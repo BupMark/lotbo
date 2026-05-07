@@ -79,6 +79,7 @@ export default function Home() {
             ${ev.heure_fin ? '⏰ Fin : ' + ev.heure_fin : ''}
             ${ev.description ? '<br/><br/>' + ev.description : ''}
             ${ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#1D9E75">🔗 Plus de détails</a>' : ''}
+<br/><br/><a href="/evenement/${ev.id}" style="color:#1D9E75;font-weight:bold">Voir la page →</a>
           </div>
         </div>
       `)
