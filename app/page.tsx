@@ -38,7 +38,7 @@ export default function Home() {
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
-      ccenter: [-72.3388, 18.5444],
+      center: [-72.3388, 18.5444],
       zoom: 8
     })
 
