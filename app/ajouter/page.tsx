@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 export default function AjouterEvenement() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [image, setImage] = useState<File | null>(null)
   const [form, setForm] = useState({
     titre: '',
     lieu: '',
@@ -57,6 +58,19 @@ export default function AjouterEvenement() {
       return
     }
 
+    let image_url = ''
+    if (image) {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('evenements')
+        .upload(`${Date.now()}-${image.name}`, image)
+      if (!uploadError && uploadData) {
+        const { data: urlData } = supabase.storage
+          .from('evenements')
+          .getPublicUrl(uploadData.path)
+        image_url = urlData.publicUrl
+      }
+    }
+
     const { error } = await supabase.from('evenements').insert([{
       titre: form.titre,
       lieu: `${form.lieu}, ${form.ville}`,
@@ -68,7 +82,8 @@ export default function AjouterEvenement() {
       longitude: coords.longitude,
       latitude: coords.latitude,
       acces: form.acces,
-      prix: form.prix
+      prix: form.prix,
+      image_url: image_url
     }])
 
     setLoading(false)
@@ -158,9 +173,15 @@ export default function AjouterEvenement() {
           <input name="lien" placeholder="Lien pour plus de détails (optionnel)" onChange={handleChange}
             className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white" />
 
+          <div className="flex flex-col gap-1">
+            <label className="text-gray-400 text-sm">Photo de l'événement (optionnel)</label>
+            <input type="file" accept="image/*" onChange={e => setImage(e.target.files?.[0] || null)}
+              className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white" />
+          </div>
+
           <button type="submit" disabled={loading}
             className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg mt-2">
-            {loading ? 'Recherche de l\'adresse...' : 'Publier l\'événement'}
+            {loading ? 'Publication en cours...' : 'Publier l\'événement'}
           </button>
 
         </form>

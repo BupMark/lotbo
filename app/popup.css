@@ -4,9 +4,26 @@
     border-radius: 12px !important;
     padding: 0 !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    width: 260px !important;
   }
   
   .mapboxgl-popup-tip {
     border-top-color: #1a1a1a !important;
     border-bottom-color: #1a1a1a !important;
+  }
+  
+  .mapboxgl-popup-content::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .mapboxgl-popup-content::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+  }
+  
+  .mapboxgl-popup-content::-webkit-scrollbar-thumb {
+    background: #1D9E75;
+    border-radius: 4px;
   }

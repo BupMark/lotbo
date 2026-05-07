@@ -54,7 +54,8 @@ export default function Home() {
     filtres.forEach(ev => {
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <div style="font-family:sans-serif;padding:12px;background:#1a1a1a;color:#ffffff;border-radius:8px;min-width:200px">
-          <strong style="font-size:16px;color:#ffffff">${ev.titre}</strong>
+         ${ev.image_url ? `<img src="${ev.image_url}" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />` : ''}
+<strong style="font-size:16px;color:#ffffff">${ev.titre}</strong>
           <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
             <span style="background:#1D9E75;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.categorie}</span>
             <span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.acces || 'public'}</span>
