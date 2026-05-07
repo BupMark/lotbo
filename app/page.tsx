@@ -18,6 +18,18 @@ export default function Home() {
   const [acces, setAcces] = useState('tous')
   const [prix, setPrix] = useState('tous')
   const [evenements, setEvenements] = useState<any[]>([])
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user || null)
+    })
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
 
   useEffect(() => {
     if (!mapContainer.current) return
@@ -54,8 +66,8 @@ export default function Home() {
     filtres.forEach(ev => {
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <div style="font-family:sans-serif;padding:12px;background:#1a1a1a;color:#ffffff;border-radius:8px;min-width:200px">
-         ${ev.image_url ? `<img src="${ev.image_url}" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />` : ''}
-<strong style="font-size:16px;color:#ffffff">${ev.titre}</strong>
+          ${ev.image_url ? `<img src="${ev.image_url}" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />` : ''}
+          <strong style="font-size:16px;color:#ffffff">${ev.titre}</strong>
           <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
             <span style="background:#1D9E75;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.categorie}</span>
             <span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.acces || 'public'}</span>
@@ -82,17 +94,30 @@ export default function Home() {
 
   return (
     <main className="w-full h-screen relative">
-      
+
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 text-white px-6 py-3 rounded-full text-xl font-bold">
         Lotbo
       </div>
 
-      <a href="/login" className="absolute top-4 right-4 z-10 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-  + Ajouter
-</a>
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {user ? (
+          <>
+            <a href="/ajouter" className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+              + Ajouter
+            </a>
+            <button onClick={handleLogout} className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-full text-sm font-bold">
+              Déconnexion
+            </button>
+          </>
+        ) : (
+          <a href="/login" className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+            + Ajouter
+          </a>
+        )}
+      </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-wrap gap-2 justify-center px-4">
-        
+
         <div className="flex gap-1 bg-black/80 rounded-full px-3 py-2">
           {CATEGORIES.map(cat => (
             <button key={cat} onClick={() => setCategorie(cat)}
