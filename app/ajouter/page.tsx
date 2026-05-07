@@ -22,7 +22,7 @@ export default function AjouterEvenement() {
     prix: 'gratuit'
   })
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
@@ -39,7 +39,7 @@ export default function AjouterEvenement() {
     return null
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
