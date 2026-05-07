@@ -38,11 +38,19 @@ export default function Home() {
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-72.3388, 18.5444],
+      ccenter: [-72.3388, 18.5444],
       zoom: 8
     })
 
     map.on('load', async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          map.flyTo({
+            center: [pos.coords.longitude, pos.coords.latitude],
+            zoom: 12
+          })
+        })
+      }
       const { data } = await supabase.from('evenements').select('*')
       setEvenements(data || [])
     })
@@ -101,12 +109,24 @@ export default function Home() {
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 text-white px-6 py-3 rounded-full text-xl font-bold">
         Lotbo
       </div>
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-4">
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-4 flex gap-2">
   <input
     type="text"
-    placeholder="🔍 Rechercher un événement ou un lieu..."
+    placeholder="🔍 Ville, pays ou événement..."
     value={recherche}
     onChange={e => setRecherche(e.target.value)}
+    onKeyDown={async e => {
+      if (e.key === 'Enter' && mapRef.current) {
+        const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(recherche)}.json?access_token=${token}&limit=1`
+        const res = await fetch(url)
+        const data = await res.json()
+        if (data.features && data.features.length > 0) {
+          const [lng, lat] = data.features[0].center
+          mapRef.current.flyTo({ center: [lng as number, lat as number], zoom: 12 })
+        }
+      }
+    }}
     className="w-full bg-black/80 text-white border border-gray-700 rounded-full px-5 py-2 text-sm outline-none focus:border-green-500"
   />
 </div>
