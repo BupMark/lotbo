@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -22,7 +22,13 @@ export default function AjouterEvenement() {
     prix: 'gratuit'
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) router.push('/login')
+    })
+  }, [])
+
+  const handleChange = (e: any) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
@@ -39,7 +45,7 @@ export default function AjouterEvenement() {
     return null
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault()
     setLoading(true)
 
