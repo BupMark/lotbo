@@ -17,7 +17,7 @@ export default function Home() {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-72.3388, 18.5444],
-      zoom: 12
+      zoom: 8
     })
 
     map.on('load', async () => {
@@ -30,11 +30,20 @@ export default function Home() {
 
       data?.forEach(ev => {
         const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div style="font-family:sans-serif;padding:8px">
-            <strong style="font-size:14px">${ev.titre}</strong><br/>
-            <span style="color:#888;font-size:12px">${ev.categorie}</span><br/>
-            <span style="font-size:12px">📍 ${ev.lieu}</span><br/>
-            <span style="font-size:12px">📅 ${ev.date}</span>
+          <div style="font-family:sans-serif;padding:12px;background:#1a1a1a;color:#ffffff;border-radius:8px;min-width:200px">
+            <strong style="font-size:16px;color:#ffffff">${ev.titre}</strong>
+            <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+              <span style="background:#1D9E75;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.categorie}</span>
+              <span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.acces || 'public'}</span>
+              <span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.prix || 'gratuit'}</span>
+            </div>
+            <div style="margin-top:10px;font-size:13px;color:#cccccc;line-height:1.6">
+              📍 ${ev.lieu}<br/>
+              📅 ${ev.date}<br/>
+              ${ev.heure_fin ? '⏰ Fin : ' + ev.heure_fin : ''}
+              ${ev.description ? '<br/><br/>' + ev.description : ''}
+              ${ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#1D9E75">🔗 Plus de détails</a>' : ''}
+            </div>
           </div>
         `)
 
@@ -53,6 +62,9 @@ export default function Home() {
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 text-white px-6 py-3 rounded-full text-xl font-bold">
         Lotbo
       </div>
+      <a href="/ajouter" className="absolute top-4 right-4 z-10 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+        + Ajouter un événement
+      </a>
       <div ref={mapContainer} className="w-full h-full" />
     </main>
   )
