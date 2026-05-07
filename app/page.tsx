@@ -19,6 +19,7 @@ export default function Home() {
   const [prix, setPrix] = useState('tous')
   const [evenements, setEvenements] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
+  const [recherche, setRecherche] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -60,6 +61,7 @@ export default function Home() {
       if (categorie !== 'Toutes' && ev.categorie !== categorie) return false
       if (acces !== 'tous' && ev.acces !== acces) return false
       if (prix !== 'tous' && ev.prix !== prix) return false
+      if (recherche && !ev.titre.toLowerCase().includes(recherche.toLowerCase()) && !ev.lieu.toLowerCase().includes(recherche.toLowerCase())) return false
       return true
     })
 
@@ -91,7 +93,7 @@ export default function Home() {
 
       markersRef.current.push(marker)
     })
-  }, [evenements, categorie, acces, prix])
+  }, [evenements, categorie, acces, prix, recherche])
 
   return (
     <main className="w-full h-screen relative">
@@ -99,7 +101,15 @@ export default function Home() {
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 text-white px-6 py-3 rounded-full text-xl font-bold">
         Lotbo
       </div>
-
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-4">
+  <input
+    type="text"
+    placeholder="🔍 Rechercher un événement ou un lieu..."
+    value={recherche}
+    onChange={e => setRecherche(e.target.value)}
+    className="w-full bg-black/80 text-white border border-gray-700 rounded-full px-5 py-2 text-sm outline-none focus:border-green-500"
+  />
+</div>
       <div className="absolute top-4 right-4 z-10 flex gap-2">
         {user ? (
           <>
