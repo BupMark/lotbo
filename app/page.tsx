@@ -104,7 +104,7 @@ export default function Home() {
   }, [evenements, categorie, acces, prix, recherche])
 
   return (
-    <main className="w-full h-screen relative">
+    <main className="w-full relative" style={{height: '100dvh'}}>
 
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 text-white px-6 py-3 rounded-full text-xl font-bold">
         Lotbo
@@ -178,7 +178,7 @@ export default function Home() {
 
       </div>
 
-      <div ref={mapContainer} className="w-full h-full" />
+      <div ref={mapContainer} style={{position:'absolute', top:0, left:0, right:0, bottom:0}} />
     </main>
   )
 }
