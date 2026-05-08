@@ -1,0 +1,90 @@
+{
+    "nav": {
+      "ajouter": "+ Agregar",
+      "profil": "Mi perfil",
+      "deconnexion": "Cerrar sesión"
+    },
+    "carte": {
+      "recherche": "Ciudad, país o evento...",
+      "toutes": "Todos",
+      "tous": "Todos",
+      "public": "Público",
+      "prive": "Privado",
+      "gratuit": "Gratis",
+      "payant": "De pago",
+      "liste": "Lista",
+      "carte": "Mapa"
+    },
+    "evenement": {
+      "voir": "Ver página →",
+      "details": "Más detalles",
+      "partager_whatsapp": "WhatsApp",
+      "partager_facebook": "Facebook",
+      "similaires": "Eventos similares",
+      "signaler": "Reportar este evento",
+      "retour": "Volver al mapa"
+    },
+    "ajouter": {
+      "titre_page": "Agregar un evento",
+      "sous_titre": "Comparte un evento con la comunidad Lotbo",
+      "titre": "Título del evento",
+      "lieu": "Nombre del lugar",
+      "ville": "Ciudad",
+      "pays": "País",
+      "date": "Fecha",
+      "debut": "Inicio",
+      "fin": "Fin",
+      "categorie": "Categoría",
+      "acces": "Acceso",
+      "prix": "Precio",
+      "description": "Descripción",
+      "lien": "Enlace para más detalles",
+      "photo": "Foto del evento",
+      "publier": "Publicar evento"
+    }
+  }
+  {
+  "nav": {
+    "ajouter": "+ Adicionar",
+    "profil": "Meu perfil",
+    "deconnexion": "Sair"
+  },
+  "carte": {
+    "recherche": "Cidade, país ou evento...",
+    "toutes": "Todos",
+    "tous": "Todos",
+    "public": "Público",
+    "prive": "Privado",
+    "gratuit": "Gratuito",
+    "payant": "Pago",
+    "liste": "Lista",
+    "carte": "Mapa"
+  },
+  "evenement": {
+    "voir": "Ver página →",
+    "details": "Mais detalhes",
+    "partager_whatsapp": "WhatsApp",
+    "partager_facebook": "Facebook",
+    "similaires": "Eventos similares",
+    "signaler": "Reportar este evento",
+    "retour": "Voltar ao mapa"
+  },
+  "ajouter": {
+    "titre_page": "Adicionar um evento",
+    "sous_titre": "Compartilhe um evento com a comunidade Lotbo",
+    "titre": "Título do evento",
+    "lieu": "Nome do local",
+    "ville": "Cidade",
+    "pays": "País",
+    "date": "Data",
+    "debut": "Início",
+    "fin": "Fim",
+    "categorie": "Categoria",
+    "acces": "Acesso",
+    "prix": "Preço",
+    "description": "Descrição",
+    "lien": "Link para mais detalhes",
+    "photo": "Foto do evento",
+    "publier": "Publicar evento"
+  }
+}

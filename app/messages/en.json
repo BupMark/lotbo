@@ -1,0 +1,45 @@
+{
+    "nav": {
+      "ajouter": "+ Add",
+      "profil": "My profile",
+      "deconnexion": "Sign out"
+    },
+    "carte": {
+      "recherche": "City, country or event...",
+      "toutes": "All",
+      "tous": "All",
+      "public": "Public",
+      "prive": "Private",
+      "gratuit": "Free",
+      "payant": "Paid",
+      "liste": "List",
+      "carte": "Map"
+    },
+    "evenement": {
+      "voir": "View page →",
+      "details": "More details",
+      "partager_whatsapp": "WhatsApp",
+      "partager_facebook": "Facebook",
+      "similaires": "Similar events",
+      "signaler": "Report this event",
+      "retour": "Back to map"
+    },
+    "ajouter": {
+      "titre_page": "Add an event",
+      "sous_titre": "Share an event with the Lotbo community",
+      "titre": "Event title",
+      "lieu": "Venue name",
+      "ville": "City",
+      "pays": "Country",
+      "date": "Date",
+      "debut": "Start",
+      "fin": "End",
+      "categorie": "Category",
+      "acces": "Access",
+      "prix": "Price",
+      "description": "Description",
+      "lien": "Link for more details",
+      "photo": "Event photo",
+      "publier": "Publish event"
+    }
+  }

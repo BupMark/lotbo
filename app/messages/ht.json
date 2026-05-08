@@ -1,0 +1,45 @@
+{
+    "nav": {
+      "ajouter": "+ Ajoute",
+      "profil": "Pwofil mwen",
+      "deconnexion": "Dekonekte"
+    },
+    "carte": {
+      "recherche": "Vil, peyi oswa evènman...",
+      "toutes": "Tout",
+      "tous": "Tout",
+      "public": "Piblik",
+      "prive": "Prive",
+      "gratuit": "Gratis",
+      "payant": "Peye",
+      "liste": "Lis",
+      "carte": "Kat"
+    },
+    "evenement": {
+      "voir": "Wè paj la →",
+      "details": "Plis detay",
+      "partager_whatsapp": "WhatsApp",
+      "partager_facebook": "Facebook",
+      "similaires": "Evènman ki sanble",
+      "signaler": "Rapòte evènman sa",
+      "retour": "Retounen nan kat la"
+    },
+    "ajouter": {
+      "titre_page": "Ajoute yon evènman",
+      "sous_titre": "Pataje yon evènman ak kominote Lotbo a",
+      "titre": "Tit evènman an",
+      "lieu": "Non kote a",
+      "ville": "Vil",
+      "pays": "Peyi",
+      "date": "Dat",
+      "debut": "Kòmansman",
+      "fin": "Fen",
+      "categorie": "Kategori",
+      "acces": "Aksè",
+      "prix": "Pri",
+      "description": "Deskripsyon",
+      "lien": "Lyen pou plis detay",
+      "photo": "Foto evènman an",
+      "publier": "Pibliye evènman an"
+    }
+  }

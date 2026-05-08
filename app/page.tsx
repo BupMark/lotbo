@@ -5,6 +5,8 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './popup.css'
 import { supabase } from '../lib/supabase'
+import { langues, type Langue, getTraductions } from '../lib/i18n'
+
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -21,6 +23,8 @@ export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [recherche, setRecherche] = useState('')
   const [mode, setMode] = useState<'carte' | 'liste'>('carte')
+  const [langue, setLangue] = useState<Langue>('fr')
+  const t = getTraductions(langue)
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
 
@@ -115,7 +119,8 @@ export default function Home() {
   return (
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
 
-<div style={{
+
+     <div style={{
   position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
   zIndex: 10, background: 'rgba(0,0,0,0.8)',
   padding: '8px 24px', borderRadius: 999, fontSize: 18, fontWeight: 'bold',
@@ -124,6 +129,25 @@ export default function Home() {
   <span style={{ color: 'white' }}>lot</span><span style={{ color: '#C84B2F' }}>bo</span>
 </div>
 
+<div style={{
+  position: 'absolute', top: 60, left: 16, zIndex: 10
+}}>
+  <select
+    value={langue}
+    onChange={e => setLangue(e.target.value as Langue)}
+    style={{
+      background: 'rgba(0,0,0,0.8)', color: 'white',
+      border: '1px solid #444', borderRadius: 999,
+      padding: '6px 12px', fontSize: 12, cursor: 'pointer', outline: 'none'
+    }}
+  >
+    {Object.entries(langues).map(([code, info]) => (
+      <option key={code} value={code}>
+        {info.drapeau} {info.nom}
+      </option>
+    ))}
+  </select>
+</div>
       <div style={{
   position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', gap: 4,
   background: 'rgba(0,0,0,0.8)', borderRadius: 999, padding: '4px'
@@ -133,13 +157,13 @@ export default function Home() {
     border: 'none', cursor: 'pointer',
     background: mode === 'carte' ? '#1D9E75' : 'transparent',
     color: mode === 'carte' ? 'white' : '#aaa'
-  }}>🗺️ Carte</button>
+  }}>🗺️ {t.carte.carte}</button>
   <button onClick={() => setMode('liste')} style={{
     padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
     border: 'none', cursor: 'pointer',
     background: mode === 'liste' ? '#1D9E75' : 'transparent',
     color: mode === 'liste' ? 'white' : '#aaa'
-  }}>📋 Liste</button>
+  }}>📋 {t.carte.liste}</button>
 </div>
 
       <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8 }}>
@@ -148,15 +172,15 @@ export default function Home() {
             <a href="/ajouter" style={{
               background: '#1D9E75', color: 'white', padding: '8px 14px',
               borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none'
-            }}>+ Ajouter</a>
+            }}>{t.nav.ajouter}</a>
             <a href="/profil" style={{
               background: '#444', color: 'white', padding: '8px 14px',
               borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none'
-            }}>Mon profil</a>
+            }}>{t.nav.profil}</a>
             <button onClick={handleLogout} style={{
               background: '#333', color: 'white', padding: '8px 14px',
               borderRadius: 999, fontSize: 13, fontWeight: 'bold', border: 'none', cursor: 'pointer'
-            }}>Deconnexion</button>
+            }}>{t.nav.deconnexion}</button>
           </>
         ) : (
           <a href="/login" style={{
@@ -169,7 +193,7 @@ export default function Home() {
       <div style={{ position: 'absolute', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: '90%', maxWidth: 400 }}>
         <input
           type="text"
-          placeholder="Ville, pays ou evenement..."
+          placeholder={t.carte.recherche}
           value={recherche}
           onChange={e => setRecherche(e.target.value)}
           onKeyDown={async e => {
@@ -221,7 +245,7 @@ export default function Home() {
                 border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                 background: acces === a ? '#1D9E75' : 'transparent',
                 color: acces === a ? 'white' : '#aaa'
-              }}>{a === 'tous' ? 'Tous' : a === 'public' ? 'Public' : 'Prive'}</button>
+              }}>{a === 'tous' ? t.carte.tous : a === 'public' ? t.carte.public : t.carte.prive}</button>
             ))}
           </div>
 
@@ -235,7 +259,7 @@ export default function Home() {
                 border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                 background: prix === p ? '#1D9E75' : 'transparent',
                 color: prix === p ? 'white' : '#aaa'
-              }}>{p === 'tous' ? 'Tous' : p === 'gratuit' ? 'Gratuit' : 'Payant'}</button>
+              }}>{p === 'tous' ? t.carte.tous : p === 'gratuit' ? t.carte.gratuit : t.carte.payant}</button>
             ))}
           </div>
         </div>
