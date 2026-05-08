@@ -21,6 +21,8 @@ export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [recherche, setRecherche] = useState('')
   const [mode, setMode] = useState<'carte' | 'liste'>('carte')
+  const [dateDebut, setDateDebut] = useState('')
+  const [dateFin, setDateFin] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -76,6 +78,8 @@ export default function Home() {
       if (acces !== 'tous' && ev.acces !== acces) return false
       if (prix !== 'tous' && ev.prix !== prix) return false
       if (recherche && !ev.titre.toLowerCase().includes(recherche.toLowerCase()) && !ev.lieu.toLowerCase().includes(recherche.toLowerCase())) return false
+      if (dateDebut && ev.date_debut && ev.date_debut < dateDebut) return false
+      if (dateFin && ev.date_debut && ev.date_debut > dateFin) return false
       return true
     })
 
@@ -106,7 +110,7 @@ export default function Home() {
 
       markersRef.current.push(marker)
     })
-  }, [evenements, categorie, acces, prix, recherche])
+  }, [evenements, categorie, acces, prix, recherche, dateDebut, dateFin])
 
   return (
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
@@ -257,6 +261,22 @@ export default function Home() {
             width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0
           }} />
         )}
+        <div style={{
+  display: 'flex', gap: 8, background: 'rgba(0,0,0,0.85)',
+  borderRadius: 999, padding: '6px 12px', alignItems: 'center'
+}}>
+  <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
+    style={{
+      background: 'transparent', border: 'none', color: '#aaa',
+      fontSize: 12, outline: 'none', cursor: 'pointer'
+    }} />
+  <span style={{ color: '#aaa', fontSize: 12 }}>→</span>
+  <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
+    style={{
+      background: 'transparent', border: 'none', color: '#aaa',
+      fontSize: 12, outline: 'none', cursor: 'pointer'
+    }} />
+</div>
         <div>
           <p style={{ fontWeight: 'bold', fontSize: 15, marginBottom: 4 }}>{ev.titre}</p>
           <p style={{ color: '#aaa', fontSize: 13, marginBottom: 2 }}>📍 {ev.lieu}</p>
