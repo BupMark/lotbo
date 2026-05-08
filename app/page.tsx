@@ -26,6 +26,7 @@ export default function Home() {
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
   const [filtresOuverts, setFiltresOuverts] = useState(false)
+  const [drawerOuvert, setDrawerOuvert] = useState(false)
   const t = getTraductions(langue)
 
   const nbFiltres = [
@@ -36,16 +37,13 @@ export default function Home() {
     !!dateFin
   ].filter(Boolean).length
 
+  const isAdmin = user?.user_metadata?.role === 'admin'
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user || null)
     })
   }, [])
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-  }
 
   useEffect(() => {
     if (!mapContainer.current) return
@@ -127,25 +125,167 @@ export default function Home() {
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
       {/* ══════════════════════════════════════
-          HEADER — flex, jamais position:absolute
-          Mobile-first 375px
+          DRAWER — menu hamburger mobile
+      ══════════════════════════════════════ */}
+      {drawerOuvert && (
+        <>
+          {/* Overlay */}
+          <div
+            onClick={() => setDrawerOuvert(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 50,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+            }}
+          />
+          {/* Drawer panel */}
+          <div style={{
+            position: 'fixed', top: 0, left: 0, bottom: 0,
+            width: 280, zIndex: 51,
+            background: '#1A1410',
+            borderRight: '1px solid #2a2a2a',
+            display: 'flex', flexDirection: 'column',
+            padding: '24px 20px',
+            gap: 0,
+          }}>
+            {/* Logo + fermer */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+              <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
+                <span style={{ color: '#F7F2E8' }}>lot</span>
+                <span style={{ color: '#C8431A' }}>bo</span>
+              </div>
+              <button
+                onClick={() => setDrawerOuvert(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)', border: 'none',
+                  color: '#F7F2E8', borderRadius: 999,
+                  width: 32, height: 32, fontSize: 16,
+                  cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center'
+                }}>✕</button>
+            </div>
+
+            {/* Langue */}
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                Langue
+              </p>
+              <select
+                value={langue}
+                onChange={e => setLangue(e.target.value as Langue)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
+                  border: '1px solid #2a2a2a', borderRadius: 10,
+                  padding: '10px 12px', fontSize: 14,
+                  cursor: 'pointer', outline: 'none', width: '100%'
+                }}>
+                {Object.entries(langues).map(([code, info]) => (
+                  <option key={code} value={code}>
+                    {info.drapeau} {(info as any).nom ?? code}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Séparateur */}
+            <div style={{ height: 1, background: '#2a2a2a', marginBottom: 24 }} />
+
+            {/* Navigation */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+
+              {!user ? (
+                <a href="/login"
+                  onClick={() => setDrawerOuvert(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(200,67,26,0.12)',
+                    color: '#C8431A', textDecoration: 'none',
+                    fontSize: 14, fontWeight: 'bold'
+                  }}>
+                  🔑 Se connecter
+                </a>
+              ) : (
+                <>
+                  <a href="/profil"
+                    onClick={() => setDrawerOuvert(false)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                    }}>
+                    👤 Mon profil
+                  </a>
+                  {isAdmin && (
+                    <a href="/admin"
+                      onClick={() => setDrawerOuvert(false)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '12px 16px', borderRadius: 12,
+                        background: 'rgba(255,255,255,0.04)',
+                        color: '#D4A820', textDecoration: 'none', fontSize: 14
+                      }}>
+                      ⚙️ Panel admin
+                    </a>
+                  )}
+                  <button
+                    onClick={async () => {
+                      await supabase.auth.signOut()
+                      setUser(null)
+                      setDrawerOuvert(false)
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#8C5A40', border: 'none',
+                      fontSize: 14, cursor: 'pointer', textAlign: 'left'
+                    }}>
+                    🚪 Déconnexion
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Version en bas */}
+            <div style={{ marginTop: 'auto', paddingTop: 24 }}>
+              <p style={{ color: '#2a2a2a', fontSize: 11, textAlign: 'center' }}>
+                Lotbo v1.0 · né en Haïti 🇭🇹
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════
+          HEADER — mobile-first 375px
       ══════════════════════════════════════ */}
       <div style={{
-        position: 'relative',
-        zIndex: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        padding: '10px 12px',
-        flexShrink: 0,
+        position: 'relative', zIndex: 20,
+        display: 'flex', flexDirection: 'column',
+        gap: 8, padding: '10px 12px', flexShrink: 0,
       }}>
 
-        {/* Ligne 1 : Carte/Liste — Logo — Actions */}
+        {/* Ligne 1 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
 
-          {/* Carte / Liste */}
-          <div style={{
-            display: 'flex', gap: 2, background: 'rgba(0,0,0,0.85)',
+          {/* ☰ Hamburger — mobile uniquement */}
+          <button
+            className="lotbo-hamburger"
+            onClick={() => setDrawerOuvert(true)}
+            style={{
+              background: 'rgba(0,0,0,0.85)', border: '1px solid #333',
+              color: '#F7F2E8', borderRadius: 999,
+              padding: '6px 10px', fontSize: 16,
+              cursor: 'pointer', flexShrink: 0
+            }}>
+            ☰
+          </button>
+
+          {/* Switcher Carte/Liste — desktop uniquement */}
+          <div className="lotbo-mode-header" style={{
+            gap: 2, background: 'rgba(0,0,0,0.85)',
             borderRadius: 999, padding: 3, flexShrink: 0
           }}>
             <button onClick={() => setMode('carte')} style={{
@@ -162,7 +302,7 @@ export default function Home() {
             }}>📋 {t.carte.liste}</button>
           </div>
 
-          {/* Logo — centré automatiquement */}
+          {/* Logo — centré */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <div style={{
               background: 'rgba(0,0,0,0.85)', padding: '5px 16px',
@@ -176,37 +316,56 @@ export default function Home() {
 
           {/* Actions droite */}
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
-            <select value={langue} onChange={e => setLangue(e.target.value as Langue)}
-              style={{
-                background: 'rgba(0,0,0,0.85)', color: 'white',
-                border: '1px solid #333', borderRadius: 999,
-                padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none'
-              }}>
-              {Object.entries(langues).map(([code, info]) => (
-                <option key={code} value={code}>{info.drapeau}</option>
-              ))}
-            </select>
-            {user ? (
-              <>
-                <a href="/ajouter" style={{
-                  background: '#C8431A', color: 'white', padding: '6px 12px',
-                  borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
-                }}>{t.nav.ajouter}</a>
-                <a href="/profil" style={{
-                  background: '#333', color: 'white', padding: '6px 10px',
-                  borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
-                }}>{t.nav.profil}</a>
-              </>
-            ) : (
-              <a href="/login" style={{
-                background: '#C8431A', color: 'white', padding: '6px 12px',
-                borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
-              }}>+ Ajouter</a>
-            )}
+
+            {/* Langue — desktop uniquement */}
+            <div className="lotbo-langue-desktop">
+              <select value={langue} onChange={e => setLangue(e.target.value as Langue)}
+                style={{
+                  background: 'rgba(0,0,0,0.85)', color: 'white',
+                  border: '1px solid #333', borderRadius: 999,
+                  padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none'
+                }}>
+                {Object.entries(langues).map(([code, info]) => (
+                  <option key={code} value={code}>{info.drapeau}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Desktop : Connexion / Profil / Admin */}
+            <div className="lotbo-mode-header" style={{ gap: 6 }}>
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <a href="/admin" style={{
+                      background: 'rgba(212,168,32,0.15)', color: '#D4A820',
+                      padding: '6px 10px', borderRadius: 999,
+                      fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
+                    }}>⚙️</a>
+                  )}
+                  <a href="/profil" style={{
+                    background: '#333', color: 'white', padding: '6px 10px',
+                    borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
+                  }}>{t.nav.profil}</a>
+                </>
+              ) : (
+                <a href="/login" style={{
+                  background: 'rgba(255,255,255,0.08)', color: 'white',
+                  padding: '6px 12px', borderRadius: 999,
+                  fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
+                }}>Connexion</a>
+              )}
+            </div>
+
+            {/* + Ajouter — toujours visible */}
+            <a href="/ajouter" style={{
+              background: '#C8431A', color: 'white', padding: '6px 12px',
+              borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+              textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0
+            }}>+ Ajouter</a>
           </div>
         </div>
 
-        {/* Ligne 2 : Recherche + bouton Filtres */}
+        {/* Ligne 2 : Recherche + Filtres */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             type="text"
@@ -225,6 +384,7 @@ export default function Home() {
                 }
               }
             }}
+            className="lotbo-recherche"
             style={{
               flex: 1, background: 'rgba(0,0,0,0.85)', color: 'white',
               border: '1px solid #444', borderRadius: 999, padding: '8px 16px',
@@ -249,14 +409,17 @@ export default function Home() {
       </div>
 
       {/* ══════════════════════════════════════
-          PANNEAU FILTRES — slide down
+          PANNEAU FILTRES
       ══════════════════════════════════════ */}
       {filtresOuverts && (
         <div style={{
           position: 'absolute', top: 110, left: 12, right: 12, zIndex: 30,
           background: 'rgba(10,10,10,0.97)', border: '1px solid #333',
-          borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', gap: 16
+          borderRadius: 20, padding: 20,
+          display: 'flex', flexDirection: 'column', gap: 16,
+          maxHeight: 'calc(100dvh - 130px)', overflowY: 'auto'
         }}>
+
           {/* Catégorie */}
           <div>
             <p style={{ color: '#aaa', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Catégorie</p>
@@ -296,24 +459,24 @@ export default function Home() {
           {/* Dates */}
           <div>
             <p style={{ color: '#aaa', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Période</p>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div className="lotbo-filtres-dates">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                 <label style={{ color: '#666', fontSize: 10 }}>Du</label>
                 <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
                   style={{
                     background: 'rgba(255,255,255,0.08)', border: '1px solid #444',
                     borderRadius: 10, color: 'white', fontSize: 13,
-                    padding: '6px 10px', outline: 'none', cursor: 'pointer'
+                    padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
                   }} />
               </div>
-              <span style={{ color: '#555', marginTop: 16 }}>→</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span className="lotbo-filtres-dates-fleche">→</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                 <label style={{ color: '#666', fontSize: 10 }}>Au</label>
                 <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
                   style={{
                     background: 'rgba(255,255,255,0.08)', border: '1px solid #444',
                     borderRadius: 10, color: 'white', fontSize: 13,
-                    padding: '6px 10px', outline: 'none', cursor: 'pointer'
+                    padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
                   }} />
               </div>
             </div>
@@ -341,18 +504,27 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── VUE LISTE ── */}
+      {/* ══════════════════════════════════════
+          VUE LISTE
+      ══════════════════════════════════════ */}
       {mode === 'liste' && (
-        <div style={{
+        <div className="lotbo-vue-liste" style={{
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          background: '#000', zIndex: 5, overflowY: 'auto',
-          padding: '120px 16px 40px'
+          background: '#1A1410', zIndex: 5, overflowY: 'auto',
+          paddingTop: 100, paddingLeft: 16, paddingRight: 16, paddingBottom: 40
         }}>
+          {evenements.filter(filtreActif).length === 0 && (
+            <p style={{ color: '#8C5A40', textAlign: 'center', marginTop: 40, fontSize: 14 }}>
+              Aucun événement trouvé.
+            </p>
+          )}
           {evenements.filter(filtreActif).map(ev => (
             <a href={'/evenement/' + ev.id} key={ev.id} style={{
-              display: 'flex', gap: 12, background: '#111', borderRadius: 12,
-              padding: 12, marginBottom: 12, textDecoration: 'none', color: 'white',
-              overflow: 'hidden'
+              display: 'flex', gap: 12,
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid #2a2a2a',
+              borderRadius: 12, padding: 12, marginBottom: 12,
+              textDecoration: 'none', color: 'white', overflow: 'hidden'
             }}>
               {ev.image_url && (
                 <img src={ev.image_url} alt={ev.titre} style={{
@@ -363,13 +535,14 @@ export default function Home() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   fontWeight: 'bold', fontSize: 14, marginBottom: 3,
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  color: '#F7F2E8'
                 }}>{ev.titre}</p>
-                <p style={{ color: '#aaa', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                <p style={{ color: '#aaa', fontSize: 12, marginBottom: 6 }}>📅 {ev.date}</p>
+                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {ev.date}</p>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie}</span>
-                  <span style={{ background: '#333', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix}</span>
+                  <span style={{ background: 'rgba(255,255,255,0.08)', color: '#aaa', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix}</span>
                   {ev.statut === 'à compléter' && (
                     <span style={{ background: '#E87C2A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>À compléter</span>
                   )}
@@ -380,9 +553,43 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── CARTE MAPBOX — prend tout l'espace restant ── */}
+      {/* ══════════════════════════════════════
+          CARTE MAPBOX
+      ══════════════════════════════════════ */}
       <div ref={mapContainer} style={{ flex: 1, position: 'relative', minHeight: 0 }} />
 
-    </main>
+      {/* ══════════════════════════════════════
+          TAB BAR — mobile uniquement
+      ══════════════════════════════════════ */}
+  
+      <div className="lotbo-tabbar">
+        <div style={{
+          display: 'flex', gap: 2,
+          background: 'rgba(255,255,255,0.08)',
+          borderRadius: 999, padding: 3,
+        }}>
+          <button
+            onClick={() => setMode('carte')}
+            style={{
+              padding: '7px 20px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+              border: 'none', cursor: 'pointer',
+              background: mode === 'carte' ? '#C8431A' : 'transparent',
+              color: mode === 'carte' ? 'white' : '#555'
+            }}>
+            🗺️ {t.carte.carte}
+          </button>
+          <button
+            onClick={() => setMode('liste')}
+            style={{
+              padding: '7px 20px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+              border: 'none', cursor: 'pointer',
+              background: mode === 'liste' ? '#C8431A' : 'transparent',
+              color: mode === 'liste' ? 'white' : '#555'
+            }}>
+            📋 {t.carte.liste}
+          </button>
+        </div>
+      </div>
+      </main>
   )
 }

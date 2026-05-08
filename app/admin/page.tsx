@@ -15,14 +15,20 @@ export default function Admin() {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         router.push('/login')
-      } else {
-        setUser(data.session.user)
-        chargerEvenements()
+        return
       }
+      const role = data.session.user.user_metadata?.role
+      if (role !== 'admin') {
+        router.push('/')
+        return
+      }
+      setUser(data.session.user)
+      chargerEvenements()
     })
   }, [])
 
   const chargerEvenements = async () => {
+    // Admin voit tout — la policy "admin_acces_total" autorise ça
     const { data } = await supabase
       .from('evenements')
       .select('*')
@@ -55,69 +61,97 @@ export default function Admin() {
 
   if (loading) return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center">
-      <p className="text-gray-400">Chargement...</p>
+      <p style={{ color: '#8C5A40' }}>Chargement...</p>
     </main>
   )
 
   return (
-<main style={{minHeight: '100dvh'}} className="bg-black text-white p-8">
+    <main style={{ minHeight: '100dvh', background: '#1A1410' }} className="text-white p-8">
       <div className="max-w-4xl mx-auto">
 
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Panel Admin</h1>
-          <a href="/" className="text-gray-400 hover:text-white text-sm">Retour a la carte</a>
+          <div style={{ fontFamily: 'serif', fontStyle: 'italic' }}>
+            <span style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold' }}>lot</span>
+            <span style={{ color: '#C8431A', fontSize: 24, fontWeight: 'bold' }}>bo</span>
+            <span style={{ color: '#8C5A40', fontSize: 14, marginLeft: 12 }}>admin</span>
+          </div>
+          <a href="/" style={{ color: '#8C5A40', fontSize: 13 }}
+            className="hover:text-white transition-colors">
+            ← Retour à la carte
+          </a>
         </div>
 
-        <div className="bg-gray-900 rounded-xl p-4 mb-6">
-          <p className="text-gray-400 text-sm">Connecte en tant que <span className="text-green-400">{user?.email}</span></p>
-          <p className="text-gray-400 text-sm mt-1">Total : <span className="text-white font-bold">{evenements.length} evenements</span></p>
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 12 }}
+          className="p-4 mb-6">
+          <p style={{ color: '#8C5A40', fontSize: 13 }}>
+            Connecté en tant que <span style={{ color: '#C8431A' }}>{user?.email}</span>
+          </p>
+          <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 4 }}>
+            Total : <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{evenements.length} événements</span>
+            {' · '}
+            <span style={{ color: '#C8431A' }}>
+              {evenements.filter(e => e.statut !== 'approuve' && e.statut !== 'rejete').length} en attente
+            </span>
+          </p>
         </div>
 
         <div className="flex flex-col gap-4 mb-12">
           {evenements.map(ev => (
-            <div key={ev.id} className="bg-gray-900 rounded-xl p-4 flex gap-4 items-start">
+            <div key={ev.id}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12 }}
+              className="p-4 flex gap-4 items-start">
 
               {ev.image_url && (
-                <img src={ev.image_url} alt={ev.titre} className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
+                <img src={ev.image_url} alt={ev.titre}
+                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
               )}
 
               <div className="flex-1">
-                <h2 className="font-bold text-lg">{ev.titre}</h2>
-                <p className="text-gray-400 text-sm">{ev.lieu}</p>
-                <p className="text-gray-400 text-sm">{ev.date}</p>
+                <h2 className="font-bold text-lg" style={{ color: '#F7F2E8' }}>{ev.titre}</h2>
+                <p style={{ color: '#8C5A40', fontSize: 13 }}>📍 {ev.lieu}</p>
+                <p style={{ color: '#8C5A40', fontSize: 13 }}>📅 {ev.date}</p>
                 <div className="flex gap-2 mt-2 flex-wrap">
-                  <span className="bg-green-900 text-green-400 px-2 py-1 rounded text-xs">{ev.categorie}</span>
-                  <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{ev.acces}</span>
-                  <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{ev.prix}</span>
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    ev.statut === 'approuve' ? 'bg-green-900 text-green-400' :
-                    ev.statut === 'rejete' ? 'bg-red-900 text-red-400' :
-                    'bg-yellow-900 text-yellow-400'
-                  }`}>
-                    {ev.statut === 'approuve' ? 'Approuve' : ev.statut === 'rejete' ? 'Rejete' : 'En attente'}
+                  <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>
+                    {ev.categorie}
+                  </span>
+                  <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>
+                    {ev.acces}
+                  </span>
+                  <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>
+                    {ev.prix}
+                  </span>
+                  <span style={{
+                    padding: '2px 8px', borderRadius: 6, fontSize: 11,
+                    background: ev.statut === 'approuve' ? 'rgba(200,67,26,0.15)' :
+                      ev.statut === 'rejete' ? 'rgba(180,40,40,0.2)' : 'rgba(212,168,32,0.15)',
+                    color: ev.statut === 'approuve' ? '#C8431A' :
+                      ev.statut === 'rejete' ? '#e57373' : '#D4A820'
+                  }}>
+                    {ev.statut === 'approuve' ? '✓ Approuvé' :
+                      ev.statut === 'rejete' ? '✗ Rejeté' : '⏳ En attente'}
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
                 <a href={'/evenement/' + ev.id} target="_blank"
-                  className="bg-gray-800 text-white px-3 py-2 rounded-lg text-xs text-center">
+                  style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}>
                   Voir
                 </a>
                 {ev.statut !== 'approuve' && (
                   <button onClick={() => approuver(ev.id)}
-                    className="bg-green-900 text-green-400 px-3 py-2 rounded-lg text-xs">
+                    style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
                     Approuver
                   </button>
                 )}
                 {ev.statut !== 'rejete' && (
                   <button onClick={() => rejeter(ev.id)}
-                    className="bg-yellow-900 text-yellow-400 px-3 py-2 rounded-lg text-xs">
+                    style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
                     Rejeter
                   </button>
                 )}
                 <button onClick={() => supprimer(ev.id)}
-                  className="bg-red-900 text-red-400 px-3 py-2 rounded-lg text-xs">
+                  style={{ background: 'rgba(180,40,40,0.2)', color: '#e57373', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
                   Supprimer
                 </button>
               </div>
@@ -127,17 +161,21 @@ export default function Admin() {
         </div>
 
         <div className="mt-8">
-    
-        <h2 className="text-xl font-bold mb-4 text-red-400">Signalements ({signalements.length})</h2>
+          <h2 style={{ color: '#C8431A', fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>
+            Signalements ({signalements.length})
+          </h2>
           {signalements.length === 0 ? (
-            <p className="text-gray-500">Aucun signalement</p>
+            <p style={{ color: '#8C5A40' }}>Aucun signalement</p>
           ) : (
             <div className="flex flex-col gap-3">
               {signalements.map(sig => (
-                <div key={sig.id} className="bg-red-900/20 border border-red-900 rounded-xl p-4">
-                  <p className="text-gray-400 text-xs">ID: {sig.evenement_id}</p>
-                  <p className="text-red-400 text-sm mt-1">{sig.raison}</p>
-                  <p className="text-gray-500 text-xs mt-1">{new Date(sig.created_at).toLocaleDateString()}</p>
+                <div key={sig.id}
+                  style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}>
+                  <p style={{ color: '#8C5A40', fontSize: 11 }}>ID: {sig.evenement_id}</p>
+                  <p style={{ color: '#e57373', fontSize: 13, marginTop: 4 }}>{sig.raison}</p>
+                  <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
+                    {new Date(sig.created_at).toLocaleDateString()}
+                  </p>
                 </div>
               ))}
             </div>

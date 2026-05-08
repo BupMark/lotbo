@@ -7,30 +7,26 @@
 
 /* ── DESIGN TOKENS LOTBO — brandbook v1.0 ── */
 :root {
-  /* Palette officielle */
-  --night:    #1A1410;   /* fond principal, texte */
-  --brique:   #C8431A;   /* couleur d'action, CTA, accents */
-  --or:       #D4A820;   /* accent signature */
-  --creme:    #F7F2E8;   /* fond clair, texte sur sombre */
-  --terre:    #8C5A40;   /* texte secondaire */
-  --brume:    #E8E0D0;   /* borders, séparateurs */
+  --night:    #1A1410;
+  --brique:   #C8431A;
+  --or:       #D4A820;
+  --creme:    #F7F2E8;
+  --terre:    #8C5A40;
+  --brume:    #E8E0D0;
 
-  /* Alias sémantiques — utiliser ces variables dans les composants */
-  --color-primary:         var(--brique);   /* REMPLACE #1D9E75 */
-  --color-primary-hover:   #D4561A;         /* brique + luminosité +8% */
-  --color-primary-light:   rgba(200, 67, 26, 0.12);  /* fond badge actif */
+  --color-primary:         var(--brique);
+  --color-primary-hover:   #D4561A;
+  --color-primary-light:   rgba(200, 67, 26, 0.12);
   --color-bg:              var(--creme);
   --color-text:            var(--night);
   --color-text-secondary:  var(--terre);
   --color-border:          var(--brume);
   --color-surface:         #FFFFFF;
 
-  /* Typographie — brandbook v1.0 */
   --font-display:    'Playfair Display', Georgia, serif;
   --font-editorial:  'DM Serif Display', Georgia, serif;
   --font-ui:         'DM Sans', system-ui, sans-serif;
 
-  /* Grille — unité de base 8px */
   --space-1:   8px;
   --space-2:  16px;
   --space-3:  24px;
@@ -39,36 +35,69 @@
   --space-8:  64px;
   --space-12: 96px;
 
-  /* Rayons */
   --radius-sm:  6px;
   --radius-md:  10px;
   --radius-lg:  14px;
   --radius-xl:  20px;
 }
 
-/* ── LOTBO RESPONSIVE ── */
+/* ══════════════════════════════════════
+   HEADER & LAYOUT
+══════════════════════════════════════ */
 
 /* Recherche — limitée sur desktop */
 .lotbo-recherche {
   max-width: 480px;
 }
 
-/* Filtres desktop — barre en bas */
-.lotbo-filtres-desktop {
-  display: flex;
-}
-
-/* Bouton mode bas — caché sur desktop */
-.lotbo-mode-bas {
+/* ══════════════════════════════════════
+   TAB BAR — mobile uniquement
+══════════════════════════════════════ */
+.lotbo-tabbar {
   display: none;
 }
 
-/* Panneau filtres mobile — visible si ouvert */
-.lotbo-panneau-filtres {
+/* ══════════════════════════════════════
+   SWITCHER CARTE/LISTE — header desktop
+══════════════════════════════════════ */
+.lotbo-mode-header {
   display: flex;
 }
 
-/* ── MOBILE (max 640px) ── */
+/* ══════════════════════════════════════
+   LANGUE — desktop dans header
+══════════════════════════════════════ */
+.lotbo-langue-desktop {
+  display: block;
+}
+
+/* ══════════════════════════════════════
+   HAMBURGER — mobile uniquement
+══════════════════════════════════════ */
+.lotbo-hamburger {
+  display: none;
+}
+
+/* ══════════════════════════════════════
+   FILTRES DATES — côte à côte desktop
+══════════════════════════════════════ */
+.lotbo-filtres-dates {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.lotbo-filtres-dates-fleche {
+  display: block;
+  color: #555;
+  margin-top: 16px;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════
+   MOBILE (max 640px)
+══════════════════════════════════════ */
 @media (max-width: 640px) {
 
   /* Recherche pleine largeur */
@@ -76,21 +105,64 @@
     max-width: 100%;
   }
 
-  /* Mode carte/liste — passe en bas */
+  /* Tab bar visible en bas */
+  .lotbo-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Switcher carte/liste caché dans header sur mobile */
   .lotbo-mode-header {
     display: none;
   }
-  .lotbo-mode-bas {
-    display: flex;
+
+  /* Langue cachée dans header sur mobile */
+  .lotbo-langue-desktop {
+    display: none;
   }
 
-  /* Filtres desktop cachés */
-  .lotbo-filtres-desktop {
+  /* Hamburger visible sur mobile */
+  .lotbo-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Dates — empilées verticalement */
+  .lotbo-filtres-dates {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .lotbo-filtres-dates-fleche {
     display: none;
+  }
+
+  .lotbo-filtres-dates input[type="date"] {
+    width: 100%;
+  }
+
+  /* Vue liste — padding bas pour tab bar */
+  .lotbo-vue-liste {
+    padding-bottom: 80px !important;
   }
 }
 
-/* ── DESKTOP (min 641px) ── */
+/* ══════════════════════════════════════
+   DESKTOP (min 641px)
+══════════════════════════════════════ */
 @media (min-width: 641px) {
 
   /* Panneau filtres mobile caché */
@@ -98,7 +170,7 @@
     display: none !important;
   }
 
-  /* Bouton filtres caché — on utilise la barre desktop */
+  /* Bouton filtres mobile caché */
   .lotbo-btn-filtres {
     display: none;
   }
