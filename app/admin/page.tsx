@@ -127,7 +127,7 @@ export default function Admin() {
         </div>
 
         <div className="mt-8">
-        {console.log('render signalements:', signalements.length)}
+    
         <h2 className="text-xl font-bold mb-4 text-red-400">Signalements ({signalements.length})</h2>
           {signalements.length === 0 ? (
             <p className="text-gray-500">Aucun signalement</p>
