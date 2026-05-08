@@ -89,7 +89,7 @@ export default function Home() {
             ${ev.heure_fin ? '⏰ Fin : ' + ev.heure_fin : ''}
             ${ev.description ? '<br/><br/>' + ev.description : ''}
             ${ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#1D9E75">🔗 Plus de détails</a>' : ''}
-<br/><br/><a href="/evenement/${ev.id}" style="color:#1D9E75;font-weight:bold">Voir la page →</a>
+            <br/><br/><a href="/evenement/${ev.id}" style="color:#1D9E75;font-weight:bold">Voir la page →</a>
           </div>
         </div>
       `)
@@ -104,81 +104,120 @@ export default function Home() {
   }, [evenements, categorie, acces, prix, recherche])
 
   return (
-    <main className="w-full relative" style={{height: '100dvh'}}>
+    <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
 
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 text-white px-6 py-3 rounded-full text-xl font-bold">
+      {/* Logo */}
+      <div style={{
+        position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 10, background: 'rgba(0,0,0,0.8)', color: 'white',
+        padding: '8px 24px', borderRadius: 999, fontSize: 18, fontWeight: 'bold'
+      }}>
         Lotbo
       </div>
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-4 flex gap-2">
-  <input
-    type="text"
-    placeholder="🔍 Ville, pays ou événement..."
-    value={recherche}
-    onChange={e => setRecherche(e.target.value)}
-    onKeyDown={async e => {
-      if (e.key === 'Enter' && mapRef.current) {
-        const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(recherche)}.json?access_token=${token}&limit=1`
-        const res = await fetch(url)
-        const data = await res.json()
-        if (data.features && data.features.length > 0) {
-          const [lng, lat] = data.features[0].center
-          mapRef.current.flyTo({ center: [lng as number, lat as number], zoom: 12 })
-        }
-      }
-    }}
-    className="w-full bg-black/80 text-white border border-gray-700 rounded-full px-5 py-2 text-sm outline-none focus:border-green-500"
-  />
-</div>
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
+
+      {/* Boutons auth */}
+      <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8 }}>
         {user ? (
           <>
-            <a href="/ajouter" className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-              + Ajouter
-            </a>
-            <button onClick={handleLogout} className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-full text-sm font-bold">
-              Déconnexion
-            </button>
+            <a href="/ajouter" style={{
+              background: '#1D9E75', color: 'white', padding: '8px 14px',
+              borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none'
+            }}>+ Ajouter</a>
+            <button onClick={handleLogout} style={{
+              background: '#333', color: 'white', padding: '8px 14px',
+              borderRadius: 999, fontSize: 13, fontWeight: 'bold', border: 'none', cursor: 'pointer'
+            }}>Déconnexion</button>
           </>
         ) : (
-          <a href="/login" className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-            + Ajouter
-          </a>
+          <a href="/login" style={{
+            background: '#1D9E75', color: 'white', padding: '8px 14px',
+            borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none'
+          }}>+ Ajouter</a>
         )}
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-wrap gap-2 justify-center px-4">
-
-        <div className="flex gap-1 bg-black/80 rounded-full px-3 py-2">
-          {CATEGORIES.map(cat => (
-            <button key={cat} onClick={() => setCategorie(cat)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition ${categorie === cat ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-1 bg-black/80 rounded-full px-3 py-2">
-          {['tous', 'public', 'prive'].map(a => (
-            <button key={a} onClick={() => setAcces(a)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition ${acces === a ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-              {a === 'tous' ? 'Tous' : a === 'public' ? 'Public' : 'Privé'}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-1 bg-black/80 rounded-full px-3 py-2">
-          {['tous', 'gratuit', 'payant'].map(p => (
-            <button key={p} onClick={() => setPrix(p)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition ${prix === p ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-              {p === 'tous' ? 'Tous' : p === 'gratuit' ? 'Gratuit' : 'Payant'}
-            </button>
-          ))}
-        </div>
-
+      {/* Barre de recherche */}
+      <div style={{ position: 'absolute', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: '90%', maxWidth: 400 }}>
+        <input
+          type="text"
+          placeholder="🔍 Ville, pays ou événement..."
+          value={recherche}
+          onChange={e => setRecherche(e.target.value)}
+          onKeyDown={async e => {
+            if (e.key === 'Enter' && mapRef.current) {
+              const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+              const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(recherche)}.json?access_token=${token}&limit=1`
+              const res = await fetch(url)
+              const data = await res.json()
+              if (data.features && data.features.length > 0) {
+                const [lng, lat] = data.features[0].center
+                mapRef.current.flyTo({ center: [lng as number, lat as number], zoom: 12 })
+              }
+            }
+          }}
+          style={{
+            width: '100%', background: 'rgba(0,0,0,0.85)', color: 'white',
+            border: '1px solid #444', borderRadius: 999, padding: '10px 20px',
+            fontSize: 14, outline: 'none', boxSizing: 'border-box'
+          }}
+        />
       </div>
 
-      <div ref={mapContainer} style={{position:'absolute', top:0, left:0, right:0, bottom:0}} />
+      {/* Filtres en bas */}
+      <div style={{
+        position: 'absolute', bottom: 24, left: 0, right: 0,
+        zIndex: 10, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', padding: '0 12px'
+      }}>
+        {/* Catégories */}
+        <div style={{
+          display: 'flex', gap: 6, background: 'rgba(0,0,0,0.85)',
+          borderRadius: 999, padding: '6px 12px', overflowX: 'auto', maxWidth: '100%'
+        }}>
+          {CATEGORIES.map(cat => (
+            <button key={cat} onClick={() => setCategorie(cat)} style={{
+              padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              background: categorie === cat ? '#1D9E75' : 'transparent',
+              color: categorie === cat ? 'white' : '#aaa'
+            }}>{cat}</button>
+          ))}
+        </div>
+
+        {/* Accès + Prix */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{
+            display: 'flex', gap: 4, background: 'rgba(0,0,0,0.85)',
+            borderRadius: 999, padding: '6px 12px'
+          }}>
+            {['tous', 'public', 'prive'].map(a => (
+              <button key={a} onClick={() => setAcces(a)} style={{
+                padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                background: acces === a ? '#1D9E75' : 'transparent',
+                color: acces === a ? 'white' : '#aaa'
+              }}>{a === 'tous' ? 'Tous' : a === 'public' ? 'Public' : 'Privé'}</button>
+            ))}
+          </div>
+
+          <div style={{
+            display: 'flex', gap: 4, background: 'rgba(0,0,0,0.85)',
+            borderRadius: 999, padding: '6px 12px'
+          }}>
+            {['tous', 'gratuit', 'payant'].map(p => (
+              <button key={p} onClick={() => setPrix(p)} style={{
+                padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                background: prix === p ? '#1D9E75' : 'transparent',
+                color: prix === p ? 'white' : '#aaa'
+              }}>{p === 'tous' ? 'Tous' : p === 'gratuit' ? 'Gratuit' : 'Payant'}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Carte */}
+      <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+
     </main>
   )
 }
