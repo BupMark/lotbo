@@ -20,6 +20,7 @@ export default function Home() {
   const [evenements, setEvenements] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [recherche, setRecherche] = useState('')
+  const [mode, setMode] = useState<'carte' | 'liste'>('carte')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -117,6 +118,24 @@ export default function Home() {
       }}>
         Lotbo
       </div>
+
+      <div style={{
+  position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', gap: 4,
+  background: 'rgba(0,0,0,0.8)', borderRadius: 999, padding: '4px'
+}}>
+  <button onClick={() => setMode('carte')} style={{
+    padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+    border: 'none', cursor: 'pointer',
+    background: mode === 'carte' ? '#1D9E75' : 'transparent',
+    color: mode === 'carte' ? 'white' : '#aaa'
+  }}>🗺️ Carte</button>
+  <button onClick={() => setMode('liste')} style={{
+    padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+    border: 'none', cursor: 'pointer',
+    background: mode === 'liste' ? '#1D9E75' : 'transparent',
+    color: mode === 'liste' ? 'white' : '#aaa'
+  }}>📋 Liste</button>
+</div>
 
       <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8 }}>
         {user ? (
@@ -217,6 +236,40 @@ export default function Home() {
         </div>
       </div>
 
+      {mode === 'liste' && (
+  <div style={{
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    background: '#000', zIndex: 5, overflowY: 'auto', padding: '80px 16px 120px'
+  }}>
+    {evenements.filter(ev => {
+      if (categorie !== 'Toutes' && ev.categorie !== categorie) return false
+      if (acces !== 'tous' && ev.acces !== acces) return false
+      if (prix !== 'tous' && ev.prix !== prix) return false
+      if (recherche && !ev.titre.toLowerCase().includes(recherche.toLowerCase()) && !ev.lieu.toLowerCase().includes(recherche.toLowerCase())) return false
+      return true
+    }).map(ev => (
+      <a href={'/evenement/' + ev.id} key={ev.id} style={{
+        display: 'flex', gap: 12, background: '#111', borderRadius: 12,
+        padding: 12, marginBottom: 12, textDecoration: 'none', color: 'white'
+      }}>
+        {ev.image_url && (
+          <img src={ev.image_url} alt={ev.titre} style={{
+            width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0
+          }} />
+        )}
+        <div>
+          <p style={{ fontWeight: 'bold', fontSize: 15, marginBottom: 4 }}>{ev.titre}</p>
+          <p style={{ color: '#aaa', fontSize: 13, marginBottom: 2 }}>📍 {ev.lieu}</p>
+          <p style={{ color: '#aaa', fontSize: 13, marginBottom: 6 }}>📅 {ev.date}</p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <span style={{ background: '#1D9E75', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 11 }}>{ev.categorie}</span>
+            <span style={{ background: '#333', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 11 }}>{ev.prix}</span>
+          </div>
+        </div>
+      </a>
+    ))}
+  </div>
+)}
       <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
 
     </main>

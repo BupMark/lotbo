@@ -9,10 +9,21 @@ export default function EvenementPage() {
   const router = useRouter()
   const [ev, setEv] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+const [similaires, setSimilaires] = useState<any[]>([])
 
   useEffect(() => {
-    supabase.from('evenements').select('*').eq('id', id).single().then(({ data }) => {
+    supabase.from('evenements').select('*').eq('id', id).single().then(async ({ data }) => {
       setEv(data)
+      if (data) {
+        const { data: sims } = await supabase
+          .from('evenements')
+          .select('*')
+          .eq('categorie', data.categorie)
+          .eq('statut', 'approuve')
+          .neq('id', id)
+          .limit(3)
+        setSimilaires(sims || [])
+      }
       setLoading(false)
     })
   }, [id])
@@ -107,6 +118,31 @@ export default function EvenementPage() {
     Signaler cet evenement
   </button>
 </div>
+
+{similaires.length > 0 && (
+  <div className="mt-12">
+    <h2 className="text-xl font-bold mb-4">Evenements similaires</h2>
+    <div className="flex flex-col gap-4">
+      {similaires.map(sim => (
+        <a href={'/evenement/' + sim.id} key={sim.id}
+          className="flex gap-3 bg-gray-900 rounded-xl p-4 text-white no-underline">
+          {sim.image_url && (
+            <img src={sim.image_url} alt={sim.titre}
+              className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+          )}
+          <div>
+            <p className="font-bold">{sim.titre}</p>
+            <p className="text-gray-400 text-sm">📍 {sim.lieu}</p>
+            <p className="text-gray-400 text-sm">📅 {sim.date}</p>
+            <span className="bg-green-900 text-green-400 px-2 py-1 rounded text-xs mt-1 inline-block">
+              {sim.categorie}
+            </span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
       </div>
     </main>
   )
