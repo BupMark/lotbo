@@ -1,5 +1,105 @@
 @import "tailwindcss";
 
+/* ── RESET ── */
 * {
   box-sizing: border-box;
+}
+
+/* ── DESIGN TOKENS LOTBO — brandbook v1.0 ── */
+:root {
+  /* Palette officielle */
+  --night:    #1A1410;   /* fond principal, texte */
+  --brique:   #C8431A;   /* couleur d'action, CTA, accents */
+  --or:       #D4A820;   /* accent signature */
+  --creme:    #F7F2E8;   /* fond clair, texte sur sombre */
+  --terre:    #8C5A40;   /* texte secondaire */
+  --brume:    #E8E0D0;   /* borders, séparateurs */
+
+  /* Alias sémantiques — utiliser ces variables dans les composants */
+  --color-primary:         var(--brique);   /* REMPLACE #1D9E75 */
+  --color-primary-hover:   #D4561A;         /* brique + luminosité +8% */
+  --color-primary-light:   rgba(200, 67, 26, 0.12);  /* fond badge actif */
+  --color-bg:              var(--creme);
+  --color-text:            var(--night);
+  --color-text-secondary:  var(--terre);
+  --color-border:          var(--brume);
+  --color-surface:         #FFFFFF;
+
+  /* Typographie — brandbook v1.0 */
+  --font-display:    'Playfair Display', Georgia, serif;
+  --font-editorial:  'DM Serif Display', Georgia, serif;
+  --font-ui:         'DM Sans', system-ui, sans-serif;
+
+  /* Grille — unité de base 8px */
+  --space-1:   8px;
+  --space-2:  16px;
+  --space-3:  24px;
+  --space-4:  32px;
+  --space-6:  48px;
+  --space-8:  64px;
+  --space-12: 96px;
+
+  /* Rayons */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+}
+
+/* ── LOTBO RESPONSIVE ── */
+
+/* Recherche — limitée sur desktop */
+.lotbo-recherche {
+  max-width: 480px;
+}
+
+/* Filtres desktop — barre en bas */
+.lotbo-filtres-desktop {
+  display: flex;
+}
+
+/* Bouton mode bas — caché sur desktop */
+.lotbo-mode-bas {
+  display: none;
+}
+
+/* Panneau filtres mobile — visible si ouvert */
+.lotbo-panneau-filtres {
+  display: flex;
+}
+
+/* ── MOBILE (max 640px) ── */
+@media (max-width: 640px) {
+
+  /* Recherche pleine largeur */
+  .lotbo-recherche {
+    max-width: 100%;
+  }
+
+  /* Mode carte/liste — passe en bas */
+  .lotbo-mode-header {
+    display: none;
+  }
+  .lotbo-mode-bas {
+    display: flex;
+  }
+
+  /* Filtres desktop cachés */
+  .lotbo-filtres-desktop {
+    display: none;
+  }
+}
+
+/* ── DESKTOP (min 641px) ── */
+@media (min-width: 641px) {
+
+  /* Panneau filtres mobile caché */
+  .lotbo-panneau-filtres {
+    display: none !important;
+  }
+
+  /* Bouton filtres caché — on utilise la barre desktop */
+  .lotbo-btn-filtres {
+    display: none;
+  }
 }

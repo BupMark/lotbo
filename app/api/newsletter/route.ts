@@ -24,21 +24,25 @@ export async function GET() {
     }
 
     const contenuEmail = `
-      <h1 style="color:#1D9E75">Kisa k'ap pase sou Lotbo cette semaine ?</h1>
-      <p>Voici les nouveaux evenements pres de toi :</p>
+      <h1 style="color:#C8431A;font-family:Georgia,serif;font-style:italic">
+        Kisa k'ap pase sou Lotbo cette semaine ?
+      </h1>
+      <p style="color:#1A1410;font-family:Arial,sans-serif">
+        Voici les nouveaux evenements pres de toi :
+      </p>
       ${evenements.map(ev => `
-        <div style="border:1px solid #eee;padding:16px;margin:16px 0;border-radius:8px">
-          <h2 style="margin:0 0 8px">${ev.titre}</h2>
-          <p style="color:#666;margin:4px 0">📍 ${ev.lieu}</p>
-          <p style="color:#666;margin:4px 0">📅 ${ev.date}</p>
-          <p style="color:#666;margin:4px 0">${ev.categorie} · ${ev.prix}</p>
-          <a href="https://app.lotbo.app/evenement/${ev.id}" 
-             style="background:#1D9E75;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:8px">
-            Voir l'evenement
+        <div style="border:1px solid #E8E0D0;padding:16px;margin:16px 0;border-radius:8px;background:#ffffff">
+          <h2 style="margin:0 0 8px;color:#1A1410;font-family:Georgia,serif">${ev.titre}</h2>
+          <p style="color:#8C5A40;margin:4px 0;font-family:Arial,sans-serif">📍 ${ev.lieu}</p>
+          <p style="color:#8C5A40;margin:4px 0;font-family:Arial,sans-serif">📅 ${ev.date}</p>
+          <p style="color:#8C5A40;margin:4px 0;font-family:Arial,sans-serif">${ev.categorie} · ${ev.prix}</p>
+          <a href="https://app.lotbo.app/evenement/${ev.id}"
+             style="background:#C8431A;color:#F7F2E8;padding:8px 16px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:8px;font-family:Arial,sans-serif;font-weight:500">
+            Voir l'evenement →
           </a>
         </div>
       `).join('')}
-      <p style="color:#999;font-size:12px;margin-top:32px">
+      <p style="color:#8C5A40;font-size:12px;margin-top:32px;font-family:Arial,sans-serif">
         Tu recois cet email car tu t'es inscrit sur lotbo.app
       </p>
     `

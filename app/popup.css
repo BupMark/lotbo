@@ -1,6 +1,6 @@
 .mapboxgl-popup-content {
-    background: #1a1a1a !important;
-    color: #ffffff !important;
+    background: #1A1410 !important;
+    color: #F7F2E8 !important;
     border-radius: 12px !important;
     padding: 0 !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
@@ -10,8 +10,8 @@
   }
   
   .mapboxgl-popup-tip {
-    border-top-color: #1a1a1a !important;
-    border-bottom-color: #1a1a1a !important;
+    border-top-color: #1A1410 !important;
+    border-bottom-color: #1A1410 !important;
   }
   
   .mapboxgl-popup-content::-webkit-scrollbar {
@@ -24,6 +24,6 @@
   }
   
   .mapboxgl-popup-content::-webkit-scrollbar-thumb {
-    background: #1D9E75;
+    background: #C8431A;
     border-radius: 4px;
   }
