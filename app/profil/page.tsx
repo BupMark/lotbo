@@ -35,7 +35,7 @@ export default function Profil() {
   )
 
   return (
-    <main className="min-h-screen bg-black text-white p-8">
+    <main style={{minHeight: '100dvh'}} className="bg-black text-white p-8">
       <div className="max-w-3xl mx-auto">
 
         <div className="flex justify-between items-center mb-8">

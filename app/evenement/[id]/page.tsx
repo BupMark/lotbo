@@ -35,7 +35,7 @@ export default function EvenementPage() {
   const urlFacebook = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main style={{minHeight: '100dvh'}} className="bg-black text-white p-8">
 
       {ev.image_url && (
         <div className="w-full h-64 overflow-hidden">

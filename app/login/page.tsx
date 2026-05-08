@@ -36,7 +36,7 @@ export default function Login() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center p-8">
+    <main style={{minHeight: '100dvh'}} className="bg-black text-white p-8">
       <div className="w-full max-w-md">
         <h1 className="text-3xl font-bold mb-2 text-center">Lotbo</h1>
         <p className="text-gray-400 text-center mb-8">Espace organisateurs</p>
