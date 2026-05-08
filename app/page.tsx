@@ -115,13 +115,14 @@ export default function Home() {
   return (
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
 
-      <div style={{
-        position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 10, background: 'rgba(0,0,0,0.8)', color: 'white',
-        padding: '8px 24px', borderRadius: 999, fontSize: 18, fontWeight: 'bold'
-      }}>
-        Lotbo
-      </div>
+<div style={{
+  position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+  zIndex: 10, background: 'rgba(0,0,0,0.8)',
+  padding: '8px 24px', borderRadius: 999, fontSize: 18, fontWeight: 'bold',
+  fontFamily: 'serif', fontStyle: 'italic'
+}}>
+  <span style={{ color: 'white' }}>lot</span><span style={{ color: '#C84B2F' }}>bo</span>
+</div>
 
       <div style={{
   position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', gap: 4,
