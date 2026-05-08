@@ -55,6 +55,7 @@ export default function Home() {
       const { data } = await supabase
         .from('evenements')
         .select('*')
+        .eq('statut', 'approuve')
         .or(`date_debut.gte.${aujourd_hui},date_debut.is.null`)
       setEvenements(data || [])
     })
