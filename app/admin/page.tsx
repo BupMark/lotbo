@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 export default function Admin() {
   const router = useRouter()
   const [evenements, setEvenements] = useState<any[]>([])
+  const [signalements, setSignalements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
 
@@ -27,6 +28,12 @@ export default function Admin() {
       .select('*')
       .order('created_at', { ascending: false })
     setEvenements(data || [])
+
+    const { data: sigs } = await supabase
+      .from('signalements')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setSignalements(sigs || [])
     setLoading(false)
   }
 
@@ -46,6 +53,12 @@ export default function Admin() {
     setEvenements(evenements.map(ev => ev.id === id ? { ...ev, statut: 'rejete' } : ev))
   }
 
+  if (loading) return (
+    <main className="min-h-screen bg-black text-white flex items-center justify-center">
+      <p className="text-gray-400">Chargement...</p>
+    </main>
+  )
+
   return (
     <main className="min-h-screen bg-black text-white p-8">
       <div className="max-w-4xl mx-auto">
@@ -60,62 +73,76 @@ export default function Admin() {
           <p className="text-gray-400 text-sm mt-1">Total : <span className="text-white font-bold">{evenements.length} evenements</span></p>
         </div>
 
-        {loading ? (
-          <p className="text-gray-400">Chargement...</p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {evenements.map(ev => (
-              <div key={ev.id} className="bg-gray-900 rounded-xl p-4 flex gap-4 items-start">
+        <div className="flex flex-col gap-4 mb-12">
+          {evenements.map(ev => (
+            <div key={ev.id} className="bg-gray-900 rounded-xl p-4 flex gap-4 items-start">
 
-                {ev.image_url && (
-                  <img src={ev.image_url} alt={ev.titre} className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
-                )}
+              {ev.image_url && (
+                <img src={ev.image_url} alt={ev.titre} className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
+              )}
 
-                <div className="flex-1">
-                  <h2 className="font-bold text-lg">{ev.titre}</h2>
-                  <p className="text-gray-400 text-sm">{ev.lieu}</p>
-                  <p className="text-gray-400 text-sm">{ev.date}</p>
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    <span className="bg-green-900 text-green-400 px-2 py-1 rounded text-xs">{ev.categorie}</span>
-                    <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{ev.acces}</span>
-                    <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{ev.prix}</span>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      ev.statut === 'approuve' ? 'bg-green-900 text-green-400' :
-                      ev.statut === 'rejete' ? 'bg-red-900 text-red-400' :
-                      'bg-yellow-900 text-yellow-400'
-                    }`}>
-                      {ev.statut === 'approuve' ? 'Approuve' : ev.statut === 'rejete' ? 'Rejete' : 'En attente'}
-                    </span>
-                  </div>
+              <div className="flex-1">
+                <h2 className="font-bold text-lg">{ev.titre}</h2>
+                <p className="text-gray-400 text-sm">{ev.lieu}</p>
+                <p className="text-gray-400 text-sm">{ev.date}</p>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  <span className="bg-green-900 text-green-400 px-2 py-1 rounded text-xs">{ev.categorie}</span>
+                  <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{ev.acces}</span>
+                  <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{ev.prix}</span>
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    ev.statut === 'approuve' ? 'bg-green-900 text-green-400' :
+                    ev.statut === 'rejete' ? 'bg-red-900 text-red-400' :
+                    'bg-yellow-900 text-yellow-400'
+                  }`}>
+                    {ev.statut === 'approuve' ? 'Approuve' : ev.statut === 'rejete' ? 'Rejete' : 'En attente'}
+                  </span>
                 </div>
-
-                <div className="flex flex-col gap-2">
-                  <a href={'/evenement/' + ev.id} target="_blank"
-                    className="bg-gray-800 text-white px-3 py-2 rounded-lg text-xs text-center">
-                    Voir
-                  </a>
-                  {ev.statut !== 'approuve' && (
-                    <button onClick={() => approuver(ev.id)}
-                      className="bg-green-900 text-green-400 px-3 py-2 rounded-lg text-xs">
-                      Approuver
-                    </button>
-                  )}
-                  {ev.statut !== 'rejete' && (
-                    <button onClick={() => rejeter(ev.id)}
-                      className="bg-yellow-900 text-yellow-400 px-3 py-2 rounded-lg text-xs">
-                      Rejeter
-                    </button>
-                  )}
-                  <button onClick={() => supprimer(ev.id)}
-                    className="bg-red-900 text-red-400 px-3 py-2 rounded-lg text-xs">
-                    Supprimer
-                  </button>
-                </div>
-
               </div>
-            ))}
-          </div>
-        )}
+
+              <div className="flex flex-col gap-2">
+                <a href={'/evenement/' + ev.id} target="_blank"
+                  className="bg-gray-800 text-white px-3 py-2 rounded-lg text-xs text-center">
+                  Voir
+                </a>
+                {ev.statut !== 'approuve' && (
+                  <button onClick={() => approuver(ev.id)}
+                    className="bg-green-900 text-green-400 px-3 py-2 rounded-lg text-xs">
+                    Approuver
+                  </button>
+                )}
+                {ev.statut !== 'rejete' && (
+                  <button onClick={() => rejeter(ev.id)}
+                    className="bg-yellow-900 text-yellow-400 px-3 py-2 rounded-lg text-xs">
+                    Rejeter
+                  </button>
+                )}
+                <button onClick={() => supprimer(ev.id)}
+                  className="bg-red-900 text-red-400 px-3 py-2 rounded-lg text-xs">
+                  Supprimer
+                </button>
+              </div>
+
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8">
+        {console.log('render signalements:', signalements.length)}
+        <h2 className="text-xl font-bold mb-4 text-red-400">Signalements ({signalements.length})</h2>
+          {signalements.length === 0 ? (
+            <p className="text-gray-500">Aucun signalement</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {signalements.map(sig => (
+                <div key={sig.id} className="bg-red-900/20 border border-red-900 rounded-xl p-4">
+                  <p className="text-gray-400 text-xs">ID: {sig.evenement_id}</p>
+                  <p className="text-red-400 text-sm mt-1">{sig.raison}</p>
+                  <p className="text-gray-500 text-xs mt-1">{new Date(sig.created_at).toLocaleDateString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
       </div>
     </main>

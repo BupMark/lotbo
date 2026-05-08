@@ -88,6 +88,25 @@ export default function EvenementPage() {
           </a>
         </div>
 
+        <div className="mt-6 border-t border-gray-800 pt-6">
+  <p className="text-gray-500 text-sm mb-3">Un probleme avec cet evenement ?</p>
+  <select id="raison" className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm mb-3">
+    <option value="">Choisir une raison...</option>
+    <option value="Fausse information">Fausse information</option>
+    <option value="Contenu inapproprie">Contenu inapproprie</option>
+    <option value="Evenement annule">Evenement annule</option>
+    <option value="Spam">Spam</option>
+    <option value="Autre">Autre</option>
+  </select>
+  <button onClick={async () => {
+    const raison = (document.getElementById('raison') as HTMLSelectElement).value
+    if (!raison) { alert('Choisis une raison'); return }
+    await supabase.from('signalements').insert([{ evenement_id: ev.id, raison }])
+    alert('Signalement envoye, merci !')
+  }} className="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm">
+    Signaler cet evenement
+  </button>
+</div>
       </div>
     </main>
   )
