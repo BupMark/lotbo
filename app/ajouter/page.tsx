@@ -72,19 +72,20 @@ export default function AjouterEvenement() {
     }
 
     const { error } = await supabase.from('evenements').insert([{
-      titre: form.titre,
-      lieu: `${form.lieu}, ${form.ville}`,
-      date: form.date,
-      heure_fin: form.heure_fin,
-      categorie: form.categorie,
-      description: form.description,
-      lien: form.lien,
-      longitude: coords.longitude,
-      latitude: coords.latitude,
-      acces: form.acces,
-      prix: form.prix,
-      image_url: image_url
-    }])
+        titre: form.titre,
+        lieu: `${form.lieu}, ${form.ville}`,
+        date: form.date,
+        date_debut: form.date,
+        heure_fin: form.heure_fin,
+        categorie: form.categorie,
+        description: form.description,
+        lien: form.lien,
+        longitude: coords.longitude,
+        latitude: coords.latitude,
+        acces: form.acces,
+        prix: form.prix,
+        image_url: image_url
+      }])
 
     setLoading(false)
 

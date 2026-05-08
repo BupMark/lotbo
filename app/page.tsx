@@ -51,7 +51,11 @@ export default function Home() {
           })
         })
       }
-      const { data } = await supabase.from('evenements').select('*')
+      const aujourd_hui = new Date().toISOString().split('T')[0]
+      const { data } = await supabase
+        .from('evenements')
+        .select('*')
+        .or(`date_debut.gte.${aujourd_hui},date_debut.is.null`)
       setEvenements(data || [])
     })
 
