@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
-const CATEGORIES = ['Toutes', 'Festival', 'Musique', 'Art', 'Sport', 'Gastronomie', 'Culture', 'Conférence', 'Autre']
+const CATEGORIES = ['Toutes', 'Festival', 'Musique', 'Art', 'Sport', 'Gastronomie', 'Culture', 'Conference', 'Autre']
 
 export default function Home() {
   const mapContainer = useRef<HTMLDivElement>(null)
@@ -56,7 +56,7 @@ export default function Home() {
         .from('evenements')
         .select('*')
         .eq('statut', 'approuve')
-        .or(`date_debut.gte.${aujourd_hui},date_debut.is.null`)
+        .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
       setEvenements(data || [])
     })
 
@@ -79,25 +79,24 @@ export default function Home() {
     })
 
     filtres.forEach(ev => {
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div style="font-family:sans-serif;padding:12px;background:#1a1a1a;color:#ffffff;border-radius:8px;min-width:200px">
-          ${ev.image_url ? `<img src="${ev.image_url}" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />` : ''}
-          <strong style="font-size:16px;color:#ffffff">${ev.titre}</strong>
-          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-            <span style="background:#1D9E75;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.categorie}</span>
-            <span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.acces || 'public'}</span>
-            <span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">${ev.prix || 'gratuit'}</span>
-          </div>
-          <div style="margin-top:10px;font-size:13px;color:#cccccc;line-height:1.6">
-            📍 ${ev.lieu}<br/>
-            📅 ${ev.date}<br/>
-            ${ev.heure_fin ? '⏰ Fin : ' + ev.heure_fin : ''}
-            ${ev.description ? '<br/><br/>' + ev.description : ''}
-            ${ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#1D9E75">🔗 Plus de détails</a>' : ''}
-            <br/><br/><a href="/evenement/${ev.id}" style="color:#1D9E75;font-weight:bold">Voir la page →</a>
-          </div>
-        </div>
-      `)
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+        '<div style="font-family:sans-serif;padding:12px;background:#1a1a1a;color:#ffffff;border-radius:8px;min-width:200px">' +
+        (ev.image_url ? '<img src="' + ev.image_url + '" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />' : '') +
+        '<strong style="font-size:16px;color:#ffffff">' + ev.titre + '</strong>' +
+        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
+        '<span style="background:#1D9E75;color:white;padding:2px 8px;border-radius:20px;font-size:11px">' + ev.categorie + '</span>' +
+        '<span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">' + (ev.acces || 'public') + '</span>' +
+        '<span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">' + (ev.prix || 'gratuit') + '</span>' +
+        '</div>' +
+        '<div style="margin-top:10px;font-size:13px;color:#cccccc;line-height:1.6">' +
+        '📍 ' + ev.lieu + '<br/>' +
+        '📅 ' + ev.date + '<br/>' +
+        (ev.heure_fin ? '⏰ Fin : ' + ev.heure_fin : '') +
+        (ev.description ? '<br/><br/>' + ev.description : '') +
+        (ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#1D9E75">🔗 Plus de details</a>' : '') +
+        '<br/><br/><a href="/evenement/' + ev.id + '" style="color:#1D9E75;font-weight:bold">Voir la page →</a>' +
+        '</div></div>'
+      )
 
       const marker = new mapboxgl.Marker({ color: '#1D9E75' })
         .setLngLat([ev.longitude, ev.latitude])
@@ -111,7 +110,6 @@ export default function Home() {
   return (
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
 
-      {/* Logo */}
       <div style={{
         position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
         zIndex: 10, background: 'rgba(0,0,0,0.8)', color: 'white',
@@ -120,7 +118,6 @@ export default function Home() {
         Lotbo
       </div>
 
-      {/* Boutons auth */}
       <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8 }}>
         {user ? (
           <>
@@ -128,10 +125,14 @@ export default function Home() {
               background: '#1D9E75', color: 'white', padding: '8px 14px',
               borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none'
             }}>+ Ajouter</a>
+            <a href="/profil" style={{
+              background: '#444', color: 'white', padding: '8px 14px',
+              borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none'
+            }}>Mon profil</a>
             <button onClick={handleLogout} style={{
               background: '#333', color: 'white', padding: '8px 14px',
               borderRadius: 999, fontSize: 13, fontWeight: 'bold', border: 'none', cursor: 'pointer'
-            }}>Déconnexion</button>
+            }}>Deconnexion</button>
           </>
         ) : (
           <a href="/login" style={{
@@ -141,17 +142,16 @@ export default function Home() {
         )}
       </div>
 
-      {/* Barre de recherche */}
       <div style={{ position: 'absolute', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: '90%', maxWidth: 400 }}>
         <input
           type="text"
-          placeholder="🔍 Ville, pays ou événement..."
+          placeholder="Ville, pays ou evenement..."
           value={recherche}
           onChange={e => setRecherche(e.target.value)}
           onKeyDown={async e => {
             if (e.key === 'Enter' && mapRef.current) {
               const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-              const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(recherche)}.json?access_token=${token}&limit=1`
+              const url = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(recherche) + '.json?access_token=' + token + '&limit=1'
               const res = await fetch(url)
               const data = await res.json()
               if (data.features && data.features.length > 0) {
@@ -168,12 +168,10 @@ export default function Home() {
         />
       </div>
 
-      {/* Filtres en bas */}
       <div style={{
         position: 'absolute', bottom: 24, left: 0, right: 0,
         zIndex: 10, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', padding: '0 12px'
       }}>
-        {/* Catégories */}
         <div style={{
           display: 'flex', gap: 6, background: 'rgba(0,0,0,0.85)',
           borderRadius: 999, padding: '6px 12px', overflowX: 'auto', maxWidth: '100%'
@@ -188,7 +186,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Accès + Prix */}
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{
             display: 'flex', gap: 4, background: 'rgba(0,0,0,0.85)',
@@ -200,7 +197,7 @@ export default function Home() {
                 border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                 background: acces === a ? '#1D9E75' : 'transparent',
                 color: acces === a ? 'white' : '#aaa'
-              }}>{a === 'tous' ? 'Tous' : a === 'public' ? 'Public' : 'Privé'}</button>
+              }}>{a === 'tous' ? 'Tous' : a === 'public' ? 'Public' : 'Prive'}</button>
             ))}
           </div>
 
@@ -220,7 +217,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Carte */}
       <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
 
     </main>

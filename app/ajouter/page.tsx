@@ -71,8 +71,11 @@ export default function AjouterEvenement() {
       }
     }
 
-    const { error } = await supabase.from('evenements').insert([{
-        titre: form.titre,
+    const { data: { session } } = await supabase.auth.getSession()
+
+const { error } = await supabase.from('evenements').insert([{
+  titre: form.titre,
+  user_id: session?.user.id,
         lieu: `${form.lieu}, ${form.ville}`,
         date: form.date,
         date_debut: form.date,
