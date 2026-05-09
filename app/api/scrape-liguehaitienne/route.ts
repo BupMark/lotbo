@@ -135,3 +135,14 @@ export async function GET() {
 
   return NextResponse.json({ success: true, imported, skipped, results, errors })
 }
+
+// DEBUG temporaire
+const idx = matchHtml.indexOf('Land des Gabions')
+if (idx > -1) {
+  console.log('STADE TROUVÉ:', matchHtml.substring(idx - 20, idx + 80))
+} else {
+  console.log('STADE NON TROUVÉ dans:', link)
+  // Cherche Gabions
+  const idx2 = matchHtml.indexOf('Gabions')
+  if (idx2 > -1) console.log('GABIONS:', matchHtml.substring(idx2 - 30, idx2 + 60))
+}
