@@ -1,5 +1,5 @@
 # MASTER_CONTEXT — LOTBO
-> Dernière mise à jour : 8 mai 2026
+> Dernière mise à jour : 9 mai 2026
 > Architecte technique : Claude (Anthropic)
 > Fondateur : Handgod Abraham
 
@@ -20,7 +20,7 @@
 
 | Surface | URL |
 |---|---|
-| Landing | `lotbo.app` |
+| Landing | `lotbo.app` (primary — pas www) |
 | App | `app.lotbo.app` |
 | Admin | `app.lotbo.app/admin` |
 
@@ -35,7 +35,7 @@
 | Supabase | latest | DB + Auth + Storage + RLS |
 | Mapbox GL JS | latest | Carte interactive |
 | next-intl | latest | Internationalisation |
-| Brevo | API v3 | Newsletter |
+| Brevo | API v3 | Newsletter + Inscription landing |
 | Vercel | latest | Hébergement + CI/CD |
 
 ---
@@ -79,12 +79,13 @@
 ---
 
 ## 5. ARCHITECTURE FICHIERS
-lotbo/
+lotbo/                          ← app.lotbo.app
 ├── app/
 │   ├── admin/page.tsx          — Panel admin (protégé middleware)
 │   ├── ajouter/page.tsx        — Formulaire ajout événement (ouvert à tous)
 │   ├── api/
-│   │   ├── newsletter/route.ts — Newsletter Brevo hebdomadaire
+│   │   ├── newsletter/route.ts     — Newsletter Brevo hebdomadaire
+│   │   ├── notify-admin/route.ts   — Notification email admin nouvel événement
 │   │   └── scrape-eventbrite/route.ts — Scraper Wikimedia
 │   ├── evenement/[id]/page.tsx — Page détail événement
 │   ├── login/page.tsx          — Auth organisateurs + admin
@@ -102,7 +103,12 @@ lotbo/
 └── public/
 ├── manifest.json           — PWA
 └── Logomark.png            — Favicon
-
+lotbo-landing/                  ← lotbo.app
+├── api/
+│   └── subscribe.js            — Route API inscription Brevo (clé côté serveur)
+├── index.html                  — Landing page complète
+├── package.json                — Config minimale
+└── vercel.json                 — Config Vercel (outputDirectory: ".")
 ---
 
 ## 6. INTERNATIONALISATION
@@ -122,7 +128,7 @@ lotbo/
 | `lieu` | text | |
 | `date` | text | Format libre |
 | `date_debut` | date | Format ISO pour filtres |
-| `heure_debut` | text | |
+| `heure_debut` | text | Ajoutée le 9 mai 2026 |
 | `heure_fin` | text | |
 | `categorie` | text | Voir taxonomie |
 | `event_type_id` | int | FK → types |
@@ -149,23 +155,24 @@ lotbo/
 
 **⚠️ Ne jamais utiliser `'publié'` — utiliser `'approuve'` uniquement.**
 
-### RLS Supabase — table `evenements`
+### RLS Supabase — table `evenements` (7 policies)
 | Policy | Cmd | Rôles | Condition |
 |---|---|---|---|
 | `lecture_publique_evenements_approuves` | SELECT | anon, authenticated | `statut = 'approuve'` |
+| `lecture_proprietaire_ses_evenements` | SELECT | authenticated | `auth.uid() = user_id` |
 | `insertion_ouverte` | INSERT | anon, authenticated | `statut = 'en_attente'` |
 | `modification_proprietaire` | UPDATE | authenticated | `auth.uid() = user_id` |
 | `suppression_proprietaire` | DELETE | authenticated | `auth.uid() = user_id` |
-| `admin_acces_total` | ALL | authenticated | `role = 'admin'` via JWT |
+| `admin_acces_total` | ALL | authenticated | `role = 'admin'` OU `statut = 'en_attente'` |
 
-### RLS Supabase — table `evenement_themes`
+### RLS Supabase — table `evenement_themes` (3 policies)
 | Policy | Cmd | Rôles |
 |---|---|---|
 | `lecture_publique_themes` | SELECT | anon, authenticated |
 | `insertion_ouverte_themes` | INSERT | anon, authenticated |
 | `admin_acces_total_themes` | ALL | authenticated (admin) |
 
-### RLS Supabase — table `signalements`
+### RLS Supabase — table `signalements` (3 policies)
 | Policy | Cmd | Rôles |
 |---|---|---|
 | `insertion_signalements_ouverte` | INSERT | anon, authenticated |
@@ -186,5 +193,198 @@ lotbo/
 - Valeur : `"admin"` pour l'admin
 - Lu via `auth.jwt() -> 'user_metadata' ->> 'role'`
 - Middleware vérifie le rôle côté serveur avant d'accéder à `/admin`
+- Login → redirect `/admin` si admin, `/ajouter` sinon
 
 ### Modèle d'accès
+Visiteur anonyme   → voit les événements approuvés
+Tout le monde      → peut soumettre un événement (Option A — ouvert)
+Tout le monde      → peut signaler un événement
+Admin              → approuve / rejette / supprime tout
+
+**Note :** Option A (soumission ouverte) est temporaire. Passer en Option B (compte requis) quand la croissance le justifie.
+
+---
+
+## 9. TAXONOMIE ÉVÉNEMENTS
+
+### 10 Types principaux (event_type_id)
+1. Conférence / Sommet 🎤
+2. Concert / Spectacle 🎶
+3. Foire / Exposition 🏪
+4. Culte / Cérémonie religieuse ⛪
+5. Festival 🎉
+6. Tournoi / Compétition 🏆
+7. Inauguration / Lancement 🎊
+8. Assemblée / Réunion 🤝
+9. Formation / Séminaire 📚
+10. Célébration communautaire 🌍
+
+### 17 Thèmes (many-to-many via `evenement_themes`)
+Religion · Politique · Business · Culture · Gastronomie · Littérature · Art · Artisanat · Sport · Technologie · Éducation · Social · Musique · Cinéma · Mode · Santé · Environnement
+
+---
+
+## 10. COMPOSANTS & FONCTIONNALITÉS LIVRÉES
+
+### `app/page.tsx` — App principale
+- Carte Mapbox dark (`dark-v11`) centrée sur Haïti
+- Header flex mobile-first (jamais `position: absolute`)
+- **Mobile :** `[☰ Menu]` `[lotbo]` `[+ Ajouter]` + tab bar en bas
+- **Desktop :** `[Carte/Liste]` `[lotbo]` `[Langue]` `[Connexion]` `[+ Ajouter]`
+- Drawer hamburger (mobile) : langue + connexion + profil + admin + déconnexion
+- Tab bar mobile : switcher Carte/Liste centré, fond `rgba(0,0,0,0.85)`
+- Filtres : catégorie / accès / prix / dates (empilés sur mobile)
+- Panneau filtres : `maxHeight: calc(100dvh - 130px)` + scroll
+- Recherche : limitée à `480px` sur desktop, pleine largeur mobile
+- Marqueurs carte : `#C8431A` (approuvé) / `#E87C2A` (à compléter)
+- Vue liste : fond `#1A1410`, message "Aucun événement" si vide
+
+### `middleware.ts`
+- Protège `/admin` côté serveur
+- Redirige vers `/login` si non connecté
+- Redirige vers `/` si connecté mais pas admin
+
+### `app/admin/page.tsx`
+- Double vérification rôle (middleware + client)
+- Voit TOUS les événements (policy admin_acces_total)
+- Actions : Approuver / Rejeter / Supprimer
+- Signalements visibles
+- Bouton déconnexion
+
+### `app/login/page.tsx`
+- Redirect post-login : admin → `/admin`, autres → `/ajouter`
+- Palette officielle
+
+### `app/ajouter/page.tsx`
+- Ouvert à tous (anonymes + connectés)
+- `statut: 'en_attente'` obligatoire à l'insertion
+- `user_id: null` si anonyme
+- Géocodage Mapbox automatique
+- Écran de confirmation post-soumission
+- Taxonomie 2 niveaux (type + thèmes)
+- Notification email admin après soumission réussie
+
+### `app/api/notify-admin/route.ts`
+- Déclenché après chaque soumission d'événement
+- Envoie email à `sambayo23@gmail.com`
+- Contient : titre, lieu, date, catégorie + lien vers `/admin`
+- Sender : `hello@lotbo.app`
+- Fire and forget — non bloquant
+
+### `lotbo-landing/api/subscribe.js`
+- Route API Vercel serverless
+- Reçoit email depuis formulaire landing
+- Appelle Brevo API avec clé côté serveur
+- List ID : 3
+- CORS configuré pour `lotbo.app`
+
+### `lotbo-landing/index.html`
+- Formulaire inscription hero + CTA final — inline, sans iframe
+- Bouton "Voir les événements" → `https://app.lotbo.app`
+- Bouton "Rejoindre la liste" → scroll vers formulaire hero
+- Palette officielle LOTBO
+- Footer : 2026 · Né en Haïti 🇭🇹
+
+---
+
+## 11. VARIABLES D'ENVIRONNEMENT
+
+### `app.lotbo.app` (Vercel — projet lotbo)
+| Variable | Côté | Usage |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Client + Serveur | URL Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Serveur | Clé publique Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Serveur uniquement | Admin Supabase (scraper) |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Client + Serveur | Mapbox geocoding + carte |
+| `BREVO_API_KEY` | Serveur uniquement | Newsletter + notify-admin |
+
+### `lotbo.app` (Vercel — projet lotbo-landing)
+| Variable | Côté | Usage |
+|---|---|---|
+| `BREVO_API_KEY` | Serveur uniquement | Inscription liste d'attente |
+
+**⚠️ Règles absolues :**
+- `SUPABASE_SERVICE_ROLE_KEY` — jamais exposé côté client
+- `BREVO_API_KEY` — jamais exposé côté client
+- Ne jamais coller une clé API dans une conversation Claude
+
+---
+
+## 12. RÈGLES DE DÉVELOPPEMENT ABSOLUES
+
+1. **Mobile-first obligatoire** — tester 375px en premier
+2. **Jamais `position: absolute` dans le header**
+3. **Jamais exposer `SUPABASE_SERVICE_ROLE_KEY` côté client**
+4. **Jamais bypasser RLS Supabase**
+5. **TypeScript strict** — jamais de `any`
+6. **Toujours mettre à jour les 5 fichiers de traduction simultanément**
+7. **Toujours livrer des fichiers complets**, jamais des extraits
+8. **Jamais instancier Supabase au niveau racine** d'une route API
+9. **`statut: 'en_attente'`** pour toute nouvelle soumission
+10. **Toute nouvelle colonne DB** doit vérifier si elle existe déjà
+11. **Jamais exposer une clé API** dans le code HTML ou dans une conversation
+12. **`lotbo.app` est le domaine primary** — pas `www.lotbo.app`
+
+---
+
+## 13. PROBLÈMES CONNUS & BACKLOG
+
+### 🟡 Important
+- Page `/evenement/[id]` — vérifier og:image dynamique pour partage social
+- PWA `manifest.json` — `theme_color` encore `#1D9E75` dans `public/manifest.json`
+
+### 🟢 Backlog
+- Option B soumission (compte requis) — activer quand spam devient problème
+- Workflow validation événements Wikimedia
+- Notifications push PWA — nouvel événement près de toi
+- Page `/apropos`
+- SEO — og:image dynamique pages événements
+
+---
+
+## 14. HISTORIQUE DES DÉCISIONS
+
+| Date | Décision | Raison |
+|---|---|---|
+| 5 mai 2026 | Couleur primaire `#C8431A` (Brique) | Alignement brandbook v1.0 officiel |
+| 5 mai 2026 | Suppression `#1D9E75` (vert) | Couleur IA générée avant le vrai logo |
+| 8 mai 2026 | RLS activé sur 3 tables | Sécurité — table ouverte = danger |
+| 8 mai 2026 | Soumission ouverte (Option A) | Réduire friction, modération admin |
+| 8 mai 2026 | Statut Wikimedia `'publié'` → non visible | Données incomplètes (coords 0,0) |
+| 8 mai 2026 | Middleware admin serveur | Protection `/admin` côté client insuffisante |
+| 8 mai 2026 | Drawer hamburger mobile | Header trop encombré sur 375px |
+| 8 mai 2026 | Tab bar mobile Carte/Liste | Navigation native mobile |
+| 8 mai 2026 | Sender newsletter `hello@lotbo.app` | Gmail rejeté par Brevo |
+| 9 mai 2026 | `lotbo.app` comme domaine primary | Redirection www cassait l'API subscribe |
+| 9 mai 2026 | Route `/api/subscribe` serverless | Clé Brevo ne peut pas être dans le HTML |
+| 9 mai 2026 | Colonne `heure_debut` ajoutée | Manquait dans le schéma initial |
+| 9 mai 2026 | Policy `admin_acces_total` — WITH CHECK élargi | Admin ne pouvait pas soumettre d'événement |
+| 9 mai 2026 | Policy `lecture_proprietaire_ses_evenements` | Profil ne voyait pas ses événements en_attente |
+
+---
+
+## 15. COMMANDES UTILES
+
+```bash
+# Développement local
+cd ~/lotbo && npm run dev
+
+# Build production
+npm run build
+
+# Chercher une couleur dans le code
+grep -r "1D9E75" --include="*.tsx" --include="*.ts" --include="*.css" .
+
+# Vérifier les policies RLS
+# (dans Supabase SQL Editor)
+SELECT tablename, policyname, cmd, roles
+FROM pg_policies
+WHERE tablename IN ('evenements', 'evenement_themes', 'signalements')
+ORDER BY tablename, cmd;
+
+# Déployer app
+cd ~/lotbo && git add . && git commit -m "message" && git push
+
+# Déployer landing
+cd ~/lotbo-landing && git add . && git commit -m "message" && git push
+```
