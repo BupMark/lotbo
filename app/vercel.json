@@ -11,6 +11,10 @@
     {
       "path": "/api/scrape-ticketmaster",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/scrape-liguehaitienne",
+      "schedule": "0 4 * * *"
     }
   ]
 }
