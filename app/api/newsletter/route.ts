@@ -56,7 +56,7 @@ export async function GET() {
       body: JSON.stringify({
         name: 'Resume hebdomadaire Lotbo - ' + new Date().toLocaleDateString(),
         subject: 'Kisa k ap pase sur Lotbo cette semaine ?',
-        sender: { name: 'Lotbo', email: 'lotboapp@gmail.com' },
+        sender: { name: 'Lotbo', email: 'hello@lotbo.app' },
         type: 'classic',
         htmlContent: contenuEmail,
         recipients: { listIds: [3] }
