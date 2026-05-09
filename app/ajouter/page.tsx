@@ -162,6 +162,19 @@ export default function AjouterEvenement() {
     if (error) {
       alert('Erreur: ' + error.message)
     } else {
+      // Notifier l'admin — fire and forget (pas bloquant)
+      if (newEvent) {
+        fetch('/api/notify-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            titre: newEvent.titre,
+            lieu: newEvent.lieu,
+            date: newEvent.date,
+            categorie: newEvent.categorie
+          })
+        }).catch(() => {}) // silencieux si échec
+      }
       setSucces(true)
     }
   }
