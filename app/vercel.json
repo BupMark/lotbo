@@ -1,8 +1,12 @@
 {
-    "crons": [
-      {
-        "path": "/api/newsletter",
-        "schedule": "0 9 * * 1"
-      }
-    ]
-  }
+  "crons": [
+    {
+      "path": "/api/newsletter",
+      "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/scrape-sports",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
