@@ -20,14 +20,19 @@ export async function POST(request: Request) {
     }
 
     // Filtre les abonnés pertinents
-    const villeEvent = lieu.toLowerCase()
-    const abonnesFiltres = abonnes.filter(ab => {
-      const villeMatch = villeEvent.includes(ab.ville.toLowerCase()) ||
-        ab.ville.toLowerCase().includes(villeEvent)
-      const catMatch = ab.categories.length === 0 ||
-        ab.categories.includes(categorie)
-      return villeMatch && catMatch
-    })
+    const normaliser = (s: string) => s.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+
+  const villeEvent = normaliser(lieu)
+  const abonnesFiltres = abonnes.filter(ab => {
+    const villeAb = normaliser(ab.ville)
+    const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
+    const catMatch = ab.categories.length === 0 ||
+      ab.categories.includes(categorie)
+    return villeMatch && catMatch
+  })
 
     if (abonnesFiltres.length === 0) {
       return NextResponse.json({ success: true, envoyes: 0 })
