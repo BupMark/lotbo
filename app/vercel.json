@@ -7,6 +7,10 @@
     {
       "path": "/api/scrape-sports",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/scrape-ticketmaster",
+      "schedule": "0 3 * * *"
     }
   ]
 }
