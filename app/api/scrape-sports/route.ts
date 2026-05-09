@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const LIGUES = const LIGUES = [
+const LIGUES = [
     // ── Football ──
     { id: '4328', nom: 'Premier League', pays: 'Angleterre', emoji: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', sport: 'Sport' },
     { id: '4335', nom: 'La Liga', pays: 'Espagne', emoji: '🇪🇸', sport: 'Sport' },
