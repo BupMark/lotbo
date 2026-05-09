@@ -1,23 +1,27 @@
 import { ImageResponse } from 'next/og'
-import { createClient } from '@supabase/supabase-js'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 export const alt = 'Lotbo — Événement'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { id: string } }) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/evenements?id=eq.${params.id}&statut=eq.approuve&select=titre,lieu,date,categorie,image_url&limit=1`
 
-  const { data: ev } = await supabase
-    .from('evenements')
-    .select('titre, lieu, date, categorie, image_url, prix, acces')
-    .eq('id', params.id)
-    .eq('statut', 'approuve')
-    .single()
+    let ev: any = null
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+        },
+        next: { revalidate: 3600 }
+      })
+      const data = await res.json()
+      ev = data?.[0] || null
+    } catch {
+      ev = null
+    }
 
   const titre = ev?.titre || 'Événement sur Lotbo'
   const lieu = ev?.lieu || ''
