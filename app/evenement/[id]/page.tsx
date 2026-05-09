@@ -3,17 +3,14 @@ import { createClient } from '@supabase/supabase-js'
 import EvenementClient from './EvenementClient'
 
 export async function generateMetadata(
-  { params }: { params: { id: string } }
-): Promise<Metadata> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  const { data: ev } = await supabase
-    .from('evenements')
-    .select('titre, lieu, date, description')
-    .eq('id', params.id)
+    { params }: { params: Promise<{ id: string }> }
+  ): Promise<Metadata> {
+    const { id } = await params
+    ...
+    const { data: ev } = await supabase
+      .from('evenements')
+      .select('titre, lieu, date, description')
+      .eq('id', id)
     .eq('statut', 'approuve')
     .single()
 
@@ -41,6 +38,6 @@ export async function generateMetadata(
   }
 }
 
-export default function Page({ params }: { params: { id: string } }) {
-  return <EvenementClient />
-}
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+    return <EvenementClient />
+  }
