@@ -48,7 +48,7 @@
 | `--night` | `#1A1410` | Fond principal, texte |
 | `--brique` | `#C8431A` | **Couleur d'action, CTA — COULEUR PRIMAIRE** |
 | `--or` | `#D4A820` | Accent signature, icône admin |
-| `--creme` | `#F7F2E8` | Fond clair, texte sur sombre |
+| `--creme` | `#F7F2E8` | Fond clair, header, tab bar |
 | `--terre` | `#8C5A40` | Texte secondaire |
 | `--brume` | `#E8E0D0` | Borders, séparateurs |
 
@@ -63,8 +63,9 @@
 | DM Sans 300/400/500 | Corps, interface, navigation |
 
 ### Règles d'usage (brandbook)
-- Fond écran principal : Nuit + Crème
-- Bouton CTA : Brique sur Nuit ou Crème
+- Fond écran principal : Crème (`#F7F2E8`) — thème clair adopté le 9 mai 2026
+- Header : fond `#F7F2E8`, logo `#1A1410` + `#C8431A`
+- Bouton CTA : Brique sur Crème
 - Accent : Or — jamais seul
 - Texte sur fond clair : `#1A1410` uniquement
 - Texte sur fond sombre : `#F7F2E8` uniquement
@@ -86,17 +87,19 @@ lotbo/                              ← app.lotbo.app
 │   ├── apropos/page.tsx            — Page À propos + fondateur
 │   ├── inscription/page.tsx        — Inscription notifications visiteur
 │   ├── api/
-│   │   ├── newsletter/route.ts     — Newsletter Brevo hebdomadaire
-│   │   ├── notify-admin/route.ts   — Notification email admin nouvel événement
-│   │   ├── notify-abonnes/route.ts — Notification email abonnés à l'approbation
-│   │   └── scrape-eventbrite/route.ts — Scraper Wikimedia
+│   │   ├── newsletter/route.ts         — Newsletter Brevo hebdomadaire
+│   │   ├── notify-admin/route.ts       — Notification email admin nouvel événement
+│   │   ├── notify-abonnes/route.ts     — Notification email abonnés à l'approbation
+│   │   ├── scrape-sports/route.ts      — Scraper TheSportsDB (6 ligues + autres sports)
+│   │   ├── scrape-ticketmaster/route.ts — Scraper Ticketmaster (musique + arts + famille)
+│   │   └── scrape-eventbrite/route.ts  — Scraper Wikimedia
 │   ├── evenement/[id]/
 │   │   ├── page.tsx                — Server component + generateMetadata
 │   │   ├── EvenementClient.tsx     — Client component page détail
 │   │   └── opengraph-image.tsx     — og:image dynamique (1200x630)
 │   ├── login/page.tsx              — Auth organisateurs + admin
 │   ├── profil/page.tsx             — Profil utilisateur
-│   ├── globals.css                 — Tokens design + responsive
+│   ├── globals.css                 — Tokens design + responsive + tab bar 5 onglets
 │   ├── layout.tsx                  — Root layout + polices + theme-color
 │   ├── page.tsx                    — App principale (carte + liste + filtres)
 │   └── popup.css                   — Styles popups Mapbox
@@ -105,10 +108,12 @@ lotbo/                              ← app.lotbo.app
 │   └── i18n.ts                     — Traductions 5 langues
 ├── middleware.ts                   — Protection route /admin (serveur)
 ├── tailwind.config.ts              — Palette Tailwind officielle
+├── vercel.json                     — CRONs : newsletter lundi 9h, sports 2h, ticketmaster 3h
 ├── MASTER_CONTEXT.md               — Ce fichier
 └── public/
 ├── manifest.json               — PWA (theme_color: #1A1410)
-└── Logomark.png                — Faviconlotbo-landing/                      ← lotbo.app
+└── Logomark.png                — Favicon
+lotbo-landing/                      ← lotbo.app
 ├── api/
 │   └── subscribe.js                — Route API inscription Brevo (clé serveur)
 ├── index.html                      — Landing page complète
@@ -147,8 +152,8 @@ lotbo/                              ← app.lotbo.app
 | `image_url` | text | Storage Supabase |
 | `statut` | text | Voir statuts |
 | `user_id` | uuid | null si anonyme |
-| `source` | text | `wikimedia` / null |
-| `source_id` | text | ID source externe |
+| `source` | text | `wikimedia` / `sports` / `ticketmaster` / null |
+| `source_id` | text | ID source externe (anti-doublon) |
 
 ### Table `abonnements` — notifications visiteurs
 | Colonne | Type | Notes |
@@ -169,6 +174,7 @@ lotbo/                              ← app.lotbo.app
 | `à compléter` | ❌ | Wikimedia incomplet (coords 0,0) |
 
 **⚠️ Ne jamais utiliser `'publié'` — utiliser `'approuve'` uniquement.**
+**Les événements scrapés (sports, ticketmaster) ont statut `'approuve'` directement.**
 
 ### RLS Supabase — table `evenements` (6 policies)
 | Policy | Cmd | Rôles | Condition |
@@ -201,7 +207,8 @@ lotbo/                              ← app.lotbo.app
 | `admin_lecture_abonnements` | SELECT | authenticated (admin) | role = 'admin' |
 | `admin_suppression_abonnements` | DELETE | authenticated (admin) | role = 'admin' |
 
-**⚠️ `notify-abonnes/route.ts` utilise `SUPABASE_SERVICE_ROLE_KEY` pour bypasser RLS et lire les abonnés.**
+**⚠️ `notify-abonnes/route.ts` utilise `SUPABASE_SERVICE_ROLE_KEY` pour bypasser RLS.**
+**⚠️ Les scrapers utilisent `SUPABASE_SERVICE_ROLE_KEY` pour insérer avec `statut = 'approuve'`.**
 
 ---
 
@@ -250,15 +257,15 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 ## 10. FONCTIONNALITÉS LIVRÉES
 
 ### `app/page.tsx` — App principale
-- Carte Mapbox dark (`dark-v11`) centrée sur Haïti
-- Header `#1A1410` fond solide, flex mobile-first
-- **Mobile :** `[☰ Menu]` `[lotbo]` `[+ Ajouter]` + tab bar bas
+- Carte Mapbox `streets-v12` (warm/clair) centrée sur Haïti
+- Header `#F7F2E8` fond clair, logo `#1A1410` + `#C8431A`, flex mobile-first
+- **Mobile :** `[☰ Menu]` `[lotbo]` `[+ Ajouter]` + tab bar 5 onglets bas
 - **Desktop :** `[À propos]` `[Langue]` `[Connexion/Profil]` `[+ Ajouter]`
 - Drawer : langue + connexion + notifications + profil + admin + déconnexion
-- Tab bar mobile : switcher Carte/Liste centré
+- Tab bar 5 onglets natifs : Home · Événements · Carte (centrer) · Alertes · Profil
 - Popup carte : image + infos + `[Voir →]` + `[🧭 S'y rendre]`
-- Filtres : catégorie / accès / prix / dates
-- Vue liste : fond `#1A1410`, overflow corrigé
+- Filtres : catégorie / accès / prix / dates (thème clair)
+- Vue liste : fond `#F7F2E8`, cartes blanches
 
 ### `app/evenement/[id]/` — Page détail événement
 - `page.tsx` — server component + `generateMetadata` og complet
@@ -280,7 +287,7 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 ### `app/inscription/page.tsx`
 - Email + ville + catégories préférées
 - Insertion dans table `abonnements`
-- Accessible depuis drawer (connecté et non connecté)
+- Accessible depuis tab bar mobile (onglet Alertes) + drawer
 
 ### `app/admin/page.tsx`
 - Double vérification rôle
@@ -292,9 +299,20 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 | Route | Déclencheur | Action |
 |---|---|---|
 | `notify-admin` | Soumission événement | Email à `sambayo23@gmail.com` |
-| `notify-abonnes` | Approbation événement | Email aux abonnés ville+catégorie |
-| `newsletter` | Manuel / CRON | Email hebdomadaire liste Brevo |
+| `notify-abonnes` | Approbation événement | Email abonnés ville+catégorie (normalisation accents) |
+| `newsletter` | CRON lundi 9h UTC | Email hebdomadaire liste Brevo |
+| `scrape-sports` | CRON nuit 2h UTC | TheSportsDB — 13 ligues/compétitions |
+| `scrape-ticketmaster` | CRON nuit 3h UTC | Ticketmaster — musique + sports + arts + famille |
 | `scrape-eventbrite` | Manuel | Scrape Wikimedia + géocode |
+
+### Scrapers automatiques
+| Source | Ligues/Segments | CRON |
+|---|---|---|
+| TheSportsDB | Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, NBA, MLB, NHL, NFL, F1, UFC, Rugby | 2h UTC |
+| Ticketmaster | Musique, Sports, Arts & Theatre, Family | 3h UTC |
+| Wikimedia | Événements culturels | Manuel |
+
+**IDs TheSportsDB :** Premier League `4328` · La Liga `4335` · Bundesliga `4331` · Serie A `4332` · Ligue 1 `4334` · Champions League `4480` · NBA `4387` · MLB `4424` · NHL `4380` · NFL `4391` · F1 `4370` · UFC `4443` · Rugby `4462`
 
 ### `lotbo-landing/`
 - Formulaire inscription inline → `/api/subscribe` → Brevo liste 3
@@ -310,9 +328,10 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Client + Serveur | URL Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Serveur | Clé publique Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Serveur uniquement | Admin + notify-abonnes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Serveur uniquement | Admin + notify-abonnes + scrapers |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | Client + Serveur | Mapbox geocoding + carte |
 | `BREVO_API_KEY` | Serveur uniquement | Toutes les routes email |
+| `TICKETMASTER_API_KEY` | Serveur uniquement | Scraper Ticketmaster |
 
 ### `lotbo.app` (Vercel — projet lotbo-landing)
 | Variable | Côté | Usage |
@@ -322,6 +341,7 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 **⚠️ Règles absolues :**
 - `SUPABASE_SERVICE_ROLE_KEY` — jamais exposé côté client
 - `BREVO_API_KEY` — jamais exposé côté client
+- `TICKETMASTER_API_KEY` — jamais exposé côté client
 - Ne jamais coller une clé API dans une conversation Claude
 
 ---
@@ -336,11 +356,13 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 6. **Toujours mettre à jour les 5 fichiers de traduction simultanément**
 7. **Toujours livrer des fichiers complets**, jamais des extraits
 8. **Jamais instancier Supabase au niveau racine** d'une route API
-9. **`statut: 'en_attente'`** pour toute nouvelle soumission
-10. **Toute nouvelle colonne DB** doit vérifier si elle existe déjà
-11. **Jamais exposer une clé API** dans le code HTML ou dans une conversation
-12. **`lotbo.app` est le domaine primary** — pas `www.lotbo.app`
-13. **`params` est une Promise** dans Next.js 16 — toujours `await params`
+9. **`statut: 'en_attente'`** pour toute nouvelle soumission manuelle
+10. **`statut: 'approuve'`** pour les événements scrapés (source fiable)
+11. **Toute nouvelle colonne DB** doit vérifier si elle existe déjà
+12. **Jamais exposer une clé API** dans le code HTML ou dans une conversation
+13. **`lotbo.app` est le domaine primary** — pas `www.lotbo.app`
+14. **`params` est une Promise** dans Next.js 16 — toujours `await params`
+15. **Anti-doublon scrapers** — vérifier `source` + `source_id` avant insertion
 
 ---
 
@@ -349,6 +371,7 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 ### 🟡 Important
 - Supprimer les `console.log` de debug dans `notify-abonnes/route.ts`
 - Page désabonnement `/desinscription` pour les abonnés notifications
+- Coupe du Monde 2026 — ajouter dans scrape-sports quand TheSportsDB publie (juin 2026)
 
 ### 🟢 Backlog
 - Option B soumission (compte requis) — activer quand spam devient problème
@@ -356,6 +379,8 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 - Commentaires sur les événements
 - Notifications push PWA
 - SEO — sitemap dynamique
+- Hero landing avec photo fondateur
+- TMDB — sorties cinéma (clé gratuite à créer sur themoviedb.org)
 
 ---
 
@@ -365,7 +390,7 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 |---|---|---|
 | 5 mai 2026 | Couleur primaire `#C8431A` (Brique) | Alignement brandbook v1.0 officiel |
 | 5 mai 2026 | Suppression `#1D9E75` (vert) | Couleur IA générée avant le vrai logo |
-| 8 mai 2026 | RLS activé sur 3 tables | Sécurité — table ouverte = danger |
+| 8 mai 2026 | RLS activé sur 4 tables | Sécurité — table ouverte = danger |
 | 8 mai 2026 | Soumission ouverte (Option A) | Réduire friction, modération admin |
 | 8 mai 2026 | Statut Wikimedia `'publié'` → non visible | Données incomplètes (coords 0,0) |
 | 8 mai 2026 | Middleware admin serveur | Protection `/admin` côté client insuffisante |
@@ -381,6 +406,11 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 | 9 mai 2026 | `notify-abonnes` utilise SERVICE_ROLE_KEY | RLS bloquait lecture abonnements |
 | 9 mai 2026 | Like anonyme localStorage | Zéro friction, pas de compte requis |
 | 9 mai 2026 | Navigation Google Maps | Lien coordonnées depuis popup + page event |
+| 9 mai 2026 | Scraper TheSportsDB — 13 ligues | Source gratuite, données riches, coordonnées GPS |
+| 9 mai 2026 | Scraper Ticketmaster — 4 segments | 318k+ événements, clé gratuite, coordonnées précises |
+| 9 mai 2026 | Thème clair `#F7F2E8` adopté | Demande fondateur — interface plus chaleureuse |
+| 9 mai 2026 | Carte `streets-v12` (warm) | Plus lisible, plus chaleureux que dark-v11 |
+| 9 mai 2026 | Tab bar 5 onglets natifs | Inspiration maquette mobile — Home/Events/Map/Alertes/Profil |
 
 ---
 
@@ -401,11 +431,18 @@ curl -X POST http://localhost:3000/api/notify-abonnes \
   -H "Content-Type: application/json" \
   -d '{"titre":"Test","lieu":"Petit-Goâve","date":"2026-05-28","categorie":"Culture","id":"UUID"}'
 
+# Tester scrapers en production
+curl https://app.lotbo.app/api/scrape-sports
+curl https://app.lotbo.app/api/scrape-ticketmaster
+
 # Vérifier les policies RLS
 SELECT tablename, policyname, cmd, roles
 FROM pg_policies
 WHERE tablename IN ('evenements','evenement_themes','signalements','abonnements')
 ORDER BY tablename, cmd;
+
+# Vérifier événements scrapés
+SELECT source, COUNT(*) FROM evenements GROUP BY source;
 
 # Déployer app
 cd ~/lotbo && git add . && git commit -m "message" && git push
