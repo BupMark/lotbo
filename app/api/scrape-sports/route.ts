@@ -1,24 +1,44 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const LIGUES = [
-  { id: '4328', nom: 'Premier League', pays: 'Angleterre', emoji: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-  { id: '4335', nom: 'La Liga', pays: 'Espagne', emoji: '🇪🇸' },
-  { id: '4331', nom: 'Bundesliga', pays: 'Allemagne', emoji: '🇩🇪' },
-  { id: '4332', nom: 'Serie A', pays: 'Italie', emoji: '🇮🇹' },
-  { id: '4334', nom: 'Ligue 1', pays: 'France', emoji: '🇫🇷' },
-  { id: '4480', nom: 'Champions League', pays: 'Europe', emoji: '🏆' },
-]
+const LIGUES = const LIGUES = [
+    // ── Football ──
+    { id: '4328', nom: 'Premier League', pays: 'Angleterre', emoji: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', sport: 'Sport' },
+    { id: '4335', nom: 'La Liga', pays: 'Espagne', emoji: '🇪🇸', sport: 'Sport' },
+    { id: '4331', nom: 'Bundesliga', pays: 'Allemagne', emoji: '🇩🇪', sport: 'Sport' },
+    { id: '4332', nom: 'Serie A', pays: 'Italie', emoji: '🇮🇹', sport: 'Sport' },
+    { id: '4334', nom: 'Ligue 1', pays: 'France', emoji: '🇫🇷', sport: 'Sport' },
+    { id: '4480', nom: 'Champions League', pays: 'Europe', emoji: '🏆', sport: 'Sport' },
+    // ── Basketball ──
+    { id: '4387', nom: 'NBA', pays: 'USA', emoji: '🏀', sport: 'Sport' },
+    // ── Baseball ──
+    { id: '4424', nom: 'MLB', pays: 'USA', emoji: '⚾', sport: 'Sport' },
+    // ── Hockey ──
+    { id: '4380', nom: 'NHL', pays: 'USA', emoji: '🏒', sport: 'Sport' },
+    // ── Football Américain ──
+    { id: '4391', nom: 'NFL', pays: 'USA', emoji: '🏈', sport: 'Sport' },
+    // ── Formule 1 ──
+    { id: '4370', nom: 'Formula 1', pays: 'International', emoji: '🏎️', sport: 'Sport' },
+    // ── Tennis ──
+    { id: '4653', nom: 'ATP Tour', pays: 'International', emoji: '🎾', sport: 'Sport' },
+    // ── Rugby ──
+    { id: '4462', nom: 'Rugby World Cup', pays: 'International', emoji: '🏉', sport: 'Sport' },
+    // ── MMA ──
+    { id: '4443', nom: 'UFC', pays: 'USA', emoji: '🥊', sport: 'Sport' },
+  ]
 
 // Coordonnées approximatives des pays pour les matchs sans ville
 const COORDS_PAYS: Record<string, { longitude: number, latitude: number, ville: string }> = {
-  'Angleterre': { longitude: -0.1278, latitude: 51.5074, ville: 'Londres' },
-  'Espagne': { longitude: -3.7038, latitude: 40.4168, ville: 'Madrid' },
-  'Allemagne': { longitude: 13.4050, latitude: 52.5200, ville: 'Berlin' },
-  'Italie': { longitude: 12.4964, latitude: 41.9028, ville: 'Rome' },
-  'France': { longitude: 2.3522, latitude: 48.8566, ville: 'Paris' },
-  'Europe': { longitude: 10.0, latitude: 50.0, ville: 'Europe' },
-}
+    'Angleterre': { longitude: -0.1278, latitude: 51.5074, ville: 'Londres' },
+    'Espagne': { longitude: -3.7038, latitude: 40.4168, ville: 'Madrid' },
+    'Allemagne': { longitude: 13.4050, latitude: 52.5200, ville: 'Berlin' },
+    'Italie': { longitude: 12.4964, latitude: 41.9028, ville: 'Rome' },
+    'France': { longitude: 2.3522, latitude: 48.8566, ville: 'Paris' },
+    'Europe': { longitude: 10.0, latitude: 50.0, ville: 'Europe' },
+    'USA': { longitude: -95.7129, latitude: 37.0902, ville: 'États-Unis' },
+    'International': { longitude: 0, latitude: 20, ville: 'International' },
+    'Turquie': { longitude: 32.8597, latitude: 39.9334, ville: 'Ankara' },
+  }
 
 async function geocodeStade(stade: string, ville: string, pays: string): Promise<{ longitude: number, latitude: number }> {
   try {
