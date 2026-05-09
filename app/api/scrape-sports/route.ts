@@ -19,8 +19,6 @@ const LIGUES = [
     { id: '4391', nom: 'NFL', pays: 'USA', emoji: '🏈', sport: 'Sport' },
     // ── Formule 1 ──
     { id: '4370', nom: 'Formula 1', pays: 'International', emoji: '🏎️', sport: 'Sport' },
-    // ── Tennis ──
-    { id: '4653', nom: 'ATP Tour', pays: 'International', emoji: '🎾', sport: 'Sport' },
     // ── Rugby ──
     { id: '4462', nom: 'Rugby World Cup', pays: 'International', emoji: '🏉', sport: 'Sport' },
     // ── MMA ──
