@@ -35,7 +35,7 @@
 | Supabase | latest | DB + Auth + Storage + RLS |
 | Mapbox GL JS | latest | Carte interactive |
 | next-intl | latest | Internationalisation |
-| Brevo | API v3 | Newsletter + Inscription landing |
+| Brevo | API v3 | Newsletter + Notifications |
 | Vercel | latest | Hébergement + CI/CD |
 
 ---
@@ -79,36 +79,42 @@
 ---
 
 ## 5. ARCHITECTURE FICHIERS
-lotbo/                          ← app.lotbo.app
+lotbo/                              ← app.lotbo.app
 ├── app/
-│   ├── admin/page.tsx          — Panel admin (protégé middleware)
-│   ├── ajouter/page.tsx        — Formulaire ajout événement (ouvert à tous)
+│   ├── admin/page.tsx              — Panel admin (protégé middleware)
+│   ├── ajouter/page.tsx            — Formulaire ajout événement (ouvert à tous)
+│   ├── apropos/page.tsx            — Page À propos + fondateur
+│   ├── inscription/page.tsx        — Inscription notifications visiteur
 │   ├── api/
 │   │   ├── newsletter/route.ts     — Newsletter Brevo hebdomadaire
 │   │   ├── notify-admin/route.ts   — Notification email admin nouvel événement
+│   │   ├── notify-abonnes/route.ts — Notification email abonnés à l'approbation
 │   │   └── scrape-eventbrite/route.ts — Scraper Wikimedia
-│   ├── evenement/[id]/page.tsx — Page détail événement
-│   ├── login/page.tsx          — Auth organisateurs + admin
-│   ├── profil/page.tsx         — Profil utilisateur
-│   ├── globals.css             — Tokens design + responsive
-│   ├── layout.tsx              — Root layout + polices + theme-color
-│   ├── page.tsx                — App principale (carte + liste + filtres)
-│   └── popup.css               — Styles popups Mapbox
+│   ├── evenement/[id]/
+│   │   ├── page.tsx                — Server component + generateMetadata
+│   │   ├── EvenementClient.tsx     — Client component page détail
+│   │   └── opengraph-image.tsx     — og:image dynamique (1200x630)
+│   ├── login/page.tsx              — Auth organisateurs + admin
+│   ├── profil/page.tsx             — Profil utilisateur
+│   ├── globals.css                 — Tokens design + responsive
+│   ├── layout.tsx                  — Root layout + polices + theme-color
+│   ├── page.tsx                    — App principale (carte + liste + filtres)
+│   └── popup.css                   — Styles popups Mapbox
 ├── lib/
-│   ├── supabase.ts             — Client Supabase (anon)
-│   └── i18n.ts                 — Traductions 5 langues
-├── middleware.ts               — Protection route /admin (serveur)
-├── tailwind.config.ts          — Palette Tailwind officielle
-├── MASTER_CONTEXT.md           — Ce fichier
+│   ├── supabase.ts                 — Client Supabase (anon)
+│   └── i18n.ts                     — Traductions 5 langues
+├── middleware.ts                   — Protection route /admin (serveur)
+├── tailwind.config.ts              — Palette Tailwind officielle
+├── MASTER_CONTEXT.md               — Ce fichier
 └── public/
-├── manifest.json           — PWA
-└── Logomark.png            — Favicon
-lotbo-landing/                  ← lotbo.app
+├── manifest.json               — PWA (theme_color: #1A1410)
+└── Logomark.png                — Faviconlotbo-landing/                      ← lotbo.app
 ├── api/
-│   └── subscribe.js            — Route API inscription Brevo (clé côté serveur)
-├── index.html                  — Landing page complète
-├── package.json                — Config minimale
-└── vercel.json                 — Config Vercel (outputDirectory: ".")
+│   └── subscribe.js                — Route API inscription Brevo (clé serveur)
+├── index.html                      — Landing page complète
+├── package.json                    — Config minimale
+└── vercel.json                     — Config Vercel
+
 ---
 
 ## 6. INTERNATIONALISATION
@@ -144,18 +150,27 @@ lotbo-landing/                  ← lotbo.app
 | `source` | text | `wikimedia` / null |
 | `source_id` | text | ID source externe |
 
+### Table `abonnements` — notifications visiteurs
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `email` | text | UNIQUE |
+| `ville` | text | Ville de l'abonné |
+| `categories` | text[] | Catégories suivies (vide = toutes) |
+| `created_at` | timestamptz | |
+
 ### Statuts événements
 | Statut | Visible public | Description |
 |---|---|---|
-| `en_attente` | ❌ | Soumis par un utilisateur, attend validation |
+| `en_attente` | ❌ | Soumis, attend validation |
 | `approuve` | ✅ | Validé par admin, visible sur carte |
 | `rejete` | ❌ | Refusé par admin |
-| `publié` | ❌ | Ancien statut Wikimedia — ne plus utiliser |
+| `publié` | ❌ | Ancien statut — ne plus utiliser |
 | `à compléter` | ❌ | Wikimedia incomplet (coords 0,0) |
 
 **⚠️ Ne jamais utiliser `'publié'` — utiliser `'approuve'` uniquement.**
 
-### RLS Supabase — table `evenements` (7 policies)
+### RLS Supabase — table `evenements` (6 policies)
 | Policy | Cmd | Rôles | Condition |
 |---|---|---|---|
 | `lecture_publique_evenements_approuves` | SELECT | anon, authenticated | `statut = 'approuve'` |
@@ -179,6 +194,15 @@ lotbo-landing/                  ← lotbo.app
 | `admin_lecture_signalements` | SELECT | authenticated (admin) |
 | `admin_suppression_signalements` | DELETE | authenticated (admin) |
 
+### RLS Supabase — table `abonnements` (3 policies)
+| Policy | Cmd | Rôles | Condition |
+|---|---|---|---|
+| `insertion_abonnements_ouverte` | INSERT | anon, authenticated | true |
+| `admin_lecture_abonnements` | SELECT | authenticated (admin) | role = 'admin' |
+| `admin_suppression_abonnements` | DELETE | authenticated (admin) | role = 'admin' |
+
+**⚠️ `notify-abonnes/route.ts` utilise `SUPABASE_SERVICE_ROLE_KEY` pour bypasser RLS et lire les abonnés.**
+
 ---
 
 ## 8. AUTHENTIFICATION & RÔLES
@@ -199,9 +223,8 @@ lotbo-landing/                  ← lotbo.app
 Visiteur anonyme   → voit les événements approuvés
 Tout le monde      → peut soumettre un événement (Option A — ouvert)
 Tout le monde      → peut signaler un événement
+Tout le monde      → peut s'inscrire aux notifications par ville
 Admin              → approuve / rejette / supprime tout
-
-**Note :** Option A (soumission ouverte) est temporaire. Passer en Option B (compte requis) quand la croissance le justifie.
 
 ---
 
@@ -224,66 +247,59 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 
 ---
 
-## 10. COMPOSANTS & FONCTIONNALITÉS LIVRÉES
+## 10. FONCTIONNALITÉS LIVRÉES
 
 ### `app/page.tsx` — App principale
 - Carte Mapbox dark (`dark-v11`) centrée sur Haïti
-- Header flex mobile-first (jamais `position: absolute`)
-- **Mobile :** `[☰ Menu]` `[lotbo]` `[+ Ajouter]` + tab bar en bas
-- **Desktop :** `[Carte/Liste]` `[lotbo]` `[Langue]` `[Connexion]` `[+ Ajouter]`
-- Drawer hamburger (mobile) : langue + connexion + profil + admin + déconnexion
-- Tab bar mobile : switcher Carte/Liste centré, fond `rgba(0,0,0,0.85)`
-- Filtres : catégorie / accès / prix / dates (empilés sur mobile)
-- Panneau filtres : `maxHeight: calc(100dvh - 130px)` + scroll
-- Recherche : limitée à `480px` sur desktop, pleine largeur mobile
-- Marqueurs carte : `#C8431A` (approuvé) / `#E87C2A` (à compléter)
-- Vue liste : fond `#1A1410`, message "Aucun événement" si vide
+- Header `#1A1410` fond solide, flex mobile-first
+- **Mobile :** `[☰ Menu]` `[lotbo]` `[+ Ajouter]` + tab bar bas
+- **Desktop :** `[À propos]` `[Langue]` `[Connexion/Profil]` `[+ Ajouter]`
+- Drawer : langue + connexion + notifications + profil + admin + déconnexion
+- Tab bar mobile : switcher Carte/Liste centré
+- Popup carte : image + infos + `[Voir →]` + `[🧭 S'y rendre]`
+- Filtres : catégorie / accès / prix / dates
+- Vue liste : fond `#1A1410`, overflow corrigé
 
-### `middleware.ts`
-- Protège `/admin` côté serveur
-- Redirige vers `/login` si non connecté
-- Redirige vers `/` si connecté mais pas admin
+### `app/evenement/[id]/` — Page détail événement
+- `page.tsx` — server component + `generateMetadata` og complet
+- `EvenementClient.tsx` — client component
+  - ❤️ Like anonyme localStorage
+  - Barre actions : `[❤️ J'aime]` `[⚠️ Signaler]` `[📱 WA]` `[📘 FB]` `[𝕏 X]`
+  - Signalement : modal bottom sheet
+  - `[🧭 S'y rendre]` → Google Maps avec coordonnées
+  - Événements similaires
+- `opengraph-image.tsx` — og:image 1200x630 dynamique
+  - Image fond si disponible + overlay gradient
+  - Logo + badge catégorie + titre + lieu + date + CTA
+
+### `app/apropos/page.tsx`
+- Histoire, mission, valeurs, fondateur
+- Handgod Abraham · Fondateur · Petit-Goâve, Haïti
+- Accessible depuis drawer mobile + nav desktop
+
+### `app/inscription/page.tsx`
+- Email + ville + catégories préférées
+- Insertion dans table `abonnements`
+- Accessible depuis drawer (connecté et non connecté)
 
 ### `app/admin/page.tsx`
-- Double vérification rôle (middleware + client)
-- Voit TOUS les événements (policy admin_acces_total)
+- Double vérification rôle
 - Actions : Approuver / Rejeter / Supprimer
+- Approuver → déclenche `notify-abonnes` automatiquement
 - Signalements visibles
-- Bouton déconnexion
 
-### `app/login/page.tsx`
-- Redirect post-login : admin → `/admin`, autres → `/ajouter`
-- Palette officielle
+### Routes API
+| Route | Déclencheur | Action |
+|---|---|---|
+| `notify-admin` | Soumission événement | Email à `sambayo23@gmail.com` |
+| `notify-abonnes` | Approbation événement | Email aux abonnés ville+catégorie |
+| `newsletter` | Manuel / CRON | Email hebdomadaire liste Brevo |
+| `scrape-eventbrite` | Manuel | Scrape Wikimedia + géocode |
 
-### `app/ajouter/page.tsx`
-- Ouvert à tous (anonymes + connectés)
-- `statut: 'en_attente'` obligatoire à l'insertion
-- `user_id: null` si anonyme
-- Géocodage Mapbox automatique
-- Écran de confirmation post-soumission
-- Taxonomie 2 niveaux (type + thèmes)
-- Notification email admin après soumission réussie
-
-### `app/api/notify-admin/route.ts`
-- Déclenché après chaque soumission d'événement
-- Envoie email à `sambayo23@gmail.com`
-- Contient : titre, lieu, date, catégorie + lien vers `/admin`
-- Sender : `hello@lotbo.app`
-- Fire and forget — non bloquant
-
-### `lotbo-landing/api/subscribe.js`
-- Route API Vercel serverless
-- Reçoit email depuis formulaire landing
-- Appelle Brevo API avec clé côté serveur
-- List ID : 3
-- CORS configuré pour `lotbo.app`
-
-### `lotbo-landing/index.html`
-- Formulaire inscription hero + CTA final — inline, sans iframe
-- Bouton "Voir les événements" → `https://app.lotbo.app`
-- Bouton "Rejoindre la liste" → scroll vers formulaire hero
-- Palette officielle LOTBO
-- Footer : 2026 · Né en Haïti 🇭🇹
+### `lotbo-landing/`
+- Formulaire inscription inline → `/api/subscribe` → Brevo liste 3
+- Bouton "Voir les événements" → `app.lotbo.app`
+- Palette officielle + footer 2026
 
 ---
 
@@ -294,9 +310,9 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Client + Serveur | URL Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Serveur | Clé publique Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Serveur uniquement | Admin Supabase (scraper) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Serveur uniquement | Admin + notify-abonnes |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | Client + Serveur | Mapbox geocoding + carte |
-| `BREVO_API_KEY` | Serveur uniquement | Newsletter + notify-admin |
+| `BREVO_API_KEY` | Serveur uniquement | Toutes les routes email |
 
 ### `lotbo.app` (Vercel — projet lotbo-landing)
 | Variable | Côté | Usage |
@@ -315,7 +331,7 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 1. **Mobile-first obligatoire** — tester 375px en premier
 2. **Jamais `position: absolute` dans le header**
 3. **Jamais exposer `SUPABASE_SERVICE_ROLE_KEY` côté client**
-4. **Jamais bypasser RLS Supabase**
+4. **Jamais bypasser RLS Supabase** sauf dans les routes serveur avec `SERVICE_ROLE_KEY`
 5. **TypeScript strict** — jamais de `any`
 6. **Toujours mettre à jour les 5 fichiers de traduction simultanément**
 7. **Toujours livrer des fichiers complets**, jamais des extraits
@@ -324,21 +340,22 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 10. **Toute nouvelle colonne DB** doit vérifier si elle existe déjà
 11. **Jamais exposer une clé API** dans le code HTML ou dans une conversation
 12. **`lotbo.app` est le domaine primary** — pas `www.lotbo.app`
+13. **`params` est une Promise** dans Next.js 16 — toujours `await params`
 
 ---
 
-## 13. PROBLÈMES CONNUS & BACKLOG
+## 13. BACKLOG
 
 ### 🟡 Important
-- Page `/evenement/[id]` — vérifier og:image dynamique pour partage social
-- PWA `manifest.json` — `theme_color` encore `#1D9E75` dans `public/manifest.json`
+- Supprimer les `console.log` de debug dans `notify-abonnes/route.ts`
+- Page désabonnement `/desinscription` pour les abonnés notifications
 
 ### 🟢 Backlog
 - Option B soumission (compte requis) — activer quand spam devient problème
 - Workflow validation événements Wikimedia
-- Notifications push PWA — nouvel événement près de toi
-- Page `/apropos`
-- SEO — og:image dynamique pages événements
+- Commentaires sur les événements
+- Notifications push PWA
+- SEO — sitemap dynamique
 
 ---
 
@@ -358,8 +375,12 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 | 9 mai 2026 | `lotbo.app` comme domaine primary | Redirection www cassait l'API subscribe |
 | 9 mai 2026 | Route `/api/subscribe` serverless | Clé Brevo ne peut pas être dans le HTML |
 | 9 mai 2026 | Colonne `heure_debut` ajoutée | Manquait dans le schéma initial |
-| 9 mai 2026 | Policy `admin_acces_total` — WITH CHECK élargi | Admin ne pouvait pas soumettre d'événement |
-| 9 mai 2026 | Policy `lecture_proprietaire_ses_evenements` | Profil ne voyait pas ses événements en_attente |
+| 9 mai 2026 | Policy `admin_acces_total` WITH CHECK élargi | Admin ne pouvait pas soumettre |
+| 9 mai 2026 | Policy `lecture_proprietaire_ses_evenements` | Profil ne voyait pas ses événements |
+| 9 mai 2026 | `params` await Promise Next.js 16 | opengraph-image params.id undefined |
+| 9 mai 2026 | `notify-abonnes` utilise SERVICE_ROLE_KEY | RLS bloquait lecture abonnements |
+| 9 mai 2026 | Like anonyme localStorage | Zéro friction, pas de compte requis |
+| 9 mai 2026 | Navigation Google Maps | Lien coordonnées depuis popup + page event |
 
 ---
 
@@ -369,17 +390,21 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 # Développement local
 cd ~/lotbo && npm run dev
 
-# Build production
-npm run build
+# Tuer un process bloquant
+kill PID && npm run dev
 
-# Chercher une couleur dans le code
-grep -r "1D9E75" --include="*.tsx" --include="*.ts" --include="*.css" .
+# Nettoyer le cache Turbopack
+rm -rf .next && npm run dev
+
+# Tester notify-abonnes en local
+curl -X POST http://localhost:3000/api/notify-abonnes \
+  -H "Content-Type: application/json" \
+  -d '{"titre":"Test","lieu":"Petit-Goâve","date":"2026-05-28","categorie":"Culture","id":"UUID"}'
 
 # Vérifier les policies RLS
-# (dans Supabase SQL Editor)
 SELECT tablename, policyname, cmd, roles
 FROM pg_policies
-WHERE tablename IN ('evenements', 'evenement_themes', 'signalements')
+WHERE tablename IN ('evenements','evenement_themes','signalements','abonnements')
 ORDER BY tablename, cmd;
 
 # Déployer app
