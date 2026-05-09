@@ -11,7 +11,8 @@ export default function Apropos() {
       {/* Header */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '20px 24px', borderBottom: '1px solid #2a2a2a'
+        padding: '20px 24px', borderBottom: '1px solid #2a2a2a',
+        background: '#1A1410'
       }}>
         <button
           onClick={() => router.push('/')}
@@ -45,7 +46,10 @@ export default function Apropos() {
             <span style={{ color: '#C8431A' }}>pour le monde entier.</span>
           </h1>
           <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8, maxWidth: 560 }}>
-            LOTBO est né d'une frustration simple : pourquoi est-il si difficile de savoir ce qui se passe autour de soi ? Concerts, marchés, conférences, célébrations culturelles — ces événements existent, mais restent invisibles faute d'un endroit commun pour les découvrir.
+            Pourquoi est-ce si compliqué de savoir ce qui se passe autour de soi quand on arrive quelque part ? Tu débarques dans une ville, tu cherches où aller, quoi faire, comment te défouler et tu te retrouves à scroller sans fin, à demander à des inconnus, à rater les meilleurs moments faute d'information. Les événements existent. La vie locale existe. Mais elle reste invisible.
+          </p>
+          <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8, maxWidth: 560, marginTop: 16 }}>
+            LOTBO est né de cette frustration. Une plateforme unique où tout ce qui se passe près de toi est visible, accessible, en un seul endroit.
           </p>
         </div>
 
@@ -64,10 +68,10 @@ export default function Apropos() {
             marginBottom: 16
           }}>Tous les événements, un seul endroit.</h2>
           <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8, marginBottom: 16 }}>
-            LOTBO connecte les organisateurs d'événements avec leur communauté locale — qu'ils soient touristes, voyageurs ou résidents. Notre carte interactive permet à chacun de découvrir ce qui se passe autour de lui, en temps réel, partout dans le monde.
+            LOTBO connecte les organisateurs d'événements avec leur communauté locale, qu'ils soient touristes, voyageurs ou résidents. Notre carte interactive permet à chacun de découvrir ce qui se passe autour de lui, en temps réel, partout dans le monde.
           </p>
           <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8 }}>
-            La plateforme est ouverte — n'importe qui peut soumettre un événement en 2 minutes. Nous croyons que la culture locale mérite d'être visible, et que les communautés savent mieux que quiconque ce qui se passe chez elles.
+            La plateforme est ouverte. N'importe qui peut soumettre un événement en 2 minutes. Nous croyons que la culture locale mérite d'être visible, et que les communautés savent mieux que quiconque ce qui se passe chez elles.
           </p>
         </div>
 
@@ -85,7 +89,7 @@ export default function Apropos() {
               { icon: '🌍', titre: 'Local d\'abord', texte: 'Chaque événement a une histoire ancrée dans un lieu. Nous mettons en valeur ce qui se passe près de toi, pas ce qui est populaire en général.' },
               { icon: '🔓', titre: 'Ouvert à tous', texte: 'Organiser ou découvrir un événement ne devrait pas nécessiter de compte, de frais ou de permission. LOTBO est gratuit et ouvert.' },
               { icon: '🤝', titre: 'Confiance communautaire', texte: 'Les événements sont soumis par la communauté et vérifiés par notre équipe. Chacun peut signaler une information incorrecte.' },
-              { icon: '🇭🇹', titre: 'Fierté haïtienne', texte: 'Né à Port-au-Prince le 5 mai 2026. L\'Haïti nous a appris que la culture et la vie communautaire sont les vraies richesses d\'un peuple.' },
+              { icon: '🇭🇹', titre: 'Fierté haïtienne', texte: 'Né à Petit-Goâve le 5 mai 2026. L\'Haïti nous a appris que la culture et la vie communautaire sont les vraies richesses d\'un peuple.' },
             ].map((v, i) => (
               <div key={i} style={{
                 display: 'flex', gap: 16,
@@ -133,10 +137,10 @@ export default function Apropos() {
                 Handgod Abraham
               </p>
               <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 12, fontWeight: 'bold' }}>
-                Fondateur & CEO · Port-au-Prince, Haïti
+                Fondateur · Petit-Goâve, Haïti
               </p>
               <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>
-                Poète, entrepreneur et citoyen du monde. Handgod a fondé LOTBO avec la conviction que les événements culturels locaux méritent une vitrine mondiale. Il préside également le MOLICAJ — Mouvement Littéraire Culturel et Artistique des Jeunes — et organise le Marathon du Livre chaque année en Haïti.
+                Poète, entrepreneur et citoyen du monde. Handgod a fondé LOTBO avec la conviction que les événements culturels locaux méritent une vitrine mondiale. Directeur de Stratégie Digital chez Bup Mark, une agence de marketing digital international, et Consultant et Chef de Projet Digital chez Mon Succès Marketing. Il préside des événements culturels comme le Marathon du Livre chaque année en Haïti.
               </p>
             </div>
           </div>

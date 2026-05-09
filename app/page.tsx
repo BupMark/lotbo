@@ -271,10 +271,12 @@ export default function Home() {
       {/* ══════════════════════════════════════
           HEADER — mobile-first 375px
       ══════════════════════════════════════ */}
-      <div style={{
+     <div style={{
         position: 'relative', zIndex: 20,
         display: 'flex', flexDirection: 'column',
         gap: 8, padding: '10px 12px', flexShrink: 0,
+        background: '#1A1410',
+        borderBottom: '1px solid #2a2a2a',
       }}>
 
         {/* Ligne 1 */}
@@ -327,6 +329,12 @@ export default function Home() {
           {/* Actions droite */}
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
 
+            {/* À propos — desktop uniquement */}
+            <a href="/apropos" className="lotbo-mode-header" style={{
+              color: '#8C5A40', fontSize: 12,
+              textDecoration: 'none', whiteSpace: 'nowrap'
+            }}>À propos</a>
+
             {/* Langue — desktop uniquement */}
             <div className="lotbo-langue-desktop">
               <select value={langue} onChange={e => setLangue(e.target.value as Langue)}
@@ -343,6 +351,7 @@ export default function Home() {
 
             {/* Desktop : Connexion / Profil / Admin */}
             <div className="lotbo-mode-header" style={{ gap: 6 }}>
+
               {user ? (
                 <>
                   {isAdmin && (
@@ -359,14 +368,16 @@ export default function Home() {
                 </>
               ) : (
                 <a href="/login" style={{
-                  background: 'rgba(255,255,255,0.08)', color: 'white',
+                  background: 'rgba(255,255,255,0.12)',
+                  color: '#F7F2E8',
+                  border: '1px solid rgba(255,255,255,0.2)',
                   padding: '6px 12px', borderRadius: 999,
                   fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
                 }}>Connexion</a>
               )}
             </div>
 
-            {/* + Ajouter — toujours visible */}
+{/* + Ajouter — toujours visible */}
             <a href="/ajouter" style={{
               background: '#C8431A', color: 'white', padding: '6px 12px',
               borderRadius: 999, fontSize: 12, fontWeight: 'bold',
