@@ -6,20 +6,22 @@ export async function POST(request: Request) {
     const { titre, lieu, date, categorie, id } = await request.json()
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Récupère les abonnés de la même ville ou sans filtre catégorie
     const { data: abonnes } = await supabase
       .from('abonnements')
       .select('email, ville, categories')
+
+    console.log('DATA ABONNES:', JSON.stringify(abonnes))
+    console.log('LIEU:', lieu)
+    console.log('CATEGORIE:', categorie)
 
     if (!abonnes || abonnes.length === 0) {
       return NextResponse.json({ success: true, envoyes: 0 })
     }
 
-    // Filtre les abonnés pertinents
     const normaliser = (s: string) => s.toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -27,9 +29,8 @@ export async function POST(request: Request) {
 
     const villeEvent = normaliser(lieu)
     console.log('Ville event normalisée:', villeEvent)
-    console.log('Abonnés total:', abonnes.length)
 
-    const abonnesFiltres = abonnes.filter(ab => {
+    const abonnesFiltres = abonnes.filter((ab: any) => {
       const villeAb = normaliser(ab.ville)
       const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
       const catMatch = ab.categories.length === 0 || ab.categories.includes(categorie)
@@ -43,7 +44,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, envoyes: 0 })
     }
 
-    // Envoie un email à chaque abonné
     let envoyes = 0
     for (const ab of abonnesFiltres) {
       const contenu = `
