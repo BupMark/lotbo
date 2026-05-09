@@ -1,24 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Coordonnées des stades haïtiens connus
-const STADES: Record<string, { longitude: number, latitude: number, ville: string }> = {
-  'Parc Sainte-Thérèse': { longitude: -72.2845, latitude: 18.5170, ville: 'Pétion-Ville' },
-  'Land des Gabions': { longitude: -73.7485, latitude: 18.1947, ville: 'Les Cayes' },
-  'Parc Saint-Victor': { longitude: -72.3388, latitude: 19.7575, ville: 'Cap-Haïtien' },
-  'Parc Levelt': { longitude: -72.7007, latitude: 19.1069, ville: 'Saint-Marc' },
-  'Stade Sylvio Cator': { longitude: -72.3388, latitude: 18.5444, ville: 'Port-au-Prince' },
-  'Stade de Carrefour': { longitude: -72.4057, latitude: 18.5307, ville: 'Carrefour' },
+const STADES: Record<string, { longitude: number, latitude: number }> = {
+  'Land des Gabions': { longitude: -73.7485, latitude: 18.1947 },
+  'Parc Sainte-Thérèse': { longitude: -72.2845, latitude: 18.5170 },
+  'Parc Saint-Victor': { longitude: -72.3388, latitude: 19.7575 },
+  'Parc Levelt': { longitude: -72.7007, latitude: 19.1069 },
+  'Stade Sylvio Cator': { longitude: -72.3388, latitude: 18.5444 },
+  'Stade de Carrefour': { longitude: -72.4057, latitude: 18.5307 },
 }
 
-function trouverCoords(stade: string): { longitude: number, latitude: number, ville: string } {
+function trouverCoords(lieu: string): { longitude: number, latitude: number } {
   for (const [nom, coords] of Object.entries(STADES)) {
-    if (stade.toLowerCase().includes(nom.toLowerCase())) {
+    if (lieu.toLowerCase().includes(nom.toLowerCase())) {
       return coords
     }
   }
-  // Défaut : Port-au-Prince
-  return { longitude: -72.3388, latitude: 18.5444, ville: 'Haïti' }
+  return { longitude: -72.3388, latitude: 18.5444 }
 }
 
 export async function GET() {
@@ -33,7 +31,6 @@ export async function GET() {
   const errors = []
 
   try {
-    // Scrape la page des matchs
     const res = await fetch('https://www.liguehaitienne.com/fr/matches', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Lotbo/1.0; https://lotbo.app)',
@@ -43,18 +40,16 @@ export async function GET() {
 
     const html = await res.text()
 
-    // Extraire les liens de matchs individuels
     const matchLinks = [...html.matchAll(/href="(\/fr\/matches\/[^"]+)"/g)]
       .map(m => m[1])
-      .filter((v, i, a) => a.indexOf(v) === i) // dédupliqué
+      .filter((v, i, a) => a.indexOf(v) === i)
       .filter(l => l !== '/fr/matches')
-      .slice(0, 20) // max 20 matchs par passe
+      .slice(0, 20)
 
     for (const link of matchLinks) {
       try {
         const source_id = link.replace('/fr/matches/', '')
 
-        // Vérifier si déjà importé
         const { data: existing } = await supabase
           .from('evenements')
           .select('id')
@@ -64,7 +59,6 @@ export async function GET() {
 
         if (existing) { skipped++; continue }
 
-        // Scrape la page du match individuel
         const matchRes = await fetch(`https://www.liguehaitienne.com${link}`, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; Lotbo/1.0; https://lotbo.app)',
@@ -72,7 +66,7 @@ export async function GET() {
         })
         const matchHtml = await matchRes.text()
 
-        // Extraire les équipes
+        // Extraire équipes + date depuis source_id
         const equipeMatch = source_id.match(/^(.+)-v-(.+)-(\d{4}-\d{2}-\d{2})$/)
         if (!equipeMatch) { skipped++; continue }
 
@@ -80,24 +74,25 @@ export async function GET() {
         const equipeB = equipeMatch[2].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
         const dateStr = equipeMatch[3]
 
-        // Extraire le stade depuis le HTML
-        const stadeMatch = matchHtml.match(/Land des Gabions|Parc Sainte-Thérèse|Parc Saint-Victor|Parc Levelt|Stade Sylvio Cator|Stade de Carrefour/i)
-        const stadeNom = stadeMatch ? stadeMatch[0] : 'Haïti'
-        const coords = trouverCoords(stadeNom)
+        // Extraire le lieu complet — pattern "Land des Gabions, Les Cayes"
+        const lieuMatch = matchHtml.match(/(?:Land des Gabions|Parc Sainte-Thérèse|Parc Saint-Victor|Parc Levelt|Stade Sylvio Cator|Stade de Carrefour)[^<"]{0,50}/)
+        const lieuComplet = lieuMatch ? lieuMatch[0].trim().replace(/\\u[\dA-F]{4}/gi, '') : 'Port-au-Prince, Haïti'
 
-        // Extraire le score si disponible
-        const scoreMatch = matchHtml.match(/(\d+)\s*-\s*(\d+)/)
-        const score = scoreMatch ? `${scoreMatch[1]} - ${scoreMatch[2]}` : 'À venir'
+        const coords = trouverCoords(lieuComplet)
+
+        // Extraire le score
+        const scoreMatch = matchHtml.match(/(\d+)\s*[-–]\s*(\d+)/)
+        const score = scoreMatch ? `${scoreMatch[1]} - ${scoreMatch[2]}` : ''
 
         // Extraire la phase
-        const phaseMatch = matchHtml.match(/Championnat National[^<]*/i)
+        const phaseMatch = matchHtml.match(/Championnat National[^<"]{0,30}/)
         const phase = phaseMatch ? phaseMatch[0].trim() : 'Championnat National'
 
         const titre = `🇭🇹 ${equipeA} vs ${equipeB}`
-        const lieu = stadeNom !== 'Haïti'
-          ? `${stadeNom}, ${coords.ville}`
-          : `${coords.ville}, Haïti`
-        const description = `${phase} · ${equipeA} vs ${equipeB} · Score: ${score}`
+        const lieu = lieuComplet
+        const description = score
+          ? `${phase} · ${equipeA} ${score} ${equipeB}`
+          : `${phase} · ${equipeA} vs ${equipeB}`
 
         const { error } = await supabase.from('evenements').insert([{
           titre,
@@ -126,7 +121,6 @@ export async function GET() {
           imported++
         }
 
-        // Pause pour ne pas surcharger le serveur
         await new Promise(r => setTimeout(r, 500))
 
       } catch (err) {
