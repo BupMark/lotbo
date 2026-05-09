@@ -196,18 +196,30 @@ export default function Home() {
             {/* Navigation */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
 
-              {!user ? (
-                <a href="/login"
-                  onClick={() => setDrawerOuvert(false)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(200,67,26,0.12)',
-                    color: '#C8431A', textDecoration: 'none',
-                    fontSize: 14, fontWeight: 'bold'
-                  }}>
-                  🔑 Se connecter
-                </a>
+            {!user ? (
+                <>
+                  <a href="/login"
+                    onClick={() => setDrawerOuvert(false)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(200,67,26,0.12)',
+                      color: '#C8431A', textDecoration: 'none',
+                      fontSize: 14, fontWeight: 'bold'
+                    }}>
+                    🔑 Se connecter
+                  </a>
+                  <a href="/inscription"
+                    onClick={() => setDrawerOuvert(false)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                    }}>
+                    🔔 Recevoir les événements
+                  </a>
+                </>
               ) : (
                 <>
                   <a href="/profil"
@@ -219,6 +231,16 @@ export default function Home() {
                       color: '#F7F2E8', textDecoration: 'none', fontSize: 14
                     }}>
                     👤 Mon profil
+                  </a>
+                  <a href="/inscription"
+                    onClick={() => setDrawerOuvert(false)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                    }}>
+                    🔔 Recevoir les événements
                   </a>
                   {isAdmin && (
                     <a href="/admin"

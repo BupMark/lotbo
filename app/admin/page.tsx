@@ -49,11 +49,27 @@ export default function Admin() {
     setEvenements(evenements.filter(ev => ev.id !== id))
   }
 
+
   const approuver = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'approuve' }).eq('id', id)
     setEvenements(evenements.map(ev => ev.id === id ? { ...ev, statut: 'approuve' } : ev))
-  }
 
+    // Notifier les abonnés
+    const ev = evenements.find(e => e.id === id)
+    if (ev) {
+      fetch('/api/notify-abonnes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: ev.id,
+          titre: ev.titre,
+          lieu: ev.lieu,
+          date: ev.date,
+          categorie: ev.categorie
+        })
+      }).catch(() => {})
+    }
+  }
   const rejeter = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'rejete' }).eq('id', id)
     setEvenements(evenements.map(ev => ev.id === id ? { ...ev, statut: 'rejete' } : ev))
