@@ -3,47 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
-import type { Metadata } from 'next'
-import { createClient } from '@supabase/supabase-js'
-
-export async function generateMetadata(
-  { params }: { params: { id: string } }
-): Promise<Metadata> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  const { data: ev } = await supabase
-    .from('evenements')
-    .select('titre, lieu, date, description, image_url')
-    .eq('id', params.id)
-    .eq('statut', 'approuve')
-    .single()
-
-  const titre = ev?.titre || 'Événement sur Lotbo'
-  const description = ev?.description
-    ? ev.description.slice(0, 160)
-    : `${ev?.lieu || ''} · ${ev?.date || ''} · Découvre cet événement sur Lotbo`
-  const url = `https://app.lotbo.app/evenement/${params.id}`
-
-  return {
-    title: `${titre} · Lotbo`,
-    description,
-    openGraph: {
-      title: titre,
-      description,
-      url,
-      siteName: 'Lotbo',
-      type: 'article',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: titre,
-      description,
-    },
-  }
-}
 
 export default function EvenementPage() {
   const { id } = useParams()
@@ -51,15 +10,18 @@ export default function EvenementPage() {
   const [ev, setEv] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [similaires, setSimilaires] = useState<any[]>([])
+  const [signalementModal, setSignalementModal] = useState(false)
   const [raisonSignalement, setRaisonSignalement] = useState('')
   const [signalementEnvoye, setSignalementEnvoye] = useState(false)
+  const [liked, setLiked] = useState(false)
+  const [nbLikes, setNbLikes] = useState(0)
 
   useEffect(() => {
     supabase
       .from('evenements')
       .select('*')
       .eq('id', id)
-      .eq('statut', 'approuve')   // ← RLS : ne jamais afficher un événement non approuvé
+      .eq('statut', 'approuve')
       .single()
       .then(async ({ data }) => {
         setEv(data)
@@ -77,13 +39,40 @@ export default function EvenementPage() {
       })
   }, [id])
 
+  // Like — localStorage
+  useEffect(() => {
+    if (!id) return
+    const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
+    const count = JSON.parse(localStorage.getItem('lotbo_likes_count') || '{}')
+    setLiked(!!likes[id as string])
+    setNbLikes(count[id as string] || 0)
+  }, [id])
+
+  const handleLike = () => {
+    if (!id) return
+    const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
+    const count = JSON.parse(localStorage.getItem('lotbo_likes_count') || '{}')
+    if (liked) {
+      delete likes[id as string]
+      count[id as string] = Math.max(0, (count[id as string] || 1) - 1)
+    } else {
+      likes[id as string] = true
+      count[id as string] = (count[id as string] || 0) + 1
+    }
+    localStorage.setItem('lotbo_likes', JSON.stringify(likes))
+    localStorage.setItem('lotbo_likes_count', JSON.stringify(count))
+    setLiked(!liked)
+    setNbLikes(count[id as string])
+  }
+
   const handleSignalement = async () => {
-    if (!raisonSignalement) { alert('Choisis une raison'); return }
+    if (!raisonSignalement) return
     await supabase.from('signalements').insert([{
       evenement_id: ev.id,
       raison: raisonSignalement
     }])
     setSignalementEnvoye(true)
+    setSignalementModal(false)
   }
 
   if (loading) return (
@@ -119,6 +108,64 @@ export default function EvenementPage() {
   return (
     <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8' }}>
 
+      {/* Modal signalement */}
+      {signalementModal && (
+        <>
+          <div
+            onClick={() => setSignalementModal(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 50,
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(4px)'
+            }}
+          />
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51,
+            background: '#1A1410', borderTop: '1px solid #2a2a2a',
+            borderRadius: '20px 20px 0 0',
+            padding: '24px 20px 40px'
+          }}>
+            <h3 style={{ color: '#F7F2E8', fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>
+              Signaler cet événement
+            </h3>
+            {signalementEnvoye ? (
+              <p style={{ color: '#D4A820', fontSize: 14 }}>✓ Signalement envoyé, merci !</p>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                  {['Fausse information', 'Contenu inapproprié', 'Événement annulé', 'Spam', 'Autre'].map(raison => (
+                    <button
+                      key={raison}
+                      onClick={() => setRaisonSignalement(raison)}
+                      style={{
+                        padding: '12px 16px', borderRadius: 10, fontSize: 14,
+                        textAlign: 'left', cursor: 'pointer',
+                        background: raisonSignalement === raison ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: raisonSignalement === raison ? '1px solid #C8431A' : '1px solid #2a2a2a',
+                        color: raisonSignalement === raison ? '#F7F2E8' : '#8C5A40',
+                      }}>
+                      {raison}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={handleSignalement}
+                  disabled={!raisonSignalement}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: raisonSignalement ? '#C8431A' : 'rgba(255,255,255,0.04)',
+                    color: raisonSignalement ? '#F7F2E8' : '#555',
+                    border: 'none', borderRadius: 10,
+                    fontSize: 14, fontWeight: 'bold', cursor: raisonSignalement ? 'pointer' : 'not-allowed'
+                  }}>
+                  Envoyer le signalement
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
       {/* Image hero */}
       {ev.image_url && (
         <div style={{ width: '100%', height: 280, overflow: 'hidden' }}>
@@ -140,13 +187,29 @@ export default function EvenementPage() {
           ← Retour à la carte
         </button>
 
-        {/* Titre */}
-        <h1 style={{
-          fontSize: 'clamp(24px, 5vw, 36px)',
-          fontWeight: 'bold', marginBottom: 16,
-          fontFamily: 'serif', fontStyle: 'italic',
-          color: '#F7F2E8', lineHeight: 1.2
-        }}>{ev.titre}</h1>
+        {/* Titre + Like */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, gap: 12 }}>
+          <h1 style={{
+            fontSize: 'clamp(24px, 5vw, 36px)',
+            fontWeight: 'bold',
+            fontFamily: 'serif', fontStyle: 'italic',
+            color: '#F7F2E8', lineHeight: 1.2, flex: 1
+          }}>{ev.titre}</h1>
+          <button
+            onClick={handleLike}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: 2, background: 'none', border: 'none',
+              cursor: 'pointer', flexShrink: 0, padding: '4px 8px'
+            }}>
+            <span style={{ fontSize: 24, transition: 'transform 0.15s' }}>
+              {liked ? '❤️' : '🤍'}
+            </span>
+            {nbLikes > 0 && (
+              <span style={{ fontSize: 11, color: '#8C5A40' }}>{nbLikes}</span>
+            )}
+          </button>
+        </div>
 
         {/* Badges */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
@@ -188,10 +251,9 @@ export default function EvenementPage() {
             border: '1px solid #2a2a2a',
             borderRadius: 16, padding: 24, marginBottom: 24
           }}>
-            <h2 style={{
-              fontSize: 16, fontWeight: 'bold', marginBottom: 12,
-              color: '#F7F2E8'
-            }}>À propos</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#F7F2E8' }}>
+              À propos
+            </h2>
             <p style={{ color: '#E8E0D0', lineHeight: 1.7, fontSize: 14 }}>
               {ev.description}
             </p>
@@ -211,8 +273,8 @@ export default function EvenementPage() {
           </a>
         )}
 
-        {/* Partage */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 32 }}>
+        {/* Partage + Signalement */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 32, alignItems: 'center' }}>
           <a href={urlWhatsapp} target="_blank" style={{
             flex: 1, textAlign: 'center',
             background: '#25D366', color: 'white',
@@ -229,63 +291,33 @@ export default function EvenementPage() {
           }}>
             📘 Facebook
           </a>
+          {/* Signalement — icône discret */}
+          <button
+            onClick={() => setSignalementModal(true)}
+            title="Signaler cet événement"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid #2a2a2a',
+              color: '#555', borderRadius: 12,
+              padding: '12px 14px', cursor: 'pointer',
+              fontSize: 13, display: 'flex',
+              flexDirection: 'column', alignItems: 'center', gap: 2,
+              flexShrink: 0
+            }}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            <span style={{ fontSize: 10 }}>Signaler</span>
+          </button>
         </div>
 
-        {/* Signalement */}
-        <div style={{
-          borderTop: '1px solid #2a2a2a',
-          paddingTop: 24, marginBottom: 48
-        }}>
-          <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 12 }}>
-            Un problème avec cet événement ?
-          </p>
-          {signalementEnvoye ? (
-            <p style={{ color: '#D4A820', fontSize: 13 }}>
-              ✓ Signalement envoyé, merci !
-            </p>
-          ) : (
-            <>
-              <select
-                value={raisonSignalement}
-                onChange={e => setRaisonSignalement(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid #333',
-                  borderRadius: 10, color: '#F7F2E8',
-                  padding: '10px 14px', fontSize: 13,
-                  marginBottom: 10, outline: 'none', cursor: 'pointer'
-                }}>
-                <option value="">Choisir une raison...</option>
-                <option value="Fausse information">Fausse information</option>
-                <option value="Contenu inapproprié">Contenu inapproprié</option>
-                <option value="Événement annulé">Événement annulé</option>
-                <option value="Spam">Spam</option>
-                <option value="Autre">Autre</option>
-              </select>
-              <button
-                onClick={handleSignalement}
-                style={{
-                  width: '100%',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid #333',
-                  color: '#8C5A40', fontWeight: 'bold',
-                  padding: '12px', borderRadius: 10,
-                  fontSize: 13, cursor: 'pointer'
-                }}>
-                Signaler cet événement
-              </button>
-            </>
-          )}
-        </div>
+        {/* Séparateur */}
+        <div style={{ height: 1, background: '#2a2a2a', marginBottom: 32 }} />
 
         {/* Événements similaires */}
         {similaires.length > 0 && (
           <div>
-            <h2 style={{
-              fontSize: 18, fontWeight: 'bold', marginBottom: 16,
-              color: '#F7F2E8'
-            }}>Événements similaires</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#F7F2E8' }}>
+              Événements similaires
+            </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {similaires.map(sim => (
                 <a href={'/evenement/' + sim.id} key={sim.id} style={{
