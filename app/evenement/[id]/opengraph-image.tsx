@@ -108,7 +108,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
                 border: '1px solid rgba(200,67,26,0.5)',
                 borderRadius: 999,
                 padding: '6px 18px',
-                width: 'fit-content',
+                alignSelf: 'flex-start',
               }}>
                 <span style={{ color: '#C8431A', fontSize: 16, fontWeight: 600 }}>
                   {categorie}
