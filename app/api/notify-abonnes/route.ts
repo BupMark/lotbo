@@ -21,18 +21,23 @@ export async function POST(request: Request) {
 
     // Filtre les abonnés pertinents
     const normaliser = (s: string) => s.toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
 
-  const villeEvent = normaliser(lieu)
-  const abonnesFiltres = abonnes.filter(ab => {
-    const villeAb = normaliser(ab.ville)
-    const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
-    const catMatch = ab.categories.length === 0 ||
-      ab.categories.includes(categorie)
-    return villeMatch && catMatch
-  })
+    const villeEvent = normaliser(lieu)
+    console.log('Ville event normalisée:', villeEvent)
+    console.log('Abonnés total:', abonnes.length)
+
+    const abonnesFiltres = abonnes.filter(ab => {
+      const villeAb = normaliser(ab.ville)
+      const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
+      const catMatch = ab.categories.length === 0 || ab.categories.includes(categorie)
+      console.log(`Abonné ${ab.email}: ville="${villeAb}" match=${villeMatch}, cat match=${catMatch}`)
+      return villeMatch && catMatch
+    })
+
+    console.log('Abonnés filtrés:', abonnesFiltres.length)
 
     if (abonnesFiltres.length === 0) {
       return NextResponse.json({ success: true, envoyes: 0 })
