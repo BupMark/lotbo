@@ -1,46 +1,31 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
-// Liste de villes et pays connus à détecter
 const KNOWN_LOCATIONS = [
-  // Haïti
   'Port-au-Prince', 'Haiti', 'Haïti', 'Pétion-Ville', 'Cap-Haïtien',
-  // Europe
   'Paris', 'France', 'London', 'Berlin', 'Germany', 'Brussels', 'Belgium',
   'Geneva', 'Switzerland', 'Amsterdam', 'Netherlands', 'Rome', 'Italy',
   'Madrid', 'Spain', 'Vienna', 'Austria', 'Stockholm', 'Sweden',
   'Oslo', 'Norway', 'Warsaw', 'Poland', 'Prague', 'Czech Republic',
   'Lisbon', 'Portugal', 'Athens', 'Greece', 'Budapest', 'Hungary',
-  // Amérique
   'New York', 'Washington', 'San Francisco', 'Los Angeles', 'Chicago',
   'USA', 'United States', 'Canada', 'Toronto', 'Montreal',
   'Mexico City', 'Mexico', 'Buenos Aires', 'Argentina',
   'São Paulo', 'Brasilia', 'Brazil', 'Bogota', 'Colombia',
-  // Afrique
   'Nairobi', 'Kenya', 'Lagos', 'Nigeria', 'Dakar', 'Senegal',
   'Johannesburg', 'Cape Town', 'South Africa', 'Cairo', 'Egypt',
   'Accra', 'Ghana', 'Abidjan', 'Côte d\'Ivoire', 'Kampala', 'Uganda',
   'Dar es Salaam', 'Tanzania', 'Addis Ababa', 'Ethiopia',
-  // Asie
   'Tokyo', 'Japan', 'Beijing', 'Shanghai', 'China', 'Delhi', 'Mumbai', 'India',
   'Singapore', 'Bangkok', 'Thailand', 'Jakarta', 'Indonesia',
   'Seoul', 'South Korea', 'Taipei', 'Taiwan',
-  // Moyen-Orient
   'Dubai', 'UAE', 'Istanbul', 'Turkey', 'Beirut', 'Lebanon',
   'Amman', 'Jordan', 'Tunis', 'Tunisia', 'Rabat', 'Morocco',
-  // Océanie
   'Sydney', 'Melbourne', 'Australia', 'Auckland', 'New Zealand',
 ]
 
-// Détecte le lieu dans le texte
-// Mots à ignorer — pas des lieux
 const IGNORE_WORDS = [
   'informel', 'memory', 'Wikimédia', 'Wikimedia', 'Wikipedia',
   'discussions', 'LATAM', 'région', 'region', 'their', 'home',
@@ -48,23 +33,19 @@ const IGNORE_WORDS = [
 ]
 
 function extractLocation(titre: string, description: string): string | null {
-  // Ignorer les pages de travail Wikimedia
   if (titre.includes('Campagnes/') || titre.includes('Campaigns/')) return null
   if (titre.includes('WikiForHumanRights')) return null
 
   const text = `${titre} ${description}`
 
-  // D'abord chercher dans la liste de lieux connus
   for (const location of KNOWN_LOCATIONS) {
     const regex = new RegExp(`\\b${location}\\b`, 'i')
     if (regex.test(text)) return location
   }
 
-  // Pattern "in [Ville]" — mais valider que c'est un vrai nom propre
   const inMatch = text.match(/\b(?:in|at|held in|located in|taking place in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i)
   if (inMatch) {
     const candidate = inMatch[1].trim()
-    // Vérifier que ce n'est pas un mot à ignorer
     const isIgnored = IGNORE_WORDS.some(w => candidate.toLowerCase().includes(w.toLowerCase()))
     if (!isIgnored && candidate.length > 3) return candidate
   }
@@ -72,7 +53,6 @@ function extractLocation(titre: string, description: string): string | null {
   return null
 }
 
-// Géocode via Mapbox
 async function geocode(address: string): Promise<{ longitude: number, latitude: number } | null> {
   try {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&limit=1`
@@ -89,8 +69,13 @@ async function geocode(address: string): Promise<{ longitude: number, latitude: 
 }
 
 export async function GET() {
+  // ── Instanciation DANS la fonction — jamais au niveau racine ──
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   try {
-    // Étape 1 — Récupère les événements Wikimedia
     const res = await fetch(
       'https://meta.wikimedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:Events&cmlimit=50&format=json',
       {
@@ -115,7 +100,6 @@ export async function GET() {
     const results = []
 
     for (const page of pages.slice(0, 15)) {
-      // Détail de chaque page
       const pageRes = await fetch(
         `https://meta.wikimedia.org/w/api.php?action=query&pageids=${page.pageid}&prop=extracts&exintro=true&explaintext=true&format=json`,
         {
@@ -131,12 +115,11 @@ export async function GET() {
       if (!pageInfo) { skipped++; continue }
 
       const titre = pageInfo.title?.replace('Event:', '').trim() || page.title
-      // Après : const titre = ...
-// Ajoute ce filtre :
-if (titre.includes('/') && titre.split('/').length > 2) { skipped++; continue }
+
+      if (titre.includes('/') && titre.split('/').length > 2) { skipped++; continue }
+
       const description = pageInfo.extract?.slice(0, 500) || ''
 
-      // Vérifier si déjà importé
       const { data: existing } = await supabase
         .from('evenements')
         .select('id')
@@ -145,7 +128,6 @@ if (titre.includes('/') && titre.split('/').length > 2) { skipped++; continue }
 
       if (existing) { skipped++; continue }
 
-      // Détecter le lieu
       const locationStr = extractLocation(titre, description)
       let coords = null
       let statut = 'à compléter'
@@ -200,7 +182,8 @@ if (titre.includes('/') && titre.split('/').length > 2) { skipped++; continue }
       events: results
     })
 
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

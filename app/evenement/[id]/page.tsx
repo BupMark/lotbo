@@ -9,140 +9,275 @@ export default function EvenementPage() {
   const router = useRouter()
   const [ev, setEv] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-const [similaires, setSimilaires] = useState<any[]>([])
+  const [similaires, setSimilaires] = useState<any[]>([])
+  const [raisonSignalement, setRaisonSignalement] = useState('')
+  const [signalementEnvoye, setSignalementEnvoye] = useState(false)
 
   useEffect(() => {
-    supabase.from('evenements').select('*').eq('id', id).single().then(async ({ data }) => {
-      setEv(data)
-      if (data) {
-        const { data: sims } = await supabase
-          .from('evenements')
-          .select('*')
-          .eq('categorie', data.categorie)
-          .eq('statut', 'approuve')
-          .neq('id', id)
-          .limit(3)
-        setSimilaires(sims || [])
-      }
-      setLoading(false)
-    })
+    supabase
+      .from('evenements')
+      .select('*')
+      .eq('id', id)
+      .eq('statut', 'approuve')   // ← RLS : ne jamais afficher un événement non approuvé
+      .single()
+      .then(async ({ data }) => {
+        setEv(data)
+        if (data) {
+          const { data: sims } = await supabase
+            .from('evenements')
+            .select('*')
+            .eq('categorie', data.categorie)
+            .eq('statut', 'approuve')
+            .neq('id', id)
+            .limit(3)
+          setSimilaires(sims || [])
+        }
+        setLoading(false)
+      })
   }, [id])
 
+  const handleSignalement = async () => {
+    if (!raisonSignalement) { alert('Choisis une raison'); return }
+    await supabase.from('signalements').insert([{
+      evenement_id: ev.id,
+      raison: raisonSignalement
+    }])
+    setSignalementEnvoye(true)
+  }
+
   if (loading) return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
-      <p className="text-gray-400">Chargement...</p>
+    <main style={{ minHeight: '100dvh', background: '#1A1410' }}
+      className="flex items-center justify-center">
+      <p style={{ color: '#8C5A40' }}>Chargement...</p>
     </main>
   )
 
   if (!ev) return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
-      <p className="text-gray-400">Evenement introuvable.</p>
+    <main style={{ minHeight: '100dvh', background: '#1A1410' }}
+      className="flex items-center justify-center">
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ color: '#8C5A40', marginBottom: 16 }}>Événement introuvable.</p>
+        <button
+          onClick={() => router.push('/')}
+          style={{
+            background: '#C8431A', color: '#F7F2E8',
+            padding: '10px 20px', borderRadius: 999,
+            border: 'none', cursor: 'pointer', fontSize: 14
+          }}>
+          Retour à la carte
+        </button>
+      </div>
     </main>
   )
 
   const urlEvenement = 'https://app.lotbo.app/evenement/' + ev.id
-  const texteWhatsapp = 'Decouvre cet evenement sur Lotbo : ' + ev.titre + ' - ' + urlEvenement
+  const texteWhatsapp = 'Découvre cet événement sur Lotbo : ' + ev.titre + ' — ' + urlEvenement
   const urlWhatsapp = 'https://wa.me/?text=' + encodeURIComponent(texteWhatsapp)
   const urlFacebook = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)
 
   return (
-    <main style={{minHeight: '100dvh'}} className="bg-black text-white p-8">
+    <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8' }}>
 
+      {/* Image hero */}
       {ev.image_url && (
-        <div className="w-full h-64 overflow-hidden">
-          <img src={ev.image_url} alt={ev.titre} className="w-full h-full object-cover" />
+        <div style={{ width: '100%', height: 280, overflow: 'hidden' }}>
+          <img src={ev.image_url} alt={ev.titre}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto p-8">
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px 64px' }}>
 
-        <button onClick={() => router.push('/')} className="text-gray-400 hover:text-white text-sm mb-6 flex items-center gap-2">
-          Retour a la carte
+        {/* Retour */}
+        <button
+          onClick={() => router.push('/')}
+          style={{
+            background: 'none', border: 'none', color: '#8C5A40',
+            fontSize: 13, cursor: 'pointer', marginBottom: 24,
+            display: 'flex', alignItems: 'center', gap: 6, padding: 0
+          }}>
+          ← Retour à la carte
         </button>
 
-        <h1 className="text-4xl font-bold mb-4">{ev.titre}</h1>
+        {/* Titre */}
+        <h1 style={{
+          fontSize: 'clamp(24px, 5vw, 36px)',
+          fontWeight: 'bold', marginBottom: 16,
+          fontFamily: 'serif', fontStyle: 'italic',
+          color: '#F7F2E8', lineHeight: 1.2
+        }}>{ev.titre}</h1>
 
-        <div className="flex gap-2 flex-wrap mb-6">
-          <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">{ev.categorie}</span>
-          <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">{ev.acces || 'public'}</span>
-          <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">{ev.prix || 'gratuit'}</span>
+        {/* Badges */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+          <span style={{
+            background: 'rgba(200,67,26,0.15)', color: '#C8431A',
+            padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold'
+          }}>{ev.categorie}</span>
+          <span style={{
+            background: 'rgba(255,255,255,0.06)', color: '#8C5A40',
+            padding: '4px 12px', borderRadius: 999, fontSize: 13
+          }}>{ev.acces || 'public'}</span>
+          <span style={{
+            background: 'rgba(255,255,255,0.06)', color: '#8C5A40',
+            padding: '4px 12px', borderRadius: 999, fontSize: 13
+          }}>{ev.prix || 'gratuit'}</span>
         </div>
 
-        <div className="flex flex-col gap-3 text-gray-300 mb-8">
-          <p>📍 <span className="text-white">{ev.lieu}</span></p>
-          <p>📅 <span className="text-white">{ev.date}</span></p>
-          {ev.heure_fin && <p>⏰ <span className="text-white">Fin a {ev.heure_fin}</span></p>}
-        </div>
-
-        {ev.description && (
-          <div className="bg-gray-900 rounded-xl p-6 mb-8">
-            <h2 className="text-lg font-bold mb-3">A propos</h2>
-            <p className="text-gray-300 leading-relaxed">{ev.description}</p>
-          </div>
-        )}
-
-        {ev.lien && (
-          <a href={ev.lien} target="_blank"
-            className="block w-full text-center bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl mb-4">
-            Plus de details
-          </a>
-        )}
-
-        <div className="flex gap-3 mt-4">
-          <a href={urlWhatsapp} target="_blank"
-            className="flex-1 text-center bg-green-700 hover:bg-green-600 text-white font-bold py-3 rounded-xl">
-            WhatsApp
-          </a>
-          <a href={urlFacebook} target="_blank"
-            className="flex-1 text-center bg-blue-700 hover:bg-blue-600 text-white font-bold py-3 rounded-xl">
-            Facebook
-          </a>
-        </div>
-
-        <div className="mt-6 border-t border-gray-800 pt-6">
-  <p className="text-gray-500 text-sm mb-3">Un probleme avec cet evenement ?</p>
-  <select id="raison" className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm mb-3">
-    <option value="">Choisir une raison...</option>
-    <option value="Fausse information">Fausse information</option>
-    <option value="Contenu inapproprie">Contenu inapproprie</option>
-    <option value="Evenement annule">Evenement annule</option>
-    <option value="Spam">Spam</option>
-    <option value="Autre">Autre</option>
-  </select>
-  <button onClick={async () => {
-    const raison = (document.getElementById('raison') as HTMLSelectElement).value
-    if (!raison) { alert('Choisis une raison'); return }
-    await supabase.from('signalements').insert([{ evenement_id: ev.id, raison }])
-    alert('Signalement envoye, merci !')
-  }} className="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 font-bold py-3 rounded-xl text-sm">
-    Signaler cet evenement
-  </button>
-</div>
-
-{similaires.length > 0 && (
-  <div className="mt-12">
-    <h2 className="text-xl font-bold mb-4">Evenements similaires</h2>
-    <div className="flex flex-col gap-4">
-      {similaires.map(sim => (
-        <a href={'/evenement/' + sim.id} key={sim.id}
-          className="flex gap-3 bg-gray-900 rounded-xl p-4 text-white no-underline">
-          {sim.image_url && (
-            <img src={sim.image_url} alt={sim.titre}
-              className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+        {/* Infos */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+          <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+            📍 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu}</span>
+          </p>
+          <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+            📅 <span style={{ color: '#F7F2E8' }}>{ev.date}</span>
+          </p>
+          {ev.heure_debut && (
+            <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+              🕐 <span style={{ color: '#F7F2E8' }}>
+                {ev.heure_debut}{ev.heure_fin ? ` → ${ev.heure_fin}` : ''}
+              </span>
+            </p>
           )}
-          <div>
-            <p className="font-bold">{sim.titre}</p>
-            <p className="text-gray-400 text-sm">📍 {sim.lieu}</p>
-            <p className="text-gray-400 text-sm">📅 {sim.date}</p>
-            <span className="bg-green-900 text-green-400 px-2 py-1 rounded text-xs mt-1 inline-block">
-              {sim.categorie}
-            </span>
+        </div>
+
+        {/* Description */}
+        {ev.description && (
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid #2a2a2a',
+            borderRadius: 16, padding: 24, marginBottom: 24
+          }}>
+            <h2 style={{
+              fontSize: 16, fontWeight: 'bold', marginBottom: 12,
+              color: '#F7F2E8'
+            }}>À propos</h2>
+            <p style={{ color: '#E8E0D0', lineHeight: 1.7, fontSize: 14 }}>
+              {ev.description}
+            </p>
           </div>
-        </a>
-      ))}
-    </div>
-  </div>
-)}
+        )}
+
+        {/* CTA principal */}
+        {ev.lien && (
+          <a href={ev.lien} target="_blank" style={{
+            display: 'block', width: '100%', textAlign: 'center',
+            background: '#C8431A', color: '#F7F2E8',
+            fontWeight: 'bold', padding: '14px',
+            borderRadius: 12, marginBottom: 12,
+            textDecoration: 'none', fontSize: 15
+          }}>
+            Plus de détails →
+          </a>
+        )}
+
+        {/* Partage */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 32 }}>
+          <a href={urlWhatsapp} target="_blank" style={{
+            flex: 1, textAlign: 'center',
+            background: '#25D366', color: 'white',
+            fontWeight: 'bold', padding: '12px',
+            borderRadius: 12, textDecoration: 'none', fontSize: 14
+          }}>
+            📱 WhatsApp
+          </a>
+          <a href={urlFacebook} target="_blank" style={{
+            flex: 1, textAlign: 'center',
+            background: '#1877F2', color: 'white',
+            fontWeight: 'bold', padding: '12px',
+            borderRadius: 12, textDecoration: 'none', fontSize: 14
+          }}>
+            📘 Facebook
+          </a>
+        </div>
+
+        {/* Signalement */}
+        <div style={{
+          borderTop: '1px solid #2a2a2a',
+          paddingTop: 24, marginBottom: 48
+        }}>
+          <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 12 }}>
+            Un problème avec cet événement ?
+          </p>
+          {signalementEnvoye ? (
+            <p style={{ color: '#D4A820', fontSize: 13 }}>
+              ✓ Signalement envoyé, merci !
+            </p>
+          ) : (
+            <>
+              <select
+                value={raisonSignalement}
+                onChange={e => setRaisonSignalement(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid #333',
+                  borderRadius: 10, color: '#F7F2E8',
+                  padding: '10px 14px', fontSize: 13,
+                  marginBottom: 10, outline: 'none', cursor: 'pointer'
+                }}>
+                <option value="">Choisir une raison...</option>
+                <option value="Fausse information">Fausse information</option>
+                <option value="Contenu inapproprié">Contenu inapproprié</option>
+                <option value="Événement annulé">Événement annulé</option>
+                <option value="Spam">Spam</option>
+                <option value="Autre">Autre</option>
+              </select>
+              <button
+                onClick={handleSignalement}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid #333',
+                  color: '#8C5A40', fontWeight: 'bold',
+                  padding: '12px', borderRadius: 10,
+                  fontSize: 13, cursor: 'pointer'
+                }}>
+                Signaler cet événement
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Événements similaires */}
+        {similaires.length > 0 && (
+          <div>
+            <h2 style={{
+              fontSize: 18, fontWeight: 'bold', marginBottom: 16,
+              color: '#F7F2E8'
+            }}>Événements similaires</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {similaires.map(sim => (
+                <a href={'/evenement/' + sim.id} key={sim.id} style={{
+                  display: 'flex', gap: 12,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: 12, padding: 12,
+                  textDecoration: 'none', color: '#F7F2E8'
+                }}>
+                  {sim.image_url && (
+                    <img src={sim.image_url} alt={sim.titre} style={{
+                      width: 64, height: 64, objectFit: 'cover',
+                      borderRadius: 8, flexShrink: 0
+                    }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontWeight: 'bold', fontSize: 14, marginBottom: 4,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                    }}>{sim.titre}</p>
+                    <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {sim.lieu}</p>
+                    <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {sim.date}</p>
+                    <span style={{
+                      background: 'rgba(200,67,26,0.15)', color: '#C8431A',
+                      padding: '2px 8px', borderRadius: 999, fontSize: 11
+                    }}>{sim.categorie}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </main>
   )
