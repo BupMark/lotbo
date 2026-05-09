@@ -3,14 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 import EvenementClient from './EvenementClient'
 
 export async function generateMetadata(
-    { params }: { params: Promise<{ id: string }> }
-  ): Promise<Metadata> {
-    const { id } = await params
-    ...
-    const { data: ev } = await supabase
-      .from('evenements')
-      .select('titre, lieu, date, description')
-      .eq('id', id)
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Metadata> {
+  const { id } = await params
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const { data: ev } = await supabase
+    .from('evenements')
+    .select('titre, lieu, date, description')
+    .eq('id', id)
     .eq('statut', 'approuve')
     .single()
 
@@ -18,7 +23,7 @@ export async function generateMetadata(
   const description = ev?.description
     ? ev.description.slice(0, 160)
     : `${ev?.lieu || ''} · ${ev?.date || ''} · Découvre cet événement sur Lotbo`
-  const url = `https://app.lotbo.app/evenement/${params.id}`
+  const url = `https://app.lotbo.app/evenement/${id}`
 
   return {
     title: `${titre} · Lotbo`,
@@ -39,5 +44,5 @@ export async function generateMetadata(
 }
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-    return <EvenementClient />
-  }
+  return <EvenementClient />
+}
