@@ -49,7 +49,7 @@ export default function Home() {
     if (!mapContainer.current) return
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
+      style: 'mapbox://styles/mapbox/streets-v12',
       center: [-72.3388, 18.5444],
       zoom: 8
     })
@@ -103,9 +103,9 @@ export default function Home() {
         (ev.description ? '<br/><br/>' + ev.description : '') +
         (ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#C8431A">🔗 Plus de détails</a>' : '') +
         '<div style="display:flex;gap:8px;margin-top:12px">' +
-'<a href="/evenement/' + ev.id + '" style="flex:1;display:block;background:#C8431A;color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">Voir →</a>' +
-'<a href="https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude + '" target="_blank" style="flex:1;display:block;background:rgba(255,255,255,0.08);color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">🧭 S\'y rendre</a>' +
-'</div>' +
+        '<a href="/evenement/' + ev.id + '" style="flex:1;display:block;background:#C8431A;color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">Voir →</a>' +
+        '<a href="https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude + '" target="_blank" style="flex:1;display:block;background:rgba(255,255,255,0.08);color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">🧭 S\'y rendre</a>' +
+        '</div>' +
         '</div></div>'
       )
       const markerColor = ev.statut === 'à compléter' ? '#E87C2A' : '#C8431A'
@@ -119,10 +119,22 @@ export default function Home() {
 
   const btnStyle = (actif: boolean) => ({
     padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold' as const,
-    border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' as const,
-    background: actif ? '#C8431A' : 'rgba(255,255,255,0.08)',
-    color: actif ? 'white' : '#aaa'
+    border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer', whiteSpace: 'nowrap' as const,
+    background: actif ? '#C8431A' : '#F7F2E8',
+    color: actif ? 'white' : '#8C5A40'
   })
+
+  const centrerSurPosition = () => {
+    if (!mapRef.current) return
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        mapRef.current!.flyTo({
+          center: [pos.coords.longitude, pos.coords.latitude],
+          zoom: 13
+        })
+      })
+    }
+  }
 
   return (
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -132,7 +144,6 @@ export default function Home() {
       ══════════════════════════════════════ */}
       {drawerOuvert && (
         <>
-          {/* Overlay */}
           <div
             onClick={() => setDrawerOuvert(false)}
             style={{
@@ -141,7 +152,6 @@ export default function Home() {
               backdropFilter: 'blur(4px)',
             }}
           />
-          {/* Drawer panel */}
           <div style={{
             position: 'fixed', top: 0, left: 0, bottom: 0,
             width: 280, zIndex: 51,
@@ -151,7 +161,6 @@ export default function Home() {
             padding: '24px 20px',
             gap: 0,
           }}>
-            {/* Logo + fermer */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
               <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
                 <span style={{ color: '#F7F2E8' }}>lot</span>
@@ -168,7 +177,6 @@ export default function Home() {
                 }}>✕</button>
             </div>
 
-            {/* Langue */}
             <div style={{ marginBottom: 24 }}>
               <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
                 Langue
@@ -190,100 +198,68 @@ export default function Home() {
               </select>
             </div>
 
-            {/* Séparateur */}
             <div style={{ height: 1, background: '#2a2a2a', marginBottom: 24 }} />
 
-            {/* Navigation */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-
-            {!user ? (
+              {!user ? (
                 <>
-                  <a href="/login"
-                    onClick={() => setDrawerOuvert(false)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(200,67,26,0.12)',
-                      color: '#C8431A', textDecoration: 'none',
-                      fontSize: 14, fontWeight: 'bold'
-                    }}>
-                    🔑 Se connecter
-                  </a>
-                  <a href="/inscription"
-                    onClick={() => setDrawerOuvert(false)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                    }}>
-                    🔔 Recevoir les événements
-                  </a>
+                  <a href="/login" onClick={() => setDrawerOuvert(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(200,67,26,0.12)',
+                    color: '#C8431A', textDecoration: 'none',
+                    fontSize: 14, fontWeight: 'bold'
+                  }}>🔑 Se connecter</a>
+                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                  }}>🔔 Recevoir les événements</a>
                 </>
               ) : (
                 <>
-                  <a href="/profil"
-                    onClick={() => setDrawerOuvert(false)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                    }}>
-                    👤 Mon profil
-                  </a>
-                  <a href="/inscription"
-                    onClick={() => setDrawerOuvert(false)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                    }}>
-                    🔔 Recevoir les événements
-                  </a>
+                  <a href="/profil" onClick={() => setDrawerOuvert(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                  }}>👤 Mon profil</a>
+                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                  }}>🔔 Recevoir les événements</a>
                   {isAdmin && (
-                    <a href="/admin"
-                      onClick={() => setDrawerOuvert(false)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '12px 16px', borderRadius: 12,
-                        background: 'rgba(255,255,255,0.04)',
-                        color: '#D4A820', textDecoration: 'none', fontSize: 14
-                      }}>
-                      ⚙️ Panel admin
-                    </a>
+                    <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#D4A820', textDecoration: 'none', fontSize: 14
+                    }}>⚙️ Panel admin</a>
                   )}
-                  <a href="/apropos"
-                    onClick={() => setDrawerOuvert(false)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                    }}>
-                    ℹ️ À propos
-                  </a>
-                  <button
-                    onClick={async () => {
-                      await supabase.auth.signOut()
-                      setUser(null)
-                      setDrawerOuvert(false)
-                    }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#8C5A40', border: 'none',
-                      fontSize: 14, cursor: 'pointer', textAlign: 'left'
-                    }}>
-                    🚪 Déconnexion
-                  </button>
+                  <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                  }}>ℹ️ À propos</a>
+                  <button onClick={async () => {
+                    await supabase.auth.signOut()
+                    setUser(null)
+                    setDrawerOuvert(false)
+                  }} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#8C5A40', border: 'none',
+                    fontSize: 14, cursor: 'pointer', textAlign: 'left'
+                  }}>🚪 Déconnexion</button>
                 </>
               )}
             </div>
 
-            {/* Version en bas */}
             <div style={{ marginTop: 'auto', paddingTop: 24 }}>
               <p style={{ color: '#2a2a2a', fontSize: 11, textAlign: 'center' }}>
                 Lotbo v1.0 · né en Haïti 🇭🇹
@@ -294,14 +270,14 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════
-          HEADER — mobile-first 375px
+          HEADER — fond clair #F7F2E8
       ══════════════════════════════════════ */}
-     <div style={{
+      <div style={{
         position: 'relative', zIndex: 20,
         display: 'flex', flexDirection: 'column',
         gap: 8, padding: '10px 12px', flexShrink: 0,
-        background: '#1A1410',
-        borderBottom: '1px solid #2a2a2a',
+        background: '#F7F2E8',
+        borderBottom: '1px solid #E8E0D0',
       }}>
 
         {/* Ligne 1 */}
@@ -312,7 +288,7 @@ export default function Home() {
             className="lotbo-hamburger"
             onClick={() => setDrawerOuvert(true)}
             style={{
-              background: 'rgba(0,0,0,0.85)', border: '1px solid #333',
+              background: '#1A1410', border: 'none',
               color: '#F7F2E8', borderRadius: 999,
               padding: '6px 10px', fontSize: 16,
               cursor: 'pointer', flexShrink: 0
@@ -322,31 +298,31 @@ export default function Home() {
 
           {/* Switcher Carte/Liste — desktop uniquement */}
           <div className="lotbo-mode-header" style={{
-            gap: 2, background: 'rgba(0,0,0,0.85)',
+            gap: 2, background: '#E8E0D0',
             borderRadius: 999, padding: 3, flexShrink: 0
           }}>
             <button onClick={() => setMode('carte')} style={{
               padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold',
               border: 'none', cursor: 'pointer',
               background: mode === 'carte' ? '#C8431A' : 'transparent',
-              color: mode === 'carte' ? 'white' : '#aaa'
+              color: mode === 'carte' ? 'white' : '#8C5A40'
             }}>🗺️ {t.carte.carte}</button>
             <button onClick={() => setMode('liste')} style={{
               padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold',
               border: 'none', cursor: 'pointer',
               background: mode === 'liste' ? '#C8431A' : 'transparent',
-              color: mode === 'liste' ? 'white' : '#aaa'
+              color: mode === 'liste' ? 'white' : '#8C5A40'
             }}>📋 {t.carte.liste}</button>
           </div>
 
           {/* Logo — centré */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <div style={{
-              background: 'rgba(0,0,0,0.85)', padding: '5px 16px',
-              borderRadius: 999, fontSize: 16, fontWeight: 'bold',
+              padding: '5px 16px',
+              fontSize: 18, fontWeight: 'bold',
               fontFamily: 'serif', fontStyle: 'italic'
             }}>
-              <span style={{ color: 'white' }}>lot</span>
+              <span style={{ color: '#1A1410' }}>lot</span>
               <span style={{ color: '#C8431A' }}>bo</span>
             </div>
           </div>
@@ -364,8 +340,8 @@ export default function Home() {
             <div className="lotbo-langue-desktop">
               <select value={langue} onChange={e => setLangue(e.target.value as Langue)}
                 style={{
-                  background: 'rgba(0,0,0,0.85)', color: 'white',
-                  border: '1px solid #333', borderRadius: 999,
+                  background: '#E8E0D0', color: '#1A1410',
+                  border: '1px solid #E8E0D0', borderRadius: 999,
                   padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none'
                 }}>
                 {Object.entries(langues).map(([code, info]) => (
@@ -376,7 +352,6 @@ export default function Home() {
 
             {/* Desktop : Connexion / Profil / Admin */}
             <div className="lotbo-mode-header" style={{ gap: 6 }}>
-
               {user ? (
                 <>
                   {isAdmin && (
@@ -387,22 +362,21 @@ export default function Home() {
                     }}>⚙️</a>
                   )}
                   <a href="/profil" style={{
-                    background: '#333', color: 'white', padding: '6px 10px',
+                    background: '#1A1410', color: '#F7F2E8', padding: '6px 10px',
                     borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
                   }}>{t.nav.profil}</a>
                 </>
               ) : (
                 <a href="/login" style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  color: '#F7F2E8',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: '#1A1410', color: '#F7F2E8',
+                  border: 'none',
                   padding: '6px 12px', borderRadius: 999,
                   fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
                 }}>Connexion</a>
               )}
             </div>
 
-{/* + Ajouter — toujours visible */}
+            {/* + Ajouter — toujours visible */}
             <a href="/ajouter" style={{
               background: '#C8431A', color: 'white', padding: '6px 12px',
               borderRadius: 999, fontSize: 12, fontWeight: 'bold',
@@ -432,14 +406,14 @@ export default function Home() {
             }}
             className="lotbo-recherche"
             style={{
-              flex: 1, background: 'rgba(0,0,0,0.85)', color: 'white',
-              border: '1px solid #444', borderRadius: 999, padding: '8px 16px',
+              flex: 1, background: 'white', color: '#1A1410',
+              border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px 16px',
               fontSize: 13, outline: 'none', minWidth: 0
             }}
           />
           <button onClick={() => setFiltresOuverts(!filtresOuverts)} style={{
-            background: nbFiltres > 0 ? '#C8431A' : 'rgba(0,0,0,0.85)',
-            color: 'white', border: '1px solid #444',
+            background: nbFiltres > 0 ? '#C8431A' : '#1A1410',
+            color: 'white', border: 'none',
             borderRadius: 999, padding: '8px 14px', fontSize: 12,
             fontWeight: 'bold', cursor: 'pointer', flexShrink: 0,
             display: 'flex', alignItems: 'center', gap: 6
@@ -460,15 +434,16 @@ export default function Home() {
       {filtresOuverts && (
         <div style={{
           position: 'absolute', top: 110, left: 12, right: 12, zIndex: 30,
-          background: 'rgba(10,10,10,0.97)', border: '1px solid #333',
+          background: '#F7F2E8', border: '1px solid #E8E0D0',
           borderRadius: 20, padding: 20,
           display: 'flex', flexDirection: 'column', gap: 16,
-          maxHeight: 'calc(100dvh - 130px)', overflowY: 'auto'
+          maxHeight: 'calc(100dvh - 130px)', overflowY: 'auto',
+          boxShadow: '0 4px 24px rgba(26,20,16,0.12)'
         }}>
 
           {/* Catégorie */}
           <div>
-            <p style={{ color: '#aaa', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Catégorie</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Catégorie</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => setCategorie(cat)} style={btnStyle(categorie === cat)}>
@@ -480,7 +455,7 @@ export default function Home() {
 
           {/* Accès */}
           <div>
-            <p style={{ color: '#aaa', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Accès</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Accès</p>
             <div style={{ display: 'flex', gap: 6 }}>
               {['tous', 'public', 'prive'].map(a => (
                 <button key={a} onClick={() => setAcces(a)} style={btnStyle(acces === a)}>
@@ -492,7 +467,7 @@ export default function Home() {
 
           {/* Prix */}
           <div>
-            <p style={{ color: '#aaa', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Prix</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Prix</p>
             <div style={{ display: 'flex', gap: 6 }}>
               {['tous', 'gratuit', 'payant'].map(p => (
                 <button key={p} onClick={() => setPrix(p)} style={btnStyle(prix === p)}>
@@ -504,24 +479,24 @@ export default function Home() {
 
           {/* Dates */}
           <div>
-            <p style={{ color: '#aaa', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Période</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Période</p>
             <div className="lotbo-filtres-dates">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                <label style={{ color: '#666', fontSize: 10 }}>Du</label>
+                <label style={{ color: '#8C5A40', fontSize: 10 }}>Du</label>
                 <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
                   style={{
-                    background: 'rgba(255,255,255,0.08)', border: '1px solid #444',
-                    borderRadius: 10, color: 'white', fontSize: 13,
+                    background: 'white', border: '1px solid #E8E0D0',
+                    borderRadius: 10, color: '#1A1410', fontSize: 13,
                     padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
                   }} />
               </div>
               <span className="lotbo-filtres-dates-fleche">→</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                <label style={{ color: '#666', fontSize: 10 }}>Au</label>
+                <label style={{ color: '#8C5A40', fontSize: 10 }}>Au</label>
                 <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
                   style={{
-                    background: 'rgba(255,255,255,0.08)', border: '1px solid #444',
-                    borderRadius: 10, color: 'white', fontSize: 13,
+                    background: 'white', border: '1px solid #E8E0D0',
+                    borderRadius: 10, color: '#1A1410', fontSize: 13,
                     padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
                   }} />
               </div>
@@ -537,8 +512,8 @@ export default function Home() {
               setDateDebut('')
               setDateFin('')
             }} style={{
-              flex: 1, background: 'rgba(255,255,255,0.06)', color: '#aaa',
-              border: '1px solid #333', borderRadius: 999, padding: '10px',
+              flex: 1, background: 'white', color: '#8C5A40',
+              border: '1px solid #E8E0D0', borderRadius: 999, padding: '10px',
               fontSize: 13, cursor: 'pointer', fontWeight: 'bold'
             }}>Réinitialiser</button>
             <button onClick={() => setFiltresOuverts(false)} style={{
@@ -556,8 +531,8 @@ export default function Home() {
       {mode === 'liste' && (
         <div className="lotbo-vue-liste" style={{
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          background: '#1A1410', zIndex: 5, overflowY: 'auto',
-          paddingTop: 100, paddingLeft: 16, paddingRight: 16, paddingBottom: 40
+          background: '#F7F2E8', zIndex: 5, overflowY: 'auto',
+          paddingTop: 100, paddingLeft: 16, paddingRight: 16, paddingBottom: 80
         }}>
           {evenements.filter(filtreActif).length === 0 && (
             <p style={{ color: '#8C5A40', textAlign: 'center', marginTop: 40, fontSize: 14 }}>
@@ -567,10 +542,11 @@ export default function Home() {
           {evenements.filter(filtreActif).map(ev => (
             <a href={'/evenement/' + ev.id} key={ev.id} style={{
               display: 'flex', gap: 12,
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid #2a2a2a',
+              background: 'white',
+              border: '1px solid #E8E0D0',
               borderRadius: 12, padding: 12, marginBottom: 12,
-              textDecoration: 'none', color: 'white', overflow: 'hidden'
+              textDecoration: 'none', color: '#1A1410', overflow: 'hidden',
+              boxShadow: '0 1px 4px rgba(26,20,16,0.06)'
             }}>
               {ev.image_url && (
                 <img src={ev.image_url} alt={ev.titre} style={{
@@ -582,16 +558,13 @@ export default function Home() {
                 <p style={{
                   fontWeight: 'bold', fontSize: 14, marginBottom: 3,
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  color: '#F7F2E8'
+                  color: '#1A1410'
                 }}>{ev.titre}</p>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {ev.date}</p>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie}</span>
-                  <span style={{ background: 'rgba(255,255,255,0.08)', color: '#aaa', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix}</span>
-                  {ev.statut === 'à compléter' && (
-                    <span style={{ background: '#E87C2A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>À compléter</span>
-                  )}
+                  <span style={{ background: '#E8E0D0', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix}</span>
                 </div>
               </div>
             </a>
@@ -605,37 +578,96 @@ export default function Home() {
       <div ref={mapContainer} style={{ flex: 1, position: 'relative', minHeight: 0 }} />
 
       {/* ══════════════════════════════════════
-          TAB BAR — mobile uniquement
+          TAB BAR — mobile uniquement — 5 onglets
       ══════════════════════════════════════ */}
-  
       <div className="lotbo-tabbar">
-        <div style={{
-          display: 'flex', gap: 2,
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: 999, padding: 3,
+
+        {/* Home */}
+        <button onClick={() => { setMode('carte'); setFiltresOuverts(false) }} style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 3, padding: '8px 0',
+          background: 'transparent', border: 'none', cursor: 'pointer'
         }}>
-          <button
-            onClick={() => setMode('carte')}
-            style={{
-              padding: '7px 20px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-              border: 'none', cursor: 'pointer',
-              background: mode === 'carte' ? '#C8431A' : 'transparent',
-              color: mode === 'carte' ? 'white' : '#555'
-            }}>
-            🗺️ {t.carte.carte}
-          </button>
-          <button
-            onClick={() => setMode('liste')}
-            style={{
-              padding: '7px 20px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-              border: 'none', cursor: 'pointer',
-              background: mode === 'liste' ? '#C8431A' : 'transparent',
-              color: mode === 'liste' ? 'white' : '#555'
-            }}>
-            📋 {t.carte.liste}
-          </button>
-        </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
+              stroke={mode === 'carte' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" fill="none"/>
+            <path d="M9 21V12h6v9" stroke={mode === 'carte' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
+          </svg>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'carte' ? '#C8431A' : '#8C5A40' }}>
+            Home
+          </span>
+        </button>
+
+        {/* Événements */}
+        <button onClick={() => setMode('liste')} style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 3, padding: '8px 0',
+          background: 'transparent', border: 'none', cursor: 'pointer'
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="17" rx="2" stroke={mode === 'liste' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
+            <path d="M8 2v3M16 2v3M3 9h18" stroke={mode === 'liste' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'liste' ? '#C8431A' : '#8C5A40' }}>
+            Événements
+          </span>
+        </button>
+
+        {/* Carte — centrer sur position */}
+        <button onClick={centrerSurPosition} style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 3, padding: '8px 0',
+          background: 'transparent', border: 'none', cursor: 'pointer'
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: '#C8431A',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: -4, boxShadow: '0 2px 8px rgba(200,67,26,0.4)'
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="3" fill="white"/>
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: '#C8431A' }}>Carte</span>
+        </button>
+
+        {/* Notifications */}
+        <a href="/inscription" style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 3, padding: '8px 0',
+          textDecoration: 'none'
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 003.4 0"
+              stroke="#8C5A40" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: '#8C5A40' }}>Alertes</span>
+        </a>
+
+        {/* Profil */}
+        <a href={user ? '/profil' : '/login'} style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 3, padding: '8px 0',
+          textDecoration: 'none'
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke={user ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={user ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: user ? '#C8431A' : '#8C5A40' }}>
+            {user ? 'Profil' : 'Connexion'}
+          </span>
+        </a>
+
       </div>
-      </main>
+
+    </main>
   )
 }
