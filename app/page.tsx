@@ -102,7 +102,10 @@ export default function Home() {
         (ev.heure_fin ? '⏰ Fin : ' + ev.heure_fin : '') +
         (ev.description ? '<br/><br/>' + ev.description : '') +
         (ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#C8431A">🔗 Plus de détails</a>' : '') +
-        '<br/><br/><a href="/evenement/' + ev.id + '" style="color:#C8431A;font-weight:bold">Voir la page →</a>' +
+        '<div style="display:flex;gap:8px;margin-top:12px">' +
+'<a href="/evenement/' + ev.id + '" style="flex:1;display:block;background:#C8431A;color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">Voir →</a>' +
+'<a href="https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude + '" target="_blank" style="flex:1;display:block;background:rgba(255,255,255,0.08);color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">🧭 S\'y rendre</a>' +
+'</div>' +
         '</div></div>'
       )
       const markerColor = ev.statut === 'à compléter' ? '#E87C2A' : '#C8431A'

@@ -104,7 +104,7 @@ export default function EvenementPage() {
   const texteWhatsapp = 'Découvre cet événement sur Lotbo : ' + ev.titre + ' — ' + urlEvenement
   const urlWhatsapp = 'https://wa.me/?text=' + encodeURIComponent(texteWhatsapp)
   const urlFacebook = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)
-
+  const urlGoogleMaps = 'https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude
   return (
     <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8' }}>
 
@@ -226,6 +226,24 @@ export default function EvenementPage() {
               </span>
             </p>
           )}
+          {/* Bouton S'y rendre */}
+        {ev.latitude && ev.longitude && (
+          
+          <a href={urlGoogleMaps}
+          target="_blank"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 8, marginBottom: 24,
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid #2a2a2a',
+            borderRadius: 12, padding: '12px 16px',
+            textDecoration: 'none', color: '#F7F2E8',
+            fontSize: 14, fontWeight: 'bold'
+          }}>
+          <span style={{ fontSize: 20 }}>🧭</span>
+          S'y rendre · Ouvrir dans Google Maps
+        </a>
+      )}
         </div>
 
         {/* Description */}
