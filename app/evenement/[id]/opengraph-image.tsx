@@ -6,22 +6,31 @@ export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { id: string } }) {
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/evenements?id=eq.${params.id}&statut=eq.approuve&select=titre,lieu,date,categorie,image_url&limit=1`
-
+    const id = params?.id
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
     let ev: any = null
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
-      },
-      next: { revalidate: 3600 }
-    })
-    const data = await res.json()
-    ev = data?.[0] || null
-  } catch {
-    ev = null
-  }
+    try {
+      if (!supabaseUrl || !supabaseKey || !id) {
+        console.error('Params manquants:', { id, supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey })
+      } else {
+        const fetchUrl = `${supabaseUrl}/rest/v1/evenements?id=eq.${id}&statut=eq.approuve&select=titre,lieu,date,categorie,image_url&limit=1`
+        const res = await fetch(fetchUrl, {
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          cache: 'no-store'
+        })
+        const data = await res.json()
+        console.log('OG data:', JSON.stringify(data))
+        ev = data?.[0] || null
+      }
+    } catch (e) {
+      console.error('OG fetch error:', e)
+      ev = null
+    }
 
   const titre = ev?.titre || 'Événement sur Lotbo'
   const lieu = ev?.lieu || ''
