@@ -9,19 +9,19 @@ export default async function Image({ params }: { params: { id: string } }) {
     const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/evenements?id=eq.${params.id}&statut=eq.approuve&select=titre,lieu,date,categorie,image_url&limit=1`
 
     let ev: any = null
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
-        },
-        next: { revalidate: 3600 }
-      })
-      const data = await res.json()
-      ev = data?.[0] || null
-    } catch {
-      ev = null
-    }
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+      },
+      next: { revalidate: 3600 }
+    })
+    const data = await res.json()
+    ev = data?.[0] || null
+  } catch {
+    ev = null
+  }
 
   const titre = ev?.titre || 'Événement sur Lotbo'
   const lieu = ev?.lieu || ''
