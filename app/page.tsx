@@ -229,6 +229,16 @@ export default function Home() {
                       ⚙️ Panel admin
                     </a>
                   )}
+                  <a href="/apropos"
+                    onClick={() => setDrawerOuvert(false)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#F7F2E8', textDecoration: 'none', fontSize: 14
+                    }}>
+                    ℹ️ À propos
+                  </a>
                   <button
                     onClick={async () => {
                       await supabase.auth.signOut()
