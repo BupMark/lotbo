@@ -10,25 +10,20 @@ export default function Admin() {
   const [signalements, setSignalements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [filtreStatut, setFiltreStatut] = useState<'en_attente' | 'approuve' | 'rejete' | 'tous'>('en_attente')
+  const [recherche, setRecherche] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.push('/login')
-        return
-      }
+      if (!data.session) { router.push('/login'); return }
       const role = data.session.user.user_metadata?.role
-      if (role !== 'admin') {
-        router.push('/')
-        return
-      }
+      if (role !== 'admin') { router.push('/'); return }
       setUser(data.session.user)
       chargerEvenements()
     })
   }, [])
 
   const chargerEvenements = async () => {
-    // Admin voit tout — la policy "admin_acces_total" autorise ça
     const { data } = await supabase
       .from('evenements')
       .select('*')
@@ -43,90 +38,183 @@ export default function Admin() {
     setLoading(false)
   }
 
-  const supprimer = async (id: string) => {
-    if (!confirm('Supprimer cet evenement ?')) return
-    await supabase.from('evenements').delete().eq('id', id)
-    setEvenements(evenements.filter(ev => ev.id !== id))
-  }
-
-
   const approuver = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'approuve' }).eq('id', id)
     setEvenements(evenements.map(ev => ev.id === id ? { ...ev, statut: 'approuve' } : ev))
-
-    // Notifier les abonnés
     const ev = evenements.find(e => e.id === id)
     if (ev) {
       fetch('/api/notify-abonnes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: ev.id,
-          titre: ev.titre,
-          lieu: ev.lieu,
-          date: ev.date,
-          categorie: ev.categorie
-        })
+        body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie })
       }).catch(() => {})
     }
   }
+
   const rejeter = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'rejete' }).eq('id', id)
     setEvenements(evenements.map(ev => ev.id === id ? { ...ev, statut: 'rejete' } : ev))
   }
 
+  const supprimer = async (id: string) => {
+    if (!confirm('Supprimer cet événement ?')) return
+    await supabase.from('evenements').delete().eq('id', id)
+    setEvenements(evenements.filter(ev => ev.id !== id))
+  }
+
+  // Compteurs
+  const nbTotal = evenements.length
+  const nbApprouves = evenements.filter(e => e.statut === 'approuve').length
+  const nbEnAttente = evenements.filter(e => e.statut === 'en_attente').length
+  const nbRejetes = evenements.filter(e => e.statut === 'rejete').length
+  const nbVilles = new Set(evenements.filter(e => e.statut === 'approuve').map(e => e.lieu?.split(',').pop()?.trim()).filter(Boolean)).size
+  const nbPays = new Set(evenements.filter(e => e.statut === 'approuve' && e.longitude && e.latitude).map(e => {
+    if (e.longitude < -30) return 'Amériques'
+    if (e.longitude < 60) return 'Europe/Afrique'
+    return 'Asie/Pacifique'
+  })).size
+
+  // Filtres
+  const evenementsFiltres = evenements.filter(ev => {
+    const matchStatut = filtreStatut === 'tous' ? true : ev.statut === filtreStatut
+    const matchRecherche = recherche === '' ||
+      ev.titre?.toLowerCase().includes(recherche.toLowerCase()) ||
+      ev.lieu?.toLowerCase().includes(recherche.toLowerCase()) ||
+      ev.organisateur?.toLowerCase().includes(recherche.toLowerCase())
+    return matchStatut && matchRecherche
+  })
+
+  const couleurStatut = (statut: string) => {
+    if (statut === 'approuve') return { bg: 'rgba(45,158,107,0.15)', color: '#2D9E6B' }
+    if (statut === 'rejete') return { bg: 'rgba(180,40,40,0.2)', color: '#e57373' }
+    return { bg: 'rgba(212,168,32,0.15)', color: '#D4A820' }
+  }
+
+  const labelStatut = (statut: string) => {
+    if (statut === 'approuve') return '✓ Approuvé'
+    if (statut === 'rejete') return '✗ Rejeté'
+    if (statut === 'en_attente') return '⏳ En attente'
+    return statut
+  }
+
   if (loading) return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
+    <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: '#8C5A40' }}>Chargement...</p>
     </main>
   )
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#1A1410' }} className="text-white p-8">
-      <div className="max-w-4xl mx-auto">
+    <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8', padding: '24px 16px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
-        <div className="flex justify-between items-center mb-8">
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ fontFamily: 'serif', fontStyle: 'italic' }}>
             <span style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold' }}>lot</span>
             <span style={{ color: '#C8431A', fontSize: 24, fontWeight: 'bold' }}>bo</span>
             <span style={{ color: '#8C5A40', fontSize: 14, marginLeft: 12 }}>admin</span>
           </div>
-          <a href="/" style={{ color: '#8C5A40', fontSize: 13 }}
-            className="hover:text-white transition-colors">
+          <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>
             ← Retour à la carte
           </a>
         </div>
 
-        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 12 }}
-          className="p-4 mb-6">
+        {/* Compteurs */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 24 }}>
+          {[
+            { label: 'Total', valeur: nbTotal, couleur: '#F7F2E8' },
+            { label: 'En attente', valeur: nbEnAttente, couleur: '#D4A820' },
+            { label: 'Approuvés', valeur: nbApprouves, couleur: '#2D9E6B' },
+            { label: 'Rejetés', valeur: nbRejetes, couleur: '#e57373' },
+            { label: 'Villes', valeur: nbVilles, couleur: '#C8431A' },
+            { label: 'Régions', valeur: nbPays, couleur: '#8C5A40' },
+          ].map((c, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid #2a2a2a',
+              borderRadius: 12, padding: '16px 12px',
+              textAlign: 'center'
+            }}>
+              <p style={{ fontSize: 28, fontWeight: 'bold', color: c.couleur, marginBottom: 4 }}>{c.valeur}</p>
+              <p style={{ fontSize: 11, color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Info admin */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 12, padding: '12px 16px', marginBottom: 24 }}>
           <p style={{ color: '#8C5A40', fontSize: 13 }}>
             Connecté en tant que <span style={{ color: '#C8431A' }}>{user?.email}</span>
           </p>
-          <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 4 }}>
-            Total : <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{evenements.length} événements</span>
-            {' · '}
-            <span style={{ color: '#C8431A' }}>
-              {evenements.filter(e => e.statut !== 'approuve' && e.statut !== 'rejete').length} en attente
-            </span>
-          </p>
         </div>
 
-        <div className="flex flex-col gap-4 mb-12">
-          {evenements.map(ev => (
-            <div key={ev.id}
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12 }}
-              className="p-4 flex gap-4 items-start">
+        {/* Filtres onglets + recherche */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          {[
+            { key: 'en_attente', label: `⏳ En attente (${nbEnAttente})` },
+            { key: 'approuve', label: `✓ Approuvés (${nbApprouves})` },
+            { key: 'rejete', label: `✗ Rejetés (${nbRejetes})` },
+            { key: 'tous', label: `Tous (${nbTotal})` },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFiltreStatut(f.key as any)}
+              style={{
+                padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                border: 'none', cursor: 'pointer',
+                background: filtreStatut === f.key ? '#C8431A' : 'rgba(255,255,255,0.06)',
+                color: filtreStatut === f.key ? 'white' : '#8C5A40'
+              }}>
+              {f.label}
+            </button>
+          ))}
+          <input
+            type="text"
+            placeholder="Rechercher..."
+            value={recherche}
+            onChange={e => setRecherche(e.target.value)}
+            style={{
+              flex: 1, minWidth: 160,
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid #333', borderRadius: 999,
+              padding: '7px 14px', fontSize: 12,
+              color: '#F7F2E8', outline: 'none'
+            }}
+          />
+        </div>
 
+        {/* Liste événements */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
+          {evenementsFiltres.length === 0 && (
+            <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>
+              Aucun événement dans cette catégorie.
+            </p>
+          )}
+          {evenementsFiltres.map(ev => (
+            <div key={ev.id} style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: ev.statut === 'en_attente' ? '1px solid rgba(212,168,32,0.3)' : '1px solid #2a2a2a',
+              borderRadius: 12, padding: 16,
+              display: 'flex', gap: 12, alignItems: 'flex-start'
+            }}>
               {ev.image_url && (
                 <img src={ev.image_url} alt={ev.titre}
-                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
+                  style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
               )}
 
-              <div className="flex-1">
-                <h2 className="font-bold text-lg" style={{ color: '#F7F2E8' }}>{ev.titre}</h2>
-                <p style={{ color: '#8C5A40', fontSize: 13 }}>📍 {ev.lieu}</p>
-                <p style={{ color: '#8C5A40', fontSize: 13 }}>📅 {ev.date}</p>
-                <div className="flex gap-2 mt-2 flex-wrap">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 15, marginBottom: 2 }}>{ev.titre}</h2>
+                {ev.organisateur && (
+                  <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 4 }}>👤 {ev.organisateur}</p>
+                )}
+                <p style={{ color: '#8C5A40', fontSize: 12 }}>📍 {ev.lieu}</p>
+                <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date}{ev.heure_debut ? ` · ${ev.heure_debut}` : ''}</p>
+                {ev.source && (
+                  <p style={{ color: '#555', fontSize: 11, marginTop: 2 }}>
+                    Source : {ev.source}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                   <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>
                     {ev.categorie}
                   </span>
@@ -138,55 +226,59 @@ export default function Admin() {
                   </span>
                   <span style={{
                     padding: '2px 8px', borderRadius: 6, fontSize: 11,
-                    background: ev.statut === 'approuve' ? 'rgba(200,67,26,0.15)' :
-                      ev.statut === 'rejete' ? 'rgba(180,40,40,0.2)' : 'rgba(212,168,32,0.15)',
-                    color: ev.statut === 'approuve' ? '#C8431A' :
-                      ev.statut === 'rejete' ? '#e57373' : '#D4A820'
+                    background: couleurStatut(ev.statut).bg,
+                    color: couleurStatut(ev.statut).color
                   }}>
-                    {ev.statut === 'approuve' ? '✓ Approuvé' :
-                      ev.statut === 'rejete' ? '✗ Rejeté' : '⏳ En attente'}
+                    {labelStatut(ev.statut)}
                   </span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <a href={'/evenement/' + ev.id} target="_blank"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}>
-                  Voir
-                </a>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                <a href={'/evenement/' + ev.id} target="_blank" style={{
+                  background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
+                  padding: '6px 12px', borderRadius: 8, fontSize: 12,
+                  textAlign: 'center', textDecoration: 'none'
+                }}>Voir</a>
                 {ev.statut !== 'approuve' && (
-                  <button onClick={() => approuver(ev.id)}
-                    style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
-                    Approuver
-                  </button>
+                  <button onClick={() => approuver(ev.id)} style={{
+                    background: 'rgba(45,158,107,0.15)', color: '#2D9E6B',
+                    padding: '6px 12px', borderRadius: 8, fontSize: 12,
+                    border: 'none', cursor: 'pointer'
+                  }}>Approuver</button>
                 )}
                 {ev.statut !== 'rejete' && (
-                  <button onClick={() => rejeter(ev.id)}
-                    style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
-                    Rejeter
-                  </button>
+                  <button onClick={() => rejeter(ev.id)} style={{
+                    background: 'rgba(212,168,32,0.15)', color: '#D4A820',
+                    padding: '6px 12px', borderRadius: 8, fontSize: 12,
+                    border: 'none', cursor: 'pointer'
+                  }}>Rejeter</button>
                 )}
-                <button onClick={() => supprimer(ev.id)}
-                  style={{ background: 'rgba(180,40,40,0.2)', color: '#e57373', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
-                  Supprimer
-                </button>
+                <button onClick={() => supprimer(ev.id)} style={{
+                  background: 'rgba(180,40,40,0.2)', color: '#e57373',
+                  padding: '6px 12px', borderRadius: 8, fontSize: 12,
+                  border: 'none', cursor: 'pointer'
+                }}>Supprimer</button>
               </div>
-
             </div>
           ))}
         </div>
 
-        <div className="mt-8">
+        {/* Signalements */}
+        <div>
           <h2 style={{ color: '#C8431A', fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>
             Signalements ({signalements.length})
           </h2>
           {signalements.length === 0 ? (
             <p style={{ color: '#8C5A40' }}>Aucun signalement</p>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {signalements.map(sig => (
-                <div key={sig.id}
-                  style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}>
+                <div key={sig.id} style={{
+                  background: 'rgba(180,40,40,0.1)',
+                  border: '1px solid rgba(180,40,40,0.3)',
+                  borderRadius: 12, padding: 16
+                }}>
                   <p style={{ color: '#8C5A40', fontSize: 11 }}>ID: {sig.evenement_id}</p>
                   <p style={{ color: '#e57373', fontSize: 13, marginTop: 4 }}>{sig.raison}</p>
                   <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
