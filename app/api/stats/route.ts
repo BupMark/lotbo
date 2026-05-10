@@ -45,5 +45,7 @@ export async function GET() {
     }).filter(Boolean)
   ).size
 
-  return NextResponse.json({ total, villes, pays })
+  return NextResponse.json({ total, villes, pays }, {
+    headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
+  })
 }
