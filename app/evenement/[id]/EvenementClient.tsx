@@ -3,7 +3,124 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
+// ── Formulaire commentaire ──
+function CommentaireForm({ evenementId, onNouveau }: { evenementId: string, onNouveau: (c: any) => void }) {
+  const [auteur, setAuteur] = useState('')
+  const [contenu, setContenu] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [envoye, setEnvoye] = useState(false)
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!auteur.trim() || !contenu.trim()) return
+    setLoading(true)
+
+    const { data, error } = await supabase
+      .from('commentaires')
+      .insert([{ evenement_id: evenementId, auteur: auteur.trim(), contenu: contenu.trim() }])
+      .select()
+      .single()
+
+    setLoading(false)
+    if (!error && data) {
+      onNouveau(data)
+      setAuteur('')
+      setContenu('')
+      setEnvoye(true)
+      setTimeout(() => setEnvoye(false), 3000)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <input
+          value={auteur}
+          onChange={e => setAuteur(e.target.value)}
+          placeholder="Ton prénom ou pseudo"
+          maxLength={50}
+          required
+          style={{
+            background: 'white', border: '1px solid #E8E0D0',
+            borderRadius: 10, padding: '10px 14px',
+            fontSize: 13, color: '#1A1410', outline: 'none'
+          }}
+        />
+        <textarea
+          value={contenu}
+          onChange={e => setContenu(e.target.value)}
+          placeholder="Laisse un commentaire..."
+          maxLength={500}
+          rows={3}
+          required
+          style={{
+            background: 'white', border: '1px solid #E8E0D0',
+            borderRadius: 10, padding: '10px 14px',
+            fontSize: 13, color: '#1A1410', outline: 'none',
+            resize: 'vertical', fontFamily: 'inherit'
+          }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {envoye && (
+            <p style={{ color: '#2D9E6B', fontSize: 13 }}>✓ Commentaire ajouté !</p>
+          )}
+          {!envoye && <div />}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              background: loading ? '#E8E0D0' : '#C8431A',
+              color: '#F7F2E8', fontWeight: 'bold',
+              padding: '10px 20px', borderRadius: 10,
+              border: 'none', fontSize: 13,
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}>
+            {loading ? '...' : 'Commenter →'}
+          </button>
+        </div>
+      </div>
+    </form>
+  )
+}
+
+// ── Liste commentaires ──
+function CommentairesList({ evenementId, commentaires, setCommentaires }: {
+  evenementId: string,
+  commentaires: any[],
+  setCommentaires: (c: any[]) => void
+}) {
+  if (commentaires.length === 0) {
+    return (
+      <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>
+        Aucun commentaire. Sois le premier à commenter !
+      </p>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {commentaires.map(c => (
+        <div key={c.id} style={{
+          background: 'white',
+          border: '1px solid #E8E0D0',
+          borderRadius: 12, padding: '14px 16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontWeight: 'bold', fontSize: 13, color: '#1A1410' }}>
+              {c.auteur}
+            </span>
+            <span style={{ fontSize: 11, color: '#8C5A40' }}>
+              {new Date(c.created_at).toLocaleDateString('fr-FR', {
+                day: 'numeric', month: 'short', year: 'numeric'
+              })}
+            </span>
+          </div>
+          <p style={{ fontSize: 13, color: '#8C5A40', lineHeight: 1.6 }}>{c.contenu}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
 export default function EvenementPage() {
   const { id } = useParams()
   const router = useRouter()
@@ -15,6 +132,8 @@ export default function EvenementPage() {
   const [signalementEnvoye, setSignalementEnvoye] = useState(false)
   const [liked, setLiked] = useState(false)
   const [nbLikes, setNbLikes] = useState(0)
+  const [commentaires, setCommentaires] = useState<any[]>([])
+  const [loadingCommentaires, setLoadingCommentaires] = useState(true)
 
   useEffect(() => {
     supabase
@@ -35,6 +154,14 @@ export default function EvenementPage() {
             .limit(3)
           setSimilaires(sims || [])
         }
+        // Charger commentaires
+        const { data: comms } = await supabase
+          .from('commentaires')
+          .select('*')
+          .eq('evenement_id', id)
+          .order('created_at', { ascending: false })
+        setCommentaires(comms || [])
+        setLoadingCommentaires(false)
         setLoading(false)
       })
   }, [id])
@@ -353,6 +480,20 @@ export default function EvenementPage() {
 
         {/* Séparateur */}
         <div style={{ height: 1, background: '#2a2a2a', marginBottom: 32 }} />
+{/* ══════════════════════════════════════
+            COMMENTAIRES
+        ══════════════════════════════════════ */}
+        <div style={{ marginBottom: 48 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: '#1A1410' }}>
+            Commentaires
+          </h2>
+
+          {/* Formulaire */}
+          <CommentaireForm evenementId={ev.id} onNouveau={(c) => setCommentaires(prev => [c, ...prev])} />
+
+          {/* Liste */}
+          <CommentairesList evenementId={ev.id} commentaires={commentaires} setCommentaires={setCommentaires} />
+        </div>
 
         {/* Événements similaires */}
         {similaires.length > 0 && (
