@@ -14,6 +14,8 @@ const EVENT_TYPES = [
   { id: 8, nom: 'Assemblée / Réunion', icone: '🤝' },
   { id: 9, nom: 'Formation / Séminaire', icone: '📚' },
   { id: 10, nom: 'Célébration communautaire', icone: '🌍' },
+  { id: 11, nom: 'Droit / Juridique', icone: '⚖️' },
+  { id: 12, nom: 'Loisir', icone: '🎯' },
 ]
 
 const EVENT_THEMES = [
@@ -61,6 +63,7 @@ export default function AjouterEvenement() {
   const [selectedThemes, setSelectedThemes] = useState<number[]>([])
   const [form, setForm] = useState({
     titre: '',
+    organisateur: '',
     lieu: '',
     ville: '',
     pays: '',
@@ -129,6 +132,7 @@ export default function AjouterEvenement() {
 
     const { data: newEvent, error } = await supabase.from('evenements').insert([{
       titre: form.titre,
+      organisateur: form.organisateur || null,
       user_id: session?.user.id || null,
       lieu: `${form.lieu}, ${form.ville}`,
       date: form.date,
@@ -272,7 +276,7 @@ export default function AjouterEvenement() {
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Fin *</label>
               <input type="time" name="heure_fin"
-                onChange={handleChange} style={inputStyle} required />
+                onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
@@ -300,7 +304,17 @@ export default function AjouterEvenement() {
               ))}
             </div>
           </div>
-
+{/* Organisateur */}
+<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={labelStyle}>Organisateur</label>
+          <input
+            name="organisateur"
+            value={form.organisateur}
+            onChange={handleChange}
+            placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
+            style={inputStyle}
+          />
+        </div>
           {/* Thèmes */}
           <div>
             <label style={labelStyle}>Thèmes <span style={{ color: '#555' }}>(plusieurs possible)</span></label>
