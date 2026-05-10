@@ -6,13 +6,13 @@ export default function Apropos() {
   const router = useRouter()
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8' }}>
+    <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
 
       {/* Header */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '20px 24px', borderBottom: '1px solid #2a2a2a',
-        background: '#1A1410'
+        padding: '20px 24px', borderBottom: '1px solid #E8E0D0',
+        background: '#F7F2E8'
       }}>
         <button
           onClick={() => router.push('/')}
@@ -23,7 +23,7 @@ export default function Apropos() {
           ← Retour à la carte
         </button>
         <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 20, fontWeight: 'bold' }}>
-          <span style={{ color: '#F7F2E8' }}>lot</span>
+          <span style={{ color: '#1A1410' }}>lot</span>
           <span style={{ color: '#C8431A' }}>bo</span>
         </div>
         <div style={{ width: 80 }} />
@@ -40,21 +40,21 @@ export default function Apropos() {
           <h1 style={{
             fontFamily: 'serif', fontStyle: 'italic',
             fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 'bold',
-            color: '#F7F2E8', lineHeight: 1.2, marginBottom: 20
+            color: '#1A1410', lineHeight: 1.2, marginBottom: 20
           }}>
             Né en Haïti,<br />
             <span style={{ color: '#C8431A' }}>pour le monde entier.</span>
           </h1>
-          <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8, maxWidth: 560 }}>
+          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, maxWidth: 560 }}>
             Pourquoi est-ce si compliqué de savoir ce qui se passe autour de soi quand on arrive quelque part ? Tu débarques dans une ville, tu cherches où aller, quoi faire, comment te défouler et tu te retrouves à scroller sans fin, à demander à des inconnus, à rater les meilleurs moments faute d'information. Les événements existent. La vie locale existe. Mais elle reste invisible.
           </p>
-          <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8, maxWidth: 560, marginTop: 16 }}>
+          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, maxWidth: 560, marginTop: 16 }}>
             LOTBO est né de cette frustration. Une plateforme unique où tout ce qui se passe près de toi est visible, accessible, en un seul endroit.
           </p>
         </div>
 
         {/* Séparateur */}
-        <div style={{ height: 1, background: '#2a2a2a', marginBottom: 56 }} />
+        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
 
         {/* Mission */}
         <div style={{ marginBottom: 56 }}>
@@ -64,19 +64,19 @@ export default function Apropos() {
           }}>Mission</p>
           <h2 style={{
             fontFamily: 'serif', fontStyle: 'italic',
-            fontSize: 'clamp(20px, 3vw, 28px)', color: '#F7F2E8',
+            fontSize: 'clamp(20px, 3vw, 28px)', color: '#1A1410',
             marginBottom: 16
           }}>Tous les événements, un seul endroit.</h2>
-          <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8, marginBottom: 16 }}>
+          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, marginBottom: 16 }}>
             LOTBO connecte les organisateurs d'événements avec leur communauté locale, qu'ils soient touristes, voyageurs ou résidents. Notre carte interactive permet à chacun de découvrir ce qui se passe autour de lui, en temps réel, partout dans le monde.
           </p>
-          <p style={{ color: '#E8E0D0', fontSize: 15, lineHeight: 1.8 }}>
+          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8 }}>
             La plateforme est ouverte. N'importe qui peut soumettre un événement en 2 minutes. Nous croyons que la culture locale mérite d'être visible, et que les communautés savent mieux que quiconque ce qui se passe chez elles.
           </p>
         </div>
 
         {/* Séparateur */}
-        <div style={{ height: 1, background: '#2a2a2a', marginBottom: 56 }} />
+        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
 
         {/* Valeurs */}
         <div style={{ marginBottom: 56 }}>
@@ -94,12 +94,12 @@ export default function Apropos() {
               <div key={i} style={{
                 display: 'flex', gap: 16,
                 padding: '20px', borderRadius: 12,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid #2a2a2a'
+                background: 'white',
+                border: '1px solid #E8E0D0'
               }}>
                 <span style={{ fontSize: 24, flexShrink: 0, marginTop: 2 }}>{v.icon}</span>
                 <div>
-                  <p style={{ fontWeight: 'bold', fontSize: 15, color: '#F7F2E8', marginBottom: 6 }}>
+                  <p style={{ fontWeight: 'bold', fontSize: 15, color: '#1A1410', marginBottom: 6 }}>
                     {v.titre}
                   </p>
                   <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>
@@ -112,7 +112,7 @@ export default function Apropos() {
         </div>
 
         {/* Séparateur */}
-        <div style={{ height: 1, background: '#2a2a2a', marginBottom: 56 }} />
+        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
 
         {/* Fondateur */}
         <div style={{ marginBottom: 56 }}>
@@ -120,31 +120,34 @@ export default function Apropos() {
             color: '#C8431A', fontSize: 11, fontWeight: 'bold',
             textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24
           }}>Fondateur</p>
-          
-          {/* Photo + infos */}
+
+          {/* Photo */}
           <div style={{
             borderRadius: 16, overflow: 'hidden',
-            border: '1px solid #2a2a2a',
-            marginBottom: 20
+            border: '1px solid #E8E0D0',
+            marginBottom: 20,
+            height: 360,
           }}>
-            <img 
-              src="/hero-fondateur.jpg" 
-              alt="Handgod Abraham" 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hero-fondateur.jpg"
+              alt="Handgod Abraham"
               style={{
-                width: '100%', 
-                height: 320, 
+                width: '100%',
+                height: '100%',
                 objectFit: 'cover',
-                objectPosition: 'center top'
-              }} 
+                objectPosition: 'center top',
+                display: 'block',
+              }}
             />
           </div>
 
           <div style={{
             padding: 24, borderRadius: 12,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid #2a2a2a'
+            background: 'white',
+            border: '1px solid #E8E0D0'
           }}>
-            <p style={{ fontWeight: 'bold', fontSize: 17, color: '#F7F2E8', marginBottom: 4 }}>
+            <p style={{ fontWeight: 'bold', fontSize: 17, color: '#1A1410', marginBottom: 4 }}>
               Handgod Abraham
             </p>
             <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 12, fontWeight: 'bold' }}>
@@ -157,13 +160,13 @@ export default function Apropos() {
         </div>
 
         {/* Séparateur */}
-        <div style={{ height: 1, background: '#2a2a2a', marginBottom: 56 }} />
+        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
 
         {/* CTA */}
         <div style={{ textAlign: 'center' }}>
           <h2 style={{
             fontFamily: 'serif', fontStyle: 'italic',
-            fontSize: 'clamp(20px, 3vw, 28px)', color: '#F7F2E8',
+            fontSize: 'clamp(20px, 3vw, 28px)', color: '#1A1410',
             marginBottom: 12
           }}>Prêt à explorer ?</h2>
           <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24 }}>
@@ -176,8 +179,8 @@ export default function Apropos() {
               fontSize: 14, fontWeight: 'bold', textDecoration: 'none'
             }}>Voir la carte →</a>
             <a href="/ajouter" style={{
-              background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
-              border: '1px solid #2a2a2a',
+              background: 'white', color: '#1A1410',
+              border: '1px solid #E8E0D0',
               padding: '12px 24px', borderRadius: 10,
               fontSize: 14, fontWeight: 'bold', textDecoration: 'none'
             }}>Soumettre un événement</a>
