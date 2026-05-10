@@ -79,6 +79,9 @@ export async function GET() {
         const equipeA = equipeMatch[1].split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
         const equipeB = equipeMatch[2].split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
         const dateStr = equipeMatch[3]
+        // Ignorer les matchs passés
+        const aujourd_hui = new Date().toISOString().split('T')[0]
+        if (dateStr < aujourd_hui) { skipped++; continue }
         const coords = trouverCoords(lieu)
 
         const titre = `🇭🇹 ${equipeA} vs ${equipeB}`
