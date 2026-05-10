@@ -226,6 +226,11 @@ export default function EvenementPage() {
               </span>
             </p>
           )}
+          {ev.organisateur && (
+            <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+              👤 <span style={{ color: '#F7F2E8' }}>{ev.organisateur}</span>
+            </p>
+          )}
           {/* Bouton S'y rendre */}
         {ev.latitude && ev.longitude && (
           
