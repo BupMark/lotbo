@@ -23,6 +23,8 @@ const LIGUES = [
     { id: '4462', nom: 'Rugby World Cup', pays: 'International', emoji: '🏉', sport: 'Sport' },
     // ── MMA ──
     { id: '4443', nom: 'UFC', pays: 'USA', emoji: '🥊', sport: 'Sport' },
+    // ── Coupe du Monde 2026 ──
+  { id: '4429', nom: 'FIFA World Cup 2026', pays: 'International', emoji: '🏆🌍', sport: 'Sport' },
   ]
 
 // Coordonnées approximatives des pays pour les matchs sans ville
