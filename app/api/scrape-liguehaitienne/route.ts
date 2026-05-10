@@ -47,8 +47,8 @@ export async function GET() {
     // Utiliser le markdown rendu — on va parser le texte des liens
     // Format du texte : "Phase • date • EquipeA • Score • EquipeB • Stade"
     const matchTexte = html.match(
-      /(Land des Gabions[^<"]*|Parc Sainte-Thérèse[^<"]*|Parc Saint-Victor[^<"]*|Parc Levelt[^<"]*|Stade Sylvio Cator[^<"]*|Stade de Carrefour[^<"]*)/g
-    ) || []
+        /(Land des Gabions,\s*[^<"\\]{3,30}|Parc Sainte-Thérèse,\s*[^<"\\]{3,30}|Parc Saint-Victor,\s*[^<"\\]{3,30}|Parc Levelt,\s*[^<"\\]{3,30}|Stade Sylvio Cator,\s*[^<"\\]{3,30}|Stade de Carrefour,\s*[^<"\\]{3,30})/g
+      ) || []
 
     // Extraire les slugs dans l'ordre
     const slugsOrdre = [...html.matchAll(/href="(\/fr\/matches\/((?!matches")[^"]+))"/g)]
