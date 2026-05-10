@@ -237,7 +237,17 @@ export default function AjouterEvenement() {
             <input name="titre" placeholder="Ex: Livres en Folie 2026"
               onChange={handleChange} style={inputStyle} required />
           </div>
-
+{/* Organisateur */}
+<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={labelStyle}>Organisateur</label>
+          <input
+            name="organisateur"
+            value={form.organisateur}
+            onChange={handleChange}
+            placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
+            style={inputStyle}
+          />
+        </div>
           {/* Lieu */}
           <div>
             <label style={labelStyle}>Nom du lieu *</label>
@@ -304,17 +314,7 @@ export default function AjouterEvenement() {
               ))}
             </div>
           </div>
-{/* Organisateur */}
-<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={labelStyle}>Organisateur</label>
-          <input
-            name="organisateur"
-            value={form.organisateur}
-            onChange={handleChange}
-            placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
-            style={inputStyle}
-          />
-        </div>
+
           {/* Thèmes */}
           <div>
             <label style={labelStyle}>Thèmes <span style={{ color: '#555' }}>(plusieurs possible)</span></label>
