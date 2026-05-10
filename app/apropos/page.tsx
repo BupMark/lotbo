@@ -120,29 +120,39 @@ export default function Apropos() {
             color: '#C8431A', fontSize: 11, fontWeight: 'bold',
             textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24
           }}>Fondateur</p>
+          
+          {/* Photo + infos */}
           <div style={{
-            display: 'flex', gap: 20, alignItems: 'flex-start',
+            borderRadius: 16, overflow: 'hidden',
+            border: '1px solid #2a2a2a',
+            marginBottom: 20
+          }}>
+            <img 
+              src="/hero-fondateur.jpg" 
+              alt="Handgod Abraham" 
+              style={{
+                width: '100%', 
+                height: 320, 
+                objectFit: 'cover',
+                objectPosition: 'center top'
+              }} 
+            />
+          </div>
+
+          <div style={{
             padding: 24, borderRadius: 12,
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid #2a2a2a'
           }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: '50%',
-              background: '#C8431A', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 22, fontWeight: 'bold', color: '#F7F2E8'
-            }}>H</div>
-            <div>
-              <p style={{ fontWeight: 'bold', fontSize: 17, color: '#F7F2E8', marginBottom: 4 }}>
-                Handgod Abraham
-              </p>
-              <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 12, fontWeight: 'bold' }}>
-                Fondateur · Petit-Goâve, Haïti
-              </p>
-              <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>
-                Poète, entrepreneur et citoyen du monde. Handgod a fondé LOTBO avec la conviction que les événements culturels locaux méritent une vitrine mondiale. Directeur de Stratégie Digital chez Bup Mark, une agence de marketing digital international, et Consultant et Chef de Projet Digital chez Mon Succès Marketing. Il préside des événements culturels comme le Marathon du Livre chaque année en Haïti.
-              </p>
-            </div>
+            <p style={{ fontWeight: 'bold', fontSize: 17, color: '#F7F2E8', marginBottom: 4 }}>
+              Handgod Abraham
+            </p>
+            <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 12, fontWeight: 'bold' }}>
+              Fondateur · Petit-Goâve, Haïti
+            </p>
+            <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>
+              Poète, entrepreneur et citoyen du monde. Handgod a fondé LOTBO avec la conviction que les événements culturels locaux méritent une vitrine mondiale. Directeur de Stratégie Digital chez Bup Mark, une agence de marketing digital international, et Consultant et Chef de Projet Digital chez Mon Succès Marketing. Il préside des événements culturels comme le Marathon du Livre chaque année en Haïti.
+            </p>
           </div>
         </div>
 
