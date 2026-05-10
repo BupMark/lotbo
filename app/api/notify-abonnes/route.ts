@@ -14,32 +14,23 @@ export async function POST(request: Request) {
       .from('abonnements')
       .select('email, ville, categories')
 
-    console.log('DATA ABONNES:', JSON.stringify(abonnes))
-    console.log('LIEU:', lieu)
-    console.log('CATEGORIE:', categorie)
-
-    if (!abonnes || abonnes.length === 0) {
-      return NextResponse.json({ success: true, envoyes: 0 })
-    }
-
-    const normaliser = (s: string) => s.toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim()
-
-    const villeEvent = normaliser(lieu)
-    console.log('Ville event normalisée:', villeEvent)
-
-    const abonnesFiltres = abonnes.filter((ab: any) => {
-      const villeAb = normaliser(ab.ville)
-      const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
-      const catMatch = ab.categories.length === 0 || ab.categories.includes(categorie)
-      console.log(`Abonné ${ab.email}: ville="${villeAb}" match=${villeMatch}, cat match=${catMatch}`)
-      return villeMatch && catMatch
-    })
-
-    console.log('Abonnés filtrés:', abonnesFiltres.length)
-
+      if (!abonnes || abonnes.length === 0) {
+        return NextResponse.json({ success: true, envoyes: 0 })
+      }
+  
+      const normaliser = (s: string) => s.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+  
+      const villeEvent = normaliser(lieu)
+  
+      const abonnesFiltres = abonnes.filter((ab: any) => {
+        const villeAb = normaliser(ab.ville)
+        const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
+        const catMatch = ab.categories.length === 0 || ab.categories.includes(categorie)
+        return villeMatch && catMatch
+      })
     if (abonnesFiltres.length === 0) {
       return NextResponse.json({ success: true, envoyes: 0 })
     }
