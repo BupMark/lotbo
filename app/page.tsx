@@ -105,7 +105,6 @@ export default function Home() {
     markersRef.current = []
 
     evenements.filter(filtreActif).forEach(ev => {
-      // ── Période dans la popup ──
       const periodePopup = afficherPeriode(ev)
 
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
@@ -158,6 +157,15 @@ export default function Home() {
     }
   }
 
+  // ── Style réutilisable pour les liens du drawer ──
+  const drawerLien = (extra?: object) => ({
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '12px 16px', borderRadius: 12,
+    background: 'rgba(255,255,255,0.04)',
+    color: '#F7F2E8', textDecoration: 'none', fontSize: 14,
+    ...extra,
+  })
+
   return (
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
@@ -175,8 +183,10 @@ export default function Home() {
             width: 280, zIndex: 51, background: '#1A1410',
             borderRight: '1px solid #2a2a2a',
             display: 'flex', flexDirection: 'column',
-            padding: '24px 20px', gap: 0,
+            padding: '24px 20px',
+            overflowY: 'auto',
           }}>
+            {/* Logo + fermeture */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
               <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
                 <span style={{ color: '#F7F2E8' }}>lot</span>
@@ -191,6 +201,7 @@ export default function Home() {
               }}>✕</button>
             </div>
 
+            {/* Langue */}
             <div style={{ marginBottom: 24 }}>
               <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
                 Langue
@@ -209,138 +220,100 @@ export default function Home() {
 
             <div style={{ height: 1, background: '#2a2a2a', marginBottom: 24 }} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {/* ── Navigation principale ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+
+              {/* Liens communs à tous */}
+              <a href="/ajouter" onClick={() => setDrawerOuvert(false)} style={{
+                ...drawerLien(),
+                background: 'rgba(200,67,26,0.12)',
+                color: '#C8431A', fontWeight: 'bold',
+              }}>➕ Ajouter un événement</a>
+
+              <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={drawerLien()}>
+                🔔 Recevoir les événements
+              </a>
+
+              <button onClick={async () => {
+                if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                  alert('Notifications non supportées sur ce navigateur.')
+                  return
+                }
+                const permission = await Notification.requestPermission()
+                if (permission !== 'granted') return
+                const reg = await navigator.serviceWorker.ready
+                const sub = await reg.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+                })
+                const key = sub.getKey('p256dh')
+                const authKey = sub.getKey('auth')
+                await fetch('/api/push-subscribe', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    endpoint: sub.endpoint,
+                    p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
+                    auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
+                  })
+                })
+                alert('✅ Notifications activées !')
+                setDrawerOuvert(false)
+              }} style={{
+                ...drawerLien() as any,
+                border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%',
+              }}>
+                📲 Activer les notifications
+              </button>
+
+              {/* Séparateur */}
+              <div style={{ height: 1, background: '#2a2a2a', margin: '8px 0' }} />
+
+              {/* Liens selon état auth */}
               {!user ? (
-                <>
-                  <a href="/login" onClick={() => setDrawerOuvert(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(200,67,26,0.12)',
-                    color: '#C8431A', textDecoration: 'none',
-                    fontSize: 14, fontWeight: 'bold'
-                  }}>🔑 Se connecter</a>
-                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                  }}>🔔 Recevoir les événements</a>
-                  <button onClick={async () => {
-                    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                      alert('Notifications non supportées sur ce navigateur.')
-                      return
-                    }
-                    const permission = await Notification.requestPermission()
-                    if (permission !== 'granted') return
-                    const reg = await navigator.serviceWorker.ready
-                    const sub = await reg.pushManager.subscribe({
-                      userVisibleOnly: true,
-                      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-                    })
-                    const key = sub.getKey('p256dh')
-                    const authKey = sub.getKey('auth')
-                    await fetch('/api/push-subscribe', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        endpoint: sub.endpoint,
-                        p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
-                        auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
-                      })
-                    })
-                    alert('✅ Notifications activées !')
-                    setDrawerOuvert(false)
-                  }} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#F7F2E8', border: 'none',
-                    fontSize: 14, cursor: 'pointer', textAlign: 'left' as const,
-                    width: '100%'
-                  }}>
-                    📲 Activer les notifications
-                  </button>
-                </>
+                <a href="/login" onClick={() => setDrawerOuvert(false)} style={drawerLien()}>
+                  🔑 Se connecter
+                </a>
               ) : (
                 <>
-                  <a href="/profil" onClick={() => setDrawerOuvert(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                  }}>👤 Mon profil</a>
-                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                  }}>🔔 Recevoir les événements</a>
-                  <button onClick={async () => {
-                    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                      alert('Notifications non supportées sur ce navigateur.')
-                      return
-                    }
-                    const permission = await Notification.requestPermission()
-                    if (permission !== 'granted') return
-                    const reg = await navigator.serviceWorker.ready
-                    const sub = await reg.pushManager.subscribe({
-                      userVisibleOnly: true,
-                      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-                    })
-                    const key = sub.getKey('p256dh')
-                    const authKey = sub.getKey('auth')
-                    await fetch('/api/push-subscribe', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        endpoint: sub.endpoint,
-                        p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
-                        auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
-                      })
-                    })
-                    alert('✅ Notifications activées !')
-                    setDrawerOuvert(false)
-                  }} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#F7F2E8', border: 'none',
-                    fontSize: 14, cursor: 'pointer', textAlign: 'left' as const,
-                    width: '100%'
-                  }}>
-                    📲 Activer les notifications
-                  </button>
+                  <a href="/profil" onClick={() => setDrawerOuvert(false)} style={drawerLien()}>
+                    👤 Mon profil
+                  </a>
                   {isAdmin && (
-                    <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#D4A820', textDecoration: 'none', fontSize: 14
-                    }}>⚙️ Panel admin</a>
+                    <a href="/admin" onClick={() => setDrawerOuvert(false)} style={drawerLien({ color: '#D4A820' })}>
+                      ⚙️ Panel admin
+                    </a>
                   )}
-                  <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#F7F2E8', textDecoration: 'none', fontSize: 14
-                  }}>ℹ️ À propos</a>
                   <button onClick={async () => {
                     await supabase.auth.signOut()
                     setUser(null)
                     setDrawerOuvert(false)
                   }} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#8C5A40', border: 'none',
-                    fontSize: 14, cursor: 'pointer', textAlign: 'left'
-                  }}>🚪 Déconnexion</button>
+                    ...drawerLien() as any,
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    width: '100%', color: '#8C5A40',
+                  }}>
+                    🚪 Déconnexion
+                  </button>
                 </>
               )}
+
+              {/* Séparateur */}
+              <div style={{ height: 1, background: '#2a2a2a', margin: '8px 0' }} />
+
+              {/* ── Liens toujours visibles — À propos + Confidentialité ── */}
+              <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={drawerLien()}>
+                ℹ️ À propos
+              </a>
+              <a href="/politique-confidentialite" onClick={() => setDrawerOuvert(false)} style={drawerLien({ color: '#8C5A40', fontSize: 13 })}>
+                🔒 Confidentialité
+              </a>
+
             </div>
 
-            <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-              <p style={{ color: '#2a2a2a', fontSize: 11, textAlign: 'center' }}>
+            {/* Footer drawer */}
+            <div style={{ paddingTop: 24, borderTop: '1px solid #2a2a2a', marginTop: 16 }}>
+              <p style={{ color: '#444', fontSize: 11, textAlign: 'center' }}>
                 Lotbo v1.0 · né en Haïti 🇭🇹
               </p>
             </div>
@@ -561,7 +534,7 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════
-          VUE LISTE — avec période multi-jours
+          VUE LISTE
       ══════════════════════════════════════ */}
       {mode === 'liste' && (
         <div className="lotbo-vue-liste" style={{
@@ -595,7 +568,6 @@ export default function Home() {
                   color: '#1A1410'
                 }}>{ev.titre}</p>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                {/* ── Période : mono ou multi-jours ── */}
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>
                   📅 {afficherPeriode(ev)}
                 </p>
