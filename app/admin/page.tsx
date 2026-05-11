@@ -49,6 +49,16 @@ export default function Admin() {
         body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie })
       }).catch(() => {})
     }
+    // Push notification
+    fetch('/api/push-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        titre: ev.titre,
+        lieu: ev.lieu,
+        url: `https://app.lotbo.app/evenement/${ev.id}`
+      })
+    }).catch(() => {})
   }
 
   const rejeter = async (id: string) => {
