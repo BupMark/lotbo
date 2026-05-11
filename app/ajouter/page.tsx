@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const EVENT_TYPES = [
@@ -56,12 +56,24 @@ const labelStyle = {
   marginBottom: 4,
 }
 
-// ── Helper : formate une date YYYY-MM-DD en "14 juin 2026" ──
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
   const [year, month, day] = dateStr.split('-')
   const mois = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
   return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
+}
+
+interface Suggestion {
+  place_name: string
+  center: [number, number]
+  text: string
+  context?: { id: string; text: string }[]
+}
+
+interface CoordsPreview {
+  longitude: number
+  latitude: number
+  adresse: string
 }
 
 export default function AjouterEvenement() {
@@ -71,6 +83,16 @@ export default function AjouterEvenement() {
   const [selectedType, setSelectedType] = useState<number | null>(null)
   const [selectedThemes, setSelectedThemes] = useState<number[]>([])
   const [multiJours, setMultiJours] = useState(false)
+
+  // ── Autocomplétion ────────────────────────────────────────────────────────
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [coordsPreview, setCoordsPreview] = useState<CoordsPreview | null>(null)
+  const [adresseConfirmee, setAdresseConfirmee] = useState(false)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // ─────────────────────────────────────────────────────────────────────────
+
   const [form, setForm] = useState({
     titre: '',
     organisateur: '',
@@ -87,8 +109,71 @@ export default function AjouterEvenement() {
     prix: 'gratuit'
   })
 
+  // Fermer suggestions en cliquant ailleurs
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  // ── Autocomplétion lieu ───────────────────────────────────────────────────
+  const handleLieuChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setForm(f => ({ ...f, lieu: value }))
+    setAdresseConfirmee(false)
+    setCoordsPreview(null)
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (value.length < 3) { setSuggestions([]); setShowSuggestions(false); return }
+
+    debounceRef.current = setTimeout(async () => {
+      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+      const query = `${value}${form.ville ? ', ' + form.ville : ''}${form.pays ? ', ' + form.pays : ''}`
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=5&language=fr`
+      try {
+        const res = await fetch(url)
+        const data = await res.json()
+        if (data.features?.length > 0) {
+          setSuggestions(data.features)
+          setShowSuggestions(true)
+        }
+      } catch {}
+    }, 350)
+  }
+
+  // ── Sélection d'une suggestion ────────────────────────────────────────────
+  const handleSelectSuggestion = (suggestion: Suggestion) => {
+    const [longitude, latitude] = suggestion.center
+
+    // Extraire ville et pays depuis le contexte Mapbox
+    let ville = form.ville
+    let pays = form.pays
+    if (suggestion.context) {
+      const villeCtx = suggestion.context.find(c => c.id.startsWith('place') || c.id.startsWith('locality'))
+      const paysCtx = suggestion.context.find(c => c.id.startsWith('country'))
+      if (villeCtx) ville = villeCtx.text
+      if (paysCtx) pays = paysCtx.text
+    }
+
+    setForm(f => ({
+      ...f,
+      lieu: suggestion.text || suggestion.place_name.split(',')[0],
+      ville,
+      pays,
+    }))
+
+    setCoordsPreview({ longitude, latitude, adresse: suggestion.place_name })
+    setAdresseConfirmee(false)
+    setSuggestions([])
+    setShowSuggestions(false)
   }
 
   const toggleTheme = (id: number) => {
@@ -98,12 +183,17 @@ export default function AjouterEvenement() {
   }
 
   const geocoder = async () => {
+    // Si l'utilisateur a déjà confirmé via la mini-carte, utiliser ces coords
+    if (coordsPreview && adresseConfirmee) {
+      return { longitude: coordsPreview.longitude, latitude: coordsPreview.latitude }
+    }
+    // Sinon géocoder normalement
     const adresseComplete = `${form.lieu}, ${form.ville}, ${form.pays}`
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(adresseComplete)}.json?access_token=${token}&limit=1`
     const res = await fetch(url)
     const data = await res.json()
-    if (data.features && data.features.length > 0) {
+    if (data.features?.length > 0) {
       const [longitude, latitude] = data.features[0].center
       return { longitude, latitude }
     }
@@ -118,6 +208,11 @@ export default function AjouterEvenement() {
     }
     if (multiJours && form.date_fin && form.date_fin < form.date) {
       alert('La date de fin doit être après la date de début.')
+      return
+    }
+    // Si une preview existe mais n'est pas confirmée, demander confirmation
+    if (coordsPreview && !adresseConfirmee) {
+      alert('Vérifie l\'emplacement sur la mini-carte et clique sur "Confirmer cet emplacement".')
       return
     }
     setLoading(true)
@@ -145,7 +240,6 @@ export default function AjouterEvenement() {
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
 
-    // ─── INSERT sans .select() — évite le RLS SELECT post-INSERT ─────────────
     const { error } = await supabase.from('evenements').insert([{
       titre: form.titre,
       organisateur: form.organisateur || null,
@@ -170,7 +264,6 @@ export default function AjouterEvenement() {
       statut: 'en_attente',
     }])
 
-    // ─── Notification admin — avec secret interne ─────────────────────────────
     if (!error) {
       fetch('/api/notify-admin', {
         method: 'POST',
@@ -190,7 +283,6 @@ export default function AjouterEvenement() {
     }
 
     setLoading(false)
-
     if (error) {
       alert('Erreur: ' + error.message)
     } else {
@@ -238,6 +330,11 @@ export default function AjouterEvenement() {
     )
   }
 
+  // ── URL mini-carte statique Mapbox ────────────────────────────────────────
+  const miniCarteUrl = coordsPreview
+    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+C8431A(${coordsPreview.longitude},${coordsPreview.latitude})/${coordsPreview.longitude},${coordsPreview.latitude},14,0/600x200@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
+    : null
+
   return (
     <main style={{ minHeight: '100dvh', background: '#1A1410', padding: '32px 16px' }}>
       <div style={{ maxWidth: 520, margin: '0 auto' }}>
@@ -270,21 +367,150 @@ export default function AjouterEvenement() {
               style={inputStyle} />
           </div>
 
-          <div>
+          {/* ── Lieu avec autocomplétion ─────────────────────────────────── */}
+          <div style={{ position: 'relative' }} ref={suggestionsRef}>
             <label style={labelStyle}>Nom du lieu *</label>
-            <input name="lieu" placeholder="Ex: El Rancho Convention Center"
-              onChange={handleChange} style={inputStyle} required />
+            <input
+              name="lieu"
+              value={form.lieu}
+              placeholder="Ex: El Rancho Convention Center"
+              onChange={handleLieuChange}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              style={{
+                ...inputStyle,
+                border: adresseConfirmee ? '1px solid #2D9E6B' : coordsPreview ? '1px solid #D4A820' : '1px solid #333',
+              }}
+              required
+              autoComplete="off"
+            />
+            {adresseConfirmee && (
+              <span style={{
+                position: 'absolute', right: 14, top: 36,
+                color: '#2D9E6B', fontSize: 16
+              }}>✓</span>
+            )}
+
+            {/* Dropdown suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0,
+                zIndex: 100, marginTop: 4,
+                background: '#1A1410',
+                border: '1px solid #2a2a2a',
+                borderRadius: 10,
+                overflow: 'hidden',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              }}>
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleSelectSuggestion(s)}
+                    style={{
+                      width: '100%', textAlign: 'left',
+                      padding: '10px 14px',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: i < suggestions.length - 1 ? '1px solid #2a2a2a' : 'none',
+                      color: '#F7F2E8', fontSize: 13,
+                      cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', gap: 2,
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <span style={{ fontWeight: 'bold', fontSize: 13 }}>
+                      {s.text || s.place_name.split(',')[0]}
+                    </span>
+                    <span style={{ color: '#8C5A40', fontSize: 11 }}>
+                      {s.place_name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* ── Mini-carte de confirmation ────────────────────────────────── */}
+          {coordsPreview && miniCarteUrl && (
+            <div style={{
+              borderRadius: 12,
+              overflow: 'hidden',
+              border: adresseConfirmee ? '2px solid #2D9E6B' : '2px solid #D4A820',
+            }}>
+              <img
+                src={miniCarteUrl}
+                alt="Emplacement sur la carte"
+                style={{ width: '100%', display: 'block', height: 180, objectFit: 'cover' }}
+              />
+              <div style={{
+                background: 'rgba(26,20,16,0.95)',
+                padding: '12px 14px',
+                display: 'flex', flexDirection: 'column', gap: 8,
+              }}>
+                <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>
+                  📍 {coordsPreview.adresse}
+                </p>
+                {!adresseConfirmee ? (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => setAdresseConfirmee(true)}
+                      style={{
+                        flex: 2, background: '#2D9E6B', color: 'white',
+                        border: 'none', borderRadius: 8, padding: '9px 12px',
+                        fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                      }}
+                    >
+                      ✓ Confirmer cet emplacement
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCoordsPreview(null)
+                        setAdresseConfirmee(false)
+                        setForm(f => ({ ...f, lieu: '' }))
+                      }}
+                      style={{
+                        flex: 1, background: 'rgba(255,255,255,0.06)', color: '#8C5A40',
+                        border: '1px solid #333', borderRadius: 8, padding: '9px 12px',
+                        fontSize: 13, cursor: 'pointer',
+                      }}
+                    >
+                      Corriger
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: '#2D9E6B', fontSize: 13, fontWeight: 'bold' }}>
+                      ✓ Emplacement confirmé
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAdresseConfirmee(false)}
+                      style={{
+                        background: 'none', border: 'none',
+                        color: '#8C5A40', fontSize: 12, cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Ville *</label>
-              <input name="ville" placeholder="Ex: Pétion-Ville"
+              <input name="ville" value={form.ville} placeholder="Ex: Pétion-Ville"
                 onChange={handleChange} style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Pays *</label>
-              <input name="pays" placeholder="Ex: Haïti"
+              <input name="pays" value={form.pays} placeholder="Ex: Haïti"
                 onChange={handleChange} style={inputStyle} required />
             </div>
           </div>
