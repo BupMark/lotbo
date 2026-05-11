@@ -47,6 +47,7 @@ const inputStyle = {
   fontSize: 14,
   outline: 'none',
   width: '100%',
+  colorScheme: 'dark' as const,  // ← ajouter ici
 }
 
 const labelStyle = {
@@ -55,12 +56,22 @@ const labelStyle = {
   marginBottom: 4,
 }
 
+
+// ── Helper : formate une date YYYY-MM-DD en "14 juin 2026" ──
+function formatDate(dateStr: string): string {
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('-')
+  const mois = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
+  return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
+}
+
 export default function AjouterEvenement() {
   const [loading, setLoading] = useState(false)
   const [succes, setSucces] = useState(false)
   const [image, setImage] = useState<File | null>(null)
   const [selectedType, setSelectedType] = useState<number | null>(null)
   const [selectedThemes, setSelectedThemes] = useState<number[]>([])
+  const [multiJours, setMultiJours] = useState(false)
   const [form, setForm] = useState({
     titre: '',
     organisateur: '',
@@ -68,6 +79,7 @@ export default function AjouterEvenement() {
     ville: '',
     pays: '',
     date: '',
+    date_fin: '',
     heure_debut: '',
     heure_fin: '',
     description: '',
@@ -105,6 +117,10 @@ export default function AjouterEvenement() {
       alert('Choisis un type d\'événement.')
       return
     }
+    if (multiJours && form.date_fin && form.date_fin < form.date) {
+      alert('La date de fin doit être après la date de début.')
+      return
+    }
     setLoading(true)
 
     const coords = await geocoder()
@@ -127,16 +143,10 @@ export default function AjouterEvenement() {
       }
     }
 
-    // Récupère le user si connecté, null sinon
     const { data: { session } } = await supabase.auth.getSession()
-
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
 
-    // ─── INSERT sans .select() ───────────────────────────────────────────────
-    // IMPORTANT : pas de .select().single() ici — le SELECT post-INSERT
-    // déclencherait la policy RLS lecture (statut = 'approuve') et bloquerait
-    // les soumissions anonymes dont le statut est 'en_attente'.
-    // ────────────────────────────────────────────────────────────────────────
+    // ─── INSERT sans .select() — évite le RLS SELECT post-INSERT ─────────────
     const { error } = await supabase.from('evenements').insert([{
       titre: form.titre,
       organisateur: form.organisateur || null,
@@ -146,6 +156,7 @@ export default function AjouterEvenement() {
       pays: form.pays,
       date: form.date,
       date_debut: form.date,
+      date_fin: multiJours && form.date_fin ? form.date_fin : null,
       heure_debut: form.heure_debut,
       heure_fin: form.heure_fin || null,
       categorie: categorieNom,
@@ -157,11 +168,9 @@ export default function AjouterEvenement() {
       acces: form.acces,
       prix: form.prix,
       image_url: image_url,
-      statut: 'en_attente', // ← toujours en_attente, jamais publié directement
+      statut: 'en_attente',
     }])
 
-    // Notification admin — sans l'ID de l'événement (non récupérable sans SELECT)
-    // On envoie les infos du formulaire directement
     if (!error) {
       fetch('/api/notify-admin', {
         method: 'POST',
@@ -169,10 +178,12 @@ export default function AjouterEvenement() {
         body: JSON.stringify({
           titre: form.titre,
           lieu: `${form.lieu}, ${form.ville}`,
-          date: form.date,
+          date: multiJours && form.date_fin
+            ? `${formatDate(form.date)} → ${formatDate(form.date_fin)}`
+            : form.date,
           categorie: categorieNom,
         })
-      }).catch(() => {}) // silencieux si échec
+      }).catch(() => {})
     }
 
     setLoading(false)
@@ -200,14 +211,25 @@ export default function AjouterEvenement() {
           <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
             Ton événement est en attente de validation. Il apparaîtra sur la carte dès qu'il sera approuvé.
           </p>
-          <a href="/" style={{
-            background: '#C8431A', color: '#F7F2E8',
-            padding: '12px 24px', borderRadius: 10,
-            fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
-            display: 'inline-block'
-          }}>
-            Retour à la carte
-          </a>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a href="/" style={{
+              background: '#C8431A', color: '#F7F2E8',
+              padding: '12px 24px', borderRadius: 10,
+              fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
+              display: 'block', textAlign: 'center'
+            }}>
+              Retour à la carte
+            </a>
+            <a href="/ajouter" style={{
+              background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
+              border: '1px solid #333',
+              padding: '12px 24px', borderRadius: 10,
+              fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
+              display: 'block', textAlign: 'center'
+            }}>
+              + Ajouter un autre événement
+            </a>
+          </div>
         </div>
       </main>
     )
@@ -272,22 +294,65 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
-          {/* Date */}
+          {/* ── DATES ───────────────────────────────────────── */}
+
+          {/* Toggle multi-jours */}
           <div>
-            <label style={labelStyle}>Date *</label>
-            <input type="date" name="date"
-              onChange={handleChange} style={inputStyle} required />
+            <button
+              type="button"
+              onClick={() => {
+                setMultiJours(!multiJours)
+                if (multiJours) setForm(f => ({ ...f, date_fin: '' }))
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: multiJours ? 'rgba(200,67,26,0.12)' : 'rgba(255,255,255,0.04)',
+                border: multiJours ? '1px solid #C8431A' : '1px solid #333',
+                borderRadius: 10, padding: '10px 14px',
+                color: multiJours ? '#F7F2E8' : '#8C5A40',
+                fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left'
+              }}
+            >
+              <span style={{ fontSize: 16 }}>{multiJours ? '✅' : '☐'}</span>
+              <span>Événement sur plusieurs jours</span>
+            </button>
+          </div>
+
+          {/* Date début + fin */}
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>{multiJours ? 'Date de début *' : 'Date *'}</label>
+              <input
+                type="date" name="date"
+                onChange={handleChange}
+                style={inputStyle} required
+              />
+            </div>
+            {multiJours && (
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Date de fin *</label>
+                <input
+                  type="date" name="date_fin"
+                  min={form.date || undefined}
+                  onChange={handleChange}
+                  style={inputStyle}
+                  required={multiJours}
+                />
+              </div>
+            )}
           </div>
 
           {/* Heures */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Début *</label>
+              <label style={labelStyle}>Heure de début *</label>
               <input type="time" name="heure_debut"
                 onChange={handleChange} style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Fin <span style={{ color: '#555' }}>(optionnel)</span></label>
+              <label style={labelStyle}>
+                Heure de fin <span style={{ color: '#555' }}>(optionnel)</span>
+              </label>
               <input type="time" name="heure_fin"
                 onChange={handleChange} style={inputStyle} />
             </div>

@@ -11,6 +11,24 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
 const CATEGORIES = ['Toutes', 'Festival', 'Musique', 'Art', 'Sport', 'Gastronomie', 'Culture', 'Conference', 'Autre']
 
+// ── Helper : formate une date YYYY-MM-DD en "14 juin 2026" ──
+function formatDate(dateStr: string): string {
+  if (!dateStr) return dateStr
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  const [year, month, day] = parts
+  const mois = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
+  return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
+}
+
+// ── Helper : affiche la période selon mono ou multi-jours ──
+function afficherPeriode(ev: any): string {
+  if (ev.date_fin && ev.date_fin !== ev.date) {
+    return `${formatDate(ev.date)} → ${formatDate(ev.date_fin)}`
+  }
+  return formatDate(ev.date) || ev.date || ''
+}
+
 export default function Home() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
@@ -87,20 +105,24 @@ export default function Home() {
     markersRef.current = []
 
     evenements.filter(filtreActif).forEach(ev => {
+      // ── Période dans la popup ──
+      const periodePopup = afficherPeriode(ev)
+
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
         '<div style="font-family:sans-serif;padding:12px;background:#1A1410;color:#F7F2E8;border-radius:8px;min-width:200px">' +
         (ev.image_url ? '<img src="' + ev.image_url + '" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />' : '') +
         '<strong style="font-size:16px;color:#F7F2E8">' + ev.titre + '</strong>' +
         '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
         '<span style="background:#C8431A;color:#F7F2E8;padding:2px 8px;border-radius:20px;font-size:11px">' + ev.categorie + '</span>' +
+        (ev.date_fin && ev.date_fin !== ev.date ? '<span style="background:rgba(212,168,32,0.2);color:#D4A820;padding:2px 8px;border-radius:20px;font-size:11px">🗓️ Multi-jours</span>' : '') +
         '<span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">' + (ev.acces || 'public') + '</span>' +
         '<span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">' + (ev.prix || 'gratuit') + '</span>' +
         '</div>' +
         '<div style="margin-top:10px;font-size:13px;color:#E8E0D0;line-height:1.6">' +
         '📍 ' + ev.lieu + '<br/>' +
-        '📅 ' + ev.date + '<br/>' +
-        (ev.heure_fin ? '⏰ Fin : ' + ev.heure_fin : '') +
-        (ev.description ? '<br/><br/>' + ev.description : '') +
+        '📅 ' + periodePopup + '<br/>' +
+        (ev.heure_debut ? '🕐 ' + ev.heure_debut + (ev.heure_fin ? ' → ' + ev.heure_fin : '') + '<br/>' : '') +
+        (ev.description ? '<br/>' + ev.description : '') +
         (ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#C8431A">🔗 Plus de détails</a>' : '') +
         '<div style="display:flex;gap:8px;margin-top:12px">' +
         '<a href="/evenement/' + ev.id + '" style="flex:1;display:block;background:#C8431A;color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">Voir →</a>' +
@@ -144,56 +166,43 @@ export default function Home() {
       ══════════════════════════════════════ */}
       {drawerOuvert && (
         <>
-          <div
-            onClick={() => setDrawerOuvert(false)}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 50,
-              background: 'rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(4px)',
-            }}
-          />
+          <div onClick={() => setDrawerOuvert(false)} style={{
+            position: 'fixed', inset: 0, zIndex: 50,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          }} />
           <div style={{
             position: 'fixed', top: 0, left: 0, bottom: 0,
-            width: 280, zIndex: 51,
-            background: '#1A1410',
+            width: 280, zIndex: 51, background: '#1A1410',
             borderRight: '1px solid #2a2a2a',
             display: 'flex', flexDirection: 'column',
-            padding: '24px 20px',
-            gap: 0,
+            padding: '24px 20px', gap: 0,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
               <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
                 <span style={{ color: '#F7F2E8' }}>lot</span>
                 <span style={{ color: '#C8431A' }}>bo</span>
               </div>
-              <button
-                onClick={() => setDrawerOuvert(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.06)', border: 'none',
-                  color: '#F7F2E8', borderRadius: 999,
-                  width: 32, height: 32, fontSize: 16,
-                  cursor: 'pointer', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center'
-                }}>✕</button>
+              <button onClick={() => setDrawerOuvert(false)} style={{
+                background: 'rgba(255,255,255,0.06)', border: 'none',
+                color: '#F7F2E8', borderRadius: 999,
+                width: 32, height: 32, fontSize: 16,
+                cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'center'
+              }}>✕</button>
             </div>
 
             <div style={{ marginBottom: 24 }}>
               <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
                 Langue
               </p>
-              <select
-                value={langue}
-                onChange={e => setLangue(e.target.value as Langue)}
-                style={{
-                  background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
-                  border: '1px solid #2a2a2a', borderRadius: 10,
-                  padding: '10px 12px', fontSize: 14,
-                  cursor: 'pointer', outline: 'none', width: '100%'
-                }}>
+              <select value={langue} onChange={e => setLangue(e.target.value as Langue)} style={{
+                background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
+                border: '1px solid #2a2a2a', borderRadius: 10,
+                padding: '10px 12px', fontSize: 14,
+                cursor: 'pointer', outline: 'none', width: '100%'
+              }}>
                 {Object.entries(langues).map(([code, info]) => (
-                  <option key={code} value={code}>
-                    {info.drapeau} {(info as any).nom ?? code}
-                  </option>
+                  <option key={code} value={code}>{info.drapeau} {(info as any).nom ?? code}</option>
                 ))}
               </select>
             </div>
@@ -216,41 +225,39 @@ export default function Home() {
                     background: 'rgba(255,255,255,0.04)',
                     color: '#F7F2E8', textDecoration: 'none', fontSize: 14
                   }}>🔔 Recevoir les événements</a>
-                  <button
-                    onClick={async () => {
-                      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                        alert('Notifications non supportées sur ce navigateur.')
-                        return
-                      }
-                      const permission = await Notification.requestPermission()
-                      if (permission !== 'granted') return
-                      const reg = await navigator.serviceWorker.ready
-                      const sub = await reg.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+                  <button onClick={async () => {
+                    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                      alert('Notifications non supportées sur ce navigateur.')
+                      return
+                    }
+                    const permission = await Notification.requestPermission()
+                    if (permission !== 'granted') return
+                    const reg = await navigator.serviceWorker.ready
+                    const sub = await reg.pushManager.subscribe({
+                      userVisibleOnly: true,
+                      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+                    })
+                    const key = sub.getKey('p256dh')
+                    const authKey = sub.getKey('auth')
+                    await fetch('/api/push-subscribe', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        endpoint: sub.endpoint,
+                        p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
+                        auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
                       })
-                      const key = sub.getKey('p256dh')
-                      const authKey = sub.getKey('auth')
-                      await fetch('/api/push-subscribe', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          endpoint: sub.endpoint,
-                          p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
-                          auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
-                        })
-                      })
-                      alert('✅ Notifications activées !')
-                      setDrawerOuvert(false)
-                    }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#F7F2E8', border: 'none',
-                      fontSize: 14, cursor: 'pointer', textAlign: 'left' as const,
-                      width: '100%'
-                    }}>
+                    })
+                    alert('✅ Notifications activées !')
+                    setDrawerOuvert(false)
+                  }} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#F7F2E8', border: 'none',
+                    fontSize: 14, cursor: 'pointer', textAlign: 'left' as const,
+                    width: '100%'
+                  }}>
                     📲 Activer les notifications
                   </button>
                 </>
@@ -268,46 +275,41 @@ export default function Home() {
                     background: 'rgba(255,255,255,0.04)',
                     color: '#F7F2E8', textDecoration: 'none', fontSize: 14
                   }}>🔔 Recevoir les événements</a>
-                  
-                  {/* Notifications push */}
-                  <button
-                    onClick={async () => {
-                      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                        alert('Notifications non supportées sur ce navigateur.')
-                        return
-                      }
-                      const permission = await Notification.requestPermission()
-                      if (permission !== 'granted') return
-                      const reg = await navigator.serviceWorker.ready
-                      const sub = await reg.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+                  <button onClick={async () => {
+                    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                      alert('Notifications non supportées sur ce navigateur.')
+                      return
+                    }
+                    const permission = await Notification.requestPermission()
+                    if (permission !== 'granted') return
+                    const reg = await navigator.serviceWorker.ready
+                    const sub = await reg.pushManager.subscribe({
+                      userVisibleOnly: true,
+                      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+                    })
+                    const key = sub.getKey('p256dh')
+                    const authKey = sub.getKey('auth')
+                    await fetch('/api/push-subscribe', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        endpoint: sub.endpoint,
+                        p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
+                        auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
                       })
-                      const key = sub.getKey('p256dh')
-                      const authKey = sub.getKey('auth')
-                      await fetch('/api/push-subscribe', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          endpoint: sub.endpoint,
-                          p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
-                          auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
-                        })
-                      })
-                      alert('✅ Notifications activées !')
-                      setDrawerOuvert(false)
-                    }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#F7F2E8', border: 'none',
-                      fontSize: 14, cursor: 'pointer', textAlign: 'left' as const,
-                      width: '100%'
-                    }}>
+                    })
+                    alert('✅ Notifications activées !')
+                    setDrawerOuvert(false)
+                  }} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#F7F2E8', border: 'none',
+                    fontSize: 14, cursor: 'pointer', textAlign: 'left' as const,
+                    width: '100%'
+                  }}>
                     📲 Activer les notifications
                   </button>
-
                   {isAdmin && (
                     <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{
                       display: 'flex', alignItems: 'center', gap: 12,
@@ -347,36 +349,24 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════
-          HEADER — fond clair #F7F2E8
+          HEADER
       ══════════════════════════════════════ */}
       <div style={{
         position: 'relative', zIndex: 20,
         display: 'flex', flexDirection: 'column',
         gap: 8, padding: '10px 12px', flexShrink: 0,
-        background: '#F7F2E8',
-        borderBottom: '1px solid #E8E0D0',
+        background: '#F7F2E8', borderBottom: '1px solid #E8E0D0',
       }}>
-
-        {/* Ligne 1 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button className="lotbo-hamburger" onClick={() => setDrawerOuvert(true)} style={{
+            background: '#1A1410', border: 'none',
+            color: '#F7F2E8', borderRadius: 999,
+            padding: '6px 10px', fontSize: 16,
+            cursor: 'pointer', flexShrink: 0
+          }}>☰</button>
 
-          {/* ☰ Hamburger — mobile uniquement */}
-          <button
-            className="lotbo-hamburger"
-            onClick={() => setDrawerOuvert(true)}
-            style={{
-              background: '#1A1410', border: 'none',
-              color: '#F7F2E8', borderRadius: 999,
-              padding: '6px 10px', fontSize: 16,
-              cursor: 'pointer', flexShrink: 0
-            }}>
-            ☰
-          </button>
-
-          {/* Switcher Carte/Liste — desktop uniquement */}
           <div className="lotbo-mode-header" style={{
-            gap: 2, background: '#E8E0D0',
-            borderRadius: 999, padding: 3, flexShrink: 0
+            gap: 2, background: '#E8E0D0', borderRadius: 999, padding: 3, flexShrink: 0
           }}>
             <button onClick={() => setMode('carte')} style={{
               padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold',
@@ -392,42 +382,30 @@ export default function Home() {
             }}>📋 {t.carte.liste}</button>
           </div>
 
-          {/* Logo — centré */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <div style={{
-              padding: '5px 16px',
-              fontSize: 18, fontWeight: 'bold',
-              fontFamily: 'serif', fontStyle: 'italic'
-            }}>
+            <div style={{ padding: '5px 16px', fontSize: 18, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic' }}>
               <span style={{ color: '#1A1410' }}>lot</span>
               <span style={{ color: '#C8431A' }}>bo</span>
             </div>
           </div>
 
-          {/* Actions droite */}
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
-
-            {/* À propos — desktop uniquement */}
             <a href="/apropos" className="lotbo-mode-header" style={{
-              color: '#8C5A40', fontSize: 12,
-              textDecoration: 'none', whiteSpace: 'nowrap'
+              color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap'
             }}>À propos</a>
 
-            {/* Langue — desktop uniquement */}
             <div className="lotbo-langue-desktop">
-              <select value={langue} onChange={e => setLangue(e.target.value as Langue)}
-                style={{
-                  background: '#E8E0D0', color: '#1A1410',
-                  border: '1px solid #E8E0D0', borderRadius: 999,
-                  padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none'
-                }}>
+              <select value={langue} onChange={e => setLangue(e.target.value as Langue)} style={{
+                background: '#E8E0D0', color: '#1A1410',
+                border: '1px solid #E8E0D0', borderRadius: 999,
+                padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none'
+              }}>
                 {Object.entries(langues).map(([code, info]) => (
                   <option key={code} value={code}>{info.drapeau}</option>
                 ))}
               </select>
             </div>
 
-            {/* Desktop : Connexion / Profil / Admin */}
             <div className="lotbo-mode-header" style={{ gap: 6 }}>
               {user ? (
                 <>
@@ -445,15 +423,13 @@ export default function Home() {
                 </>
               ) : (
                 <a href="/login" style={{
-                  background: '#1A1410', color: '#F7F2E8',
-                  border: 'none',
+                  background: '#1A1410', color: '#F7F2E8', border: 'none',
                   padding: '6px 12px', borderRadius: 999,
                   fontSize: 12, fontWeight: 'bold', textDecoration: 'none'
                 }}>Connexion</a>
               )}
             </div>
 
-            {/* + Ajouter — toujours visible */}
             <a href="/ajouter" style={{
               background: '#C8431A', color: 'white', padding: '6px 12px',
               borderRadius: 999, fontSize: 12, fontWeight: 'bold',
@@ -462,7 +438,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Ligne 2 : Recherche + Filtres */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             type="text"
@@ -517,20 +492,14 @@ export default function Home() {
           maxHeight: 'calc(100dvh - 130px)', overflowY: 'auto',
           boxShadow: '0 4px 24px rgba(26,20,16,0.12)'
         }}>
-
-          {/* Catégorie */}
           <div>
             <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Catégorie</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {CATEGORIES.map(cat => (
-                <button key={cat} onClick={() => setCategorie(cat)} style={btnStyle(categorie === cat)}>
-                  {cat}
-                </button>
+                <button key={cat} onClick={() => setCategorie(cat)} style={btnStyle(categorie === cat)}>{cat}</button>
               ))}
             </div>
           </div>
-
-          {/* Accès */}
           <div>
             <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Accès</p>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -541,8 +510,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-
-          {/* Prix */}
           <div>
             <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Prix</p>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -553,41 +520,32 @@ export default function Home() {
               ))}
             </div>
           </div>
-
-          {/* Dates */}
           <div>
             <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Période</p>
             <div className="lotbo-filtres-dates">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                 <label style={{ color: '#8C5A40', fontSize: 10 }}>Du</label>
-                <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
-                  style={{
-                    background: 'white', border: '1px solid #E8E0D0',
-                    borderRadius: 10, color: '#1A1410', fontSize: 13,
-                    padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
-                  }} />
+                <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} style={{
+                  background: 'white', border: '1px solid #E8E0D0',
+                  borderRadius: 10, color: '#1A1410', fontSize: 13,
+                  padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
+                }} />
               </div>
               <span className="lotbo-filtres-dates-fleche">→</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                 <label style={{ color: '#8C5A40', fontSize: 10 }}>Au</label>
-                <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
-                  style={{
-                    background: 'white', border: '1px solid #E8E0D0',
-                    borderRadius: 10, color: '#1A1410', fontSize: 13,
-                    padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
-                  }} />
+                <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={{
+                  background: 'white', border: '1px solid #E8E0D0',
+                  borderRadius: 10, color: '#1A1410', fontSize: 13,
+                  padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
+                }} />
               </div>
             </div>
           </div>
-
-          {/* Actions */}
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button onClick={() => {
-              setCategorie('Toutes')
-              setAcces('tous')
-              setPrix('tous')
-              setDateDebut('')
-              setDateFin('')
+              setCategorie('Toutes'); setAcces('tous'); setPrix('tous')
+              setDateDebut(''); setDateFin('')
             }} style={{
               flex: 1, background: 'white', color: '#8C5A40',
               border: '1px solid #E8E0D0', borderRadius: 999, padding: '10px',
@@ -603,7 +561,7 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════
-          VUE LISTE
+          VUE LISTE — avec période multi-jours
       ══════════════════════════════════════ */}
       {mode === 'liste' && (
         <div className="lotbo-vue-liste" style={{
@@ -619,8 +577,7 @@ export default function Home() {
           {evenements.filter(filtreActif).map(ev => (
             <a href={'/evenement/' + ev.id} key={ev.id} style={{
               display: 'flex', gap: 12,
-              background: 'white',
-              border: '1px solid #E8E0D0',
+              background: 'white', border: '1px solid #E8E0D0',
               borderRadius: 12, padding: 12, marginBottom: 12,
               textDecoration: 'none', color: '#1A1410', overflow: 'hidden',
               boxShadow: '0 1px 4px rgba(26,20,16,0.06)'
@@ -638,10 +595,22 @@ export default function Home() {
                   color: '#1A1410'
                 }}>{ev.titre}</p>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {ev.date}</p>
+                {/* ── Période : mono ou multi-jours ── */}
+                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>
+                  📅 {afficherPeriode(ev)}
+                </p>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie}</span>
-                  <span style={{ background: '#E8E0D0', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix}</span>
+                  <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>
+                    {ev.categorie}
+                  </span>
+                  {ev.date_fin && ev.date_fin !== ev.date && (
+                    <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>
+                      🗓️ Multi-jours
+                    </span>
+                  )}
+                  <span style={{ background: '#E8E0D0', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>
+                    {ev.prix}
+                  </span>
                 </div>
               </div>
             </a>
@@ -655,11 +624,9 @@ export default function Home() {
       <div ref={mapContainer} style={{ flex: 1, position: 'relative', minHeight: 0 }} />
 
       {/* ══════════════════════════════════════
-          TAB BAR — mobile uniquement — 5 onglets
+          TAB BAR — mobile uniquement
       ══════════════════════════════════════ */}
       <div className="lotbo-tabbar">
-
-        {/* Home */}
         <button onClick={() => { setMode('carte'); setFiltresOuverts(false) }} style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
@@ -671,12 +638,9 @@ export default function Home() {
               stroke={mode === 'carte' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" fill="none"/>
             <path d="M9 21V12h6v9" stroke={mode === 'carte' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
           </svg>
-          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'carte' ? '#C8431A' : '#8C5A40' }}>
-            Home
-          </span>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'carte' ? '#C8431A' : '#8C5A40' }}>Home</span>
         </button>
 
-        {/* Événements */}
         <button onClick={() => setMode('liste')} style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
@@ -687,12 +651,9 @@ export default function Home() {
             <rect x="3" y="4" width="18" height="17" rx="2" stroke={mode === 'liste' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
             <path d="M8 2v3M16 2v3M3 9h18" stroke={mode === 'liste' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
-          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'liste' ? '#C8431A' : '#8C5A40' }}>
-            Événements
-          </span>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'liste' ? '#C8431A' : '#8C5A40' }}>Événements</span>
         </button>
 
-        {/* Carte — centrer sur position */}
         <button onClick={centrerSurPosition} style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
@@ -700,8 +661,7 @@ export default function Home() {
           background: 'transparent', border: 'none', cursor: 'pointer'
         }}>
           <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: '#C8431A',
+            width: 36, height: 36, borderRadius: '50%', background: '#C8431A',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: -4, boxShadow: '0 2px 8px rgba(200,67,26,0.4)'
           }}>
@@ -713,12 +673,10 @@ export default function Home() {
           <span style={{ fontSize: 10, fontWeight: 'bold', color: '#C8431A' }}>Carte</span>
         </button>
 
-        {/* Notifications */}
         <a href="/inscription" style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: 3, padding: '8px 0',
-          textDecoration: 'none'
+          gap: 3, padding: '8px 0', textDecoration: 'none'
         }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 003.4 0"
@@ -727,12 +685,10 @@ export default function Home() {
           <span style={{ fontSize: 10, fontWeight: 'bold', color: '#8C5A40' }}>Alertes</span>
         </a>
 
-        {/* Profil */}
         <a href={user ? '/profil' : '/login'} style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: 3, padding: '8px 0',
-          textDecoration: 'none'
+          gap: 3, padding: '8px 0', textDecoration: 'none'
         }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="8" r="4" stroke={user ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
@@ -742,7 +698,6 @@ export default function Home() {
             {user ? 'Profil' : 'Connexion'}
           </span>
         </a>
-
       </div>
 
     </main>
