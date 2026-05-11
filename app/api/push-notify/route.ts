@@ -8,7 +8,17 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY!
 )
 
+// ── Vérification secret interne ──────────────────────────────────────────────
+function verifierSecret(request: Request): boolean {
+  const secret = request.headers.get('x-internal-secret')
+  return secret === process.env.INTERNAL_API_SECRET
+}
+
 export async function POST(request: Request) {
+  if (!verifierSecret(request)) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+
   try {
     const { titre, lieu, url } = await request.json()
 

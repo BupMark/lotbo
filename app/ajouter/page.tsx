@@ -174,7 +174,7 @@ export default function AjouterEvenement() {
     if (!error) {
       fetch('/api/notify-admin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
         body: JSON.stringify({
           titre: form.titre,
           lieu: `${form.lieu}, ${form.ville}`,

@@ -1,36 +1,47 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// ── Vérification secret interne ──────────────────────────────────────────────
+function verifierSecret(request: Request): boolean {
+  const secret = request.headers.get('x-internal-secret')
+  return secret === process.env.INTERNAL_API_SECRET
+}
+
 export async function POST(request: Request) {
+  if (!verifierSecret(request)) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+
   try {
     const { titre, lieu, date, categorie, id } = await request.json()
 
     const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     const { data: abonnes } = await supabase
       .from('abonnements')
       .select('email, ville, categories')
 
-      if (!abonnes || abonnes.length === 0) {
-        return NextResponse.json({ success: true, envoyes: 0 })
-      }
-  
-      const normaliser = (s: string) => s.toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .trim()
-  
-      const villeEvent = normaliser(lieu)
-  
-      const abonnesFiltres = abonnes.filter((ab: any) => {
-        const villeAb = normaliser(ab.ville)
-        const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
-        const catMatch = ab.categories.length === 0 || ab.categories.includes(categorie)
-        return villeMatch && catMatch
-      })
+    if (!abonnes || abonnes.length === 0) {
+      return NextResponse.json({ success: true, envoyes: 0 })
+    }
+
+    const normaliser = (s: string) => s.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+
+    const villeEvent = normaliser(lieu)
+
+    const abonnesFiltres = abonnes.filter((ab: any) => {
+      const villeAb = normaliser(ab.ville)
+      const villeMatch = villeEvent.includes(villeAb) || villeAb.includes(villeEvent)
+      const catMatch = ab.categories.length === 0 || ab.categories.includes(categorie)
+      return villeMatch && catMatch
+    })
+
     if (abonnesFiltres.length === 0) {
       return NextResponse.json({ success: true, envoyes: 0 })
     }
@@ -83,7 +94,6 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, envoyes })
-
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
     return NextResponse.json({ error: message }, { status: 500 })
