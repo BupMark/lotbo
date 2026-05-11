@@ -180,7 +180,7 @@ export default function PolitiqueConfidentialite() {
               Lotbo est une plateforme mondiale de découverte d&apos;événements locaux, née en Haïti le 5 mai 2026.
               Accessible via <strong>lotbo.app</strong> et <strong>app.lotbo.app</strong>.
               Pour toute question relative à vos données, contactez-nous à{' '}
-              <a href="mailto:privacy@lotbo.app" style={{ color: '#C8431A' }}>privacy@lotbo.app</a>.
+              <a href="mailto:lotboapp@gmail.com" style={{ color: '#C8431A' }}>lotboapp@gmail.com</a>.
             </p>
           </div>
           <div style={s.divider} />
@@ -304,7 +304,7 @@ export default function PolitiqueConfidentialite() {
             </ul>
             <p style={s.body}>
               Pour exercer ces droits, contactez-nous à{' '}
-              <a href="mailto:privacy@lotbo.app" style={{ color: '#C8431A' }}>privacy@lotbo.app</a>.
+              <a href="mailto:lotboapp@gmail.com" style={{ color: '#C8431A' }}>lotboapp@gmail.com</a>.
               Nous répondons dans un délai de 30 jours.
             </p>
           </div>
@@ -374,13 +374,13 @@ export default function PolitiqueConfidentialite() {
           <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 16 }}>
             Notre équipe répond dans les 30 jours.
           </p>
-          <a href="mailto:privacy@lotbo.app" style={{
+          <a href="mailto:lotboapp@gmail.com" style={{
             background: '#C8431A', color: '#F7F2E8',
             padding: '12px 24px', borderRadius: 10,
             fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
             display: 'inline-block',
           }}>
-            privacy@lotbo.app
+            lotboapp@gmail.com
           </a>
         </div>
 
