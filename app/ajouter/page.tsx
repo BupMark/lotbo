@@ -130,16 +130,25 @@ export default function AjouterEvenement() {
     // Récupère le user si connecté, null sinon
     const { data: { session } } = await supabase.auth.getSession()
 
-    const { data: newEvent, error } = await supabase.from('evenements').insert([{
+    const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
+
+    // ─── INSERT sans .select() ───────────────────────────────────────────────
+    // IMPORTANT : pas de .select().single() ici — le SELECT post-INSERT
+    // déclencherait la policy RLS lecture (statut = 'approuve') et bloquerait
+    // les soumissions anonymes dont le statut est 'en_attente'.
+    // ────────────────────────────────────────────────────────────────────────
+    const { error } = await supabase.from('evenements').insert([{
       titre: form.titre,
       organisateur: form.organisateur || null,
-      user_id: session?.user.id || null,
+      user_id: session?.user?.id || null,
       lieu: `${form.lieu}, ${form.ville}`,
+      ville: form.ville,
+      pays: form.pays,
       date: form.date,
       date_debut: form.date,
       heure_debut: form.heure_debut,
-      heure_fin: form.heure_fin,
-      categorie: EVENT_TYPES.find(t => t.id === selectedType)?.nom || '',
+      heure_fin: form.heure_fin || null,
+      categorie: categorieNom,
       event_type_id: selectedType,
       description: form.description,
       lien: form.lien,
@@ -148,17 +157,22 @@ export default function AjouterEvenement() {
       acces: form.acces,
       prix: form.prix,
       image_url: image_url,
-      statut: 'en_attente',   // ← toujours en_attente, jamais publié
-    }]).select().single()
+      statut: 'en_attente', // ← toujours en_attente, jamais publié directement
+    }])
 
-    // Lier les thèmes si connecté (RLS sur evenement_themes)
-    if (!error && newEvent && selectedThemes.length > 0) {
-      await supabase.from('evenement_themes').insert(
-        selectedThemes.map(theme_id => ({
-          evenement_id: newEvent.id,
-          theme_id
-        }))
-      )
+    // Notification admin — sans l'ID de l'événement (non récupérable sans SELECT)
+    // On envoie les infos du formulaire directement
+    if (!error) {
+      fetch('/api/notify-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titre: form.titre,
+          lieu: `${form.lieu}, ${form.ville}`,
+          date: form.date,
+          categorie: categorieNom,
+        })
+      }).catch(() => {}) // silencieux si échec
     }
 
     setLoading(false)
@@ -166,19 +180,6 @@ export default function AjouterEvenement() {
     if (error) {
       alert('Erreur: ' + error.message)
     } else {
-      // Notifier l'admin — fire and forget (pas bloquant)
-      if (newEvent) {
-        fetch('/api/notify-admin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            titre: newEvent.titre,
-            lieu: newEvent.lieu,
-            date: newEvent.date,
-            categorie: newEvent.categorie
-          })
-        }).catch(() => {}) // silencieux si échec
-      }
       setSucces(true)
     }
   }
@@ -237,17 +238,19 @@ export default function AjouterEvenement() {
             <input name="titre" placeholder="Ex: Livres en Folie 2026"
               onChange={handleChange} style={inputStyle} required />
           </div>
-{/* Organisateur */}
-<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={labelStyle}>Organisateur</label>
-          <input
-            name="organisateur"
-            value={form.organisateur}
-            onChange={handleChange}
-            placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
-            style={inputStyle}
-          />
-        </div>
+
+          {/* Organisateur */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={labelStyle}>Organisateur</label>
+            <input
+              name="organisateur"
+              value={form.organisateur}
+              onChange={handleChange}
+              placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
+              style={inputStyle}
+            />
+          </div>
+
           {/* Lieu */}
           <div>
             <label style={labelStyle}>Nom du lieu *</label>
@@ -284,7 +287,7 @@ export default function AjouterEvenement() {
                 onChange={handleChange} style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Fin *</label>
+              <label style={labelStyle}>Fin <span style={{ color: '#555' }}>(optionnel)</span></label>
               <input type="time" name="heure_fin"
                 onChange={handleChange} style={inputStyle} />
             </div>
