@@ -1,5 +1,5 @@
 # MASTER_CONTEXT — LOTBO
-> Dernière mise à jour : 9 mai 2026
+> Dernière mise à jour : 10 mai 2026
 > Architecte technique : Claude (Anthropic)
 > Fondateur : Handgod Abraham
 
@@ -35,7 +35,8 @@
 | Supabase | latest | DB + Auth + Storage + RLS |
 | Mapbox GL JS | latest | Carte interactive |
 | next-intl | latest | Internationalisation |
-| Brevo | API v3 | Newsletter + Notifications |
+| Brevo | API v3 | Newsletter + Notifications email |
+| web-push | 3.6.7 | Notifications push PWA |
 | Vercel | latest | Hébergement + CI/CD |
 
 ---
@@ -63,7 +64,7 @@
 | DM Sans 300/400/500 | Corps, interface, navigation |
 
 ### Règles d'usage (brandbook)
-- Fond écran principal : Crème (`#F7F2E8`) — thème clair adopté le 9 mai 2026
+- Fond écran principal : Crème (`#F7F2E8`) — thème clair
 - Header : fond `#F7F2E8`, logo `#1A1410` + `#C8431A`
 - Bouton CTA : Brique sur Crème
 - Accent : Or — jamais seul
@@ -84,21 +85,28 @@ lotbo/                              ← app.lotbo.app
 ├── app/
 │   ├── admin/page.tsx              — Panel admin (protégé middleware)
 │   ├── ajouter/page.tsx            — Formulaire ajout événement (ouvert à tous)
-│   ├── apropos/page.tsx            — Page À propos + fondateur
+│   ├── apropos/page.tsx            — Page À propos + fondateur + photo
+│   ├── desinscription/page.tsx     — Désinscription notifications email
 │   ├── inscription/page.tsx        — Inscription notifications visiteur
 │   ├── api/
 │   │   ├── newsletter/route.ts         — Newsletter Brevo hebdomadaire
 │   │   ├── notify-admin/route.ts       — Notification email admin nouvel événement
 │   │   ├── notify-abonnes/route.ts     — Notification email abonnés à l'approbation
-│   │   ├── scrape-sports/route.ts      — Scraper TheSportsDB (6 ligues + autres sports)
-│   │   ├── scrape-ticketmaster/route.ts — Scraper Ticketmaster (musique + arts + famille)
-│   │   └── scrape-eventbrite/route.ts  — Scraper Wikimedia
+│   │   ├── push-subscribe/route.ts     — Enregistrement subscriptions push PWA
+│   │   ├── push-notify/route.ts        — Envoi notifications push PWA
+│   │   ├── scrape-sports/route.ts      — Scraper TheSportsDB (13 ligues + FIFA WC)
+│   │   ├── scrape-ticketmaster/route.ts — Scraper Ticketmaster
+│   │   ├── scrape-worldcup/route.ts    — Scraper FIFA World Cup 2026 (72 matchs)
+│   │   ├── scrape-liguehaitienne/route.ts — Scraper Ligue Haïtienne Football
+│   │   ├── scrape-eventbrite/route.ts  — Scraper Wikimedia
+│   │   └── stats/route.ts              — API stats publiques (événements/villes/pays)
 │   ├── evenement/[id]/
 │   │   ├── page.tsx                — Server component + generateMetadata
-│   │   ├── EvenementClient.tsx     — Client component page détail
+│   │   ├── EvenementClient.tsx     — Client component page détail + commentaires
 │   │   └── opengraph-image.tsx     — og:image dynamique (1200x630)
 │   ├── login/page.tsx              — Auth organisateurs + admin
 │   ├── profil/page.tsx             — Profil utilisateur
+│   ├── sitemap.ts                  — Sitemap SEO dynamique
 │   ├── globals.css                 — Tokens design + responsive + tab bar 5 onglets
 │   ├── layout.tsx                  — Root layout + polices + theme-color
 │   ├── page.tsx                    — App principale (carte + liste + filtres)
@@ -108,17 +116,19 @@ lotbo/                              ← app.lotbo.app
 │   └── i18n.ts                     — Traductions 5 langues
 ├── middleware.ts                   — Protection route /admin (serveur)
 ├── tailwind.config.ts              — Palette Tailwind officielle
-├── vercel.json                     — CRONs : newsletter lundi 9h, sports 2h, ticketmaster 3h
+├── vercel.json                     — CRONs : newsletter, sports, ticketmaster, liguehaitienne, worldcup
 ├── MASTER_CONTEXT.md               — Ce fichier
 └── public/
 ├── manifest.json               — PWA (theme_color: #1A1410)
-└── Logomark.png                — Favicon
-lotbo-landing/                      ← lotbo.app
+├── sw.js                       — Service Worker PWA + push notifications
+├── hero-fondateur.jpg          — Photo fondateur (page apropos)
+└── Logomark.png                — Faviconlotbo-landing/                      ← lotbo.app
 ├── api/
 │   └── subscribe.js                — Route API inscription Brevo (clé serveur)
-├── index.html                      — Landing page complète
+├── hero-femme.jpg                  — Photo hero landing
+├── index.html                      — Landing page complète + compteurs dynamiques
 ├── package.json                    — Config minimale
-└── vercel.json                     — Config Vercel
+└── vercel.json                     — Config Vercel + routes statiques
 
 ---
 
@@ -136,11 +146,12 @@ lotbo-landing/                      ← lotbo.app
 |---|---|---|
 | `id` | uuid | PK |
 | `titre` | text | |
+| `organisateur` | text | Ajouté le 10 mai 2026 |
 | `lieu` | text | |
 | `date` | text | Format libre |
 | `date_debut` | date | Format ISO pour filtres |
-| `heure_debut` | text | Ajoutée le 9 mai 2026 |
-| `heure_fin` | text | |
+| `heure_debut` | text | |
+| `heure_fin` | text | Non obligatoire |
 | `categorie` | text | Voir taxonomie |
 | `event_type_id` | int | FK → types |
 | `description` | text | |
@@ -152,16 +163,34 @@ lotbo-landing/                      ← lotbo.app
 | `image_url` | text | Storage Supabase |
 | `statut` | text | Voir statuts |
 | `user_id` | uuid | null si anonyme |
-| `source` | text | `wikimedia` / `sports` / `ticketmaster` / null |
+| `source` | text | `wikimedia` / `sports` / `ticketmaster` / `worldcup2026` / `liguehaitienne` / null |
 | `source_id` | text | ID source externe (anti-doublon) |
 
-### Table `abonnements` — notifications visiteurs
+### Table `abonnements` — notifications email visiteurs
 | Colonne | Type | Notes |
 |---|---|---|
 | `id` | uuid | PK |
 | `email` | text | UNIQUE |
 | `ville` | text | Ville de l'abonné |
 | `categories` | text[] | Catégories suivies (vide = toutes) |
+| `created_at` | timestamptz | |
+
+### Table `commentaires` — commentaires événements
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `evenement_id` | uuid | FK → evenements (CASCADE DELETE) |
+| `auteur` | text | Prénom ou pseudo |
+| `contenu` | text | Max 500 chars |
+| `created_at` | timestamptz | |
+
+### Table `push_subscriptions` — notifications push PWA
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `endpoint` | text | UNIQUE |
+| `p256dh` | text | Clé publique |
+| `auth` | text | Auth secret |
 | `created_at` | timestamptz | |
 
 ### Statuts événements
@@ -173,10 +202,7 @@ lotbo-landing/                      ← lotbo.app
 | `publié` | ❌ | Ancien statut — ne plus utiliser |
 | `à compléter` | ❌ | Wikimedia incomplet (coords 0,0) |
 
-**⚠️ Ne jamais utiliser `'publié'` — utiliser `'approuve'` uniquement.**
-**Les événements scrapés (sports, ticketmaster) ont statut `'approuve'` directement.**
-
-### RLS Supabase — table `evenements` (6 policies)
+### RLS — table `evenements` (6 policies)
 | Policy | Cmd | Rôles | Condition |
 |---|---|---|---|
 | `lecture_publique_evenements_approuves` | SELECT | anon, authenticated | `statut = 'approuve'` |
@@ -184,31 +210,28 @@ lotbo-landing/                      ← lotbo.app
 | `insertion_ouverte` | INSERT | anon, authenticated | `statut = 'en_attente'` |
 | `modification_proprietaire` | UPDATE | authenticated | `auth.uid() = user_id` |
 | `suppression_proprietaire` | DELETE | authenticated | `auth.uid() = user_id` |
-| `admin_acces_total` | ALL | authenticated | `role = 'admin'` OU `statut = 'en_attente'` |
+| `admin_acces_total` | ALL | authenticated | `role = 'admin'` |
 
-### RLS Supabase — table `evenement_themes` (3 policies)
+### RLS — table `commentaires` (3 policies)
 | Policy | Cmd | Rôles |
 |---|---|---|
-| `lecture_publique_themes` | SELECT | anon, authenticated |
-| `insertion_ouverte_themes` | INSERT | anon, authenticated |
-| `admin_acces_total_themes` | ALL | authenticated (admin) |
+| `lecture_publique_commentaires` | SELECT | anon, authenticated |
+| `insertion_ouverte_commentaires` | INSERT | anon, authenticated |
+| `admin_suppression_commentaires` | DELETE | authenticated (admin) |
 
-### RLS Supabase — table `signalements` (3 policies)
+### RLS — table `push_subscriptions` (2 policies)
 | Policy | Cmd | Rôles |
 |---|---|---|
-| `insertion_signalements_ouverte` | INSERT | anon, authenticated |
-| `admin_lecture_signalements` | SELECT | authenticated (admin) |
-| `admin_suppression_signalements` | DELETE | authenticated (admin) |
+| `insertion_push_ouverte` | INSERT | anon, authenticated |
+| `admin_lecture_push` | SELECT | authenticated (admin) |
 
-### RLS Supabase — table `abonnements` (3 policies)
-| Policy | Cmd | Rôles | Condition |
-|---|---|---|---|
-| `insertion_abonnements_ouverte` | INSERT | anon, authenticated | true |
-| `admin_lecture_abonnements` | SELECT | authenticated (admin) | role = 'admin' |
-| `admin_suppression_abonnements` | DELETE | authenticated (admin) | role = 'admin' |
-
-**⚠️ `notify-abonnes/route.ts` utilise `SUPABASE_SERVICE_ROLE_KEY` pour bypasser RLS.**
-**⚠️ Les scrapers utilisent `SUPABASE_SERVICE_ROLE_KEY` pour insérer avec `statut = 'approuve'`.**
+### RLS — table `abonnements` (4 policies)
+| Policy | Cmd | Rôles |
+|---|---|---|
+| `insertion_abonnements_ouverte` | INSERT | anon, authenticated |
+| `admin_lecture_abonnements` | SELECT | authenticated (admin) |
+| `admin_suppression_abonnements` | DELETE | authenticated (admin) |
+| `desinscription_par_email` | DELETE | anon, authenticated |
 
 ---
 
@@ -227,17 +250,132 @@ lotbo-landing/                      ← lotbo.app
 - Login → redirect `/admin` si admin, `/ajouter` sinon
 
 ### Modèle d'accès
-Visiteur anonyme   → voit les événements approuvés
-Tout le monde      → peut soumettre un événement (Option A — ouvert)
-Tout le monde      → peut signaler un événement
-Tout le monde      → peut s'inscrire aux notifications par ville
-Admin              → approuve / rejette / supprime tout
+---
+
+## 6. INTERNATIONALISATION
+
+**5 langues :** FR · EN · ES · PT · KW (kreyòl)
+**Règle absolue :** toute nouvelle chaîne de texte doit être ajoutée aux 5 fichiers JSON simultanément.
+
+---
+
+## 7. BASE DE DONNÉES SUPABASE
+
+### Table `evenements` — colonnes principales
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `titre` | text | |
+| `organisateur` | text | Ajouté le 10 mai 2026 |
+| `lieu` | text | |
+| `date` | text | Format libre |
+| `date_debut` | date | Format ISO pour filtres |
+| `heure_debut` | text | |
+| `heure_fin` | text | Non obligatoire |
+| `categorie` | text | Voir taxonomie |
+| `event_type_id` | int | FK → types |
+| `description` | text | |
+| `lien` | text | |
+| `longitude` | float | |
+| `latitude` | float | |
+| `acces` | text | `public` / `prive` |
+| `prix` | text | `gratuit` / `payant` |
+| `image_url` | text | Storage Supabase |
+| `statut` | text | Voir statuts |
+| `user_id` | uuid | null si anonyme |
+| `source` | text | `wikimedia` / `sports` / `ticketmaster` / `worldcup2026` / `liguehaitienne` / null |
+| `source_id` | text | ID source externe (anti-doublon) |
+
+### Table `abonnements` — notifications email visiteurs
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `email` | text | UNIQUE |
+| `ville` | text | Ville de l'abonné |
+| `categories` | text[] | Catégories suivies (vide = toutes) |
+| `created_at` | timestamptz | |
+
+### Table `commentaires` — commentaires événements
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `evenement_id` | uuid | FK → evenements (CASCADE DELETE) |
+| `auteur` | text | Prénom ou pseudo |
+| `contenu` | text | Max 500 chars |
+| `created_at` | timestamptz | |
+
+### Table `push_subscriptions` — notifications push PWA
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `endpoint` | text | UNIQUE |
+| `p256dh` | text | Clé publique |
+| `auth` | text | Auth secret |
+| `created_at` | timestamptz | |
+
+### Statuts événements
+| Statut | Visible public | Description |
+|---|---|---|
+| `en_attente` | ❌ | Soumis, attend validation |
+| `approuve` | ✅ | Validé par admin, visible sur carte |
+| `rejete` | ❌ | Refusé par admin |
+| `publié` | ❌ | Ancien statut — ne plus utiliser |
+| `à compléter` | ❌ | Wikimedia incomplet (coords 0,0) |
+
+### RLS — table `evenements` (6 policies)
+| Policy | Cmd | Rôles | Condition |
+|---|---|---|---|
+| `lecture_publique_evenements_approuves` | SELECT | anon, authenticated | `statut = 'approuve'` |
+| `lecture_proprietaire_ses_evenements` | SELECT | authenticated | `auth.uid() = user_id` |
+| `insertion_ouverte` | INSERT | anon, authenticated | `statut = 'en_attente'` |
+| `modification_proprietaire` | UPDATE | authenticated | `auth.uid() = user_id` |
+| `suppression_proprietaire` | DELETE | authenticated | `auth.uid() = user_id` |
+| `admin_acces_total` | ALL | authenticated | `role = 'admin'` |
+
+### RLS — table `commentaires` (3 policies)
+| Policy | Cmd | Rôles |
+|---|---|---|
+| `lecture_publique_commentaires` | SELECT | anon, authenticated |
+| `insertion_ouverte_commentaires` | INSERT | anon, authenticated |
+| `admin_suppression_commentaires` | DELETE | authenticated (admin) |
+
+### RLS — table `push_subscriptions` (2 policies)
+| Policy | Cmd | Rôles |
+|---|---|---|
+| `insertion_push_ouverte` | INSERT | anon, authenticated |
+| `admin_lecture_push` | SELECT | authenticated (admin) |
+
+### RLS — table `abonnements` (4 policies)
+| Policy | Cmd | Rôles |
+|---|---|---|
+| `insertion_abonnements_ouverte` | INSERT | anon, authenticated |
+| `admin_lecture_abonnements` | SELECT | authenticated (admin) |
+| `admin_suppression_abonnements` | DELETE | authenticated (admin) |
+| `desinscription_par_email` | DELETE | anon, authenticated |
+
+---
+
+## 8. AUTHENTIFICATION & RÔLES
+
+### Utilisateurs
+| Email | Rôle | user_id |
+|---|---|---|
+| `sambayo23@gmail.com` | `admin` | `ff21f2e0-135d-4996-9713-4a0e20c38fe1` |
+
+### Système de rôles
+- Rôle stocké dans `auth.users.raw_user_meta_data.role`
+- Valeur : `"admin"` pour l'admin
+- Lu via `auth.jwt() -> 'user_metadata' ->> 'role'`
+- Middleware vérifie le rôle côté serveur avant d'accéder à `/admin`
+- Login → redirect `/admin` si admin, `/ajouter` sinon
+
+### Modèle d'accès
 
 ---
 
 ## 9. TAXONOMIE ÉVÉNEMENTS
 
-### 10 Types principaux (event_type_id)
+### 12 Types principaux (event_type_id)
 1. Conférence / Sommet 🎤
 2. Concert / Spectacle 🎶
 3. Foire / Exposition 🏪
@@ -248,6 +386,8 @@ Admin              → approuve / rejette / supprime tout
 8. Assemblée / Réunion 🤝
 9. Formation / Séminaire 📚
 10. Célébration communautaire 🌍
+11. Droit / Juridique ⚖️
+12. Loisir 🎯
 
 ### 17 Thèmes (many-to-many via `evenement_themes`)
 Religion · Politique · Business · Culture · Gastronomie · Littérature · Art · Artisanat · Sport · Technologie · Éducation · Social · Musique · Cinéma · Mode · Santé · Environnement
@@ -258,66 +398,66 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 
 ### `app/page.tsx` — App principale
 - Carte Mapbox `streets-v12` (warm/clair) centrée sur Haïti
-- Header `#F7F2E8` fond clair, logo `#1A1410` + `#C8431A`, flex mobile-first
+- Header `#F7F2E8` fond clair, logo `#1A1410` + `#C8431A`
 - **Mobile :** `[☰ Menu]` `[lotbo]` `[+ Ajouter]` + tab bar 5 onglets bas
 - **Desktop :** `[À propos]` `[Langue]` `[Connexion/Profil]` `[+ Ajouter]`
-- Drawer : langue + connexion + notifications + profil + admin + déconnexion
-- Tab bar 5 onglets natifs : Home · Événements · Carte (centrer) · Alertes · Profil
+- Drawer : langue + connexion + notifications email + push + profil + admin
+- Tab bar 5 onglets : Home · Événements · Carte (centrer GPS) · Alertes · Profil
 - Popup carte : image + infos + `[Voir →]` + `[🧭 S'y rendre]`
-- Filtres : catégorie / accès / prix / dates (thème clair)
+- Filtres : catégorie / accès / prix / dates
 - Vue liste : fond `#F7F2E8`, cartes blanches
 
-### `app/evenement/[id]/` — Page détail événement
-- `page.tsx` — server component + `generateMetadata` og complet
-- `EvenementClient.tsx` — client component
-  - ❤️ Like anonyme localStorage
-  - Barre actions : `[❤️ J'aime]` `[⚠️ Signaler]` `[📱 WA]` `[📘 FB]` `[𝕏 X]`
-  - Signalement : modal bottom sheet
-  - `[🧭 S'y rendre]` → Google Maps avec coordonnées
-  - Événements similaires
-- `opengraph-image.tsx` — og:image 1200x630 dynamique
-  - Image fond si disponible + overlay gradient
-  - Logo + badge catégorie + titre + lieu + date + CTA
-
-### `app/apropos/page.tsx`
-- Histoire, mission, valeurs, fondateur
-- Handgod Abraham · Fondateur · Petit-Goâve, Haïti
-- Accessible depuis drawer mobile + nav desktop
-
-### `app/inscription/page.tsx`
-- Email + ville + catégories préférées
-- Insertion dans table `abonnements`
-- Accessible depuis tab bar mobile (onglet Alertes) + drawer
+### `app/evenement/[id]/EvenementClient.tsx`
+- ❤️ Like anonyme localStorage
+- 👤 Organisateur affiché si disponible
+- 🧭 S'y rendre → Google Maps
+- Barre actions : `[❤️ J'aime]` `[⚠️ Signaler]` `[📱 WA]` `[📘 FB]` `[𝕏 X]`
+- Signalement : modal bottom sheet
+- 💬 Commentaires — form + liste (anonyme, auteur + contenu)
+- Événements similaires
 
 ### `app/admin/page.tsx`
-- Double vérification rôle
-- Actions : Approuver / Rejeter / Supprimer
-- Approuver → déclenche `notify-abonnes` automatiquement
-- Signalements visibles
+- Compteurs : Total / En attente / Approuvés / Rejetés / Villes / Pays
+- Filtres onglets : En attente · Approuvés · Rejetés · Tous
+- Recherche par titre / lieu / organisateur
+- Organisateur affiché dans chaque carte
+- Source affichée (scraper / manuel)
+- Approuver → notify-abonnes + push-notify
 
 ### Routes API
 | Route | Déclencheur | Action |
 |---|---|---|
 | `notify-admin` | Soumission événement | Email à `sambayo23@gmail.com` |
-| `notify-abonnes` | Approbation événement | Email abonnés ville+catégorie (normalisation accents) |
+| `notify-abonnes` | Approbation événement | Email abonnés ville+catégorie |
+| `push-subscribe` | Bouton drawer | Enregistre subscription push |
+| `push-notify` | Approbation événement | Push PWA à tous les abonnés |
 | `newsletter` | CRON lundi 9h UTC | Email hebdomadaire liste Brevo |
-| `scrape-sports` | CRON nuit 2h UTC | TheSportsDB — 13 ligues/compétitions |
-| `scrape-ticketmaster` | CRON nuit 3h UTC | Ticketmaster — musique + sports + arts + famille |
+| `scrape-sports` | CRON nuit 2h UTC | TheSportsDB 13 ligues |
+| `scrape-ticketmaster` | CRON nuit 3h UTC | Ticketmaster 4 segments |
+| `scrape-worldcup` | CRON nuit 5h UTC | FIFA World Cup 2026 — 72 matchs |
+| `scrape-liguehaitienne` | CRON nuit 4h UTC | Ligue Haïtienne Football |
 | `scrape-eventbrite` | Manuel | Scrape Wikimedia + géocode |
+| `stats` | Landing toutes 5min | Compteurs événements/villes/pays |
 
 ### Scrapers automatiques
-| Source | Ligues/Segments | CRON |
+| Source | Contenu | CRON |
 |---|---|---|
 | TheSportsDB | Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, NBA, MLB, NHL, NFL, F1, UFC, Rugby | 2h UTC |
 | Ticketmaster | Musique, Sports, Arts & Theatre, Family | 3h UTC |
+| FIFA World Cup | 72 matchs — tous les rounds (groupes + finale) | 5h UTC |
+| Ligue Haïtienne | Matchs Championnat National (stades géocodés) | 4h UTC |
 | Wikimedia | Événements culturels | Manuel |
 
-**IDs TheSportsDB :** Premier League `4328` · La Liga `4335` · Bundesliga `4331` · Serie A `4332` · Ligue 1 `4334` · Champions League `4480` · NBA `4387` · MLB `4424` · NHL `4380` · NFL `4391` · F1 `4370` · UFC `4443` · Rugby `4462`
+**IDs TheSportsDB :** Premier League `4328` · La Liga `4335` · Bundesliga `4331` · Serie A `4332` · Ligue 1 `4334` · Champions League `4480` · NBA `4387` · MLB `4424` · NHL `4380` · NFL `4391` · F1 `4370` · UFC `4443` · Rugby `4462` · **FIFA World Cup 2026 `4429`**
 
-### `lotbo-landing/`
-- Formulaire inscription inline → `/api/subscribe` → Brevo liste 3
-- Bouton "Voir les événements" → `app.lotbo.app`
-- Palette officielle + footer 2026
+### `lotbo-landing/index.html`
+- Hero 2 colonnes desktop : texte gauche + photo femme droite (pleine hauteur)
+- Compteurs dynamiques animés : **185+ événements · 55+ villes · 12+ pays**
+- Refresh automatique toutes les 5 minutes
+- Map mockup + pills filtres
+- Section "Comment ça marche" avec mockup téléphone LOTBO
+- Formulaire inscription → Brevo liste 3
+- CTA final + footer
 
 ---
 
@@ -328,10 +468,13 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Client + Serveur | URL Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Serveur | Clé publique Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Serveur uniquement | Admin + notify-abonnes + scrapers |
+| `SUPABASE_SERVICE_ROLE_KEY` | Serveur uniquement | Admin + scrapers + push |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | Client + Serveur | Mapbox geocoding + carte |
 | `BREVO_API_KEY` | Serveur uniquement | Toutes les routes email |
 | `TICKETMASTER_API_KEY` | Serveur uniquement | Scraper Ticketmaster |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Client + Serveur | Notifications push PWA |
+| `VAPID_PRIVATE_KEY` | Serveur uniquement | Notifications push PWA |
+| `VAPID_EMAIL` | Serveur uniquement | `mailto:hello@lotbo.app` |
 
 ### `lotbo.app` (Vercel — projet lotbo-landing)
 | Variable | Côté | Usage |
@@ -341,7 +484,7 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 **⚠️ Règles absolues :**
 - `SUPABASE_SERVICE_ROLE_KEY` — jamais exposé côté client
 - `BREVO_API_KEY` — jamais exposé côté client
-- `TICKETMASTER_API_KEY` — jamais exposé côté client
+- `VAPID_PRIVATE_KEY` — jamais exposé côté client
 - Ne jamais coller une clé API dans une conversation Claude
 
 ---
@@ -351,7 +494,7 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 1. **Mobile-first obligatoire** — tester 375px en premier
 2. **Jamais `position: absolute` dans le header**
 3. **Jamais exposer `SUPABASE_SERVICE_ROLE_KEY` côté client**
-4. **Jamais bypasser RLS Supabase** sauf dans les routes serveur avec `SERVICE_ROLE_KEY`
+4. **Jamais bypasser RLS Supabase** sauf routes serveur avec `SERVICE_ROLE_KEY`
 5. **TypeScript strict** — jamais de `any`
 6. **Toujours mettre à jour les 5 fichiers de traduction simultanément**
 7. **Toujours livrer des fichiers complets**, jamais des extraits
@@ -359,28 +502,22 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 9. **`statut: 'en_attente'`** pour toute nouvelle soumission manuelle
 10. **`statut: 'approuve'`** pour les événements scrapés (source fiable)
 11. **Toute nouvelle colonne DB** doit vérifier si elle existe déjà
-12. **Jamais exposer une clé API** dans le code HTML ou dans une conversation
+12. **Jamais exposer une clé API** dans le code ou dans une conversation
 13. **`lotbo.app` est le domaine primary** — pas `www.lotbo.app`
 14. **`params` est une Promise** dans Next.js 16 — toujours `await params`
 15. **Anti-doublon scrapers** — vérifier `source` + `source_id` avant insertion
+16. **Push subscriptions expirées** — supprimer automatiquement si sendNotification échoue
 
 ---
 
 ## 13. BACKLOG
 
-### 🟡 Important
-- Supprimer les `console.log` de debug dans `notify-abonnes/route.ts`
-- Page désabonnement `/desinscription` pour les abonnés notifications
-- Coupe du Monde 2026 — ajouter dans scrape-sports quand TheSportsDB publie (juin 2026)
-
 ### 🟢 Backlog
 - Option B soumission (compte requis) — activer quand spam devient problème
 - Workflow validation événements Wikimedia
-- Commentaires sur les événements
-- Notifications push PWA
-- SEO — sitemap dynamique
-- Hero landing avec photo fondateur
-- TMDB — sorties cinéma (clé gratuite à créer sur themoviedb.org)
+- SEO — soumettre sitemap à Google Search Console
+- Coupe du Monde 2026 — scraper tourne, matchs en DB jusqu'à la finale
+- Ligue Haïtienne — scraper actif, prochaine saison à venir
 
 ---
 
@@ -392,25 +529,25 @@ Religion · Politique · Business · Culture · Gastronomie · Littérature · A
 | 5 mai 2026 | Suppression `#1D9E75` (vert) | Couleur IA générée avant le vrai logo |
 | 8 mai 2026 | RLS activé sur 4 tables | Sécurité — table ouverte = danger |
 | 8 mai 2026 | Soumission ouverte (Option A) | Réduire friction, modération admin |
-| 8 mai 2026 | Statut Wikimedia `'publié'` → non visible | Données incomplètes (coords 0,0) |
 | 8 mai 2026 | Middleware admin serveur | Protection `/admin` côté client insuffisante |
 | 8 mai 2026 | Drawer hamburger mobile | Header trop encombré sur 375px |
 | 8 mai 2026 | Tab bar mobile Carte/Liste | Navigation native mobile |
-| 8 mai 2026 | Sender newsletter `hello@lotbo.app` | Gmail rejeté par Brevo |
-| 9 mai 2026 | `lotbo.app` comme domaine primary | Redirection www cassait l'API subscribe |
-| 9 mai 2026 | Route `/api/subscribe` serverless | Clé Brevo ne peut pas être dans le HTML |
-| 9 mai 2026 | Colonne `heure_debut` ajoutée | Manquait dans le schéma initial |
-| 9 mai 2026 | Policy `admin_acces_total` WITH CHECK élargi | Admin ne pouvait pas soumettre |
-| 9 mai 2026 | Policy `lecture_proprietaire_ses_evenements` | Profil ne voyait pas ses événements |
-| 9 mai 2026 | `params` await Promise Next.js 16 | opengraph-image params.id undefined |
-| 9 mai 2026 | `notify-abonnes` utilise SERVICE_ROLE_KEY | RLS bloquait lecture abonnements |
+| 9 mai 2026 | Thème clair `#F7F2E8` adopté | Demande fondateur — interface chaleureuse |
+| 9 mai 2026 | Carte `streets-v12` (warm) | Plus lisible que dark-v11 |
+| 9 mai 2026 | Tab bar 5 onglets natifs | Inspiration maquette mobile |
 | 9 mai 2026 | Like anonyme localStorage | Zéro friction, pas de compte requis |
-| 9 mai 2026 | Navigation Google Maps | Lien coordonnées depuis popup + page event |
-| 9 mai 2026 | Scraper TheSportsDB — 13 ligues | Source gratuite, données riches, coordonnées GPS |
-| 9 mai 2026 | Scraper Ticketmaster — 4 segments | 318k+ événements, clé gratuite, coordonnées précises |
-| 9 mai 2026 | Thème clair `#F7F2E8` adopté | Demande fondateur — interface plus chaleureuse |
-| 9 mai 2026 | Carte `streets-v12` (warm) | Plus lisible, plus chaleureux que dark-v11 |
-| 9 mai 2026 | Tab bar 5 onglets natifs | Inspiration maquette mobile — Home/Events/Map/Alertes/Profil |
+| 9 mai 2026 | Navigation Google Maps | Lien coordonnées popup + page event |
+| 9 mai 2026 | Scraper TheSportsDB 13 ligues | Source gratuite, données riches |
+| 9 mai 2026 | Scraper Ticketmaster 4 segments | 318k+ événements mondiaux |
+| 9 mai 2026 | notify-abonnes SERVICE_ROLE_KEY | RLS bloquait lecture abonnements |
+| 10 mai 2026 | FIFA World Cup 2026 — 72 matchs | TheSportsDB ID 4429 disponible |
+| 10 mai 2026 | Ligue Haïtienne scraper | Stades géocodés par ville |
+| 10 mai 2026 | Commentaires anonymes | Engagement communauté sans friction |
+| 10 mai 2026 | Notifications push PWA VAPID | Alertes natives sans app store |
+| 10 mai 2026 | Sitemap dynamique 185+ pages | SEO — indexation Google |
+| 10 mai 2026 | Compteurs dynamiques landing | Preuve sociale — 185+/55+/12+ |
+| 10 mai 2026 | Champ organisateur | Barreau de Petit-Goâve use case |
+| 10 mai 2026 | TMDB abandonné | Plan commercial $149/mois |
 
 ---
 
@@ -434,15 +571,24 @@ curl -X POST http://localhost:3000/api/notify-abonnes \
 # Tester scrapers en production
 curl https://app.lotbo.app/api/scrape-sports
 curl https://app.lotbo.app/api/scrape-ticketmaster
+curl https://app.lotbo.app/api/scrape-worldcup
+curl https://app.lotbo.app/api/scrape-liguehaitienne
+
+# Tester stats
+curl https://app.lotbo.app/api/stats
 
 # Vérifier les policies RLS
 SELECT tablename, policyname, cmd, roles
 FROM pg_policies
-WHERE tablename IN ('evenements','evenement_themes','signalements','abonnements')
+WHERE tablename IN ('evenements','abonnements','commentaires','push_subscriptions')
 ORDER BY tablename, cmd;
 
-# Vérifier événements scrapés
-SELECT source, COUNT(*) FROM evenements GROUP BY source;
+# Vérifier événements par source
+SELECT source, COUNT(*) FROM evenements GROUP BY source ORDER BY count DESC;
+
+# Vérifier matchs Mondial
+SELECT titre, lieu, date FROM evenements
+WHERE source = 'worldcup2026' ORDER BY date ASC LIMIT 10;
 
 # Déployer app
 cd ~/lotbo && git add . && git commit -m "message" && git push
