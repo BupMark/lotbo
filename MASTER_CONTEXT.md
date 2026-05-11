@@ -595,4 +595,8 @@ cd ~/lotbo && git add . && git commit -m "message" && git push
 
 # Déployer landing
 cd ~/lotbo-landing && git add . && git commit -m "message" && git push
+
+| INSERT bloqué RLS | Colonnes ville/pays absentes en DB + Supabase masque 
+  les erreurs de schéma derrière "RLS violation" pour les anonymes | 
+  ALTER TABLE ADD COLUMN ville, pays + supprimer .select().single() post-INSERT |
 ```
