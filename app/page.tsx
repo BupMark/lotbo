@@ -231,46 +231,46 @@ export default function Home() {
                     background: 'rgba(255,255,255,0.04)',
                     color: '#F7F2E8', textDecoration: 'none', fontSize: 14
                   }}>🔔 Recevoir les événements</a>
+                  
                   {/* Notifications push */}
-              <button
-                onClick={async () => {
-                  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                    alert('Notifications non supportées sur ce navigateur.')
-                    return
-                  }
-                  const permission = await Notification.requestPermission()
-                  if (permission !== 'granted') return
+                  <button
+                    onClick={async () => {
+                      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                        alert('Notifications non supportées sur ce navigateur.')
+                        return
+                      }
+                      const permission = await Notification.requestPermission()
+                      if (permission !== 'granted') return
+                      const reg = await navigator.serviceWorker.ready
+                      const sub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+                      })
+                      const key = sub.getKey('p256dh')
+                      const authKey = sub.getKey('auth')
+                      await fetch('/api/push-subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          endpoint: sub.endpoint,
+                          p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
+                          auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : ''
+                        })
+                      })
+                      alert('✅ Notifications activées !')
+                      setDrawerOuvert(false)
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#F7F2E8', border: 'none',
+                      fontSize: 14, cursor: 'pointer', textAlign: 'left' as const,
+                      width: '100%'
+                    }}>
+                    📲 Activer les notifications
+                  </button>
                   
-                  const reg = await navigator.serviceWorker.ready
-                  const sub = await reg.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-                  })
-                  const key = sub.getKey('p256dh')
-                  const auth = sub.getKey('auth')
-                  
-                  await fetch('/api/push-subscribe', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      endpoint: sub.endpoint,
-                      p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
-                      auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : ''
-                    })
-                  })
-                  alert('✅ Notifications activées !')
-                  setDrawerOuvert(false)
-                }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 16px', borderRadius: 12,
-                  background: 'rgba(255,255,255,0.04)',
-                  color: '#F7F2E8', border: 'none',
-                  fontSize: 14, cursor: 'pointer', textAlign: 'left',
-                  width: '100%'
-                }}>
-                📲 Activer les notifications
-              </button>
                   {isAdmin && (
                     <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{
                       display: 'flex', alignItems: 'center', gap: 12,
