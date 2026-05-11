@@ -365,6 +365,19 @@ export default function AjouterEvenement() {
               onChange={handleChange}
               placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
               style={inputStyle} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Ville *</label>
+              <input name="ville" value={form.ville} placeholder="Ex: Pétion-Ville"
+                onChange={handleChange} style={inputStyle} required />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Pays *</label>
+              <input name="pays" value={form.pays} placeholder="Ex: Haïti"
+                onChange={handleChange} style={inputStyle} required />
+            </div>
+          </div>
+
           </div>
 
           {/* ── Lieu avec autocomplétion ─────────────────────────────────── */}
@@ -502,20 +515,7 @@ export default function AjouterEvenement() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Ville *</label>
-              <input name="ville" value={form.ville} placeholder="Ex: Pétion-Ville"
-                onChange={handleChange} style={inputStyle} required />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Pays *</label>
-              <input name="pays" value={form.pays} placeholder="Ex: Haïti"
-                onChange={handleChange} style={inputStyle} required />
-            </div>
-          </div>
-
-          {/* Toggle multi-jours */}
+{/* Toggle multi-jours */}
           <div>
             <button type="button" onClick={() => {
               setMultiJours(!multiJours)
