@@ -342,6 +342,7 @@ export default function Home() {
             <div style={{ marginTop: 'auto', paddingTop: 24 }}>
               <p style={{ color: '#2a2a2a', fontSize: 11, textAlign: 'center' }}>
                 <a href="/politique-confidentialite" onClick={() => setDrawerOuvert(false)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.04)', color:'#8C5A40', textDecoration:'none', fontSize:13 }}>🔒 Confidentialité</a>
+              <a href="/aide" onClick={() => setDrawerOuvert(false)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.04)', color:'#8C5A40', textDecoration:'none', fontSize:13 }}>❓ Aide</a>
               <a href="/cgu" onClick={() => setDrawerOuvert(false)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.04)', color:'#8C5A40', textDecoration:'none', fontSize:13 }}>📄 CGU</a>
               Lotbo v1.0 · né en Haïti 🇭🇹
               </p>
