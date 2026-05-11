@@ -72,68 +72,46 @@ const DROITS = [
 ]
 
 const s = {
-  section: {
-    marginBottom: 40,
-  } as React.CSSProperties,
+  section: { marginBottom: 40 } as React.CSSProperties,
   numBadge: {
     width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-    background: 'rgba(200,67,26,0.15)',
-    border: '1px solid rgba(200,67,26,0.3)',
+    background: 'rgba(200,67,26,0.15)', border: '1px solid rgba(200,67,26,0.3)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#C8431A', fontSize: 13, fontWeight: 700,
   } as React.CSSProperties,
   h2: {
     fontFamily: 'Georgia, serif', fontStyle: 'italic',
     fontSize: 'clamp(18px, 3vw, 22px)',
-    fontWeight: 700, color: '#F7F2E8',
-    lineHeight: 1.3, marginTop: 4,
+    fontWeight: 700, color: '#F7F2E8', lineHeight: 1.3, marginTop: 4,
   } as React.CSSProperties,
-  body: {
-    color: '#E8E0D0', fontSize: 14, lineHeight: 1.7,
-  } as React.CSSProperties,
+  body: { color: '#E8E0D0', fontSize: 14, lineHeight: 1.7 } as React.CSSProperties,
   card: {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid #2a2a2a',
+    background: 'rgba(255,255,255,0.03)', border: '1px solid #2a2a2a',
     borderRadius: 12, padding: '16px 18px',
   } as React.CSSProperties,
-  divider: {
-    height: 1, background: '#2a2a2a', marginTop: 40,
-  } as React.CSSProperties,
-  list: {
-    paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8,
-  } as React.CSSProperties,
+  divider: { height: 1, background: '#2a2a2a', marginTop: 40 } as React.CSSProperties,
+  list: { paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 } as React.CSSProperties,
 }
 
 export default function PolitiqueConfidentialite() {
   return (
     <main style={{
-      minHeight: '100dvh',
-      background: '#1A1410',
-      color: '#F7F2E8',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      minHeight: '100dvh', background: '#1A1410',
+      color: '#F7F2E8', fontFamily: 'system-ui, -apple-system, sans-serif',
     }}>
 
       {/* Header sticky */}
       <div style={{
-        background: '#1A1410',
-        borderBottom: '1px solid #2a2a2a',
-        padding: '16px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
+        background: '#1A1410', borderBottom: '1px solid #2a2a2a',
+        padding: '16px 20px', display: 'flex', alignItems: 'center',
+        position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <a href="/" style={{
-          color: '#8C5A40', fontSize: 13,
-          textDecoration: 'none',
-        }}>
+        <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>
           ← Retour
         </a>
         <div style={{
           fontFamily: 'Georgia, serif', fontStyle: 'italic',
-          fontSize: 20, fontWeight: 'bold',
-          marginLeft: 'auto', marginRight: 'auto',
+          fontSize: 20, fontWeight: 'bold', marginLeft: 'auto', marginRight: 'auto',
         }}>
           <span style={{ color: '#F7F2E8' }}>lot</span>
           <span style={{ color: '#C8431A' }}>bo</span>
@@ -141,29 +119,28 @@ export default function PolitiqueConfidentialite() {
         <div style={{ width: 48 }} />
       </div>
 
-      {/* Contenu */}
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px' }}>
 
-        {/* Titre page */}
+        {/* Titre */}
         <div style={{ marginBottom: 40 }}>
           <p style={{
-            color: '#C8431A', fontSize: 11,
-            textTransform: 'uppercase', letterSpacing: '0.1em',
-            marginBottom: 12, fontWeight: 600,
+            color: '#C8431A', fontSize: 11, textTransform: 'uppercase',
+            letterSpacing: '0.1em', marginBottom: 12, fontWeight: 600,
           }}>Légal</p>
           <h1 style={{
             fontFamily: 'Georgia, serif', fontStyle: 'italic',
             fontSize: 'clamp(28px, 5vw, 42px)',
-            fontWeight: 700, color: '#F7F2E8',
-            lineHeight: 1.15, marginBottom: 16,
+            fontWeight: 700, color: '#F7F2E8', lineHeight: 1.15, marginBottom: 16,
           }}>
             Politique de confidentialité
           </h1>
           <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.6 }}>
             Dernière mise à jour : <strong style={{ color: '#F7F2E8' }}>11 mai 2026</strong>
             <br />
-            Cette politique décrit comment <strong style={{ color: '#F7F2E8' }}>Lotbo</strong> collecte,
-            utilise et protège vos données personnelles lorsque vous utilisez notre plateforme.
+            Cette politique décrit comment <strong style={{ color: '#F7F2E8' }}>Lotbo</strong>,
+            un produit de <strong style={{ color: '#F7F2E8' }}>Bup Mark Ltd</strong>{' '}
+            (société enregistrée en Angleterre et au Pays de Galles, n° 15840780),
+            collecte, utilise et protège vos données personnelles.
           </p>
         </div>
 
@@ -175,10 +152,28 @@ export default function PolitiqueConfidentialite() {
             <div style={s.numBadge}>1</div>
             <h2 style={s.h2}>Qui sommes-nous ?</h2>
           </div>
-          <div style={{ paddingLeft: 48 }}>
+          <div style={{ paddingLeft: 48, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <p style={s.body}>
-              Lotbo est une plateforme mondiale de découverte d&apos;événements locaux, née en Haïti le 5 mai 2026.
-              Accessible via <strong>lotbo.app</strong> et <strong>app.lotbo.app</strong>.
+              Lotbo est une plateforme mondiale de découverte d&apos;événements locaux,
+              née en Haïti le 5 mai 2026. Accessible via{' '}
+              <strong>lotbo.app</strong> et <strong>app.lotbo.app</strong>.
+            </p>
+            <div style={{
+              background: 'rgba(255,255,255,0.03)', border: '1px solid #2a2a2a',
+              borderRadius: 10, padding: '14px 16px',
+            }}>
+              <p style={{ color: '#C8431A', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
+                Responsable du traitement
+              </p>
+              <p style={{ color: '#F7F2E8', fontSize: 14, lineHeight: 1.8 }}>
+                <strong>Bup Mark Ltd</strong><br />
+                Numéro d&apos;entreprise : 15840780<br />
+                Office 12, Initial Business Centre<br />
+                Wilson Business Park, Manchester, M40 8WN<br />
+                Royaume-Uni
+              </p>
+            </div>
+            <p style={s.body}>
               Pour toute question relative à vos données, contactez-nous à{' '}
               <a href="mailto:lotboapp@gmail.com" style={{ color: '#C8431A' }}>lotboapp@gmail.com</a>.
             </p>
@@ -195,9 +190,7 @@ export default function PolitiqueConfidentialite() {
           <div style={{ paddingLeft: 48, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {DONNEES_COLLECTEES.map(item => (
               <div key={item.cat} style={s.card}>
-                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-                  {item.cat}
-                </p>
+                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{item.cat}</p>
                 <p style={s.body}>{item.desc}</p>
               </div>
             ))}
@@ -213,9 +206,7 @@ export default function PolitiqueConfidentialite() {
           </div>
           <div style={{ paddingLeft: 48 }}>
             <ul style={s.list}>
-              {NON_COLLECTES.map((item, i) => (
-                <li key={i} style={s.body}>{item}</li>
-              ))}
+              {NON_COLLECTES.map((item, i) => <li key={i} style={s.body}>{item}</li>)}
             </ul>
           </div>
           <div style={s.divider} />
@@ -229,9 +220,7 @@ export default function PolitiqueConfidentialite() {
           </div>
           <div style={{ paddingLeft: 48 }}>
             <ul style={s.list}>
-              {USAGES.map((item, i) => (
-                <li key={i} style={s.body}>{item}</li>
-              ))}
+              {USAGES.map((item, i) => <li key={i} style={s.body}>{item}</li>)}
             </ul>
           </div>
           <div style={s.divider} />
@@ -251,18 +240,15 @@ export default function PolitiqueConfidentialite() {
             {PARTENAIRES.map(p => (
               <div key={p.nom} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid #2a2a2a',
-                borderRadius: 10, padding: '12px 16px', gap: 12,
-                flexWrap: 'wrap',
+                background: 'rgba(255,255,255,0.03)', border: '1px solid #2a2a2a',
+                borderRadius: 10, padding: '12px 16px', gap: 12, flexWrap: 'wrap',
               }}>
                 <div>
                   <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 600 }}>{p.nom}</p>
                   <p style={{ color: '#8C5A40', fontSize: 12 }}>{p.role}</p>
                 </div>
-                <a href={p.lien} target="_blank" rel="noopener noreferrer" style={{
-                  color: '#C8431A', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap',
-                }}>
+                <a href={p.lien} target="_blank" rel="noopener noreferrer"
+                  style={{ color: '#C8431A', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   Leur politique →
                 </a>
               </div>
@@ -279,9 +265,7 @@ export default function PolitiqueConfidentialite() {
           </div>
           <div style={{ paddingLeft: 48 }}>
             <ul style={s.list}>
-              {CONSERVATION.map((item, i) => (
-                <li key={i} style={s.body}>{item}</li>
-              ))}
+              {CONSERVATION.map((item, i) => <li key={i} style={s.body}>{item}</li>)}
             </ul>
           </div>
           <div style={s.divider} />
@@ -298,9 +282,7 @@ export default function PolitiqueConfidentialite() {
               Conformément au RGPD et aux lois applicables, vous disposez des droits suivants :
             </p>
             <ul style={s.list}>
-              {DROITS.map((item, i) => (
-                <li key={i} style={s.body}>{item}</li>
-              ))}
+              {DROITS.map((item, i) => <li key={i} style={s.body}>{item}</li>)}
             </ul>
             <p style={s.body}>
               Pour exercer ces droits, contactez-nous à{' '}
@@ -349,13 +331,15 @@ export default function PolitiqueConfidentialite() {
         <div style={s.section}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
             <div style={s.numBadge}>10</div>
-            <h2 style={s.h2}>Modifications</h2>
+            <h2 style={s.h2}>Droit applicable</h2>
           </div>
           <div style={{ paddingLeft: 48 }}>
             <p style={s.body}>
-              Nous pouvons mettre à jour cette politique à tout moment. La date de dernière
-              modification est indiquée en haut de cette page. En continuant à utiliser Lotbo
-              après une modification, vous acceptez la nouvelle politique.
+              La présente politique est régie par le droit anglais et gallois, conformément
+              au siège social de Bup Mark Ltd au Royaume-Uni. Elle est également conforme
+              au Règlement Général sur la Protection des Données (RGPD) de l&apos;Union Européenne.
+              Nous pouvons mettre à jour cette politique à tout moment — la date de dernière
+              modification est indiquée en haut de cette page.
             </p>
           </div>
           <div style={s.divider} />
@@ -363,16 +347,14 @@ export default function PolitiqueConfidentialite() {
 
         {/* Contact final */}
         <div style={{
-          background: 'rgba(200,67,26,0.08)',
-          border: '1px solid rgba(200,67,26,0.2)',
-          borderRadius: 16, padding: '24px 20px',
-          textAlign: 'center', marginTop: 8,
+          background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.2)',
+          borderRadius: 16, padding: '24px 20px', textAlign: 'center', marginTop: 8,
         }}>
           <p style={{ color: '#F7F2E8', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
             Une question sur vos données ?
           </p>
           <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 16 }}>
-            Notre équipe répond dans les 30 jours.
+            Bup Mark Ltd · Office 12, Initial Business Centre, Manchester M40 8WN, UK
           </p>
           <a href="mailto:lotboapp@gmail.com" style={{
             background: '#C8431A', color: '#F7F2E8',
