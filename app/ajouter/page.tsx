@@ -38,6 +38,71 @@ const EVENT_THEMES = [
   { id: 17, nom: 'Environnement', icone: '🌿' },
 ]
 
+// ── Fuseaux horaires — 49 zones mondiales ────────────────────────────────────
+const FUSEAUX = [
+  // Haïti & Caraïbes
+  { value: 'America/Port-au-Prince', label: '🇭🇹 Haïti' },
+  { value: 'America/Guadeloupe', label: '🇬🇵 Guadeloupe / Martinique' },
+  { value: 'America/Santo_Domingo', label: '🇩🇴 République Dominicaine' },
+  { value: 'America/Jamaica', label: '🇯🇲 Jamaïque' },
+  { value: 'America/Havana', label: '🇨🇺 Cuba' },
+  { value: 'America/Puerto_Rico', label: '🇵🇷 Porto Rico' },
+  // Amérique du Nord
+  { value: 'America/New_York', label: '🇺🇸 New York / Miami / Boston' },
+  { value: 'America/Chicago', label: '🇺🇸 Chicago / Houston' },
+  { value: 'America/Denver', label: '🇺🇸 Denver / Phoenix' },
+  { value: 'America/Los_Angeles', label: '🇺🇸 Los Angeles / San Francisco' },
+  { value: 'America/Montreal', label: '🇨🇦 Montréal / Québec' },
+  { value: 'America/Toronto', label: '🇨🇦 Toronto / Ottawa' },
+  { value: 'America/Vancouver', label: '🇨🇦 Vancouver' },
+  // Amérique Latine
+  { value: 'America/Mexico_City', label: '🇲🇽 Mexique' },
+  { value: 'America/Bogota', label: '🇨🇴 Colombie' },
+  { value: 'America/Lima', label: '🇵🇪 Pérou' },
+  { value: 'America/Santiago', label: '🇨🇱 Chili' },
+  { value: 'America/Argentina/Buenos_Aires', label: '🇦🇷 Argentine' },
+  { value: 'America/Sao_Paulo', label: '🇧🇷 Brésil (São Paulo)' },
+  // Europe
+  { value: 'Europe/London', label: '🇬🇧 Londres' },
+  { value: 'Europe/Paris', label: '🇫🇷 Paris / Bruxelles / Genève' },
+  { value: 'Europe/Berlin', label: '🇩🇪 Berlin / Amsterdam / Rome' },
+  { value: 'Europe/Madrid', label: '🇪🇸 Madrid / Barcelone' },
+  { value: 'Europe/Lisbon', label: '🇵🇹 Lisbonne' },
+  { value: 'Europe/Moscow', label: '🇷🇺 Moscou' },
+  // Afrique
+  { value: 'Africa/Abidjan', label: '🇨🇮 Côte d\'Ivoire / Sénégal / Mali' },
+  { value: 'Africa/Lagos', label: '🇳🇬 Nigeria / Cameroun / Gabon' },
+  { value: 'Africa/Kinshasa', label: '🇨🇩 Congo / RDC' },
+  { value: 'Africa/Nairobi', label: '🇰🇪 Kenya / Éthiopie / Tanzanie' },
+  { value: 'Africa/Casablanca', label: '🇲🇦 Maroc' },
+  { value: 'Africa/Cairo', label: '🇪🇬 Égypte' },
+  { value: 'Indian/Reunion', label: '🇷🇪 La Réunion / Maurice' },
+  // Moyen-Orient
+  { value: 'Asia/Beirut', label: '🇱🇧 Liban' },
+  { value: 'Asia/Riyadh', label: '🇸🇦 Arabie Saoudite / Koweït' },
+  { value: 'Asia/Dubai', label: '🇦🇪 Dubaï / EAU' },
+  { value: 'Asia/Tehran', label: '🇮🇷 Iran' },
+  // Asie du Sud
+  { value: 'Asia/Karachi', label: '🇵🇰 Pakistan' },
+  { value: 'Asia/Kolkata', label: '🇮🇳 Inde' },
+  { value: 'Asia/Dhaka', label: '🇧🇩 Bangladesh' },
+  // Asie du Sud-Est
+  { value: 'Asia/Bangkok', label: '🇹🇭 Thaïlande / Vietnam / Cambodge' },
+  { value: 'Asia/Singapore', label: '🇸🇬 Singapour / Malaisie / Philippines' },
+  { value: 'Asia/Jakarta', label: '🇮🇩 Indonésie' },
+  // Asie de l'Est
+  { value: 'Asia/Shanghai', label: '🇨🇳 Chine / Hong Kong / Taïwan' },
+  { value: 'Asia/Seoul', label: '🇰🇷 Corée du Sud' },
+  { value: 'Asia/Tokyo', label: '🇯🇵 Japon' },
+  // Océanie
+  { value: 'Australia/Sydney', label: '🇦🇺 Australie (Sydney)' },
+  { value: 'Pacific/Auckland', label: '🇳🇿 Nouvelle-Zélande' },
+  { value: 'Pacific/Honolulu', label: '🇺🇸 Hawaï' },
+  // International
+  { value: 'UTC', label: '🌍 UTC — événement international / en ligne' },
+]
+// ─────────────────────────────────────────────────────────────────────────────
+
 const inputStyle = {
   background: 'rgba(255,255,255,0.06)',
   border: '1px solid #333',
@@ -103,10 +168,11 @@ export default function AjouterEvenement() {
     date_fin: '',
     heure_debut: '',
     heure_fin: '',
+    fuseau_organisateur: 'America/Port-au-Prince',
     description: '',
     lien: '',
     acces: 'public',
-    prix: 'gratuit'
+    prix: 'gratuit',
   })
 
   // Fermer suggestions en cliquant ailleurs
@@ -152,8 +218,6 @@ export default function AjouterEvenement() {
   // ── Sélection d'une suggestion ────────────────────────────────────────────
   const handleSelectSuggestion = (suggestion: Suggestion) => {
     const [longitude, latitude] = suggestion.center
-
-    // Extraire ville et pays depuis le contexte Mapbox
     let ville = form.ville
     let pays = form.pays
     if (suggestion.context) {
@@ -162,14 +226,12 @@ export default function AjouterEvenement() {
       if (villeCtx) ville = villeCtx.text
       if (paysCtx) pays = paysCtx.text
     }
-
     setForm(f => ({
       ...f,
       lieu: suggestion.text || suggestion.place_name.split(',')[0],
       ville,
       pays,
     }))
-
     setCoordsPreview({ longitude, latitude, adresse: suggestion.place_name })
     setAdresseConfirmee(false)
     setSuggestions([])
@@ -183,11 +245,9 @@ export default function AjouterEvenement() {
   }
 
   const geocoder = async () => {
-    // Si l'utilisateur a déjà confirmé via la mini-carte, utiliser ces coords
     if (coordsPreview && adresseConfirmee) {
       return { longitude: coordsPreview.longitude, latitude: coordsPreview.latitude }
     }
-    // Sinon géocoder normalement
     const adresseComplete = `${form.lieu}, ${form.ville}, ${form.pays}`
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(adresseComplete)}.json?access_token=${token}&limit=1`
@@ -210,7 +270,6 @@ export default function AjouterEvenement() {
       alert('La date de fin doit être après la date de début.')
       return
     }
-    // Si une preview existe mais n'est pas confirmée, demander confirmation
     if (coordsPreview && !adresseConfirmee) {
       alert('Vérifie l\'emplacement sur la mini-carte et clique sur "Confirmer cet emplacement".')
       return
@@ -252,6 +311,7 @@ export default function AjouterEvenement() {
       date_fin: multiJours && form.date_fin ? form.date_fin : null,
       heure_debut: form.heure_debut,
       heure_fin: form.heure_fin || null,
+      fuseau_organisateur: form.fuseau_organisateur,
       categorie: categorieNom,
       event_type_id: selectedType,
       description: form.description,
@@ -312,25 +372,19 @@ export default function AjouterEvenement() {
               padding: '12px 24px', borderRadius: 10,
               fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
               display: 'block', textAlign: 'center'
-            }}>
-              Retour à la carte
-            </a>
+            }}>Retour à la carte</a>
             <a href="/ajouter" style={{
               background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
-              border: '1px solid #333',
-              padding: '12px 24px', borderRadius: 10,
+              border: '1px solid #333', padding: '12px 24px', borderRadius: 10,
               fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
               display: 'block', textAlign: 'center'
-            }}>
-              + Ajouter un autre événement
-            </a>
+            }}>+ Ajouter un autre événement</a>
           </div>
         </div>
       </main>
     )
   }
 
-  // ── URL mini-carte statique Mapbox ────────────────────────────────────────
   const miniCarteUrl = coordsPreview
     ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+C8431A(${coordsPreview.longitude},${coordsPreview.latitude})/${coordsPreview.longitude},${coordsPreview.latitude},14,0/600x200@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
     : null
@@ -353,18 +407,23 @@ export default function AjouterEvenement() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+          {/* Titre */}
           <div>
             <label style={labelStyle}>Titre de l'événement *</label>
             <input name="titre" placeholder="Ex: Livres en Folie 2026"
               onChange={handleChange} style={inputStyle} required />
           </div>
 
+          {/* Organisateur */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={labelStyle}>Organisateur</label>
             <input name="organisateur" value={form.organisateur}
               onChange={handleChange}
               placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
               style={inputStyle} />
+          </div>
+
+          {/* Ville + Pays */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Ville *</label>
@@ -378,14 +437,11 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
-          </div>
-
-          {/* ── Lieu avec autocomplétion ─────────────────────────────────── */}
+          {/* Lieu avec autocomplétion */}
           <div style={{ position: 'relative' }} ref={suggestionsRef}>
             <label style={labelStyle}>Nom du lieu *</label>
             <input
-              name="lieu"
-              value={form.lieu}
+              name="lieu" value={form.lieu}
               placeholder="Ex: El Rancho Convention Center"
               onChange={handleLieuChange}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
@@ -393,40 +449,25 @@ export default function AjouterEvenement() {
                 ...inputStyle,
                 border: adresseConfirmee ? '1px solid #2D9E6B' : coordsPreview ? '1px solid #D4A820' : '1px solid #333',
               }}
-              required
-              autoComplete="off"
+              required autoComplete="off"
             />
             {adresseConfirmee && (
-              <span style={{
-                position: 'absolute', right: 14, top: 36,
-                color: '#2D9E6B', fontSize: 16
-              }}>✓</span>
+              <span style={{ position: 'absolute', right: 14, top: 36, color: '#2D9E6B', fontSize: 16 }}>✓</span>
             )}
-
-            {/* Dropdown suggestions */}
             {showSuggestions && suggestions.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0,
-                zIndex: 100, marginTop: 4,
-                background: '#1A1410',
-                border: '1px solid #2a2a2a',
-                borderRadius: 10,
-                overflow: 'hidden',
+                zIndex: 100, marginTop: 4, background: '#1A1410',
+                border: '1px solid #2a2a2a', borderRadius: 10, overflow: 'hidden',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
               }}>
                 {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => handleSelectSuggestion(s)}
+                  <button key={i} type="button" onClick={() => handleSelectSuggestion(s)}
                     style={{
-                      width: '100%', textAlign: 'left',
-                      padding: '10px 14px',
-                      background: 'transparent',
-                      border: 'none',
+                      width: '100%', textAlign: 'left', padding: '10px 14px',
+                      background: 'transparent', border: 'none',
                       borderBottom: i < suggestions.length - 1 ? '1px solid #2a2a2a' : 'none',
-                      color: '#F7F2E8', fontSize: 13,
-                      cursor: 'pointer',
+                      color: '#F7F2E8', fontSize: 13, cursor: 'pointer',
                       display: 'flex', flexDirection: 'column', gap: 2,
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
@@ -435,30 +476,23 @@ export default function AjouterEvenement() {
                     <span style={{ fontWeight: 'bold', fontSize: 13 }}>
                       {s.text || s.place_name.split(',')[0]}
                     </span>
-                    <span style={{ color: '#8C5A40', fontSize: 11 }}>
-                      {s.place_name}
-                    </span>
+                    <span style={{ color: '#8C5A40', fontSize: 11 }}>{s.place_name}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* ── Mini-carte de confirmation ────────────────────────────────── */}
+          {/* Mini-carte de confirmation */}
           {coordsPreview && miniCarteUrl && (
             <div style={{
-              borderRadius: 12,
-              overflow: 'hidden',
+              borderRadius: 12, overflow: 'hidden',
               border: adresseConfirmee ? '2px solid #2D9E6B' : '2px solid #D4A820',
             }}>
-              <img
-                src={miniCarteUrl}
-                alt="Emplacement sur la carte"
-                style={{ width: '100%', display: 'block', height: 180, objectFit: 'cover' }}
-              />
+              <img src={miniCarteUrl} alt="Emplacement sur la carte"
+                style={{ width: '100%', display: 'block', height: 180, objectFit: 'cover' }} />
               <div style={{
-                background: 'rgba(26,20,16,0.95)',
-                padding: '12px 14px',
+                background: 'rgba(26,20,16,0.95)', padding: '12px 14px',
                 display: 'flex', flexDirection: 'column', gap: 8,
               }}>
                 <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>
@@ -466,56 +500,37 @@ export default function AjouterEvenement() {
                 </p>
                 {!adresseConfirmee ? (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      type="button"
-                      onClick={() => setAdresseConfirmee(true)}
-                      style={{
-                        flex: 2, background: '#2D9E6B', color: 'white',
-                        border: 'none', borderRadius: 8, padding: '9px 12px',
-                        fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
-                      }}
-                    >
-                      ✓ Confirmer cet emplacement
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCoordsPreview(null)
-                        setAdresseConfirmee(false)
-                        setForm(f => ({ ...f, lieu: '' }))
-                      }}
-                      style={{
-                        flex: 1, background: 'rgba(255,255,255,0.06)', color: '#8C5A40',
-                        border: '1px solid #333', borderRadius: 8, padding: '9px 12px',
-                        fontSize: 13, cursor: 'pointer',
-                      }}
-                    >
-                      Corriger
-                    </button>
+                    <button type="button" onClick={() => setAdresseConfirmee(true)} style={{
+                      flex: 2, background: '#2D9E6B', color: 'white',
+                      border: 'none', borderRadius: 8, padding: '9px 12px',
+                      fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                    }}>✓ Confirmer cet emplacement</button>
+                    <button type="button" onClick={() => {
+                      setCoordsPreview(null)
+                      setAdresseConfirmee(false)
+                      setForm(f => ({ ...f, lieu: '' }))
+                    }} style={{
+                      flex: 1, background: 'rgba(255,255,255,0.06)', color: '#8C5A40',
+                      border: '1px solid #333', borderRadius: 8, padding: '9px 12px',
+                      fontSize: 13, cursor: 'pointer',
+                    }}>Corriger</button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ color: '#2D9E6B', fontSize: 13, fontWeight: 'bold' }}>
                       ✓ Emplacement confirmé
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setAdresseConfirmee(false)}
-                      style={{
-                        background: 'none', border: 'none',
-                        color: '#8C5A40', fontSize: 12, cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      Modifier
-                    </button>
+                    <button type="button" onClick={() => setAdresseConfirmee(false)} style={{
+                      background: 'none', border: 'none', color: '#8C5A40',
+                      fontSize: 12, cursor: 'pointer', textDecoration: 'underline',
+                    }}>Modifier</button>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-{/* Toggle multi-jours */}
+          {/* Toggle multi-jours */}
           <div>
             <button type="button" onClick={() => {
               setMultiJours(!multiJours)
@@ -533,6 +548,7 @@ export default function AjouterEvenement() {
             </button>
           </div>
 
+          {/* Dates */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{multiJours ? 'Date de début *' : 'Date *'}</label>
@@ -547,6 +563,7 @@ export default function AjouterEvenement() {
             )}
           </div>
 
+          {/* Heures */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Heure de début *</label>
@@ -558,6 +575,25 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* ── Fuseau horaire ───────────────────────────────────────────── */}
+          <div>
+            <label style={labelStyle}>
+              Fuseau horaire de l'événement
+              <span style={{ color: '#555', marginLeft: 4 }}>(heure locale du lieu)</span>
+            </label>
+            <select
+              name="fuseau_organisateur"
+              value={form.fuseau_organisateur}
+              onChange={handleChange}
+              style={inputStyle}
+            >
+              {FUSEAUX.map(f => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Type d'événement */}
           <div>
             <label style={labelStyle}>Type d'événement *</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
@@ -577,6 +613,7 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* Thèmes */}
           <div>
             <label style={labelStyle}>Thèmes <span style={{ color: '#555' }}>(plusieurs possible)</span></label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
@@ -596,6 +633,7 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* Accès + Prix */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Accès</label>
@@ -613,6 +651,7 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* Description */}
           <div>
             <label style={labelStyle}>Description</label>
             <textarea name="description" placeholder="Décris l'événement..."
@@ -620,11 +659,13 @@ export default function AjouterEvenement() {
               style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
+          {/* Lien */}
           <div>
             <label style={labelStyle}>Lien pour plus de détails (optionnel)</label>
             <input name="lien" placeholder="https://" onChange={handleChange} style={inputStyle} />
           </div>
 
+          {/* Photo */}
           <div>
             <label style={labelStyle}>Photo de l'événement (optionnel)</label>
             <input type="file" accept="image/*"
@@ -632,6 +673,7 @@ export default function AjouterEvenement() {
               style={{ ...inputStyle, cursor: 'pointer' }} />
           </div>
 
+          {/* Submit */}
           <button type="submit" disabled={loading} style={{
             background: loading ? '#8C5A40' : '#C8431A',
             color: '#F7F2E8', fontWeight: 'bold',
