@@ -47,7 +47,7 @@ const inputStyle = {
   fontSize: 14,
   outline: 'none',
   width: '100%',
-  colorScheme: 'dark' as const,  // ← ajouter ici
+  colorScheme: 'dark' as const,
 }
 
 const labelStyle = {
@@ -55,7 +55,6 @@ const labelStyle = {
   fontSize: 12,
   marginBottom: 4,
 }
-
 
 // ── Helper : formate une date YYYY-MM-DD en "14 juin 2026" ──
 function formatDate(dateStr: string): string {
@@ -171,10 +170,14 @@ export default function AjouterEvenement() {
       statut: 'en_attente',
     }])
 
+    // ─── Notification admin — avec secret interne ─────────────────────────────
     if (!error) {
       fetch('/api/notify-admin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
+        },
         body: JSON.stringify({
           titre: form.titre,
           lieu: `${form.lieu}, ${form.ville}`,
@@ -239,7 +242,6 @@ export default function AjouterEvenement() {
     <main style={{ minHeight: '100dvh', background: '#1A1410', padding: '32px 16px' }}>
       <div style={{ maxWidth: 520, margin: '0 auto' }}>
 
-        {/* Header */}
         <div style={{ marginBottom: 32 }}>
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>
             ← Retour à la carte
@@ -254,33 +256,26 @@ export default function AjouterEvenement() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Titre */}
           <div>
             <label style={labelStyle}>Titre de l'événement *</label>
             <input name="titre" placeholder="Ex: Livres en Folie 2026"
               onChange={handleChange} style={inputStyle} required />
           </div>
 
-          {/* Organisateur */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={labelStyle}>Organisateur</label>
-            <input
-              name="organisateur"
-              value={form.organisateur}
+            <input name="organisateur" value={form.organisateur}
               onChange={handleChange}
               placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
-              style={inputStyle}
-            />
+              style={inputStyle} />
           </div>
 
-          {/* Lieu */}
           <div>
             <label style={labelStyle}>Nom du lieu *</label>
             <input name="lieu" placeholder="Ex: El Rancho Convention Center"
               onChange={handleChange} style={inputStyle} required />
           </div>
 
-          {/* Ville + Pays */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Ville *</label>
@@ -294,88 +289,61 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
-          {/* ── DATES ───────────────────────────────────────── */}
-
           {/* Toggle multi-jours */}
           <div>
-            <button
-              type="button"
-              onClick={() => {
-                setMultiJours(!multiJours)
-                if (multiJours) setForm(f => ({ ...f, date_fin: '' }))
-              }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: multiJours ? 'rgba(200,67,26,0.12)' : 'rgba(255,255,255,0.04)',
-                border: multiJours ? '1px solid #C8431A' : '1px solid #333',
-                borderRadius: 10, padding: '10px 14px',
-                color: multiJours ? '#F7F2E8' : '#8C5A40',
-                fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left'
-              }}
-            >
+            <button type="button" onClick={() => {
+              setMultiJours(!multiJours)
+              if (multiJours) setForm(f => ({ ...f, date_fin: '' }))
+            }} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: multiJours ? 'rgba(200,67,26,0.12)' : 'rgba(255,255,255,0.04)',
+              border: multiJours ? '1px solid #C8431A' : '1px solid #333',
+              borderRadius: 10, padding: '10px 14px',
+              color: multiJours ? '#F7F2E8' : '#8C5A40',
+              fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left'
+            }}>
               <span style={{ fontSize: 16 }}>{multiJours ? '✅' : '☐'}</span>
               <span>Événement sur plusieurs jours</span>
             </button>
           </div>
 
-          {/* Date début + fin */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{multiJours ? 'Date de début *' : 'Date *'}</label>
-              <input
-                type="date" name="date"
-                onChange={handleChange}
-                style={inputStyle} required
-              />
+              <input type="date" name="date" onChange={handleChange} style={inputStyle} required />
             </div>
             {multiJours && (
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Date de fin *</label>
-                <input
-                  type="date" name="date_fin"
-                  min={form.date || undefined}
-                  onChange={handleChange}
-                  style={inputStyle}
-                  required={multiJours}
-                />
+                <input type="date" name="date_fin" min={form.date || undefined}
+                  onChange={handleChange} style={inputStyle} required={multiJours} />
               </div>
             )}
           </div>
 
-          {/* Heures */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Heure de début *</label>
-              <input type="time" name="heure_debut"
-                onChange={handleChange} style={inputStyle} required />
+              <input type="time" name="heure_debut" onChange={handleChange} style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>
-                Heure de fin <span style={{ color: '#555' }}>(optionnel)</span>
-              </label>
-              <input type="time" name="heure_fin"
-                onChange={handleChange} style={inputStyle} />
+              <label style={labelStyle}>Heure de fin <span style={{ color: '#555' }}>(optionnel)</span></label>
+              <input type="time" name="heure_fin" onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
-          {/* Type principal */}
           <div>
             <label style={labelStyle}>Type d'événement *</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
               {EVENT_TYPES.map(type => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => setSelectedType(type.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 12px', borderRadius: 10, fontSize: 13,
-                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s',
-                    background: selectedType === type.id ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: selectedType === type.id ? '1px solid #C8431A' : '1px solid #2a2a2a',
-                    color: selectedType === type.id ? '#F7F2E8' : '#8C5A40',
-                  }}
-                >
+                <button key={type.id} type="button" onClick={() => setSelectedType(type.id)} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 12px', borderRadius: 10, fontSize: 13,
+                  textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s',
+                  background: selectedType === type.id ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
+                  border: selectedType === type.id ? '1px solid #C8431A' : '1px solid #2a2a2a',
+                  color: selectedType === type.id ? '#F7F2E8' : '#8C5A40',
+                }}>
                   <span>{type.icone}</span>
                   <span>{type.nom}</span>
                 </button>
@@ -383,24 +351,18 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
-          {/* Thèmes */}
           <div>
             <label style={labelStyle}>Thèmes <span style={{ color: '#555' }}>(plusieurs possible)</span></label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
               {EVENT_THEMES.map(theme => (
-                <button
-                  key={theme.id}
-                  type="button"
-                  onClick={() => toggleTheme(theme.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 12px', borderRadius: 999, fontSize: 12,
-                    cursor: 'pointer', transition: 'all 0.15s',
-                    background: selectedThemes.includes(theme.id) ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: selectedThemes.includes(theme.id) ? '1px solid #C8431A' : '1px solid #2a2a2a',
-                    color: selectedThemes.includes(theme.id) ? '#F7F2E8' : '#8C5A40',
-                  }}
-                >
+                <button key={theme.id} type="button" onClick={() => toggleTheme(theme.id)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px', borderRadius: 999, fontSize: 12,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                  background: selectedThemes.includes(theme.id) ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
+                  border: selectedThemes.includes(theme.id) ? '1px solid #C8431A' : '1px solid #2a2a2a',
+                  color: selectedThemes.includes(theme.id) ? '#F7F2E8' : '#8C5A40',
+                }}>
                   <span>{theme.icone}</span>
                   <span>{theme.nom}</span>
                 </button>
@@ -408,7 +370,6 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
-          {/* Accès + Prix */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Accès</label>
@@ -426,7 +387,6 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
-          {/* Description */}
           <div>
             <label style={labelStyle}>Description</label>
             <textarea name="description" placeholder="Décris l'événement..."
@@ -434,14 +394,11 @@ export default function AjouterEvenement() {
               style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
-          {/* Lien */}
           <div>
             <label style={labelStyle}>Lien pour plus de détails (optionnel)</label>
-            <input name="lien" placeholder="https://..."
-              onChange={handleChange} style={inputStyle} />
+            <input name="lien" placeholder="https://" onChange={handleChange} style={inputStyle} />
           </div>
 
-          {/* Photo */}
           <div>
             <label style={labelStyle}>Photo de l'événement (optionnel)</label>
             <input type="file" accept="image/*"
@@ -449,7 +406,6 @@ export default function AjouterEvenement() {
               style={{ ...inputStyle, cursor: 'pointer' }} />
           </div>
 
-          {/* Submit */}
           <button type="submit" disabled={loading} style={{
             background: loading ? '#8C5A40' : '#C8431A',
             color: '#F7F2E8', fontWeight: 'bold',
