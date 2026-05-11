@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import CookieBanner from "../components/CookieBanner";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
       </head>
       <body className={`${dmSans.variable} ${playfairDisplay.variable} antialiased`}>
         {children}
+        <CookieBanner />
       </body>
     </html>
   );
