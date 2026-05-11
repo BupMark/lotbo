@@ -357,7 +357,9 @@ export default function Home() {
             <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.04)', color:'#F7F2E8', textDecoration:'none', fontSize:14 }}>ℹ️ À propos</a>
 <a href="/politique-confidentialite" onClick={() => setDrawerOuvert(false)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.04)', color:'#8C5A40', textDecoration:'none', fontSize:13 }}>🔒 Confidentialité</a>
               <p style={{ color: '#2a2a2a', fontSize: 11, textAlign: 'center' }}>
-                Lotbo v1.0 · né en Haïti 🇭🇹
+                <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.04)', color:'#F7F2E8', textDecoration:'none', fontSize:14 }}>ℹ️ À propos</a>
+              <a href="/politique-confidentialite" onClick={() => setDrawerOuvert(false)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.04)', color:'#8C5A40', textDecoration:'none', fontSize:13 }}>🔒 Confidentialité</a>
+              Lotbo v1.0 · né en Haïti 🇭🇹
               </p>
             </div>
           </div>
