@@ -175,7 +175,7 @@ export default function PolitiqueConfidentialite() {
             </div>
             <p style={s.body}>
               Pour toute question relative à vos données, contactez-nous à{' '}
-              <a href="mailto:lotboapp@gmail.com" style={{ color: '#C8431A' }}>lotboapp@gmail.com</a>.
+              <a href="mailto:lotbo@bup-mark.com" style={{ color: '#C8431A' }}>lotbo@bup-mark.com</a>.
             </p>
           </div>
           <div style={s.divider} />
@@ -286,7 +286,7 @@ export default function PolitiqueConfidentialite() {
             </ul>
             <p style={s.body}>
               Pour exercer ces droits, contactez-nous à{' '}
-              <a href="mailto:lotboapp@gmail.com" style={{ color: '#C8431A' }}>lotboapp@gmail.com</a>.
+              <a href="mailto:lotbo@bup-mark.com" style={{ color: '#C8431A' }}>lotbo@bup-mark.com</a>.
               Nous répondons dans un délai de 30 jours.
             </p>
           </div>
@@ -356,13 +356,13 @@ export default function PolitiqueConfidentialite() {
           <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 16 }}>
             Bup Mark Ltd · Office 12, Initial Business Centre, Manchester M40 8WN, UK
           </p>
-          <a href="mailto:lotboapp@gmail.com" style={{
+          <a href="mailto:lotbo@bup-mark.com" style={{
             background: '#C8431A', color: '#F7F2E8',
             padding: '12px 24px', borderRadius: 10,
             fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
             display: 'inline-block',
           }}>
-            lotboapp@gmail.com
+            lotbo@bup-mark.com
           </a>
         </div>
 
