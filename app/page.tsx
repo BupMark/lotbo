@@ -1,8 +1,8 @@
 'use client'
-
+ 
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
-
+ 
 const EVENT_TYPES = [
   { id: 1, nom: 'Conférence / Sommet', icone: '🎤' },
   { id: 2, nom: 'Concert / Spectacle', icone: '🎶' },
@@ -17,7 +17,7 @@ const EVENT_TYPES = [
   { id: 11, nom: 'Droit / Juridique', icone: '⚖️' },
   { id: 12, nom: 'Loisir', icone: '🎯' },
 ]
-
+ 
 const EVENT_THEMES = [
   { id: 1, nom: 'Religion', icone: '✝️' },
   { id: 2, nom: 'Politique', icone: '🏛️' },
@@ -37,7 +37,7 @@ const EVENT_THEMES = [
   { id: 16, nom: 'Santé', icone: '❤️' },
   { id: 17, nom: 'Environnement', icone: '🌿' },
 ]
-
+ 
 const inputStyle = {
   background: 'rgba(255,255,255,0.06)',
   border: '1px solid #333',
@@ -49,13 +49,13 @@ const inputStyle = {
   width: '100%',
   colorScheme: 'dark' as const,
 }
-
+ 
 const labelStyle = {
   color: '#8C5A40',
   fontSize: 12,
   marginBottom: 4,
 }
-
+ 
 // ── Helper : formate une date YYYY-MM-DD en "14 juin 2026" ──
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
@@ -63,7 +63,7 @@ function formatDate(dateStr: string): string {
   const mois = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
   return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
 }
-
+ 
 export default function AjouterEvenement() {
   const [loading, setLoading] = useState(false)
   const [succes, setSucces] = useState(false)
@@ -86,17 +86,17 @@ export default function AjouterEvenement() {
     acces: 'public',
     prix: 'gratuit'
   })
-
+ 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
-
+ 
   const toggleTheme = (id: number) => {
     setSelectedThemes(prev =>
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
     )
   }
-
+ 
   const geocoder = async () => {
     const adresseComplete = `${form.lieu}, ${form.ville}, ${form.pays}`
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
@@ -109,7 +109,7 @@ export default function AjouterEvenement() {
     }
     return null
   }
-
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedType) {
@@ -121,14 +121,14 @@ export default function AjouterEvenement() {
       return
     }
     setLoading(true)
-
+ 
     const coords = await geocoder()
     if (!coords) {
       alert('Adresse introuvable. Vérifie le lieu, la ville et le pays.')
       setLoading(false)
       return
     }
-
+ 
     let image_url = ''
     if (image) {
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -141,10 +141,10 @@ export default function AjouterEvenement() {
         image_url = urlData.publicUrl
       }
     }
-
+ 
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
-
+ 
     // ─── INSERT sans .select() — évite le RLS SELECT post-INSERT ─────────────
     const { error } = await supabase.from('evenements').insert([{
       titre: form.titre,
@@ -169,7 +169,7 @@ export default function AjouterEvenement() {
       image_url: image_url,
       statut: 'en_attente',
     }])
-
+ 
     // ─── Notification admin — avec secret interne ─────────────────────────────
     if (!error) {
       fetch('/api/notify-admin', {
@@ -188,16 +188,16 @@ export default function AjouterEvenement() {
         })
       }).catch(() => {})
     }
-
+ 
     setLoading(false)
-
+ 
     if (error) {
       alert('Erreur: ' + error.message)
     } else {
       setSucces(true)
     }
   }
-
+ 
   // ── Écran de confirmation ──
   if (succes) {
     return (
@@ -237,11 +237,11 @@ export default function AjouterEvenement() {
       </main>
     )
   }
-
+ 
   return (
     <main style={{ minHeight: '100dvh', background: '#1A1410', padding: '32px 16px' }}>
       <div style={{ maxWidth: 520, margin: '0 auto' }}>
-
+ 
         <div style={{ marginBottom: 32 }}>
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>
             ← Retour à la carte
@@ -253,15 +253,15 @@ export default function AjouterEvenement() {
             Partage un événement avec la communauté Lotbo
           </p>
         </div>
-
+ 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
+ 
           <div>
             <label style={labelStyle}>Titre de l'événement *</label>
             <input name="titre" placeholder="Ex: Livres en Folie 2026"
               onChange={handleChange} style={inputStyle} required />
           </div>
-
+ 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={labelStyle}>Organisateur</label>
             <input name="organisateur" value={form.organisateur}
@@ -269,13 +269,13 @@ export default function AjouterEvenement() {
               placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..."
               style={inputStyle} />
           </div>
-
+ 
           <div>
             <label style={labelStyle}>Nom du lieu *</label>
             <input name="lieu" placeholder="Ex: El Rancho Convention Center"
               onChange={handleChange} style={inputStyle} required />
           </div>
-
+ 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Ville *</label>
@@ -288,7 +288,7 @@ export default function AjouterEvenement() {
                 onChange={handleChange} style={inputStyle} required />
             </div>
           </div>
-
+ 
           {/* Toggle multi-jours */}
           <div>
             <button type="button" onClick={() => {
@@ -306,7 +306,7 @@ export default function AjouterEvenement() {
               <span>Événement sur plusieurs jours</span>
             </button>
           </div>
-
+ 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{multiJours ? 'Date de début *' : 'Date *'}</label>
@@ -320,7 +320,7 @@ export default function AjouterEvenement() {
               </div>
             )}
           </div>
-
+ 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Heure de début *</label>
@@ -331,7 +331,7 @@ export default function AjouterEvenement() {
               <input type="time" name="heure_fin" onChange={handleChange} style={inputStyle} />
             </div>
           </div>
-
+ 
           <div>
             <label style={labelStyle}>Type d'événement *</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
@@ -350,7 +350,7 @@ export default function AjouterEvenement() {
               ))}
             </div>
           </div>
-
+ 
           <div>
             <label style={labelStyle}>Thèmes <span style={{ color: '#555' }}>(plusieurs possible)</span></label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
@@ -369,7 +369,7 @@ export default function AjouterEvenement() {
               ))}
             </div>
           </div>
-
+ 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Accès</label>
@@ -386,26 +386,26 @@ export default function AjouterEvenement() {
               </select>
             </div>
           </div>
-
+ 
           <div>
             <label style={labelStyle}>Description</label>
             <textarea name="description" placeholder="Décris l'événement..."
               onChange={handleChange} rows={4}
               style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
-
+ 
           <div>
             <label style={labelStyle}>Lien pour plus de détails (optionnel)</label>
             <input name="lien" placeholder="https://" onChange={handleChange} style={inputStyle} />
           </div>
-
+ 
           <div>
             <label style={labelStyle}>Photo de l'événement (optionnel)</label>
             <input type="file" accept="image/*"
               onChange={e => setImage(e.target.files?.[0] || null)}
               style={{ ...inputStyle, cursor: 'pointer' }} />
           </div>
-
+ 
           <button type="submit" disabled={loading} style={{
             background: loading ? '#8C5A40' : '#C8431A',
             color: '#F7F2E8', fontWeight: 'bold',
@@ -416,9 +416,10 @@ export default function AjouterEvenement() {
           }}>
             {loading ? 'Géocodage et publication...' : 'Soumettre l\'événement'}
           </button>
-
+ 
         </form>
       </div>
     </main>
   )
 }
+ 
