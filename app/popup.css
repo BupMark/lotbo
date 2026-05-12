@@ -4,9 +4,12 @@
     border-radius: 12px !important;
     padding: 0 !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-    max-height: 400px !important;
+    max-height: 70dvh !important;
     overflow-y: auto !important;
-    width: 260px !important;
+    overflow-x: hidden !important;
+    width: min(280px, calc(100vw - 40px)) !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   
   .mapboxgl-popup-tip {
