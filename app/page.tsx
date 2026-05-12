@@ -525,7 +525,21 @@ export default function Home() {
           </div>
           <div>
             <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Période</p>
-            <div className="lotbo-filtres-dates">
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+              {[
+                { label: "Aujourd'hui", fn: () => { const d = new Date().toISOString().split('T')[0]; setDateDebut(d); setDateFin(d) } },
+                { label: 'Cette semaine', fn: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); const fin = new Date(debut); fin.setDate(debut.getDate() + 6); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) } },
+                { label: 'Ce mois', fn: () => { const d = new Date(); const debut = new Date(d.getFullYear(), d.getMonth(), 1); const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) } },
+                { label: 'Ce week-end', fn: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); const dim = new Date(sam); dim.setDate(sam.getDate() + 1); setDateDebut(sam.toISOString().split('T')[0]); setDateFin(dim.toISOString().split('T')[0]) } },
+              ].map(p => (
+                <button key={p.label} onClick={p.fn} style={{
+                  padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                  border: '1px solid #E8E0D0', cursor: 'pointer', whiteSpace: 'nowrap',
+                  background: '#F7F2E8', color: '#8C5A40'
+                }}>{p.label}</button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                 <label style={{ color: '#8C5A40', fontSize: 10 }}>Du</label>
                 <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} style={{
@@ -535,7 +549,7 @@ export default function Home() {
                   colorScheme: 'light', minWidth: 0,
                 }} />
               </div>
-              <span className="lotbo-filtres-dates-fleche">→</span>
+              <span style={{ color: '#8C5A40', fontSize: 14, marginTop: 14 }}>→</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                 <label style={{ color: '#8C5A40', fontSize: 10 }}>Au</label>
                 <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={{
