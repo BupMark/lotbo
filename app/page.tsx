@@ -488,7 +488,7 @@ export default function Home() {
       ══════════════════════════════════════ */}
       {filtresOuverts && (
         <div style={{
-          position: 'absolute', top: 116, left: 12, right: 12, zIndex: 30,
+          position: 'absolute', top: 116, left: 12, right: 12, zIndex: 30, paddingBottom: 'env(safe-area-inset-bottom, 80px)',
           background: '#F7F2E8', border: '1px solid #E8E0D0',
           borderRadius: 20, padding: 20,
           display: 'flex', flexDirection: 'column', gap: 16,
