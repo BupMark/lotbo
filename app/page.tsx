@@ -531,7 +531,8 @@ export default function Home() {
                 <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} style={{
                   background: 'white', border: '1px solid #E8E0D0',
                   borderRadius: 10, color: '#1A1410', fontSize: 13,
-                  padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
+                  padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%',
+                  colorScheme: 'light', minWidth: 0,
                 }} />
               </div>
               <span className="lotbo-filtres-dates-fleche">→</span>
@@ -540,7 +541,8 @@ export default function Home() {
                 <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={{
                   background: 'white', border: '1px solid #E8E0D0',
                   borderRadius: 10, color: '#1A1410', fontSize: 13,
-                  padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%'
+                  padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%',
+                  colorScheme: 'light', minWidth: 0,
                 }} />
               </div>
             </div>
