@@ -8,6 +8,7 @@ export default function Login() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -79,22 +80,41 @@ export default function Login() {
             required
           />
 
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid #333',
-              borderRadius: 10,
-              padding: '12px 16px',
-              color: '#F7F2E8',
-              fontSize: 14,
-              outline: 'none'
-            }}
-            required
-          />
+          {/* Champ mot de passe avec bouton 👁 */}
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Mot de passe"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid #333',
+                borderRadius: 10,
+                padding: '12px 48px 12px 16px',
+                color: '#F7F2E8',
+                fontSize: 14,
+                outline: 'none',
+                width: '100%',
+              }}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute', right: 14, top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none', border: 'none',
+                cursor: 'pointer', padding: 0,
+                color: '#8C5A40', fontSize: 18,
+                lineHeight: 1,
+              }}
+              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            >
+              {showPassword ? '🙈' : '👁'}
+            </button>
+          </div>
 
           {message && (
             <p style={{ color: '#D4A820', fontSize: 13, textAlign: 'center' }}>
