@@ -23,6 +23,19 @@ function afficherPeriode(ev: any): string {
   return formatDate(ev.date) || ev.date
 }
 
+// ── Helper : détecte si l'événement est en ligne ──────────────────────────────
+function estEnLigne(lieu: string): boolean {
+  if (!lieu) return false
+  const mots = ['en ligne', 'online', 'zoom', 'teams', 'meet', 'webinar', 'webinaire', 'virtuel', 'distanciel']
+  return mots.some(m => lieu.toLowerCase().includes(m))
+}
+
+// ── Helper : détecte si l'adresse est incomplète ─────────────────────────────
+function adresseIncomplete(ev: any): boolean {
+  return !ev.latitude || !ev.longitude
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Formulaire commentaire ──
 function CommentaireForm({ evenementId, onNouveau }: { evenementId: string, onNouveau: (c: any) => void }) {
   const [auteur, setAuteur] = useState('')
@@ -241,6 +254,11 @@ export default function EvenementPage() {
   const periodeAffichee = afficherPeriode(ev)
   const estMultiJours = ev.date_fin && ev.date_fin !== ev.date
 
+  // ── F5 + F6 : détection lieu ──────────────────────────────────────────────
+  const enLigne = estEnLigne(ev.lieu || '')
+  const sansCoordonnes = adresseIncomplete(ev)
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8' }}>
 
@@ -319,6 +337,15 @@ export default function EvenementPage() {
             background: 'rgba(200,67,26,0.15)', color: '#C8431A',
             padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold'
           }}>{ev.categorie}</span>
+
+          {/* ── F6 : badge En ligne ── */}
+          {enLigne && (
+            <span style={{
+              background: 'rgba(45,158,107,0.15)', color: '#2D9E6B',
+              padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold'
+            }}>🌐 En ligne</span>
+          )}
+
           {estMultiJours && (
             <span style={{
               background: 'rgba(212,168,32,0.15)', color: '#D4A820',
@@ -337,11 +364,32 @@ export default function EvenementPage() {
 
         {/* Infos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
-          <p style={{ color: '#E8E0D0', fontSize: 15 }}>
-            📍 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu}</span>
-          </p>
 
-          {/* ── Période : mono ou multi-jours ── */}
+          {/* ── F5 + F6 : affichage lieu adaptatif ── */}
+          {enLigne ? (
+            <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+              🌐 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu}</span>
+            </p>
+          ) : sansCoordonnes ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+                📍 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu || 'Lieu à confirmer'}</span>
+              </p>
+              <span style={{
+                background: 'rgba(212,168,32,0.12)', color: '#D4A820',
+                border: '1px solid rgba(212,168,32,0.3)',
+                padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold'
+              }}>
+                📍 Adresse non communiquée
+              </span>
+            </div>
+          ) : (
+            <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+              📍 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu}</span>
+            </p>
+          )}
+
+          {/* Période */}
           <p style={{ color: '#E8E0D0', fontSize: 15 }}>
             📅 <span style={{ color: '#F7F2E8' }}>{periodeAffichee}</span>
           </p>
@@ -359,8 +407,8 @@ export default function EvenementPage() {
             </p>
           )}
 
-          {/* S'y rendre */}
-          {ev.latitude && ev.longitude && (
+          {/* ── S'y rendre : masqué si en ligne ou sans coordonnées ── */}
+          {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
             <a href={urlGoogleMaps} target="_blank" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               gap: 8, marginBottom: 24,
@@ -371,6 +419,21 @@ export default function EvenementPage() {
             }}>
               <span style={{ fontSize: 20 }}>🧭</span>
               S'y rendre · Ouvrir dans Google Maps
+            </a>
+          )}
+
+          {/* ── Événement en ligne : lien direct si disponible ── */}
+          {enLigne && ev.lien && (
+            <a href={ev.lien} target="_blank" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: 8,
+              background: 'rgba(45,158,107,0.1)', border: '1px solid rgba(45,158,107,0.3)',
+              borderRadius: 12, padding: '12px 16px',
+              textDecoration: 'none', color: '#2D9E6B',
+              fontSize: 14, fontWeight: 'bold'
+            }}>
+              <span style={{ fontSize: 20 }}>🌐</span>
+              Rejoindre l'événement en ligne →
             </a>
           )}
         </div>
@@ -388,8 +451,8 @@ export default function EvenementPage() {
           </div>
         )}
 
-        {/* CTA principal */}
-        {ev.lien && (
+        {/* CTA principal — masqué si en ligne (déjà affiché au-dessus) */}
+        {ev.lien && !enLigne && (
           <a href={ev.lien} target="_blank" style={{
             display: 'block', width: '100%', textAlign: 'center',
             background: '#C8431A', color: '#F7F2E8',
@@ -495,8 +558,9 @@ export default function EvenementPage() {
                       fontWeight: 'bold', fontSize: 14, marginBottom: 4,
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                     }}>{sim.titre}</p>
-                    <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {sim.lieu}</p>
-                    {/* Période similaires */}
+                    <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>
+                      {estEnLigne(sim.lieu || '') ? '🌐' : '📍'} {sim.lieu}
+                    </p>
                     <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>
                       📅 {afficherPeriode(sim)}
                     </p>
