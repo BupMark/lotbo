@@ -36,10 +36,11 @@ export default function RootLayout({
     <html lang="fr">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1A1410" />
+        <meta name="theme-color" content="#C8431A" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Lotbo" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="icon" href="/Logomark.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -47,6 +48,24 @@ export default function RootLayout({
       <body className={`${dmSans.variable} ${playfairDisplay.variable} antialiased`}>
         {children}
         <CookieBanner />
+        {/* ── Enregistrement Service Worker PWA ─────────────────────────── */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(reg) {
+                      console.log('SW enregistré:', reg.scope);
+                    })
+                    .catch(function(err) {
+                      console.log('SW erreur:', err);
+                    });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
