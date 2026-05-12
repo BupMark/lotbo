@@ -36,6 +36,42 @@ function adresseIncomplete(ev: any): boolean {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Helper : affiche l'heure avec conversion fuseau visiteur ─────────────────
+function afficherHeureFuseau(heure: string, fuseauOrganisateur: string): string {
+  if (!heure) return heure
+  try {
+    // Construire une date fictive avec l'heure de l'événement
+    const [h, m] = heure.split(':').map(Number)
+    const now = new Date()
+    const dateRef = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), h, m))
+
+    // Heure dans le fuseau de l'organisateur
+    const heureOrga = new Intl.DateTimeFormat('fr-FR', {
+      hour: '2-digit', minute: '2-digit',
+      timeZone: fuseauOrganisateur, hour12: false
+    }).format(dateRef)
+
+    // Fuseau du visiteur
+    const fuseauVisiteur = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+    // Si même fuseau → afficher simple
+    if (fuseauVisiteur === fuseauOrganisateur) return heureOrga
+
+    // Sinon → afficher heure locale + conversion
+    const heureVisiteur = new Intl.DateTimeFormat('fr-FR', {
+      hour: '2-digit', minute: '2-digit',
+      timeZone: fuseauVisiteur, hour12: false
+    }).format(dateRef)
+
+    if (heureOrga === heureVisiteur) return heureOrga
+
+    return `${heureOrga} (heure locale) · Chez vous : ${heureVisiteur}`
+  } catch {
+    return heure
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Formulaire commentaire ──
 function CommentaireForm({ evenementId, onNouveau }: { evenementId: string, onNouveau: (c: any) => void }) {
   const [auteur, setAuteur] = useState('')
@@ -397,7 +433,7 @@ export default function EvenementPage() {
           {ev.heure_debut && (
             <p style={{ color: '#E8E0D0', fontSize: 15 }}>
               🕐 <span style={{ color: '#F7F2E8' }}>
-                {ev.heure_debut}{ev.heure_fin ? ` → ${ev.heure_fin}` : ''}
+                {afficherHeureFuseau(ev.heure_debut, ev.fuseau_organisateur || 'America/Port-au-Prince')}{ev.heure_fin ? ` → ${afficherHeureFuseau(ev.heure_fin, ev.fuseau_organisateur || 'America/Port-au-Prince')}` : ''}
               </span>
             </p>
           )}
