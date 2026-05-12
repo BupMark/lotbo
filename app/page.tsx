@@ -492,7 +492,7 @@ export default function Home() {
           background: '#F7F2E8', border: '1px solid #E8E0D0',
           borderRadius: 20, padding: 20,
           display: 'flex', flexDirection: 'column', gap: 16,
-          maxHeight: 'calc(100dvh - 130px)', overflowY: 'auto',
+          maxHeight: 'calc(100dvh - 220px)', overflowY: 'auto',
           boxShadow: '0 4px 24px rgba(26,20,16,0.12)'
         }}>
           <div>
