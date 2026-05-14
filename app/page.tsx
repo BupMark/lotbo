@@ -699,7 +699,37 @@ export default function Home() {
       {/* ══════════════════════════════════════
           CARTE MAPBOX
       ══════════════════════════════════════ */}
-      <div ref={mapContainer} style={{ flex: 1, position: 'relative', minHeight: 0 }} />
+      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+        <div ref={mapContainer} style={{ position: 'absolute', inset: 0 }} />
+        {mode === 'carte' && evenements.filter(filtreActif).length === 0 && evenements.length > 0 && (
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 10, background: 'white',
+            borderRadius: 16, padding: '24px 20px',
+            boxShadow: '0 8px 32px rgba(26,20,16,0.18)',
+            textAlign: 'center', maxWidth: 280, width: 'calc(100% - 40px)'
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
+            <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>
+              Aucun événement trouvé
+            </p>
+            <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>
+              Aucun événement ne correspond à tes filtres actuels.
+            </p>
+            <button onClick={() => {
+              setCategorie('Toutes'); setAcces('tous'); setPrix('tous');
+              setDateDebut(''); setDateFin('');
+            }} style={{
+              background: '#C8431A', color: 'white', border: 'none',
+              borderRadius: 999, padding: '9px 20px',
+              fontSize: 13, fontWeight: 'bold', cursor: 'pointer'
+            }}>
+              Réinitialiser les filtres
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* ══════════════════════════════════════
           TAB BAR — mobile uniquement
