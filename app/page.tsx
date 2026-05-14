@@ -656,11 +656,16 @@ export default function Home() {
               )}
             </div>
           )}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: 12,
+          }}>
           {evenements.filter(filtreActif).map(ev => (
             <a href={'/evenement/' + ev.id} key={ev.id} style={{
               display: 'flex', gap: 12,
               background: 'white', border: '1px solid #E8E0D0',
-              borderRadius: 12, padding: 12, marginBottom: 12,
+              borderRadius: 12, padding: 12,
               textDecoration: 'none', color: '#1A1410', overflow: 'hidden',
               boxShadow: '0 1px 4px rgba(26,20,16,0.06)'
             }}>
@@ -697,6 +702,7 @@ export default function Home() {
               </div>
             </a>
           ))}
+          </div>
         </div>
       )}
 
