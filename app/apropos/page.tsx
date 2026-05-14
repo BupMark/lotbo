@@ -2,192 +2,317 @@
 
 import { useRouter } from 'next/navigation'
 
+const VALEURS = [
+  {
+    icon: '🌍',
+    titre: 'Local d\'abord',
+    texte: 'Chaque événement a une histoire ancrée dans un lieu. Nous mettons en valeur ce qui se passe près de toi, pas ce qui est populaire en général.',
+    color: '#C8431A',
+    bg: 'rgba(200,67,26,0.06)',
+  },
+  {
+    icon: '🔓',
+    titre: 'Ouvert à tous',
+    texte: 'Organiser ou découvrir un événement ne devrait pas nécessiter de compte, de frais ou de permission. LOTBO est gratuit et ouvert.',
+    color: '#2D9E6B',
+    bg: 'rgba(45,158,107,0.06)',
+  },
+  {
+    icon: '🤝',
+    titre: 'Confiance communautaire',
+    texte: 'Les événements sont soumis par la communauté et vérifiés par notre équipe. Chacun peut signaler une information incorrecte.',
+    color: '#D4A820',
+    bg: 'rgba(212,168,32,0.06)',
+  },
+  {
+    icon: '🇭🇹',
+    titre: 'Fierté haïtienne',
+    texte: 'Né à Petit-Goâve le 5 mai 2026. L\'Haïti nous a appris que la culture et la vie communautaire sont les vraies richesses d\'un peuple.',
+    color: '#C8431A',
+    bg: 'rgba(200,67,26,0.06)',
+  },
+]
+
+const STATS = [
+  { valeur: '185+', label: 'Événements approuvés' },
+  { valeur: '55+', label: 'Villes couvertes' },
+  { valeur: '12+', label: 'Pays' },
+  { valeur: '5', label: 'Langues supportées' },
+]
+
 export default function Apropos() {
   const router = useRouter()
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
+    <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
-      {/* Header */}
+      {/* ── Header ───────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '20px 24px', borderBottom: '1px solid #E8E0D0',
-        background: '#F7F2E8'
+        padding: '18px 32px', borderBottom: '1px solid #E8E0D0',
+        background: '#F7F2E8', position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <button
-          onClick={() => router.push('/')}
-          style={{
-            background: 'none', border: 'none', color: '#8C5A40',
-            fontSize: 13, cursor: 'pointer', padding: 0
-          }}>
-          ← Retour à la carte
-        </button>
-        <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 20, fontWeight: 'bold' }}>
+        <button onClick={() => router.push('/')} style={{
+          background: 'none', border: 'none', color: '#8C5A40',
+          fontSize: 13, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 6
+        }}>← Retour</button>
+        <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
           <span style={{ color: '#1A1410' }}>lot</span>
           <span style={{ color: '#C8431A' }}>bo</span>
         </div>
-        <div style={{ width: 80 }} />
+        <a href="/ajouter" style={{
+          background: '#C8431A', color: 'white', padding: '8px 18px',
+          borderRadius: 8, fontSize: 13, fontWeight: 'bold', textDecoration: 'none'
+        }}>+ Ajouter</a>
       </div>
 
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '48px 24px 80px' }}>
-
-        {/* Hero */}
-        <div style={{ marginBottom: 56 }}>
-          <p style={{
-            color: '#C8431A', fontSize: 11, fontWeight: 'bold',
-            textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12
-          }}>Notre histoire</p>
-          <h1 style={{
-            fontFamily: 'serif', fontStyle: 'italic',
-            fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 'bold',
-            color: '#1A1410', lineHeight: 1.2, marginBottom: 20
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section style={{
+        background: '#1A1410', color: '#F7F2E8',
+        padding: 'clamp(48px, 8vw, 96px) clamp(24px, 5vw, 80px)',
+      }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 48, alignItems: 'center'
           }}>
-            Né en Haïti,<br />
-            <span style={{ color: '#C8431A' }}>pour le monde entier.</span>
-          </h1>
-          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, maxWidth: 720 }}>
-            Pourquoi est-ce si compliqué de savoir ce qui se passe autour de soi quand on arrive quelque part ? Tu débarques dans une ville, tu cherches où aller, quoi faire, comment te défouler et tu te retrouves à scroller sans fin, à demander à des inconnus, à rater les meilleurs moments faute d'information. Les événements existent. La vie locale existe. Mais elle reste invisible.
-          </p>
-          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, maxWidth: 560, marginTop: 16 }}>
-            LOTBO est né de cette frustration. Une plateforme unique où tout ce qui se passe près de toi est visible, accessible, en un seul endroit.
-          </p>
-        </div>
-
-        {/* Séparateur */}
-        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
-
-        {/* Mission */}
-        <div style={{ marginBottom: 56 }}>
-          <p style={{
-            color: '#C8431A', fontSize: 11, fontWeight: 'bold',
-            textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12
-          }}>Mission</p>
-          <h2 style={{
-            fontFamily: 'serif', fontStyle: 'italic',
-            fontSize: 'clamp(20px, 3vw, 28px)', color: '#1A1410',
-            marginBottom: 16
-          }}>Tous les événements, un seul endroit.</h2>
-          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, marginBottom: 16 }}>
-            LOTBO connecte les organisateurs d'événements avec leur communauté locale, qu'ils soient touristes, voyageurs ou résidents. Notre carte interactive permet à chacun de découvrir ce qui se passe autour de lui, en temps réel, partout dans le monde.
-          </p>
-          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8 }}>
-            La plateforme est ouverte. N'importe qui peut soumettre un événement en 2 minutes. Nous croyons que la culture locale mérite d'être visible, et que les communautés savent mieux que quiconque ce qui se passe chez elles.
-          </p>
-        </div>
-
-        {/* Séparateur */}
-        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
-
-        {/* Valeurs */}
-        <div style={{ marginBottom: 56 }}>
-          <p style={{
-            color: '#C8431A', fontSize: 11, fontWeight: 'bold',
-            textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24
-          }}>Nos valeurs</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {[
-              { icon: '🌍', titre: 'Local d\'abord', texte: 'Chaque événement a une histoire ancrée dans un lieu. Nous mettons en valeur ce qui se passe près de toi, pas ce qui est populaire en général.' },
-              { icon: '🔓', titre: 'Ouvert à tous', texte: 'Organiser ou découvrir un événement ne devrait pas nécessiter de compte, de frais ou de permission. LOTBO est gratuit et ouvert.' },
-              { icon: '🤝', titre: 'Confiance communautaire', texte: 'Les événements sont soumis par la communauté et vérifiés par notre équipe. Chacun peut signaler une information incorrecte.' },
-              { icon: '🇭🇹', titre: 'Fierté haïtienne', texte: 'Né à Petit-Goâve le 5 mai 2026. L\'Haïti nous a appris que la culture et la vie communautaire sont les vraies richesses d\'un peuple.' },
-            ].map((v, i) => (
-              <div key={i} style={{
-                display: 'flex', gap: 16,
-                padding: '20px', borderRadius: 12,
-                background: 'white',
-                border: '1px solid #E8E0D0'
+            {/* Texte */}
+            <div>
+              <p style={{
+                color: '#C8431A', fontSize: 11, fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16
+              }}>Notre histoire</p>
+              <h1 style={{
+                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 700,
+                color: '#F7F2E8', lineHeight: 1.15, marginBottom: 24
               }}>
-                <span style={{ fontSize: 24, flexShrink: 0, marginTop: 2 }}>{v.icon}</span>
-                <div>
-                  <p style={{ fontWeight: 'bold', fontSize: 15, color: '#1A1410', marginBottom: 6 }}>
-                    {v.titre}
-                  </p>
-                  <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>
-                    {v.texte}
-                  </p>
+                Né en Haïti,<br />
+                <span style={{ color: '#C8431A' }}>pour le monde entier.</span>
+              </h1>
+              <p style={{ color: 'rgba(247,242,232,0.7)', fontSize: 16, lineHeight: 1.8, marginBottom: 16, maxWidth: 520 }}>
+                Les événements existent. La vie locale existe. Mais elle reste invisible.
+                Lotbo est né de cette frustration — une plateforme unique où tout ce qui
+                se passe près de toi est visible, accessible, en un seul endroit.
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 32 }}>
+                <a href="/" style={{
+                  background: '#C8431A', color: 'white',
+                  padding: '12px 24px', borderRadius: 10,
+                  fontSize: 14, fontWeight: 'bold', textDecoration: 'none'
+                }}>Voir les événements →</a>
+                <a href="/ajouter" style={{
+                  background: 'rgba(255,255,255,0.08)', color: '#F7F2E8',
+                  border: '1px solid rgba(247,242,232,0.2)',
+                  padding: '12px 24px', borderRadius: 10,
+                  fontSize: 14, fontWeight: 'bold', textDecoration: 'none'
+                }}>Soumettre un événement</a>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16
+            }}>
+              {STATS.map((s, i) => (
+                <div key={i} style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(247,242,232,0.1)',
+                  borderRadius: 16, padding: '28px 20px', textAlign: 'center'
+                }}>
+                  <p style={{
+                    fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                    fontSize: 'clamp(32px, 4vw, 44px)', fontWeight: 700,
+                    color: '#C8431A', marginBottom: 6, lineHeight: 1
+                  }}>{s.valeur}</p>
+                  <p style={{ color: 'rgba(247,242,232,0.6)', fontSize: 12, lineHeight: 1.4 }}>{s.label}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Mission ──────────────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(48px, 6vw, 80px) clamp(24px, 5vw, 80px)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 48, alignItems: 'center'
+          }}>
+            <div>
+              <p style={{
+                color: '#C8431A', fontSize: 11, fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16
+              }}>Mission</p>
+              <h2 style={{
+                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontSize: 'clamp(24px, 3vw, 36px)', color: '#1A1410',
+                lineHeight: 1.3, marginBottom: 20
+              }}>
+                Tous les événements,<br />un seul endroit.
+              </h2>
+            </div>
+            <div>
+              <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.85, marginBottom: 16 }}>
+                LOTBO connecte les organisateurs d'événements avec leur communauté locale,
+                qu'ils soient touristes, voyageurs ou résidents. Notre carte interactive permet
+                à chacun de découvrir ce qui se passe autour de lui, en temps réel, partout dans le monde.
+              </p>
+              <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.85 }}>
+                La plateforme est ouverte. N'importe qui peut soumettre un événement en 2 minutes.
+                Nous croyons que la culture locale mérite d'être visible, et que les communautés
+                savent mieux que quiconque ce qui se passe chez elles.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Valeurs ──────────────────────────────────────────────────────── */}
+      <section style={{
+        background: 'white', padding: 'clamp(48px, 6vw, 80px) clamp(24px, 5vw, 80px)',
+        borderTop: '1px solid #E8E0D0', borderBottom: '1px solid #E8E0D0'
+      }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <p style={{
+            color: '#C8431A', fontSize: 11, fontWeight: 700,
+            textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 12
+          }}>Nos valeurs</p>
+          <h2 style={{
+            fontFamily: 'Georgia, serif', fontStyle: 'italic',
+            fontSize: 'clamp(22px, 3vw, 32px)', color: '#1A1410',
+            marginBottom: 40
+          }}>Ce en quoi nous croyons.</h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 20
+          }}>
+            {VALEURS.map((v, i) => (
+              <div key={i} style={{
+                background: v.bg,
+                border: `1px solid ${v.color}22`,
+                borderRadius: 16, padding: '28px 24px',
+                display: 'flex', flexDirection: 'column', gap: 12
+              }}>
+                <span style={{ fontSize: 32 }}>{v.icon}</span>
+                <p style={{ fontWeight: 700, fontSize: 16, color: '#1A1410' }}>{v.titre}</p>
+                <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>{v.texte}</p>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Séparateur */}
-        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
-
-        {/* Fondateur */}
-        <div style={{ marginBottom: 56 }}>
+      {/* ── Fondateur ────────────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(48px, 6vw, 80px) clamp(24px, 5vw, 80px)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <p style={{
-            color: '#C8431A', fontSize: 11, fontWeight: 'bold',
-            textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24
+            color: '#C8431A', fontSize: 11, fontWeight: 700,
+            textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 40
           }}>Fondateur</p>
-
-          {/* Photo */}
           <div style={{
-            borderRadius: 16, overflow: 'hidden',
-            border: '1px solid #E8E0D0',
-            marginBottom: 20,
-            height: 360,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 40, alignItems: 'center'
           }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/hero-fondateur.jpg"
-              alt="Handgod Abraham"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center top',
-                display: 'block',
-              }}
-            />
-          </div>
+            {/* Photo */}
+            <div style={{
+              borderRadius: 20, overflow: 'hidden',
+              border: '1px solid #E8E0D0',
+              height: 'clamp(300px, 40vw, 480px)',
+              boxShadow: '0 8px 40px rgba(26,20,16,0.12)'
+            }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/hero-fondateur.jpg"
+                alt="Handgod Abraham"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+              />
+            </div>
 
-          <div style={{
-            padding: 24, borderRadius: 12,
-            background: 'white',
-            border: '1px solid #E8E0D0'
-          }}>
-            <p style={{ fontWeight: 'bold', fontSize: 17, color: '#1A1410', marginBottom: 4 }}>
-              Handgod Abraham
-            </p>
-            <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 12, fontWeight: 'bold' }}>
-              Fondateur · Petit-Goâve, Haïti
-            </p>
-            <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>
-              Poète, entrepreneur et citoyen du monde. Handgod a fondé LOTBO avec la conviction que les événements culturels locaux méritent une vitrine mondiale. Directeur de Stratégie Digital chez Bup Mark, une agence de marketing digital international, et Consultant et Chef de Projet Digital chez Mon Succès Marketing. Il préside des événements culturels comme le Marathon du Livre chaque année en Haïti.
-            </p>
+            {/* Bio */}
+            <div>
+              <h3 style={{
+                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontSize: 'clamp(24px, 3vw, 36px)', color: '#1A1410',
+                marginBottom: 4, lineHeight: 1.2
+              }}>Handgod Abraham</h3>
+              <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 700, marginBottom: 24 }}>
+                Fondateur · Petit-Goâve, Haïti 🇭🇹
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.85 }}>
+                  Poète, entrepreneur et citoyen du monde. Handgod a fondé LOTBO avec la
+                  conviction que les événements culturels locaux méritent une vitrine mondiale.
+                </p>
+                <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.85 }}>
+                  Directeur de Stratégie Digital chez Bup Mark, agence de marketing digital
+                  international. Il préside des événements culturels comme le Marathon du Livre
+                  chaque année en Haïti.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 32 }}>
+                {[
+                  { label: '🗺️ Lotbo', href: '/' },
+                  { label: '🏢 Bup Mark', href: 'https://bup-mark.com' },
+                ].map(l => (
+                  <a key={l.label} href={l.href} style={{
+                    background: '#F7F2E8', border: '1px solid #E8E0D0',
+                    color: '#1A1410', padding: '8px 16px', borderRadius: 8,
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none'
+                  }}>{l.label}</a>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Séparateur */}
-        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 56 }} />
-
-        {/* CTA */}
-        <div style={{ textAlign: 'center' }}>
+      {/* ── CTA Final ────────────────────────────────────────────────────── */}
+      <section style={{
+        background: '#1A1410', color: '#F7F2E8',
+        padding: 'clamp(48px, 6vw, 80px) clamp(24px, 5vw, 80px)',
+        textAlign: 'center'
+      }}>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          <p style={{ color: '#C8431A', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16 }}>
+            Kisa k'ap pase lotbo?
+          </p>
           <h2 style={{
-            fontFamily: 'serif', fontStyle: 'italic',
-            fontSize: 'clamp(20px, 3vw, 28px)', color: '#1A1410',
-            marginBottom: 12
-          }}>Prêt à explorer ?</h2>
-          <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24 }}>
-            Découvre les événements près de toi ou soumets le tien.
+            fontFamily: 'Georgia, serif', fontStyle: 'italic',
+            fontSize: 'clamp(28px, 4vw, 44px)', color: '#F7F2E8',
+            lineHeight: 1.2, marginBottom: 16
+          }}>
+            Prêt à explorer ?
+          </h2>
+          <p style={{ color: 'rgba(247,242,232,0.6)', fontSize: 15, lineHeight: 1.7, marginBottom: 36 }}>
+            Découvre les événements près de toi ou partage le tien avec le monde.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="/" style={{
-              background: '#C8431A', color: '#F7F2E8',
-              padding: '12px 24px', borderRadius: 10,
-              fontSize: 14, fontWeight: 'bold', textDecoration: 'none'
+              background: '#C8431A', color: 'white',
+              padding: '14px 32px', borderRadius: 10,
+              fontSize: 15, fontWeight: 'bold', textDecoration: 'none'
             }}>Voir la carte →</a>
             <a href="/ajouter" style={{
-              background: 'white', color: '#1A1410',
-              border: '1px solid #E8E0D0',
-              padding: '12px 24px', borderRadius: 10,
-              fontSize: 14, fontWeight: 'bold', textDecoration: 'none'
+              background: 'rgba(255,255,255,0.08)', color: '#F7F2E8',
+              border: '1px solid rgba(247,242,232,0.2)',
+              padding: '14px 32px', borderRadius: 10,
+              fontSize: 15, fontWeight: 'bold', textDecoration: 'none'
             }}>Soumettre un événement</a>
           </div>
+          <p style={{ color: 'rgba(247,242,232,0.3)', fontSize: 12, marginTop: 40 }}>
+            Un produit de <strong style={{ color: 'rgba(247,242,232,0.5)' }}>Bup Mark Ltd</strong> · Manchester, UK · Né en Haïti 🇭🇹
+          </p>
         </div>
+      </section>
 
-      </div>
     </main>
   )
 }
