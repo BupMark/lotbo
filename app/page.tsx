@@ -495,6 +495,14 @@ export default function Home() {
           maxHeight: 'calc(100dvh - 220px)', overflowY: 'auto',
           boxShadow: '0 4px 24px rgba(26,20,16,0.12)'
         }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <p style={{ color: '#8C5A40', fontSize: 12, fontWeight: 'bold' }}>Filtres</p>
+            <button onClick={() => setFiltresOuverts(false)} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#8C5A40', fontSize: 20, lineHeight: 1, padding: '2px 6px',
+              borderRadius: 6, display: 'flex', alignItems: 'center'
+            }} aria-label="Fermer les filtres">✕</button>
+          </div>
           <div>
             <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Catégorie</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
