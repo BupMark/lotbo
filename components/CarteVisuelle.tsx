@@ -384,7 +384,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                 </button>
 
                 {/* Partage natif mobile */}
-                {typeof navigator !== 'undefined' && navigator.share && (
+                {typeof window !== 'undefined' && 'share' in navigator && (
                   <button onClick={partagerNatif} style={{
                     background: 'rgba(255,255,255,0.08)', color: '#F7F2E8',
                     border: '1px solid #333', borderRadius: 10, padding: '13px',
