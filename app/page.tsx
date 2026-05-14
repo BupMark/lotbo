@@ -535,17 +535,21 @@ export default function Home() {
             <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Période</p>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
               {[
-                { label: "Aujourd'hui", fn: () => { const d = new Date().toISOString().split('T')[0]; setDateDebut(d); setDateFin(d) } },
-                { label: 'Cette semaine', fn: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); const fin = new Date(debut); fin.setDate(debut.getDate() + 6); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) } },
-                { label: 'Ce mois', fn: () => { const d = new Date(); const debut = new Date(d.getFullYear(), d.getMonth(), 1); const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) } },
-                { label: 'Ce week-end', fn: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); const dim = new Date(sam); dim.setDate(sam.getDate() + 1); setDateDebut(sam.toISOString().split('T')[0]); setDateFin(dim.toISOString().split('T')[0]) } },
-              ].map(p => (
-                <button key={p.label} onClick={p.fn} style={{
-                  padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-                  border: '1px solid #E8E0D0', cursor: 'pointer', whiteSpace: 'nowrap',
-                  background: '#F7F2E8', color: '#8C5A40'
-                }}>{p.label}</button>
-              ))}
+                { label: "Aujourd'hui", fn: () => { const d = new Date().toISOString().split('T')[0]; setDateDebut(d); setDateFin(d) }, check: () => { const d = new Date().toISOString().split('T')[0]; return dateDebut === d && dateFin === d } },
+                { label: 'Cette semaine', fn: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); const fin = new Date(debut); fin.setDate(debut.getDate() + 6); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) }, check: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); return dateDebut === debut.toISOString().split('T')[0] } },
+                { label: 'Ce mois', fn: () => { const d = new Date(); const debut = new Date(d.getFullYear(), d.getMonth(), 1); const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) }, check: () => { const d = new Date(); return dateDebut === new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0] } },
+                { label: 'Ce week-end', fn: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); const dim = new Date(sam); dim.setDate(sam.getDate() + 1); setDateDebut(sam.toISOString().split('T')[0]); setDateFin(dim.toISOString().split('T')[0]) }, check: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); return dateDebut === sam.toISOString().split('T')[0] } },
+              ].map(p => {
+                const actif = p.check()
+                return (
+                  <button key={p.label} onClick={p.fn} style={{
+                    padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                    border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer', whiteSpace: 'nowrap',
+                    background: actif ? '#C8431A' : '#F7F2E8',
+                    color: actif ? 'white' : '#8C5A40'
+                  }}>{p.label}</button>
+                )
+              })}
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
@@ -710,6 +714,11 @@ export default function Home() {
             boxShadow: '0 8px 32px rgba(26,20,16,0.18)',
             textAlign: 'center', maxWidth: 280, width: 'calc(100% - 40px)'
           }}>
+            <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{
+              position: 'absolute', top: 10, right: 12,
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#8C5A40', fontSize: 18, lineHeight: 1, padding: '2px 6px'
+            }}>✕</button>
             <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
             <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>
               Aucun événement trouvé
