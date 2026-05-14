@@ -44,7 +44,7 @@ export default function Login() {
   return (
     <main style={{
       minHeight: '100dvh',
-      background: '#1A1410',
+      background: '#F7F2E8',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -69,11 +69,11 @@ export default function Login() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid #333',
+              background: 'white',
+              border: '1px solid #E8E0D0',
               borderRadius: 10,
               padding: '12px 16px',
-              color: '#F7F2E8',
+              color: '#1A1410',
               fontSize: 14,
               outline: 'none'
             }}
@@ -88,11 +88,11 @@ export default function Login() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid #333',
+                background: 'white',
+                border: '1px solid #E8E0D0',
                 borderRadius: 10,
                 padding: '12px 48px 12px 16px',
-                color: '#F7F2E8',
+                color: '#1A1410',
                 fontSize: 14,
                 outline: 'none',
                 width: '100%',
@@ -127,7 +127,7 @@ export default function Login() {
             disabled={loading}
             style={{
               background: loading ? '#8C5A40' : '#C8431A',
-              color: '#F7F2E8',
+              color: '#1A1410',
               fontWeight: 'bold',
               padding: '13px',
               borderRadius: 10,
@@ -143,12 +143,12 @@ export default function Login() {
             onClick={handleSignup}
             disabled={loading}
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              color: '#F7F2E8',
+              background: 'white',
+              color: '#1A1410',
               fontWeight: 'bold',
               padding: '13px',
               borderRadius: 10,
-              border: '1px solid #333',
+              border: '1px solid #E8E0D0',
               fontSize: 14,
               cursor: loading ? 'not-allowed' : 'pointer'
             }}>
