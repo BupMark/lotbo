@@ -120,15 +120,15 @@ const VISIBILITES = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const inputStyle = {
-  background: 'rgba(255,255,255,0.06)',
-  border: '1px solid #333',
+  background: 'white',
+  border: '1px solid #E8E0D0',
   borderRadius: 10,
   padding: '12px 16px',
-  color: '#F7F2E8',
+  color: '#1A1410',
   fontSize: 14,
   outline: 'none',
   width: '100%',
-  colorScheme: 'dark' as const,
+  colorScheme: 'light' as const,
 }
 
 const labelStyle = {
@@ -364,13 +364,13 @@ export default function AjouterEvenement() {
   if (succes) {
     return (
       <main style={{
-        minHeight: '100dvh', background: '#1A1410',
+        minHeight: '100dvh', background: '#F7F2E8',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '24px 16px'
       }}>
         <div style={{ textAlign: 'center', maxWidth: 440 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-          <h2 style={{ color: '#F7F2E8', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>
+          <h2 style={{ color: '#1A1410', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>
             Événement soumis !
           </h2>
           <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
@@ -390,7 +390,7 @@ export default function AjouterEvenement() {
                 background: 'rgba(255,255,255,0.06)', borderRadius: 8,
                 padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8
               }}>
-                <code style={{ color: '#F7F2E8', fontSize: 12, flex: 1, wordBreak: 'break-all' }}>
+                <code style={{ color: '#1A1410', fontSize: 12, flex: 1, wordBreak: 'break-all' }}>
                   {`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`}
                 </code>
                 <button
@@ -415,7 +415,7 @@ export default function AjouterEvenement() {
                 background: 'rgba(255,255,255,0.06)', borderRadius: 8,
                 padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
               }}>
-                <span style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold', letterSpacing: 8 }}>
+                <span style={{ color: '#1A1410', fontSize: 24, fontWeight: 'bold', letterSpacing: 8 }}>
                   {succesData.codeAcces}
                 </span>
                 <button
@@ -452,12 +452,12 @@ export default function AjouterEvenement() {
     : null
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#1A1410', padding: '32px 16px' }}>
+    <main style={{ minHeight: '100dvh', background: '#F7F2E8', padding: '32px 16px' }}>
       <div style={{ maxWidth: 520, margin: '0 auto' }}>
 
         <div style={{ marginBottom: 32 }}>
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
-          <h1 style={{ color: '#F7F2E8', fontSize: 26, fontWeight: 'bold', marginTop: 12, marginBottom: 4 }}>
+          <h1 style={{ color: '#1A1410', fontSize: 26, fontWeight: 'bold', marginTop: 12, marginBottom: 4 }}>
             Ajouter un événement
           </h1>
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
@@ -499,14 +499,14 @@ export default function AjouterEvenement() {
             {showSuggestions && suggestions.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, marginTop: 4,
-                background: '#1A1410', border: '1px solid #2a2a2a', borderRadius: 10, overflow: 'hidden',
+                background: 'white', border: '1px solid #2a2a2a', borderRadius: 10, overflow: 'hidden',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
               }}>
                 {suggestions.map((s, i) => (
                   <button key={i} type="button" onClick={() => handleSelectSuggestion(s)} style={{
                     width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent',
                     border: 'none', borderBottom: i < suggestions.length - 1 ? '1px solid #2a2a2a' : 'none',
-                    color: '#F7F2E8', fontSize: 13, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 2,
+                    color: '#1A1410', fontSize: 13, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 2,
                   }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -552,7 +552,7 @@ export default function AjouterEvenement() {
               display: 'flex', alignItems: 'center', gap: 10,
               background: multiJours ? 'rgba(200,67,26,0.12)' : 'rgba(255,255,255,0.04)',
               border: multiJours ? '1px solid #C8431A' : '1px solid #333',
-              borderRadius: 10, padding: '10px 14px', color: multiJours ? '#F7F2E8' : '#8C5A40',
+              borderRadius: 10, padding: '10px 14px', color: multiJours ? '#1A1410' : '#8C5A40',
               fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left'
             }}>
               <span style={{ fontSize: 16 }}>{multiJours ? '✅' : '☐'}</span>
@@ -600,7 +600,7 @@ export default function AjouterEvenement() {
                   fontSize: 13, textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s',
                   background: selectedType === type.id ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
                   border: selectedType === type.id ? '1px solid #C8431A' : '1px solid #2a2a2a',
-                  color: selectedType === type.id ? '#F7F2E8' : '#8C5A40',
+                  color: selectedType === type.id ? '#1A1410' : '#8C5A40',
                 }}>
                   <span>{type.icone}</span><span>{type.nom}</span>
                 </button>
@@ -617,7 +617,7 @@ export default function AjouterEvenement() {
                   fontSize: 12, cursor: 'pointer', transition: 'all 0.15s',
                   background: selectedThemes.includes(theme.id) ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
                   border: selectedThemes.includes(theme.id) ? '1px solid #C8431A' : '1px solid #2a2a2a',
-                  color: selectedThemes.includes(theme.id) ? '#F7F2E8' : '#8C5A40',
+                  color: selectedThemes.includes(theme.id) ? '#1A1410' : '#8C5A40',
                 }}>
                   <span>{theme.icone}</span><span>{theme.nom}</span>
                 </button>
@@ -676,7 +676,7 @@ export default function AjouterEvenement() {
                     background: visibilite === v.value ? v.color : 'transparent',
                   }} />
                   <div>
-                    <p style={{ color: visibilite === v.value ? '#F7F2E8' : '#8C5A40', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>
+                    <p style={{ color: visibilite === v.value ? '#1A1410' : '#8C5A40', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>
                       {v.label}
                     </p>
                     <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>{v.description}</p>
