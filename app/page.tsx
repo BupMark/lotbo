@@ -656,11 +656,7 @@ export default function Home() {
               )}
             </div>
           )}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-            gap: 12,
-          }}>
+          <div className="lotbo-grid-evenements">
           {evenements.filter(filtreActif).map(ev => (
             <a href={'/evenement/' + ev.id} key={ev.id} style={{
               display: 'flex', gap: 12,

@@ -185,3 +185,50 @@
     display: none;
   }
 }
+.lotbo-grid-evenements {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .lotbo-grid-evenements {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .lotbo-grid-evenements {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .lotbo-grid-evenements {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lotbo-grid-evenements {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .lotbo-grid-evenements {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .lotbo-grid-evenements {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .lotbo-grid-evenements {
+    grid-template-columns: 1fr;
+  }
+}
