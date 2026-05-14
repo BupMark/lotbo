@@ -597,9 +597,60 @@ export default function Home() {
           paddingTop: 100, paddingLeft: 16, paddingRight: 16, paddingBottom: 80
         }}>
           {evenements.filter(filtreActif).length === 0 && (
-            <p style={{ color: '#8C5A40', textAlign: 'center', marginTop: 40, fontSize: 14 }}>
-              Aucun événement trouvé.
-            </p>
+            <div style={{ textAlign: 'center', padding: '40px 16px 24px' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+              <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>
+                Aucun événement trouvé
+              </p>
+              <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
+                Aucun événement ne correspond à tes filtres actuels.
+              </p>
+              <button onClick={() => {
+                setCategorie('Toutes'); setAcces('tous'); setPrix('tous');
+                setDateDebut(''); setDateFin('');
+              }} style={{
+                background: '#C8431A', color: 'white', border: 'none',
+                borderRadius: 999, padding: '10px 24px',
+                fontSize: 13, fontWeight: 'bold', cursor: 'pointer', marginBottom: 24
+              }}>
+                Réinitialiser les filtres
+              </button>
+              {evenements.length > 0 && (
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase',
+                    letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>
+                    Tu pourrais aimer
+                  </p>
+                  {evenements.slice(0, 3).map(ev => (
+                    <a href={'/evenement/' + ev.id} key={ev.id} style={{
+                      display: 'flex', gap: 12,
+                      background: 'white', border: '1px solid #E8E0D0',
+                      borderRadius: 12, padding: 12, marginBottom: 10,
+                      textDecoration: 'none', color: '#1A1410',
+                      boxShadow: '0 1px 4px rgba(26,20,16,0.06)'
+                    }}>
+                      {ev.image_url && (
+                        <img src={ev.image_url} alt={ev.titre} style={{
+                          width: 56, height: 56, objectFit: 'cover',
+                          borderRadius: 8, flexShrink: 0
+                        }} />
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 'bold', fontSize: 13, marginBottom: 2,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {ev.titre}
+                        </p>
+                        <p style={{ color: '#8C5A40', fontSize: 11 }}>📍 {ev.lieu}</p>
+                        <span style={{ background: '#C8431A', color: 'white',
+                          padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>
+                          {ev.categorie}
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           {evenements.filter(filtreActif).map(ev => (
             <a href={'/evenement/' + ev.id} key={ev.id} style={{
