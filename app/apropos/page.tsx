@@ -29,7 +29,7 @@ export default function Apropos() {
         <div style={{ width: 80 }} />
       </div>
 
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 24px 80px' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '48px 24px 80px' }}>
 
         {/* Hero */}
         <div style={{ marginBottom: 56 }}>
@@ -45,7 +45,7 @@ export default function Apropos() {
             Né en Haïti,<br />
             <span style={{ color: '#C8431A' }}>pour le monde entier.</span>
           </h1>
-          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, maxWidth: 560 }}>
+          <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, maxWidth: 720 }}>
             Pourquoi est-ce si compliqué de savoir ce qui se passe autour de soi quand on arrive quelque part ? Tu débarques dans une ville, tu cherches où aller, quoi faire, comment te défouler et tu te retrouves à scroller sans fin, à demander à des inconnus, à rater les meilleurs moments faute d'information. Les événements existent. La vie locale existe. Mais elle reste invisible.
           </p>
           <p style={{ color: '#8C5A40', fontSize: 15, lineHeight: 1.8, maxWidth: 560, marginTop: 16 }}>

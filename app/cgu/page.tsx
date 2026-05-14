@@ -243,7 +243,7 @@ export default function CGU() {
         <div style={{ width: 48 }} />
       </div>
 
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '40px 20px 80px' }}>
 
         {/* Titre */}
         <div style={{ marginBottom: 40 }}>
