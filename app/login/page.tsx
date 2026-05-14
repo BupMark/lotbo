@@ -55,7 +55,7 @@ export default function Login() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 32, fontWeight: 'bold' }}>
-            <span style={{ color: '#F7F2E8' }}>lot</span>
+            <span style={{ color: '#1A1410' }}>lot</span>
             <span style={{ color: '#C8431A' }}>bo</span>
           </div>
           <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 6 }}>Espace organisateurs</p>
