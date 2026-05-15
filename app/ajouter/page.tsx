@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 const EVENT_TYPES = [
   { id: 1, nom: 'Conférence / Sommet', icone: '🎤' },
@@ -64,7 +66,7 @@ const FUSEAUX = [
   { value: 'Europe/Madrid', label: '🇪🇸 Madrid / Barcelone' },
   { value: 'Europe/Lisbon', label: '🇵🇹 Lisbonne' },
   { value: 'Europe/Moscow', label: '🇷🇺 Moscou' },
-  { value: 'Africa/Abidjan', label: '🇨🇮 Côte d\'Ivoire / Sénégal / Mali' },
+  { value: 'Africa/Abidjan', label: "🇨🇮 Côte d'Ivoire / Sénégal / Mali" },
   { value: 'Africa/Lagos', label: '🇳🇬 Nigeria / Cameroun / Gabon' },
   { value: 'Africa/Kinshasa', label: '🇨🇩 Congo / RDC' },
   { value: 'Africa/Nairobi', label: '🇰🇪 Kenya / Éthiopie / Tanzanie' },
@@ -90,52 +92,19 @@ const FUSEAUX = [
   { value: 'UTC', label: '🌍 UTC — événement international / en ligne' },
 ]
 
-// ── Niveaux de visibilité ─────────────────────────────────────────────────────
 const VISIBILITES = [
-  {
-    value: 'public',
-    label: '🌍 Public',
-    description: 'Visible sur la carte pour tout le monde',
-    color: '#2D9E6B',
-    bg: 'rgba(45,158,107,0.12)',
-    border: 'rgba(45,158,107,0.4)',
-  },
-  {
-    value: 'discret',
-    label: '🔒 Discret',
-    description: 'Pin visible sur la carte — adresse révélée avec un code',
-    color: '#D4A820',
-    bg: 'rgba(212,168,32,0.12)',
-    border: 'rgba(212,168,32,0.4)',
-  },
-  {
-    value: 'prive',
-    label: '🫧 Privé',
-    description: 'Invisible sur la carte — accessible uniquement via lien secret',
-    color: '#C8431A',
-    bg: 'rgba(200,67,26,0.12)',
-    border: 'rgba(200,67,26,0.4)',
-  },
+  { value: 'public', label: '🌍 Public', description: 'Visible sur la carte pour tout le monde', color: '#2D9E6B', bg: 'rgba(45,158,107,0.12)', border: 'rgba(45,158,107,0.4)' },
+  { value: 'discret', label: '🔒 Discret', description: 'Pin visible sur la carte — adresse révélée avec un code', color: '#D4A820', bg: 'rgba(212,168,32,0.12)', border: 'rgba(212,168,32,0.4)' },
+  { value: 'prive', label: '🫧 Privé', description: 'Invisible sur la carte — accessible uniquement via lien secret', color: '#C8431A', bg: 'rgba(200,67,26,0.12)', border: 'rgba(200,67,26,0.4)' },
 ]
-// ─────────────────────────────────────────────────────────────────────────────
 
 const inputStyle = {
-  background: 'white',
-  border: '1px solid #E8E0D0',
-  borderRadius: 10,
-  padding: '12px 16px',
-  color: '#1A1410',
-  fontSize: 14,
-  outline: 'none',
-  width: '100%',
-  colorScheme: 'light' as const,
+  background: 'white', border: '1px solid #E8E0D0', borderRadius: 10,
+  padding: '12px 16px', color: '#1A1410', fontSize: 14, outline: 'none',
+  width: '100%', colorScheme: 'light' as const,
 }
 
-const labelStyle = {
-  color: '#8C5A40',
-  fontSize: 12,
-  marginBottom: 4,
-}
+const labelStyle = { color: '#8C5A40', fontSize: 12, marginBottom: 4 }
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
@@ -151,10 +120,85 @@ interface Suggestion {
   context?: { id: string; text: string }[]
 }
 
-interface CoordsPreview {
+interface Coords {
   longitude: number
   latitude: number
   adresse: string
+}
+
+// ── Composant carte interactive avec drag pin ─────────────────────────────────
+function CarteInteractive({
+  coords, onCoordsChange
+}: {
+  coords: Coords
+  onCoordsChange: (c: Coords) => void
+}) {
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<mapboxgl.Map | null>(null)
+  const markerRef = useRef<mapboxgl.Marker | null>(null)
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [coords.longitude, coords.latitude],
+      zoom: 14,
+    })
+
+    // Marker draggable
+    const marker = new mapboxgl.Marker({ color: '#C8431A', draggable: true })
+      .setLngLat([coords.longitude, coords.latitude])
+      .addTo(map)
+
+    marker.on('dragend', () => {
+      const lngLat = marker.getLngLat()
+      onCoordsChange({
+        longitude: lngLat.lng,
+        latitude: lngLat.lat,
+        adresse: coords.adresse,
+      })
+    })
+
+    // Clic sur la carte pour déplacer le pin
+    map.on('click', (e) => {
+      marker.setLngLat([e.lngLat.lng, e.lngLat.lat])
+      onCoordsChange({
+        longitude: e.lngLat.lng,
+        latitude: e.lngLat.lat,
+        adresse: coords.adresse,
+      })
+    })
+
+    mapRef.current = map
+    markerRef.current = marker
+
+    return () => { map.remove() }
+  }, [])
+
+  // Mettre à jour le marker si coords changent depuis l'extérieur
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.setLngLat([coords.longitude, coords.latitude])
+      mapRef.current?.flyTo({ center: [coords.longitude, coords.latitude], zoom: 14 })
+    }
+  }, [coords.longitude, coords.latitude])
+
+  return (
+    <div style={{ borderRadius: 12, overflow: 'hidden', border: '2px solid #2D9E6B' }}>
+      <div ref={mapContainerRef} style={{ height: 220 }} />
+      <div style={{ background: '#1A1410', padding: '10px 14px' }}>
+        <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 6 }}>
+          📍 Glisse le pin ou clique sur la carte pour ajuster l'emplacement exact
+        </p>
+        <p style={{ color: '#2D9E6B', fontSize: 11 }}>
+          {coords.longitude.toFixed(5)}, {coords.latitude.toFixed(5)}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export default function AjouterEvenement() {
@@ -168,17 +212,18 @@ export default function AjouterEvenement() {
   const [visibilite, setVisibilite] = useState<'public' | 'discret' | 'prive'>('public')
   const [codeAcces, setCodeAcces] = useState('')
 
+  // Recherche carte
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [coordsPreview, setCoordsPreview] = useState<CoordsPreview | null>(null)
-  const [adresseConfirmee, setAdresseConfirmee] = useState(false)
+  const [coordsPin, setCoordsPin] = useState<Coords | null>(null)
+  const [pinConfirme, setPinConfirme] = useState(false)
+  const [rechercheTexte, setRechercheTexte] = useState('')
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [form, setForm] = useState({
     titre: '',
     organisateur: '',
-    lieu: '',
     nom_lieu: '',
     adresse: '',
     ville: '',
@@ -208,11 +253,11 @@ export default function AjouterEvenement() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleLieuChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ── Recherche carte — autocomplétion Mapbox ───────────────────────────────
+  const handleRechercheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    setForm(f => ({ ...f, lieu: value }))
-    setAdresseConfirmee(false)
-    setCoordsPreview(null)
+    setRechercheTexte(value)
+    setPinConfirme(false)
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (value.length < 3) { setSuggestions([]); setShowSuggestions(false); return }
@@ -220,9 +265,7 @@ export default function AjouterEvenement() {
     debounceRef.current = setTimeout(async () => {
       const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
       const query = `${value}${form.ville ? ', ' + form.ville : ''}${form.pays ? ', ' + form.pays : ''}`
-      const countryCode = form.pays ? encodeURIComponent(form.pays) : ''
-      const proximityCoords = form.ville || form.pays ? '' : '-72.3288,18.5392'
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=5&language=fr&types=address,poi,place&proximity=${proximityCoords || 'ip'}`
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=5&language=fr&types=place,locality,address,poi`
       try {
         const res = await fetch(url)
         const data = await res.json()
@@ -241,12 +284,13 @@ export default function AjouterEvenement() {
     if (suggestion.context) {
       const villeCtx = suggestion.context.find(c => c.id.startsWith('place') || c.id.startsWith('locality'))
       const paysCtx = suggestion.context.find(c => c.id.startsWith('country'))
-      if (villeCtx) ville = villeCtx.text
-      if (paysCtx) pays = paysCtx.text
+      if (villeCtx && !ville) ville = villeCtx.text
+      if (paysCtx && !pays) pays = paysCtx.text
     }
-    setForm(f => ({ ...f, lieu: suggestion.text || suggestion.place_name.split(',')[0], ville, pays }))
-    setCoordsPreview({ longitude, latitude, adresse: suggestion.place_name })
-    setAdresseConfirmee(false)
+    setForm(f => ({ ...f, ville, pays }))
+    setRechercheTexte(suggestion.place_name)
+    setCoordsPin({ longitude, latitude, adresse: suggestion.place_name })
+    setPinConfirme(false)
     setSuggestions([])
     setShowSuggestions(false)
   }
@@ -255,42 +299,22 @@ export default function AjouterEvenement() {
     setSelectedThemes(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
   }
 
-  const geocoder = async () => {
-    if (coordsPreview && adresseConfirmee) {
-      return { longitude: coordsPreview.longitude, latitude: coordsPreview.latitude }
-    }
-    const adresseComplete = `${form.lieu}, ${form.ville}, ${form.pays}`
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(adresseComplete)}.json?access_token=${token}&limit=1`
-    const res = await fetch(url)
-    const data = await res.json()
-    if (data.features?.length > 0) {
-      const [longitude, latitude] = data.features[0].center
-      return { longitude, latitude }
-    }
-    return null
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedType) { alert('Choisis un type d\'événement.'); return }
+    if (!selectedType) { alert("Choisis un type d'événement."); return }
     if (multiJours && form.date_fin && form.date_fin < form.date) {
       alert('La date de fin doit être après la date de début.'); return
     }
-    if (coordsPreview && !adresseConfirmee) {
-      alert('Vérifie l\'emplacement sur la mini-carte et clique sur "Confirmer cet emplacement".'); return
+    if (!coordsPin) {
+      alert('Recherche et place le pin sur la carte pour localiser l\'événement.'); return
+    }
+    if (!pinConfirme) {
+      alert('Confirme l\'emplacement du pin sur la carte.'); return
     }
     if (visibilite === 'discret' && (!codeAcces || codeAcces.length < 4)) {
       alert('Le code d\'accès doit contenir au moins 4 chiffres.'); return
     }
     setLoading(true)
-
-    const coords = await geocoder()
-    if (!coords) {
-      alert('Adresse introuvable. Vérifie le lieu, la ville et le pays.')
-      setLoading(false)
-      return
-    }
 
     let image_url = ''
     if (image) {
@@ -305,13 +329,17 @@ export default function AjouterEvenement() {
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
 
+    const lieuAffiche = form.nom_lieu
+      ? `${form.nom_lieu}${form.ville ? ', ' + form.ville : ''}`
+      : `${form.adresse || form.ville}${form.ville ? ', ' + form.ville : ''}`
+
     const { data: inserted, error } = await supabase.from('evenements').insert([{
       titre: form.titre,
       organisateur: form.organisateur || null,
       user_id: session?.user?.id || null,
       nom_lieu: form.nom_lieu || null,
-      adresse: form.lieu || null,
-      lieu: form.nom_lieu ? `${form.nom_lieu}, ${form.ville}` : `${form.lieu}, ${form.ville}`,
+      adresse: form.adresse || null,
+      lieu: lieuAffiche,
       ville: form.ville,
       pays: form.pays,
       date: form.date,
@@ -324,138 +352,66 @@ export default function AjouterEvenement() {
       event_type_id: selectedType,
       description: form.description,
       lien: form.lien,
-      longitude: coords.longitude,
-      latitude: coords.latitude,
+      longitude: coordsPin.longitude,
+      latitude: coordsPin.latitude,
       acces: form.acces,
       prix: form.prix,
-      image_url: image_url,
+      image_url,
       statut: 'en_attente',
-      visibilite: visibilite,
+      visibilite,
       code_acces: visibilite === 'discret' ? codeAcces : null,
     }]).select('lien_secret').single()
 
     if (!error) {
       fetch('/api/notify-admin', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
-        },
-        body: JSON.stringify({
-          titre: form.titre,
-          lieu: `${form.lieu}, ${form.ville}`,
-          date: multiJours && form.date_fin
-            ? `${formatDate(form.date)} → ${formatDate(form.date_fin)}`
-            : form.date,
-          categorie: categorieNom,
-        })
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        body: JSON.stringify({ titre: form.titre, lieu: lieuAffiche, date: form.date, categorie: categorieNom })
       }).catch(() => {})
-
-      setSuccesData({
-        lienSecret: inserted?.lien_secret,
-        codeAcces: visibilite === 'discret' ? codeAcces : undefined,
-        visibilite,
-      })
+      setSuccesData({ lienSecret: inserted?.lien_secret, codeAcces: visibilite === 'discret' ? codeAcces : undefined, visibilite })
     }
 
     setLoading(false)
-    if (error) {
-      alert('Erreur: ' + error.message)
-    } else {
-      setSucces(true)
-    }
+    if (error) { alert('Erreur: ' + error.message) } else { setSucces(true) }
   }
 
-  // ── Écran de confirmation ──
+  // ── Écran succès ──────────────────────────────────────────────────────────
   if (succes) {
     return (
-      <main style={{
-        minHeight: '100dvh', background: '#F7F2E8',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px 16px'
-      }}>
+      <main style={{ minHeight: '100dvh', background: '#F7F2E8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
         <div style={{ textAlign: 'center', maxWidth: 440 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-          <h2 style={{ color: '#1A1410', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>
-            Événement soumis !
-          </h2>
-          <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
-            Ton événement est en attente de validation.
-          </p>
+          <h2 style={{ color: '#1A1410', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>Événement soumis !</h2>
+          <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Ton événement est en attente de validation.</p>
 
-          {/* ── Infos visibilité ── */}
           {succesData?.visibilite === 'prive' && succesData.lienSecret && (
-            <div style={{
-              background: 'rgba(200,67,26,0.1)', border: '1px solid rgba(200,67,26,0.3)',
-              borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left'
-            }}>
-              <p style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
-                🫧 Événement privé — partage ce lien secret :
-              </p>
-              <div style={{
-                background: 'rgba(255,255,255,0.06)', borderRadius: 8,
-                padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8
-              }}>
-                <code style={{ color: '#1A1410', fontSize: 12, flex: 1, wordBreak: 'break-all' }}>
-                  {`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`}
-                </code>
-                <button
-                  onClick={() => navigator.clipboard.writeText(`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`)}
-                  style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}
-                >
-                  Copier
-                </button>
+            <div style={{ background: 'rgba(200,67,26,0.1)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
+              <p style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>🫧 Lien secret :</p>
+              <div style={{ background: 'white', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <code style={{ color: '#1A1410', fontSize: 11, flex: 1, wordBreak: 'break-all' }}>{`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`}</code>
+                <button onClick={() => navigator.clipboard.writeText(`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`)} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>Copier</button>
               </div>
             </div>
           )}
 
           {succesData?.visibilite === 'discret' && succesData.codeAcces && (
-            <div style={{
-              background: 'rgba(212,168,32,0.1)', border: '1px solid rgba(212,168,32,0.3)',
-              borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left'
-            }}>
-              <p style={{ color: '#D4A820', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
-                🔒 Événement discret — partage ce code d'accès :
-              </p>
-              <div style={{
-                background: 'rgba(255,255,255,0.06)', borderRadius: 8,
-                padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-              }}>
-                <span style={{ color: '#1A1410', fontSize: 24, fontWeight: 'bold', letterSpacing: 8 }}>
-                  {succesData.codeAcces}
-                </span>
-                <button
-                  onClick={() => navigator.clipboard.writeText(succesData.codeAcces!)}
-                  style={{ background: '#D4A820', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}
-                >
-                  Copier
-                </button>
+            <div style={{ background: 'rgba(212,168,32,0.1)', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
+              <p style={{ color: '#D4A820', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>🔒 Code d'accès :</p>
+              <div style={{ background: 'white', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#1A1410', fontSize: 24, fontWeight: 'bold', letterSpacing: 8 }}>{succesData.codeAcces}</span>
+                <button onClick={() => navigator.clipboard.writeText(succesData.codeAcces!)} style={{ background: '#D4A820', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>Copier</button>
               </div>
             </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a href="/" style={{
-              background: '#C8431A', color: '#F7F2E8',
-              padding: '12px 24px', borderRadius: 10,
-              fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
-              display: 'block', textAlign: 'center'
-            }}>Retour à la carte</a>
-            <a href="/ajouter" style={{
-              background: 'rgba(255,255,255,0.06)', color: '#F7F2E8',
-              border: '1px solid #333', padding: '12px 24px', borderRadius: 10,
-              fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
-              display: 'block', textAlign: 'center'
-            }}>+ Ajouter un autre événement</a>
+            <a href="/" style={{ background: '#C8431A', color: '#F7F2E8', padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>Retour à la carte</a>
+            <a href="/ajouter" style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>+ Ajouter un autre événement</a>
           </div>
         </div>
       </main>
     )
   }
-
-  const miniCarteUrl = coordsPreview
-    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+C8431A(${coordsPreview.longitude},${coordsPreview.latitude})/${coordsPreview.longitude},${coordsPreview.latitude},14,0/600x200@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
-    : null
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', padding: '32px 16px' }}>
@@ -463,25 +419,25 @@ export default function AjouterEvenement() {
 
         <div style={{ marginBottom: 32 }}>
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
-          <h1 style={{ color: '#1A1410', fontSize: 26, fontWeight: 'bold', marginTop: 12, marginBottom: 4 }}>
-            Ajouter un événement
-          </h1>
+          <h1 style={{ color: '#1A1410', fontSize: 26, fontWeight: 'bold', marginTop: 12, marginBottom: 4 }}>Ajouter un événement</h1>
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+          {/* Titre */}
           <div>
             <label style={labelStyle}>Titre de l'événement *</label>
             <input name="titre" placeholder="Ex: Livres en Folie 2026" onChange={handleChange} style={inputStyle} required />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {/* Organisateur */}
+          <div>
             <label style={labelStyle}>Organisateur</label>
-            <input name="organisateur" value={form.organisateur} onChange={handleChange}
-              placeholder="Ex: Barreau de Petit-Goâve, Club Sportif..." style={inputStyle} />
+            <input name="organisateur" value={form.organisateur} onChange={handleChange} placeholder="Ex: Barreau de Petit-Goâve..." style={inputStyle} />
           </div>
 
+          {/* Ville + Pays */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Ville *</label>
@@ -493,80 +449,99 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* Nom du lieu — texte libre */}
           <div>
             <label style={labelStyle}>Nom du lieu *</label>
             <input name="nom_lieu" value={form.nom_lieu} placeholder="Ex: El Rancho Convention Center"
-              onChange={handleChange}
-              style={inputStyle}
-              required autoComplete="off" />
-            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>Nom du bâtiment, salle ou espace</p>
+              onChange={handleChange} style={inputStyle} required autoComplete="off" />
+            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>Nom exact du bâtiment, salle ou espace</p>
           </div>
 
-          <div style={{ position: 'relative' }} ref={suggestionsRef}>
-            <label style={labelStyle}>Adresse complète *</label>
-            <input name="lieu" value={form.lieu} placeholder="Ex: Route de Frères, Pétion-Ville"
-              onChange={handleLieuChange} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              style={{ ...inputStyle, border: adresseConfirmee ? '1px solid #2D9E6B' : coordsPreview ? '1px solid #D4A820' : '1px solid #333' }}
-              autoComplete="off" />
-            {adresseConfirmee && (
-              <span style={{ position: 'absolute', right: 14, top: 36, color: '#2D9E6B', fontSize: 16 }}>✓</span>
-            )}
-            {showSuggestions && suggestions.length > 0 && (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, marginTop: 4,
-                background: 'white', border: '1px solid #2a2a2a', borderRadius: 10, overflow: 'hidden',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-              }}>
-                {suggestions.map((s, i) => (
-                  <button key={i} type="button" onClick={() => handleSelectSuggestion(s)} style={{
-                    width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent',
-                    border: 'none', borderBottom: i < suggestions.length - 1 ? '1px solid #2a2a2a' : 'none',
-                    color: '#1A1410', fontSize: 13, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 2,
-                  }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <span style={{ fontWeight: 'bold', fontSize: 13 }}>{s.text || s.place_name.split(',')[0]}</span>
-                    <span style={{ color: '#8C5A40', fontSize: 11 }}>{s.place_name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Adresse — texte libre, pas de géocodage */}
+          <div>
+            <label style={labelStyle}>Adresse <span style={{ color: '#8C5A40' }}>(optionnel)</span></label>
+            <input name="adresse" value={form.adresse} placeholder="Ex: Rue Républicaine, Carrefour..."
+              onChange={handleChange} style={inputStyle} />
+            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>Numéro, rue, quartier — pour aider les participants</p>
           </div>
 
-          {coordsPreview && miniCarteUrl && (
-            <div style={{ borderRadius: 12, overflow: 'hidden', border: adresseConfirmee ? '2px solid #2D9E6B' : '2px solid #D4A820' }}>
-              <img src={miniCarteUrl} alt="Emplacement" style={{ width: '100%', display: 'block', height: 180, objectFit: 'cover' }} />
-              <div style={{ background: 'rgba(26,20,16,0.95)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>📍 {coordsPreview.adresse}</p>
-                {!adresseConfirmee ? (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" onClick={() => setAdresseConfirmee(true)} style={{
-                      flex: 2, background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8,
-                      padding: '9px 12px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer'
-                    }}>✓ Confirmer cet emplacement</button>
-                    <button type="button" onClick={() => { setCoordsPreview(null); setAdresseConfirmee(false); setForm(f => ({ ...f, lieu: '' })) }} style={{
-                      flex: 1, background: 'rgba(255,255,255,0.06)', color: '#8C5A40',
-                      border: '1px solid #333', borderRadius: 8, padding: '9px 12px', fontSize: 13, cursor: 'pointer'
-                    }}>Corriger</button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: '#2D9E6B', fontSize: 13, fontWeight: 'bold' }}>✓ Emplacement confirmé</span>
-                    <button type="button" onClick={() => setAdresseConfirmee(false)} style={{
-                      background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', textDecoration: 'underline'
-                    }}>Modifier</button>
-                  </div>
-                )}
-              </div>
+          {/* Recherche carte + carte interactive */}
+          <div>
+            <label style={labelStyle}>📍 Localisation sur la carte *</label>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8 }}>
+              Recherche la ville ou le lieu pour placer le pin, puis ajuste-le en le glissant
+            </p>
+            <div style={{ position: 'relative' }} ref={suggestionsRef}>
+              <input
+                value={rechercheTexte}
+                onChange={handleRechercheChange}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="Recherche : Pétion-Ville, El Rancho..."
+                style={{ ...inputStyle, border: pinConfirme ? '1px solid #2D9E6B' : coordsPin ? '1px solid #D4A820' : '1px solid #E8E0D0' }}
+                autoComplete="off"
+              />
+              {pinConfirme && <span style={{ position: 'absolute', right: 14, top: 14, color: '#2D9E6B', fontSize: 16 }}>✓</span>}
+              {showSuggestions && suggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, marginTop: 4,
+                  background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, overflow: 'hidden',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                }}>
+                  {suggestions.map((s, i) => (
+                    <button key={i} type="button" onClick={() => handleSelectSuggestion(s)} style={{
+                      width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent',
+                      border: 'none', borderBottom: i < suggestions.length - 1 ? '1px solid #E8E0D0' : 'none',
+                      color: '#1A1410', fontSize: 13, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 2,
+                    }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#F7F2E8')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontWeight: 'bold', fontSize: 13 }}>{s.text || s.place_name.split(',')[0]}</span>
+                      <span style={{ color: '#8C5A40', fontSize: 11 }}>{s.place_name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
 
+            {/* Carte interactive */}
+            {coordsPin && (
+              <div style={{ marginTop: 12 }}>
+                <CarteInteractive
+                  coords={coordsPin}
+                  onCoordsChange={(c) => { setCoordsPin(c); setPinConfirme(false) }}
+                />
+                <div style={{ marginTop: 10 }}>
+                  {!pinConfirme ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button type="button" onClick={() => setPinConfirme(true)} style={{
+                        flex: 2, background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8,
+                        padding: '10px 12px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer'
+                      }}>✓ Confirmer cet emplacement</button>
+                      <button type="button" onClick={() => { setCoordsPin(null); setPinConfirme(false); setRechercheTexte('') }} style={{
+                        flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0',
+                        borderRadius: 8, padding: '10px 12px', fontSize: 13, cursor: 'pointer'
+                      }}>Réinitialiser</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: '#2D9E6B', fontSize: 13, fontWeight: 'bold' }}>✓ Emplacement confirmé</span>
+                      <button type="button" onClick={() => setPinConfirme(false)} style={{
+                        background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', textDecoration: 'underline'
+                      }}>Modifier</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Multi-jours */}
           <div>
             <button type="button" onClick={() => { setMultiJours(!multiJours); if (multiJours) setForm(f => ({ ...f, date_fin: '' })) }} style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              background: multiJours ? 'rgba(200,67,26,0.12)' : 'rgba(255,255,255,0.04)',
-              border: multiJours ? '1px solid #C8431A' : '1px solid #333',
+              background: multiJours ? 'rgba(200,67,26,0.12)' : 'white',
+              border: multiJours ? '1px solid #C8431A' : '1px solid #E8E0D0',
               borderRadius: 10, padding: '10px 14px', color: multiJours ? '#1A1410' : '#8C5A40',
               fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left'
             }}>
@@ -575,6 +550,7 @@ export default function AjouterEvenement() {
             </button>
           </div>
 
+          {/* Dates */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{multiJours ? 'Date de début *' : 'Date *'}</label>
@@ -588,33 +564,36 @@ export default function AjouterEvenement() {
             )}
           </div>
 
+          {/* Heures */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Heure de début *</label>
               <input type="time" name="heure_debut" onChange={handleChange} style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Heure de fin <span style={{ color: '#555' }}>(optionnel)</span></label>
+              <label style={labelStyle}>Heure de fin <span style={{ color: '#8C5A40' }}>(optionnel)</span></label>
               <input type="time" name="heure_fin" onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
+          {/* Fuseau */}
           <div>
-            <label style={labelStyle}>Fuseau horaire <span style={{ color: '#555', marginLeft: 4 }}>(heure locale du lieu)</span></label>
+            <label style={labelStyle}>Fuseau horaire <span style={{ color: '#8C5A40', marginLeft: 4 }}>(heure locale du lieu)</span></label>
             <select name="fuseau_organisateur" value={form.fuseau_organisateur} onChange={handleChange} style={inputStyle}>
               {FUSEAUX.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
 
+          {/* Type événement */}
           <div>
             <label style={labelStyle}>Type d'événement *</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
               {EVENT_TYPES.map(type => (
                 <button key={type.id} type="button" onClick={() => setSelectedType(type.id)} style={{
                   display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10,
-                  fontSize: 13, textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s',
-                  background: selectedType === type.id ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-                  border: selectedType === type.id ? '1px solid #C8431A' : '1px solid #2a2a2a',
+                  fontSize: 13, textAlign: 'left', cursor: 'pointer',
+                  background: selectedType === type.id ? 'rgba(200,67,26,0.15)' : 'white',
+                  border: selectedType === type.id ? '1px solid #C8431A' : '1px solid #E8E0D0',
                   color: selectedType === type.id ? '#1A1410' : '#8C5A40',
                 }}>
                   <span>{type.icone}</span><span>{type.nom}</span>
@@ -623,15 +602,15 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* Thèmes */}
           <div>
-            <label style={labelStyle}>Thèmes <span style={{ color: '#555' }}>(plusieurs possible)</span></label>
+            <label style={labelStyle}>Thèmes <span style={{ color: '#8C5A40' }}>(plusieurs possible)</span></label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
               {EVENT_THEMES.map(theme => (
                 <button key={theme.id} type="button" onClick={() => toggleTheme(theme.id)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999,
-                  fontSize: 12, cursor: 'pointer', transition: 'all 0.15s',
-                  background: selectedThemes.includes(theme.id) ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-                  border: selectedThemes.includes(theme.id) ? '1px solid #C8431A' : '1px solid #2a2a2a',
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer',
+                  background: selectedThemes.includes(theme.id) ? 'rgba(200,67,26,0.15)' : 'white',
+                  border: selectedThemes.includes(theme.id) ? '1px solid #C8431A' : '1px solid #E8E0D0',
                   color: selectedThemes.includes(theme.id) ? '#1A1410' : '#8C5A40',
                 }}>
                   <span>{theme.icone}</span><span>{theme.nom}</span>
@@ -640,6 +619,7 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* Accès + Prix */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Accès</label>
@@ -657,87 +637,68 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
+          {/* Description */}
           <div>
             <label style={labelStyle}>Description</label>
-            <textarea name="description" placeholder="Décris l'événement..." onChange={handleChange} rows={4}
-              style={{ ...inputStyle, resize: 'vertical' }} />
+            <textarea name="description" placeholder="Décris l'événement..." onChange={handleChange} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
+          {/* Lien */}
           <div>
             <label style={labelStyle}>Lien pour plus de détails (optionnel)</label>
             <input name="lien" placeholder="https://" onChange={handleChange} style={inputStyle} />
           </div>
 
+          {/* Photo */}
           <div>
             <label style={labelStyle}>Photo de l'événement (optionnel)</label>
-            <input type="file" accept="image/*" onChange={e => setImage(e.target.files?.[0] || null)}
-              style={{ ...inputStyle, cursor: 'pointer' }} />
+            <input type="file" accept="image/*" onChange={e => setImage(e.target.files?.[0] || null)} style={{ ...inputStyle, cursor: 'pointer' }} />
           </div>
 
-          {/* ── F4-F6 : Visibilité 3 niveaux ─────────────────────────────── */}
+          {/* Visibilité */}
           <div>
             <label style={labelStyle}>Visibilité de l'événement</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
               {VISIBILITES.map(v => (
                 <button key={v.value} type="button" onClick={() => setVisibilite(v.value as any)} style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px',
-                  borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                  background: visibilite === v.value ? v.bg : 'rgba(255,255,255,0.04)',
-                  border: visibilite === v.value ? `1px solid ${v.border}` : '1px solid #2a2a2a',
+                  display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                  background: visibilite === v.value ? v.bg : 'white',
+                  border: visibilite === v.value ? `1px solid ${v.border}` : '1px solid #E8E0D0',
                 }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 2,
-                    border: visibilite === v.value ? `2px solid ${v.color}` : '2px solid #444',
-                    background: visibilite === v.value ? v.color : 'transparent',
-                  }} />
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 2, border: visibilite === v.value ? `2px solid ${v.color}` : '2px solid #E8E0D0', background: visibilite === v.value ? v.color : 'transparent' }} />
                   <div>
-                    <p style={{ color: visibilite === v.value ? '#1A1410' : '#8C5A40', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>
-                      {v.label}
-                    </p>
+                    <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>{v.label}</p>
                     <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>{v.description}</p>
                   </div>
                 </button>
               ))}
             </div>
 
-            {/* Code d'accès pour événement discret */}
             {visibilite === 'discret' && (
               <div style={{ marginTop: 12 }}>
-                <label style={{ ...labelStyle, color: '#D4A820' }}>
-                  Code d'accès (4-6 chiffres) *
-                </label>
-                <input
-                  type="text" inputMode="numeric" maxLength={6}
-                  value={codeAcces}
+                <label style={{ ...labelStyle, color: '#D4A820' }}>Code d'accès (4-6 chiffres) *</label>
+                <input type="text" inputMode="numeric" maxLength={6} value={codeAcces}
                   onChange={e => setCodeAcces(e.target.value.replace(/\D/g, ''))}
                   placeholder="Ex: 1234"
-                  style={{ ...inputStyle, border: '1px solid rgba(212,168,32,0.4)', letterSpacing: 8, fontSize: 18 }}
-                />
-                <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
-                  Ce code sera demandé aux visiteurs pour révéler l'adresse exacte.
-                </p>
+                  style={{ ...inputStyle, border: '1px solid rgba(212,168,32,0.4)', letterSpacing: 8, fontSize: 18 }} />
+                <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>Ce code sera demandé aux visiteurs pour révéler l'adresse exacte.</p>
               </div>
             )}
 
             {visibilite === 'prive' && (
-              <div style={{
-                marginTop: 12, background: 'rgba(200,67,26,0.08)',
-                border: '1px solid rgba(200,67,26,0.2)', borderRadius: 10, padding: '12px 14px'
-              }}>
-                <p style={{ color: '#C8431A', fontSize: 13, lineHeight: 1.6 }}>
-                  🫧 Un lien secret unique sera généré après soumission. Seules les personnes ayant ce lien pourront voir l'événement.
-                </p>
+              <div style={{ marginTop: 12, background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 10, padding: '12px 14px' }}>
+                <p style={{ color: '#C8431A', fontSize: 13, lineHeight: 1.6 }}>🫧 Un lien secret unique sera généré après soumission.</p>
               </div>
             )}
           </div>
-          {/* ────────────────────────────────────────────────────────────── */}
 
+          {/* Submit */}
           <button type="submit" disabled={loading} style={{
-            background: loading ? '#8C5A40' : '#C8431A',
-            color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 10,
-            border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8
+            background: loading ? '#8C5A40' : '#C8431A', color: '#F7F2E8', fontWeight: 'bold',
+            padding: '14px', borderRadius: 10, border: 'none', fontSize: 15,
+            cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8
           }}>
-            {loading ? 'Géocodage et publication...' : 'Soumettre l\'événement'}
+            {loading ? 'Publication en cours...' : "Soumettre l'événement"}
           </button>
 
         </form>
