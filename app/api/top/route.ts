@@ -23,23 +23,23 @@ export async function GET() {
     .slice(0, 5)
     .map(([ville, count]) => ({ ville, count }))
 
-  // Top organisateurs
-  const { data: orgs } = await supabase
+  // Top catégories
+  const { data: cats } = await supabase
     .from('evenements')
-    .select('organisateur')
+    .select('categorie')
     .eq('statut', 'approuve')
-    .not('organisateur', 'is', null)
+    .not('categorie', 'is', null)
 
-  const orgsCount: Record<string, number> = {}
-  orgs?.forEach(e => {
-    if (e.organisateur) orgsCount[e.organisateur] = (orgsCount[e.organisateur] || 0) + 1
+  const catsCount: Record<string, number> = {}
+  cats?.forEach(e => {
+    if (e.categorie) catsCount[e.categorie] = (catsCount[e.categorie] || 0) + 1
   })
-  const topOrganisateurs = Object.entries(orgsCount)
+  const topCategories = Object.entries(catsCount)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
-    .map(([organisateur, count]) => ({ organisateur, count }))
+    .map(([categorie, count]) => ({ categorie, count }))
 
-  return NextResponse.json({ topVilles, topOrganisateurs }, {
+  return NextResponse.json({ topVilles, topCategories }, {
     headers: {
       'Cache-Control': 's-maxage=86400, stale-while-revalidate=3600',
       'Access-Control-Allow-Origin': '*',
