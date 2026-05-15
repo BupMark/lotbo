@@ -1,16 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/scrape-predicthq",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/scrape-ticketmaster",
-      "schedule": "0 */12 * * *"
-    },
-    {
-      "path": "/api/scrape-worldcup",
-      "schedule": "0 8 * * *"
-    }
-  ]
-}
+{}
