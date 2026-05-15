@@ -282,10 +282,10 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const rw = W - photoW - 96
 
     // Logo
-    dessinerLogo(ctx, rx, 88, 40, textColor)
+    dessinerLogo(ctx, rx, 72, 40, textColor)
 
-    // Avatar
-    const avatarX = rx + 52, avatarY = 210, avatarR = 52
+    // Avatar — centré verticalement dans la zone droite
+    const avatarX = rx + 52, avatarY = Math.round(H * 0.28), avatarR = 52
     await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
 
     // Expression
