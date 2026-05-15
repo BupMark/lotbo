@@ -179,6 +179,8 @@ export default function AjouterEvenement() {
     titre: '',
     organisateur: '',
     lieu: '',
+    nom_lieu: '',
+    adresse: '',
     ville: '',
     pays: '',
     date: '',
@@ -305,7 +307,9 @@ export default function AjouterEvenement() {
       titre: form.titre,
       organisateur: form.organisateur || null,
       user_id: session?.user?.id || null,
-      lieu: `${form.lieu}, ${form.ville}`,
+      nom_lieu: form.nom_lieu || null,
+      adresse: form.lieu || null,
+      lieu: form.nom_lieu ? `${form.nom_lieu}, ${form.ville}` : `${form.lieu}, ${form.ville}`,
       ville: form.ville,
       pays: form.pays,
       date: form.date,
@@ -487,12 +491,21 @@ export default function AjouterEvenement() {
             </div>
           </div>
 
-          <div style={{ position: 'relative' }} ref={suggestionsRef}>
+          <div>
             <label style={labelStyle}>Nom du lieu *</label>
-            <input name="lieu" value={form.lieu} placeholder="Ex: El Rancho Convention Center"
+            <input name="nom_lieu" value={form.nom_lieu} placeholder="Ex: El Rancho Convention Center"
+              onChange={handleChange}
+              style={inputStyle}
+              required autoComplete="off" />
+            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>Nom du bâtiment, salle ou espace</p>
+          </div>
+
+          <div style={{ position: 'relative' }} ref={suggestionsRef}>
+            <label style={labelStyle}>Adresse complète *</label>
+            <input name="lieu" value={form.lieu} placeholder="Ex: Route de Frères, Pétion-Ville"
               onChange={handleLieuChange} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               style={{ ...inputStyle, border: adresseConfirmee ? '1px solid #2D9E6B' : coordsPreview ? '1px solid #D4A820' : '1px solid #333' }}
-              required autoComplete="off" />
+              autoComplete="off" />
             {adresseConfirmee && (
               <span style={{ position: 'absolute', right: 14, top: 36, color: '#2D9E6B', fontSize: 16 }}>✓</span>
             )}
