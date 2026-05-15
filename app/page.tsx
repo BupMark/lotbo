@@ -83,6 +83,7 @@ export default function Home() {
         .select('*')
         .eq('statut', 'approuve')
         .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
+        .neq('statut', 'hors_ligne')
       setEvenements(data || [])
     })
     mapRef.current = map
