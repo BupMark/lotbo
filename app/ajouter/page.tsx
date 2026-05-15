@@ -118,6 +118,7 @@ interface Suggestion {
   center: [number, number]
   text: string
   context?: { id: string; text: string }[]
+  place_id?: string
 }
 
 interface Coords {
@@ -263,36 +264,57 @@ export default function AjouterEvenement() {
     if (value.length < 3) { setSuggestions([]); setShowSuggestions(false); return }
 
     debounceRef.current = setTimeout(async () => {
-      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
       const query = `${value}${form.ville ? ', ' + form.ville : ''}${form.pays ? ', ' + form.pays : ''}`
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=5&language=fr&types=place,locality,address,poi`
       try {
-        const res = await fetch(url)
+        const res = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(query)}`)
         const data = await res.json()
-        if (data.features?.length > 0) {
-          setSuggestions(data.features)
+        if (data.predictions?.length > 0) {
+          setSuggestions(data.predictions.map((p: any) => ({
+            place_name: p.description,
+            text: p.structured_formatting?.main_text || p.description,
+            center: [0, 0] as [number, number],
+            place_id: p.place_id,
+          })))
           setShowSuggestions(true)
         }
       } catch {}
     }, 350)
   }
 
-  const handleSelectSuggestion = (suggestion: Suggestion) => {
-    const [longitude, latitude] = suggestion.center
-    let ville = form.ville
-    let pays = form.pays
-    if (suggestion.context) {
-      const villeCtx = suggestion.context.find(c => c.id.startsWith('place') || c.id.startsWith('locality'))
-      const paysCtx = suggestion.context.find(c => c.id.startsWith('country'))
-      if (villeCtx && !ville) ville = villeCtx.text
-      if (paysCtx && !pays) pays = paysCtx.text
-    }
-    setForm(f => ({ ...f, ville, pays }))
+  const handleSelectSuggestion = async (suggestion: Suggestion) => {
     setRechercheTexte(suggestion.place_name)
-    setCoordsPin({ longitude, latitude, adresse: suggestion.place_name })
-    setPinConfirme(false)
     setSuggestions([])
     setShowSuggestions(false)
+    setPinConfirme(false)
+
+    if (suggestion.place_id) {
+      try {
+        const res = await fetch(`/api/places-details?place_id=${suggestion.place_id}`)
+        const data = await res.json()
+        const loc = data.result?.geometry?.location
+        if (loc) {
+          // Extraire ville et pays depuis address_components
+          const comps = data.result?.address_components || []
+          const villeComp = comps.find((c: any) => c.types.includes('locality') || c.types.includes('administrative_area_level_1'))
+          const paysComp = comps.find((c: any) => c.types.includes('country'))
+          if (villeComp && !form.ville) setForm(f => ({ ...f, ville: villeComp.long_name }))
+          if (paysComp && !form.pays) setForm(f => ({ ...f, pays: paysComp.long_name }))
+          setCoordsPin({ longitude: loc.lng, latitude: loc.lat, adresse: suggestion.place_name })
+          return
+        }
+      } catch {}
+    }
+    // Fallback Mapbox si place_id échoue
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(suggestion.place_name)}.json?access_token=${token}&limit=1`
+    try {
+      const res = await fetch(url)
+      const data = await res.json()
+      if (data.features?.length > 0) {
+        const [lng, lat] = data.features[0].center
+        setCoordsPin({ longitude: lng, latitude: lat, adresse: suggestion.place_name })
+      }
+    } catch {}
   }
 
   const toggleTheme = (id: number) => {
