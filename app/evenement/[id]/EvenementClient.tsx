@@ -158,6 +158,7 @@ export default function EvenementPage() {
   const [commentaires, setCommentaires] = useState<any[]>([])
 
   // ── E1 + E3b : Je serai là ────────────────────────────────────────────────
+  const [isAdmin, setIsAdmin] = useState(false)
   const [seraiLa, setSeraiLa] = useState(false)
   const [nbParticipants, setNbParticipants] = useState(0)
   const [loadingParticipation, setLoadingParticipation] = useState(false)
@@ -192,6 +193,11 @@ export default function EvenementPage() {
     setNbLikes(count[id as string] || 0)
     const participations = JSON.parse(localStorage.getItem('lotbo_participations') || '{}')
     setSeraiLa(!!participations[id as string])
+
+    // Vérifier rôle admin
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.user_metadata?.role === 'admin') setIsAdmin(true)
+    })
     const expressions = JSON.parse(localStorage.getItem('lotbo_expressions') || '{}')
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
   }, [id])
@@ -318,9 +324,23 @@ export default function EvenementPage() {
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px 64px' }}>
 
-        <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
-          ← Retour à la carte
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
+            ← Retour à la carte
+          </button>
+          {isAdmin && (
+            <button onClick={async () => {
+              if (!confirm('Mettre cet événement hors ligne ?')) return
+              await supabase.from('evenements').update({ statut: 'hors_ligne' }).eq('id', ev.id)
+              alert('Événement mis hors ligne ✓')
+              router.push('/')
+            }} style={{
+              background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)',
+              color: '#D4A820', borderRadius: 8, padding: '6px 12px',
+              fontSize: 12, fontWeight: 'bold', cursor: 'pointer'
+            }}>⚠️ Mettre hors ligne</button>
+          )}
+        </div>
 
         <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 'bold', marginBottom: 16, fontFamily: 'serif', fontStyle: 'italic', color: '#F7F2E8', lineHeight: 1.2 }}>{ev.titre}</h1>
 
