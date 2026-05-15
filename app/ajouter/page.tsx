@@ -351,6 +351,12 @@ export default function AjouterEvenement() {
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
 
+    // Vérifier si contributeur/admin → statut approuve direct
+    const role = session?.user?.user_metadata?.role
+    const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session?.user?.id || '').single()
+    const estContributeur = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
+    const statutInsertion = estContributeur && profile?.charte_acceptee ? 'approuve' : 'en_attente'
+
     const lieuAffiche = form.nom_lieu
       ? `${form.nom_lieu}${form.ville ? ', ' + form.ville : ''}`
       : `${form.adresse || form.ville}${form.ville ? ', ' + form.ville : ''}`
@@ -379,7 +385,7 @@ export default function AjouterEvenement() {
       acces: form.acces,
       prix: form.prix,
       image_url,
-      statut: 'en_attente',
+      statut: statutInsertion,
       visibilite,
       code_acces: visibilite === 'discret' ? codeAcces : null,
     }]).select('lien_secret').single()
