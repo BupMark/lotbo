@@ -12,7 +12,6 @@ const FONDS = [
   { id: 'vert', label: 'Vert', bg: '#2D9E6B' },
 ]
 
-// ── Expressions ───────────────────────────────────────────────────────────────
 const EXPRESSIONS = [
   { id: 'sera_la', emoji: '🙋', texte: 'Je serai là' },
   { id: 'ecoute', emoji: '🎵', texte: "Je l'écoute" },
@@ -24,12 +23,11 @@ const EXPRESSIONS = [
   { id: 'custom', emoji: '✏️', texte: 'Personnaliser...' },
 ]
 
-// ── Dispositions ──────────────────────────────────────────────────────────────
 type Disposition = 'centree' | 'split' | 'paysage'
-const DISPOSITIONS: { id: Disposition; label: string; icon: string; size: string }[] = [
-  { id: 'centree', label: 'Centrée', icon: '⬛', size: '1080×1080' },
-  { id: 'split', label: 'Split', icon: '◧', size: '1080×1080' },
-  { id: 'paysage', label: 'Paysage', icon: '▬', size: '1200×630' },
+const DISPOSITIONS = [
+  { id: 'centree' as Disposition, label: 'Centrée', icon: '⬛', size: '1080×1080' },
+  { id: 'split' as Disposition, label: 'Split', icon: '◧', size: '1080×1080' },
+  { id: 'paysage' as Disposition, label: 'Paysage', icon: '▬', size: '1200×630' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,8 +42,8 @@ function getTextColor(bg: string): string {
   return getLuminance(bg) > 0.5 ? '#1A1410' : '#F7F2E8'
 }
 
-function getExpressionColor(bg: string, useFoto: boolean): string {
-  if (useFoto) return '#F7F2E8'
+function getExprColor(bg: string, surFondSombre: boolean): string {
+  if (surFondSombre) return '#F7F2E8'
   return getLuminance(bg) > 0.5 ? '#C8431A' : '#F7F2E8'
 }
 
@@ -57,21 +55,22 @@ function formatDateCourte(dateStr: string): string {
   if (!dateStr) return ''
   try {
     const [year, month, day] = dateStr.split('-').map(Number)
-    const date = new Date(year, month - 1, day)
     return new Intl.DateTimeFormat('fr-FR', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    }).format(date)
+      day: 'numeric', month: 'long', year: 'numeric'
+    }).format(new Date(year, month - 1, day))
   } catch { return dateStr }
 }
 
-async function chargerImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = src
-  })
+async function chargerImage(src: string): Promise<HTMLImageElement | null> {
+  try {
+    return await new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(null)
+      img.src = src
+    })
+  } catch { return null }
 }
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -81,29 +80,114 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   for (const word of words) {
     const test = current ? current + ' ' + word : word
     if (ctx.measureText(test).width > maxWidth && current) {
-      lines.push(current)
-      current = word
+      lines.push(current); current = word
     } else { current = test }
   }
   if (current) lines.push(current)
   return lines
 }
 
+// ── Dessiner zone photo avec fallback ─────────────────────────────────────────
+async function dessinerZonePhoto(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  photoUrl: string | null,
+  fallbackBg: string,
+  initiales: string
+) {
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x, y, w, h)
+  ctx.clip()
+
+  if (photoUrl) {
+    const img = await chargerImage(photoUrl)
+    if (img) {
+      // Cover: centrer et remplir
+      const ratio = Math.max(w / img.naturalWidth, h / img.naturalHeight)
+      const dw = img.naturalWidth * ratio
+      const dh = img.naturalHeight * ratio
+      const dx = x + (w - dw) / 2
+      const dy = y + (h - dh) / 2
+      ctx.drawImage(img, dx, dy, dw, dh)
+      ctx.restore()
+      return
+    }
+  }
+
+  // Fallback — fond coloré + logo + initiales
+  ctx.fillStyle = fallbackBg
+  ctx.fillRect(x, y, w, h)
+
+  // Logo LOTBO centré
+  const logoSize = Math.round(Math.min(w, h) * 0.08)
+  ctx.font = `bold italic ${logoSize}px Georgia, serif`
+  ctx.textAlign = 'center'
+  ctx.fillStyle = getTextColor(fallbackBg)
+  ctx.fillText('lot', x + w / 2 - ctx.measureText('bo').width / 2, y + h * 0.35)
+  const lotW = ctx.measureText('lot').width
+  ctx.fillStyle = '#C8431A'
+  ctx.fillText('bo', x + w / 2 + lotW / 2, y + h * 0.35)
+
+  // Initiales grandes au centre
+  const initSize = Math.round(Math.min(w, h) * 0.22)
+  ctx.font = `bold ${initSize}px system-ui, sans-serif`
+  ctx.fillStyle = getTextColor(fallbackBg) === '#F7F2E8' ? 'rgba(247,242,232,0.25)' : 'rgba(26,20,16,0.12)'
+  ctx.textAlign = 'center'
+  ctx.fillText(initiales, x + w / 2, y + h * 0.65)
+
+  ctx.restore()
+}
+
+// ── Dessiner avatar circulaire ────────────────────────────────────────────────
+async function dessinerAvatar(
+  ctx: CanvasRenderingContext2D,
+  cx: number, cy: number, r: number,
+  photoUrl: string | null, initiales: string
+) {
+  ctx.save()
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip()
+
+  if (photoUrl) {
+    const img = await chargerImage(photoUrl)
+    if (img) {
+      ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2)
+      ctx.restore()
+      ctx.strokeStyle = '#C8431A'; ctx.lineWidth = 5
+      ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.stroke()
+      return
+    }
+  }
+
+  // Fallback initiales
+  ctx.fillStyle = '#C8431A'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2)
+  ctx.restore()
+  ctx.font = `bold ${Math.round(r * 0.75)}px system-ui, sans-serif`
+  ctx.fillStyle = '#F7F2E8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText(initiales, cx, cy)
+  ctx.textBaseline = 'alphabetic'
+  ctx.strokeStyle = '#C8431A'; ctx.lineWidth = 5
+  ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.stroke()
+}
+
+function dessinerLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, textColor: string) {
+  ctx.font = `bold italic ${size}px Georgia, serif`
+  ctx.textAlign = 'left'
+  ctx.fillStyle = textColor; ctx.fillText('lot', x, y)
+  const w = ctx.measureText('lot').width
+  ctx.fillStyle = '#C8431A'; ctx.fillText('bo', x + w, y)
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
-  evenement: {
-    titre: string
-    lieu: string
-    date: string
-    date_fin?: string
-    image_url?: string
-  }
+  evenement: { titre: string; lieu: string; date: string; date_fin?: string; image_url?: string }
   expression: string
   onClose: () => void
 }
 
 export default function CarteVisuelle({ evenement, expression: expressionInitiale, onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [fondActif, setFondActif] = useState(FONDS[0])
   const [useFotoEvent, setUseFotoEvent] = useState(false)
   const [expressionSelectionnee, setExpressionSelectionnee] = useState(
@@ -111,6 +195,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   )
   const [texteCustom, setTexteCustom] = useState('')
   const [nomUtilisateur, setNomUtilisateur] = useState('Moi')
+  const [photoProfil, setPhotoProfil] = useState<string | null>(null)
   const [disposition, setDisposition] = useState<Disposition>('centree')
   const [etape, setEtape] = useState<'expression' | 'carte'>('expression')
 
@@ -118,249 +203,224 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ? (texteCustom || 'Personnalisé')
     : `${expressionSelectionnee.emoji} ${expressionSelectionnee.texte}`
 
+  const initiales = getInitiales(nomUtilisateur)
+
   const periode = evenement.date_fin && evenement.date_fin !== evenement.date
     ? `${formatDateCourte(evenement.date)} → ${formatDateCourte(evenement.date_fin)}`
     : formatDateCourte(evenement.date)
 
-  // ── Détection auto disposition selon format photo ─────────────────────────
+  // ── Détection auto disposition ────────────────────────────────────────────
   useEffect(() => {
     if (!evenement.image_url) { setDisposition('centree'); return }
     const img = new Image()
     img.onload = () => {
-      if (img.naturalWidth > img.naturalHeight * 1.2) setDisposition('paysage')
+      if (img.naturalWidth > img.naturalHeight * 1.25) setDisposition('paysage')
       else if (img.naturalHeight > img.naturalWidth * 1.1) setDisposition('split')
       else setDisposition('centree')
     }
     img.src = evenement.image_url
   }, [evenement.image_url])
 
-  // ── Redessiner quand params changent ─────────────────────────────────────
   useEffect(() => {
     if (etape !== 'carte') return
     dessinerCarte()
-  }, [fondActif, useFotoEvent, texteExpression, etape, nomUtilisateur, disposition])
+  }, [fondActif, useFotoEvent, texteExpression, etape, nomUtilisateur, disposition, photoProfil])
 
-  // ── Canvas dimensions selon disposition ───────────────────────────────────
-  const getDimensions = () => {
-    if (disposition === 'paysage') return { W: 1200, H: 630 }
-    return { W: 1080, H: 1080 }
-  }
+  const getDimensions = () => disposition === 'paysage' ? { W: 1200, H: 630 } : { W: 1080, H: 1080 }
 
-  // ── Dessiner avatar (initiales) ───────────────────────────────────────────
-  const dessinerAvatar = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number) => {
-    ctx.save()
-    ctx.fillStyle = '#C8431A'
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
-    ctx.font = `bold ${Math.round(r * 0.75)}px system-ui, sans-serif`
-    ctx.fillStyle = '#F7F2E8'
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText(getInitiales(nomUtilisateur), x, y)
-    ctx.textBaseline = 'alphabetic'; ctx.restore()
-    // Bordure
-    ctx.strokeStyle = '#C8431A'; ctx.lineWidth = 5
-    ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.stroke()
-  }
-
-  // ── Logo LOTBO ────────────────────────────────────────────────────────────
-  const dessinerLogo = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, textColor: string) => {
-    ctx.font = `bold italic ${size}px Georgia, serif`
-    ctx.fillStyle = textColor; ctx.textAlign = 'left'
-    ctx.fillText('lot', x, y)
-    const w = ctx.measureText('lot').width
-    ctx.fillStyle = '#C8431A'
-    ctx.fillText('bo', x + w, y)
+  // ── Upload photo profil ───────────────────────────────────────────────────
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) { alert('Photo max 2MB'); return }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setPhotoProfil(ev.target?.result as string)
+    }
+    reader.readAsDataURL(file)
   }
 
   // ── DISPOSITION 1 : Centrée ───────────────────────────────────────────────
   const dessinerCentree = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    const bgColor = useFotoEvent && evenement.image_url ? '#1A1410' : fondActif.bg
-    const textColor = useFotoEvent && evenement.image_url ? '#F7F2E8' : getTextColor(bgColor)
-    const exprColor = getExpressionColor(bgColor, useFotoEvent && !!evenement.image_url)
+    const bg = useFotoEvent && evenement.image_url ? '#1A1410' : fondActif.bg
+    const textColor = useFotoEvent && evenement.image_url ? '#F7F2E8' : getTextColor(bg)
+    const exprColor = getExprColor(bg, useFotoEvent && !!evenement.image_url)
 
     // Fond
     if (useFotoEvent && evenement.image_url) {
-      try {
-        const img = await chargerImage(evenement.image_url)
+      const img = await chargerImage(evenement.image_url)
+      if (img) {
         ctx.drawImage(img, 0, 0, W, H)
         ctx.fillStyle = 'rgba(26,20,16,0.72)'; ctx.fillRect(0, 0, W, H)
-      } catch { ctx.fillStyle = bgColor; ctx.fillRect(0, 0, W, H) }
-    } else { ctx.fillStyle = bgColor; ctx.fillRect(0, 0, W, H) }
+      } else { ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H) }
+    } else { ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H) }
 
-    // Logo
-    dessinerLogo(ctx, 60, 100, 48, textColor)
+    dessinerLogo(ctx, 60, 100, 46, textColor)
 
-    // Avatar
-    const avatarX = W / 2, avatarY = 340, avatarR = 90
-    dessinerAvatar(ctx, avatarX, avatarY, avatarR)
+    // Avatar centré
+    const avatarX = W / 2, avatarY = 330, avatarR = 88
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
 
     // Expression
     ctx.font = 'bold 46px system-ui, sans-serif'
     ctx.fillStyle = exprColor; ctx.textAlign = 'center'
-    ctx.fillText(texteExpression, W / 2, avatarY + avatarR + 72)
+    ctx.fillText(texteExpression, W / 2, avatarY + avatarR + 70)
 
     // Séparateur
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.15)' : 'rgba(26,20,16,0.12)'
-    ctx.fillRect(80, avatarY + avatarR + 100, W - 160, 1)
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.15)' : 'rgba(26,20,16,0.12)'
+    ctx.fillRect(80, avatarY + avatarR + 96, W - 160, 1)
 
     // Titre
     ctx.font = 'bold italic 52px Georgia, serif'
     ctx.fillStyle = textColor; ctx.textAlign = 'center'
     const titreLines = wrapText(ctx, evenement.titre, W - 120)
-    titreLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, W / 2, avatarY + avatarR + 170 + i * 62))
+    const titreH = Math.min(titreLines.length, 2) * 60
+    const startTitre = avatarY + avatarR + 166
+    titreLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, W / 2, startTitre + i * 60))
 
-    const baseY = avatarY + avatarR + 170 + Math.min(titreLines.length, 2) * 62
+    // Date + Lieu — centrés verticalement dans l'espace restant
+    const after = startTitre + titreH
+    const remaining = H - after - 80
+    const spacing = Math.min(52, remaining / 3)
 
-    // Date
     ctx.font = '32px system-ui, sans-serif'
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
-    const dateDisplay = periode.length > 40 ? periode.slice(0, 40) + '…' : periode
-    ctx.fillText(`📅 ${dateDisplay}`, W / 2, baseY + 20)
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
+    const dateDisplay = periode.length > 42 ? periode.slice(0, 42) + '…' : periode
+    ctx.fillText(`📅 ${dateDisplay}`, W / 2, after + spacing)
 
-    // Lieu
-    ctx.font = '30px system-ui, sans-serif'
     const lieuDisplay = evenement.lieu.length > 46 ? evenement.lieu.slice(0, 46) + '…' : evenement.lieu
-    ctx.fillText(`📍 ${lieuDisplay}`, W / 2, baseY + 65)
+    ctx.fillText(`📍 ${lieuDisplay}`, W / 2, after + spacing * 2)
 
     // Footer
     ctx.font = '26px system-ui, sans-serif'
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.3)'
-    ctx.fillText('app.lotbo.app', W / 2, H - 55)
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.28)'
+    ctx.fillText('app.lotbo.app', W / 2, H - 48)
     ctx.textAlign = 'left'
   }
 
   // ── DISPOSITION 2 : Split ─────────────────────────────────────────────────
   const dessinerSplit = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    const bgColor = fondActif.bg
-    const textColor = getTextColor(bgColor)
-    const exprColor = getExpressionColor(bgColor, false)
     const photoW = Math.round(W * 0.42)
+    const bg = fondActif.bg
+    const textColor = getTextColor(bg)
+    const exprColor = getExprColor(bg, false)
 
-    // Photo gauche
-    if (evenement.image_url) {
-      try {
-        const img = await chargerImage(evenement.image_url)
-        ctx.save()
-        ctx.beginPath(); ctx.rect(0, 0, photoW, H); ctx.clip()
-        ctx.drawImage(img, 0, 0, photoW, H)
-        ctx.restore()
-      } catch {
-        ctx.fillStyle = '#2a2a2a'; ctx.fillRect(0, 0, photoW, H)
-      }
-    } else {
-      ctx.fillStyle = '#C8431A'; ctx.fillRect(0, 0, photoW, H)
-      dessinerLogo(ctx, 40, H / 2, 52, '#F7F2E8')
+    // Zone photo gauche — avec fallback coloré
+    const photoSource = photoProfil || evenement.image_url || null
+    await dessinerZonePhoto(ctx, 0, 0, photoW, H, photoSource, '#C8431A', initiales)
+
+    // Overlay léger sur la photo pour lisibilité
+    if (photoSource) {
+      ctx.fillStyle = 'rgba(26,20,16,0.15)'
+      ctx.fillRect(0, 0, photoW, H)
     }
 
     // Fond droite
-    ctx.fillStyle = bgColor; ctx.fillRect(photoW, 0, W - photoW, H)
+    ctx.fillStyle = bg; ctx.fillRect(photoW, 0, W - photoW, H)
 
-    // Contenu droite
-    const rx = photoW + 48, rw = W - photoW - 96
+    // Contenu droite — centré verticalement
+    const rx = photoW + 48
+    const rw = W - photoW - 72
+    const contentH = 600 // hauteur estimée du contenu
+    const startY = (H - contentH) / 2 + 60
+
     ctx.textAlign = 'left'
-
-    // Logo droite
-    dessinerLogo(ctx, rx, 90, 40, textColor)
+    dessinerLogo(ctx, rx, startY, 38, textColor)
 
     // Avatar
-    const avatarX = rx + 52, avatarY = 210, avatarR = 52
-    dessinerAvatar(ctx, avatarX, avatarY, avatarR)
+    const avatarX = rx + 48, avatarY = startY + 80, avatarR = 48
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
 
     // Expression
-    ctx.font = 'bold 36px system-ui, sans-serif'
+    ctx.font = 'bold 34px system-ui, sans-serif'
     ctx.fillStyle = exprColor
     ctx.fillText(texteExpression, rx, avatarY + avatarR + 52)
 
     // Séparateur
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.15)' : 'rgba(26,20,16,0.12)'
-    ctx.fillRect(rx, avatarY + avatarR + 72, rw, 1)
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.15)' : 'rgba(26,20,16,0.12)'
+    ctx.fillRect(rx, avatarY + avatarR + 68, rw, 1)
 
     // Titre
-    ctx.font = 'bold italic 44px Georgia, serif'
+    ctx.font = 'bold italic 42px Georgia, serif'
     ctx.fillStyle = textColor
     const titreLines = wrapText(ctx, evenement.titre, rw)
-    titreLines.slice(0, 3).forEach((line, i) => ctx.fillText(line, rx, avatarY + avatarR + 130 + i * 54))
+    const titreStartY = avatarY + avatarR + 124
+    titreLines.slice(0, 3).forEach((line, i) => ctx.fillText(line, rx, titreStartY + i * 50))
+    const afterTitre = titreStartY + Math.min(titreLines.length, 3) * 50
 
-    const baseY = avatarY + avatarR + 130 + Math.min(titreLines.length, 3) * 54
-
-    // Date
-    ctx.font = '28px system-ui, sans-serif'
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
-    const dateShort = formatDateCourte(evenement.date).replace(/^[a-zA-ZÀ-ÿ]+ /, '')
-    ctx.fillText(`📅 ${dateShort}`, rx, baseY + 20)
-
-    const lieuDisplay = evenement.lieu.length > 32 ? evenement.lieu.slice(0, 32) + '…' : evenement.lieu
-    ctx.fillText(`📍 ${lieuDisplay}`, rx, baseY + 60)
+    // Date + Lieu
+    ctx.font = '27px system-ui, sans-serif'
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
+    const dateShort = formatDateCourte(evenement.date)
+    ctx.fillText(`📅 ${dateShort}`, rx, afterTitre + 36)
+    const lieuDisplay = evenement.lieu.length > 30 ? evenement.lieu.slice(0, 30) + '…' : evenement.lieu
+    ctx.fillText(`📍 ${lieuDisplay}`, rx, afterTitre + 78)
 
     // Footer
     ctx.font = '22px system-ui, sans-serif'
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.3)'
-    ctx.fillText('app.lotbo.app', rx, H - 50)
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.28)'
+    ctx.fillText('app.lotbo.app', rx, H - 44)
     ctx.textAlign = 'left'
   }
 
   // ── DISPOSITION 3 : Paysage ───────────────────────────────────────────────
   const dessinerPaysage = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    const photoH = Math.round(H * 0.58)
-    const bgColor = fondActif.bg
-    const textColor = getTextColor(bgColor)
-    const exprColor = getExpressionColor(bgColor, false)
+    const photoH = Math.round(H * 0.56)
+    const bg = fondActif.bg
+    const textColor = getTextColor(bg)
+    const exprColor = getExprColor(bg, false)
 
-    // Photo haut
-    if (evenement.image_url) {
-      try {
-        const img = await chargerImage(evenement.image_url)
-        ctx.drawImage(img, 0, 0, W, photoH)
-        ctx.fillStyle = 'rgba(26,20,16,0.35)'; ctx.fillRect(0, 0, W, photoH)
-      } catch {
-        ctx.fillStyle = '#2a2a2a'; ctx.fillRect(0, 0, W, photoH)
-      }
-    } else {
-      ctx.fillStyle = '#C8431A'; ctx.fillRect(0, 0, W, photoH)
+    // Zone photo haut — avec fallback coloré
+    const photoSource = evenement.image_url || null
+    await dessinerZonePhoto(ctx, 0, 0, W, photoH, photoSource, '#C8431A', initiales)
+
+    // Overlay sur photo
+    if (photoSource) {
+      ctx.fillStyle = 'rgba(26,20,16,0.42)'
+      ctx.fillRect(0, 0, W, photoH)
     }
 
-    // Bande infos bas
-    ctx.fillStyle = bgColor; ctx.fillRect(0, photoH, W, H - photoH)
-
     // Logo sur photo
-    dessinerLogo(ctx, 48, 72, 44, '#F7F2E8')
+    dessinerLogo(ctx, 48, 66, 40, '#F7F2E8')
 
-    // Avatar sur photo (bas gauche)
-    const avatarX = 80, avatarY = photoH - 60, avatarR = 52
-    dessinerAvatar(ctx, avatarX, avatarY, avatarR)
+    // Avatar + expression sur photo (bas gauche)
+    const avatarX = 76, avatarY = photoH - 64, avatarR = 46
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
 
-    // Expression sur photo
-    ctx.font = 'bold 36px system-ui, sans-serif'
+    ctx.font = 'bold 32px system-ui, sans-serif'
     ctx.fillStyle = '#F7F2E8'; ctx.textAlign = 'left'
-    ctx.fillText(texteExpression, avatarX + avatarR + 20, avatarY + 12)
+    ctx.fillText(texteExpression, avatarX + avatarR + 18, avatarY + 12)
 
-    // Contenu bande bas
-    const by = photoH + 36
+    // Bande bas
+    ctx.fillStyle = bg; ctx.fillRect(0, photoH, W, H - photoH)
+
+    // Contenu bande bas — centré verticalement
+    const bandH = H - photoH
+    const contentH = 140
+    const startY = photoH + (bandH - contentH) / 2 + 40
+
     ctx.textAlign = 'left'
-
-    // Titre
-    ctx.font = 'bold italic 48px Georgia, serif'
+    ctx.font = 'bold italic 44px Georgia, serif'
     ctx.fillStyle = textColor
     const titreLines = wrapText(ctx, evenement.titre, W - 96)
-    titreLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, 48, by + i * 56))
+    titreLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, 48, startY + i * 52))
+    const afterTitre = startY + Math.min(titreLines.length, 2) * 52
 
-    const baseY = by + Math.min(titreLines.length, 2) * 56
-
-    // Date + Lieu inline
-    ctx.font = '28px system-ui, sans-serif'
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
-    const dateShort = formatDateCourte(evenement.date).replace(/^[a-zA-ZÀ-ÿ]+ /, '')
+    ctx.font = '26px system-ui, sans-serif'
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
+    const dateShort = formatDateCourte(evenement.date)
     const lieuDisplay = evenement.lieu.length > 38 ? evenement.lieu.slice(0, 38) + '…' : evenement.lieu
-    ctx.fillText(`📅 ${dateShort}  ·  📍 ${lieuDisplay}`, 48, baseY + 24)
+    ctx.fillText(`📅 ${dateShort}  ·  📍 ${lieuDisplay}`, 48, afterTitre + 30)
 
     // Footer droite
-    ctx.font = '22px system-ui, sans-serif'
-    ctx.fillStyle = getLuminance(bgColor) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.3)'
+    ctx.font = '20px system-ui, sans-serif'
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.28)'
     ctx.textAlign = 'right'
-    ctx.fillText('app.lotbo.app', W - 48, H - 24)
+    ctx.fillText('app.lotbo.app', W - 48, H - 22)
     ctx.textAlign = 'left'
   }
 
-  // ── Orchestrateur principal ───────────────────────────────────────────────
+  // ── Orchestrateur ─────────────────────────────────────────────────────────
   const dessinerCarte = async () => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -369,26 +429,21 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const { W, H } = getDimensions()
     canvas.width = W; canvas.height = H
     ctx.clearRect(0, 0, W, H)
-
     if (disposition === 'split') await dessinerSplit(ctx, W, H)
     else if (disposition === 'paysage') await dessinerPaysage(ctx, W, H)
     else await dessinerCentree(ctx, W, H)
   }
 
-  // ── Télécharger ───────────────────────────────────────────────────────────
   const telecharger = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current; if (!canvas) return
     const lien = document.createElement('a')
     lien.download = `lotbo-${evenement.titre.slice(0, 20).replace(/\s/g, '-')}.png`
     lien.href = canvas.toDataURL('image/png')
     lien.click()
   }
 
-  // ── Partage natif ─────────────────────────────────────────────────────────
   const partagerNatif = async () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current; if (!canvas) return
     canvas.toBlob(async (blob) => {
       if (!blob) return
       const file = new File([blob], 'lotbo-carte.png', { type: 'image/png' })
@@ -402,8 +457,6 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
   const urlEvent = typeof window !== 'undefined' ? window.location.href : ''
   const textePartage = encodeURIComponent(`${texteExpression} · ${evenement.titre} — ${urlEvent}`)
-
-  // ── Ratio canvas pour aperçu ──────────────────────────────────────────────
   const { W: cW, H: cH } = getDimensions()
   const aspectRatio = `${cW}/${cH}`
 
@@ -418,7 +471,6 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
         background: '#1A1410', borderRadius: 20, width: '100%', maxWidth: 520,
         border: '1px solid #2a2a2a', boxShadow: '0 24px 80px rgba(0,0,0,0.6)', overflow: 'hidden',
       }}>
-
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #2a2a2a' }}>
           <p style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 16 }}>
@@ -429,16 +481,54 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
         <div style={{ padding: '20px 24px 28px' }}>
 
-          {/* ── Étape 1 : Expression ── */}
+          {/* ── Étape 1 ── */}
           {etape === 'expression' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ color: '#8C5A40', fontSize: 13 }}>Comment tu veux exprimer ta présence ?</p>
+
+              {/* Prénom */}
               <div>
                 <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Ton prénom</label>
                 <input value={nomUtilisateur} onChange={e => setNomUtilisateur(e.target.value)} maxLength={30}
                   placeholder="Ton prénom"
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #333', borderRadius: 10, padding: '10px 14px', color: '#F7F2E8', fontSize: 14, outline: 'none', width: '100%' }} />
               </div>
+
+              {/* Upload photo profil */}
+              <div>
+                <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8, display: 'block' }}>Photo de profil</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {photoProfil ? (
+                    <div style={{ position: 'relative' }}>
+                      <img src={photoProfil} alt="profil" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid #C8431A' }} />
+                      <button onClick={() => setPhotoProfil(null)} style={{
+                        position: 'absolute', top: -6, right: -6, width: 20, height: 20,
+                        borderRadius: '50%', background: '#C8431A', border: 'none',
+                        color: 'white', fontSize: 11, cursor: 'pointer', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center'
+                      }}>✕</button>
+                    </div>
+                  ) : (
+                    <div style={{
+                      width: 52, height: 52, borderRadius: '50%',
+                      background: '#C8431A', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', color: '#F7F2E8', fontWeight: 'bold', fontSize: 18
+                    }}>{initiales}</div>
+                  )}
+                  <button onClick={() => fileInputRef.current?.click()} style={{
+                    flex: 1, padding: '10px 16px', borderRadius: 10, fontSize: 13,
+                    background: 'rgba(255,255,255,0.06)', border: '1px solid #333',
+                    color: '#8C5A40', cursor: 'pointer', textAlign: 'left'
+                  }}>
+                    📷 {photoProfil ? 'Changer ma photo' : 'Ajouter ma photo'}
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+                    onChange={handlePhotoUpload} style={{ display: 'none' }} />
+                </div>
+                <p style={{ color: '#555', fontSize: 11, marginTop: 6 }}>JPG, PNG, WebP · max 2MB</p>
+              </div>
+
+              {/* Expressions */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {EXPRESSIONS.map(exp => (
                   <button key={exp.id} onClick={() => setExpressionSelectionnee(exp)} style={{
@@ -453,11 +543,13 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                   </button>
                 ))}
               </div>
+
               {expressionSelectionnee.id === 'custom' && (
                 <input value={texteCustom} onChange={e => setTexteCustom(e.target.value.slice(0, 30))}
                   placeholder="Ton expression (30 caractères max)" maxLength={30}
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #C8431A', borderRadius: 10, padding: '10px 14px', color: '#F7F2E8', fontSize: 14, outline: 'none', width: '100%' }} />
               )}
+
               <button onClick={() => setEtape('carte')} style={{
                 background: '#C8431A', color: 'white', border: 'none', borderRadius: 10,
                 padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', marginTop: 8
@@ -469,12 +561,12 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
           {etape === 'carte' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-              {/* Aperçu canvas */}
+              {/* Aperçu */}
               <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a', aspectRatio }}>
                 <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
               </div>
 
-              {/* Sélecteur disposition */}
+              {/* Disposition */}
               <div>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Disposition</p>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -494,7 +586,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                 </div>
               </div>
 
-              {/* Sélecteur fonds */}
+              {/* Fonds */}
               <div>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Fond</p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
