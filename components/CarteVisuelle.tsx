@@ -115,27 +115,12 @@ async function dessinerZonePhoto(
     }
   }
 
-  // Fallback — fond coloré + logo + initiales
-  ctx.fillStyle = fallbackBg
+  // Fallback — fond coloré dégradé propre
+  const grad = ctx.createLinearGradient(x, y, x + w, y + h)
+  grad.addColorStop(0, fallbackBg)
+  grad.addColorStop(1, '#1A1410')
+  ctx.fillStyle = grad
   ctx.fillRect(x, y, w, h)
-
-  // Logo LOTBO centré
-  const logoSize = Math.round(Math.min(w, h) * 0.08)
-  ctx.font = `bold italic ${logoSize}px Georgia, serif`
-  ctx.textAlign = 'center'
-  ctx.fillStyle = getTextColor(fallbackBg)
-  ctx.fillText('lot', x + w / 2 - ctx.measureText('bo').width / 2, y + h * 0.35)
-  const lotW = ctx.measureText('lot').width
-  ctx.fillStyle = '#C8431A'
-  ctx.fillText('bo', x + w / 2 + lotW / 2, y + h * 0.35)
-
-  // Initiales grandes au centre
-  const initSize = Math.round(Math.min(w, h) * 0.22)
-  ctx.font = `bold ${initSize}px system-ui, sans-serif`
-  ctx.fillStyle = getTextColor(fallbackBg) === '#F7F2E8' ? 'rgba(247,242,232,0.25)' : 'rgba(26,20,16,0.12)'
-  ctx.textAlign = 'center'
-  ctx.fillText(initiales, x + w / 2, y + h * 0.65)
-
   ctx.restore()
 }
 
