@@ -220,7 +220,7 @@ export default function AjouterEvenement() {
     debounceRef.current = setTimeout(async () => {
       const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
       const query = `${value}${form.ville ? ', ' + form.ville : ''}${form.pays ? ', ' + form.pays : ''}`
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=5&language=fr`
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=5&language=fr&types=address,poi&proximity=${form.pays === 'Haïti' || form.pays === 'Haiti' ? '-72.3288,18.5392' : 'ip'}`
       try {
         const res = await fetch(url)
         const data = await res.json()
