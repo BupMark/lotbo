@@ -71,9 +71,13 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   // ── Formater date ─────────────────────────────────────────────────────────
   const formatDateCourte = (dateStr: string) => {
     if (!dateStr) return ''
-    const [year, month, day] = dateStr.split('-')
-    const mois = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
-    return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      return new Intl.DateTimeFormat('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      }).format(date)
+    } catch { return dateStr }
   }
 
   const periode = evenement.date_fin && evenement.date_fin !== evenement.date
@@ -161,7 +165,14 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
     // ── Expression ──
     ctx.font = 'bold 48px system-ui, sans-serif'
-    ctx.fillStyle = '#C8431A'
+    // Contraste auto : orange sur fond clair, crème sur fond foncé/brique
+    const luminanceBg = useFotoEvent && evenement.image_url ? 0 : (() => {
+      const r2 = parseInt(bgColor.slice(1,3),16)
+      const g2 = parseInt(bgColor.slice(3,5),16)
+      const b2 = parseInt(bgColor.slice(5,7),16)
+      return (0.299*r2 + 0.587*g2 + 0.114*b2) / 255
+    })()
+    ctx.fillStyle = luminanceBg > 0.5 ? '#C8431A' : '#F7F2E8'
     ctx.textAlign = 'center'
     ctx.fillText(texteExpression, W / 2, avatarY + avatarR + 70)
 
