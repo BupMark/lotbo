@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import CookieBanner from "../components/CookieBanner";
+import { Analytics } from "@vercel/analytics/react";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
       <body className={`${dmSans.variable} ${playfairDisplay.variable} antialiased`}>
         {children}
         <CookieBanner />
+        <Analytics />
         {/* ── Enregistrement Service Worker PWA ─────────────────────────── */}
         <script
           dangerouslySetInnerHTML={{
