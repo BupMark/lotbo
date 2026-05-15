@@ -1,0 +1,35 @@
+name: Scraping automatique LOTBO
+
+on:
+  schedule:
+    # PredictHQ — toutes les 6h
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Déclenchement manuel possible
+
+jobs:
+  scrape-predicthq:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import PredictHQ
+        run: |
+          curl -s "https://app.lotbo.app/api/scrape-predicthq" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+
+  scrape-ticketmaster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import Ticketmaster
+        run: |
+          curl -s "https://app.lotbo.app/api/scrape-ticketmaster" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+
+  scrape-worldcup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import World Cup
+        run: |
+          curl -s "https://app.lotbo.app/api/scrape-worldcup" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
