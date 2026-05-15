@@ -46,6 +46,9 @@ export async function GET() {
   ).size
 
   return NextResponse.json({ total, villes, pays }, {
-    headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' }
+    headers: {
+      'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
+      'Access-Control-Allow-Origin': '*',
+    }
   })
 }
