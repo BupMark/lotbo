@@ -8,6 +8,7 @@ export default function Profil() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [evenements, setEvenements] = useState<any[]>([])
+  const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,6 +18,14 @@ export default function Profil() {
         return
       }
       setUser(data.session.user)
+
+      // Charger profil + badges
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('role, charte_acceptee, points, badge')
+        .eq('id', data.session.user.id)
+        .single()
+      setProfile(prof)
 
       const { data: evs } = await supabase
         .from('evenements')
@@ -109,6 +118,21 @@ export default function Profil() {
               <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 2 }}>
                 {isAdmin ? '⚙️ Administrateur' : 'Organisateur Lotbo'}
               </p>
+              {/* ROLE6 — Double badge */}
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                {isAdmin && (
+                  <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⚙️ Admin</span>
+                )}
+                {profile?.role === 'contributeur' && profile?.charte_acceptee && (
+                  <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur</span>
+                )}
+                {profile?.role === 'ambassadeur' && (
+                  <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🤝 Ambassadeur</span>
+                )}
+                {evenements.filter(e => e.statut === 'approuve').length > 0 && (
+                  <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🎪 Organisateur</span>
+                )}
+              </div>
             </div>
           </div>
 
