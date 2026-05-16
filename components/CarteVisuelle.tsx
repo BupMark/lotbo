@@ -531,15 +531,17 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               {/* Aperçu canvas avec drag si paysage */}
               <div
                 ref={previewRef}
-                style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a', aspectRatio, cursor: isPaysage && photoFondPaysage ? 'grab' : 'default', userSelect: 'none' }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
+                style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a', aspectRatio, userSelect: 'none' }}
               >
-                <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
+                <canvas ref={canvasRef}
+                  style={{ width: '100%', height: '100%', display: 'block', cursor: (isPaysage || disposition === 'split') && photoFondPaysage ? 'grab' : 'default' }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                />
               </div>
 
               {/* Contrôles ajustement photo fond — uniquement en paysage */}
