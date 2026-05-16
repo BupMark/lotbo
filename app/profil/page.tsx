@@ -203,7 +203,7 @@ export default function Profil() {
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
             {[
-              { val: nbTotal, label: 'Total', color: '#F7F2E8', bg: 'rgba(255,255,255,0.04)' },
+              { val: nbTotal, label: 'Total', color: '#1A1410', bg: 'rgba(26,20,16,0.04)' },
               { val: nbApprouves, label: 'Approuvés', color: '#C8431A', bg: 'rgba(200,67,26,0.08)' },
               { val: nbEnAttente, label: 'En attente', color: '#D4A820', bg: 'rgba(212,168,32,0.08)' },
               { val: paysCouverts, label: 'Pays', color: '#2D9E6B', bg: 'rgba(45,158,107,0.08)' },
