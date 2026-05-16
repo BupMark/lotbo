@@ -4,79 +4,202 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Evenement {
+  id: string
+  titre: string
+  lieu: string
+  organisateur: string | null
+  date: string
+  heure_debut: string | null
+  categorie: string
+  acces: string
+  prix: string
+  statut: 'en_attente' | 'approuve' | 'rejete' | string
+  image_url: string | null
+  latitude: number | null
+  longitude: number | null
+  source: string | null
+  created_at: string
+}
+
+interface Signalement {
+  id: string
+  evenement_id: string
+  raison: string
+  created_at: string
+}
+
+type FiltreStatut = 'en_attente' | 'approuve' | 'rejete' | 'tous'
+type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
+type Onglet = 'evenements' | 'signalements'
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const couleurStatut = (s: string): { bg: string; color: string } => {
+  if (s === 'approuve') return { bg: 'rgba(45,158,107,0.15)', color: '#2D9E6B' }
+  if (s === 'rejete')   return { bg: 'rgba(180,40,40,0.2)',   color: '#e57373' }
+  return                       { bg: 'rgba(212,168,32,0.15)', color: '#D4A820' }
+}
+
+const labelStatut = (s: string): string => {
+  if (s === 'approuve')  return '✓ Approuvé'
+  if (s === 'rejete')    return '✗ Rejeté'
+  if (s === 'en_attente') return '⏳ En attente'
+  return s
+}
+
+/** Retourne true si la date ISO tombe dans la plage demandée */
+const matchTemporel = (dateStr: string, filtre: FiltreTemporel): boolean => {
+  if (filtre === 'tous') return true
+  if (!dateStr) return false
+
+  const now = new Date()
+  const date = new Date(dateStr)
+
+  if (filtre === 'aujourd_hui') {
+    return (
+      date.getDate()     === now.getDate() &&
+      date.getMonth()    === now.getMonth() &&
+      date.getFullYear() === now.getFullYear()
+    )
+  }
+
+  if (filtre === 'cette_semaine') {
+    const debut = new Date(now)
+    debut.setDate(now.getDate() - now.getDay())
+    debut.setHours(0, 0, 0, 0)
+    const fin = new Date(debut)
+    fin.setDate(debut.getDate() + 6)
+    fin.setHours(23, 59, 59, 999)
+    return date >= debut && date <= fin
+  }
+
+  if (filtre === 'ce_mois') {
+    return (
+      date.getMonth()    === now.getMonth() &&
+      date.getFullYear() === now.getFullYear()
+    )
+  }
+
+  return true
+}
+
+// ─── Composant principal ──────────────────────────────────────────────────────
+
 export default function Admin() {
   const router = useRouter()
-  const [evenements, setEvenements] = useState<any[]>([])
-  const [signalements, setSignalements] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [filtreStatut, setFiltreStatut] = useState<'en_attente' | 'approuve' | 'rejete' | 'tous'>('en_attente')
-  const [recherche, setRecherche] = useState('')
+  const [evenements, setEvenements]         = useState<Evenement[]>([])
+  const [signalements, setSignalements]     = useState<Signalement[]>([])
+  const [loading, setLoading]               = useState(true)
+  const [userEmail, setUserEmail]           = useState<string>('')
+  const [filtreStatut, setFiltreStatut]     = useState<FiltreStatut>('en_attente')
+  const [filtreTemporel, setFiltreTemporel] = useState<FiltreTemporel>('tous')
+  const [recherche, setRecherche]           = useState('')
+  const [onglet, setOnglet]                 = useState<Onglet>('evenements')
+
+  // Headers sécurisés pour les routes API internes
+  const hi: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) { router.push('/login'); return }
       const role = data.session.user.user_metadata?.role
       if (role !== 'admin') { router.push('/'); return }
-      setUser(data.session.user)
-      chargerEvenements()
+      setUserEmail(data.session.user.email ?? '')
+      chargerDonnees()
     })
   }, [])
 
-  const chargerEvenements = async () => {
-    const { data } = await supabase.from('evenements').select('*').order('created_at', { ascending: false })
-    setEvenements(data || [])
-    const { data: sigs } = await supabase.from('signalements').select('*').order('created_at', { ascending: false })
-    setSignalements(sigs || [])
+  const chargerDonnees = async () => {
+    const [{ data: evs }, { data: sigs }] = await Promise.all([
+      supabase.from('evenements').select('*').order('created_at', { ascending: false }),
+      supabase.from('signalements').select('*').order('created_at', { ascending: false }),
+    ])
+    setEvenements((evs as Evenement[]) || [])
+    setSignalements((sigs as Signalement[]) || [])
     setLoading(false)
   }
 
-  // Headers sécurisés pour les routes API internes
-  const hi = { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' }
-
   const approuver = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'approuve' }).eq('id', id)
-    setEvenements(evenements.map(ev => ev.id === id ? { ...ev, statut: 'approuve' } : ev))
+    setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, statut: 'approuve' } : ev))
     const ev = evenements.find(e => e.id === id)
     if (ev) {
       fetch('/api/notify-abonnes', { method: 'POST', headers: hi, body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
-      fetch('/api/push-notify', { method: 'POST', headers: hi, body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
+      fetch('/api/push-notify',    { method: 'POST', headers: hi, body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
     }
   }
 
   const rejeter = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'rejete' }).eq('id', id)
-    setEvenements(evenements.map(ev => ev.id === id ? { ...ev, statut: 'rejete' } : ev))
+    setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, statut: 'rejete' } : ev))
   }
 
   const supprimer = async (id: string) => {
     if (!confirm('Supprimer cet événement ?')) return
     await supabase.from('evenements').delete().eq('id', id)
-    setEvenements(evenements.filter(ev => ev.id !== id))
+    setEvenements(prev => prev.filter(ev => ev.id !== id))
   }
 
-  const nbTotal = evenements.length
+  // ─── Stats ─────────────────────────────────────────────────────────────────
+
+  const nbTotal     = evenements.length
   const nbApprouves = evenements.filter(e => e.statut === 'approuve').length
   const nbEnAttente = evenements.filter(e => e.statut === 'en_attente').length
-  const nbRejetes = evenements.filter(e => e.statut === 'rejete').length
-  const nbVilles = new Set(evenements.filter(e => e.statut === 'approuve').map(e => e.lieu?.split(',').pop()?.trim()).filter(Boolean)).size
-  const nbPays = new Set(evenements.filter(e => e.statut === 'approuve' && e.longitude && e.latitude).map(e => e.longitude < -30 ? 'Amériques' : e.longitude < 60 ? 'Europe/Afrique' : 'Asie/Pacifique')).size
+  const nbRejetes   = evenements.filter(e => e.statut === 'rejete').length
+  const nbVilles    = new Set(
+    evenements
+      .filter(e => e.statut === 'approuve')
+      .map(e => e.lieu?.split(',').pop()?.trim())
+      .filter(Boolean)
+  ).size
+  const nbRegions = new Set(
+    evenements
+      .filter(e => e.statut === 'approuve' && e.longitude !== null)
+      .map(e => (e.longitude! < -30 ? 'Amériques' : e.longitude! < 60 ? 'Europe/Afrique' : 'Asie/Pacifique'))
+  ).size
+
+  // ─── Filtre combiné ────────────────────────────────────────────────────────
 
   const evenementsFiltres = evenements.filter(ev => {
-    const matchStatut = filtreStatut === 'tous' || ev.statut === filtreStatut
-    const matchRecherche = recherche === '' || ev.titre?.toLowerCase().includes(recherche.toLowerCase()) || ev.lieu?.toLowerCase().includes(recherche.toLowerCase()) || ev.organisateur?.toLowerCase().includes(recherche.toLowerCase())
-    return matchStatut && matchRecherche
+    const matchStatut    = filtreStatut === 'tous' || ev.statut === filtreStatut
+    const matchTemps     = matchTemporel(ev.date, filtreTemporel)
+    const q              = recherche.toLowerCase()
+    const matchRecherche = q === '' ||
+      ev.titre?.toLowerCase().includes(q) ||
+      ev.lieu?.toLowerCase().includes(q) ||
+      ev.organisateur?.toLowerCase().includes(q)
+    return matchStatut && matchTemps && matchRecherche
   })
 
-  const couleurStatut = (s: string) => s === 'approuve' ? { bg: 'rgba(45,158,107,0.15)', color: '#2D9E6B' } : s === 'rejete' ? { bg: 'rgba(180,40,40,0.2)', color: '#e57373' } : { bg: 'rgba(212,168,32,0.15)', color: '#D4A820' }
-  const labelStatut = (s: string) => s === 'approuve' ? '✓ Approuvé' : s === 'rejete' ? '✗ Rejeté' : s === 'en_attente' ? '⏳ En attente' : s
+  // ─── Labels filtres temporels ──────────────────────────────────────────────
 
-  if (loading) return <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#8C5A40' }}>Chargement...</p></main>
+  const nbParTemps = (f: FiltreTemporel) =>
+    evenements.filter(ev =>
+      (filtreStatut === 'tous' || ev.statut === filtreStatut) &&
+      matchTemporel(ev.date, f)
+    ).length
+
+  // ─── Loading ───────────────────────────────────────────────────────────────
+
+  if (loading) return (
+    <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: '#8C5A40', fontFamily: 'serif', fontStyle: 'italic' }}>Chargement...</p>
+    </main>
+  )
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8', padding: '24px 16px' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
+        {/* ── En-tête ─────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ fontFamily: 'serif', fontStyle: 'italic' }}>
             <span style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold' }}>lot</span>
@@ -86,14 +209,15 @@ export default function Admin() {
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 24 }}>
+        {/* ── Stats ───────────────────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'Total', valeur: nbTotal, couleur: '#F7F2E8' },
+            { label: 'Total',      valeur: nbTotal,     couleur: '#F7F2E8' },
             { label: 'En attente', valeur: nbEnAttente, couleur: '#D4A820' },
-            { label: 'Approuvés', valeur: nbApprouves, couleur: '#2D9E6B' },
-            { label: 'Rejetés', valeur: nbRejetes, couleur: '#e57373' },
-            { label: 'Villes', valeur: nbVilles, couleur: '#C8431A' },
-            { label: 'Régions', valeur: nbPays, couleur: '#8C5A40' },
+            { label: 'Approuvés',  valeur: nbApprouves, couleur: '#2D9E6B' },
+            { label: 'Rejetés',    valeur: nbRejetes,   couleur: '#e57373' },
+            { label: 'Villes',     valeur: nbVilles,    couleur: '#C8431A' },
+            { label: 'Régions',    valeur: nbRegions,   couleur: '#8C5A40' },
           ].map((c, i) => (
             <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center' }}>
               <p style={{ fontSize: 28, fontWeight: 'bold', color: c.couleur, marginBottom: 4 }}>{c.valeur}</p>
@@ -102,73 +226,256 @@ export default function Admin() {
           ))}
         </div>
 
-        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 12, padding: '12px 16px', marginBottom: 24 }}>
-          <p style={{ color: '#8C5A40', fontSize: 13 }}>Connecté en tant que <span style={{ color: '#C8431A' }}>{user?.email}</span></p>
+        {/* ── Utilisateur connecté ────────────────────────────────────── */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 12, padding: '10px 16px', marginBottom: 24 }}>
+          <p style={{ color: '#8C5A40', fontSize: 13 }}>
+            Connecté en tant que <span style={{ color: '#C8431A' }}>{userEmail}</span>
+          </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* ══════════════════════════════════════════════════════════════
+            ADMIN2 — Navigation onglets
+        ══════════════════════════════════════════════════════════════ */}
+        <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid #2a2a2a' }}>
           {[
-            { key: 'en_attente', label: `⏳ En attente (${nbEnAttente})` },
-            { key: 'approuve', label: `✓ Approuvés (${nbApprouves})` },
-            { key: 'rejete', label: `✗ Rejetés (${nbRejetes})` },
-            { key: 'tous', label: `Tous (${nbTotal})` },
-          ].map(f => (
-            <button key={f.key} onClick={() => setFiltreStatut(f.key as any)} style={{
-              padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: 'pointer',
-              background: filtreStatut === f.key ? '#C8431A' : 'rgba(255,255,255,0.06)',
-              color: filtreStatut === f.key ? 'white' : '#8C5A40'
-            }}>{f.label}</button>
+            { key: 'evenements',   label: `Événements`,                         count: nbTotal            },
+            { key: 'signalements', label: `Signalements`,                       count: signalements.length },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setOnglet(tab.key as Onglet)}
+              style={{
+                padding: '10px 20px',
+                fontSize: 13,
+                fontWeight: 'bold',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'transparent',
+                color: onglet === tab.key ? '#F7F2E8' : '#8C5A40',
+                borderBottom: onglet === tab.key ? '2px solid #C8431A' : '2px solid transparent',
+                marginBottom: -1,
+                transition: 'color 0.15s, border-color 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              {tab.label}
+              <span style={{
+                background: onglet === tab.key ? '#C8431A' : 'rgba(255,255,255,0.08)',
+                color: onglet === tab.key ? 'white' : '#8C5A40',
+                borderRadius: 999,
+                padding: '1px 7px',
+                fontSize: 11,
+                fontWeight: 'bold',
+              }}>
+                {tab.count}
+              </span>
+            </button>
           ))}
-          <input type="text" placeholder="Rechercher..." value={recherche} onChange={e => setRecherche(e.target.value)}
-            style={{ flex: 1, minWidth: 160, background: 'rgba(255,255,255,0.06)', border: '1px solid #333', borderRadius: 999, padding: '7px 14px', fontSize: 12, color: '#F7F2E8', outline: 'none' }} />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
-          {evenementsFiltres.length === 0 && <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucun événement dans cette catégorie.</p>}
-          {evenementsFiltres.map(ev => (
-            <div key={ev.id} style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: ev.statut === 'en_attente' ? '1px solid rgba(212,168,32,0.3)' : '1px solid #2a2a2a',
-              borderRadius: 12, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start'
-            }}>
-              {ev.image_url && <img src={ev.image_url} alt={ev.titre} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h2 style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 15, marginBottom: 2 }}>{ev.titre}</h2>
-                {ev.organisateur && <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 4 }}>👤 {ev.organisateur}</p>}
-                <p style={{ color: '#8C5A40', fontSize: 12 }}>📍 {ev.lieu}</p>
-                <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date}{ev.heure_debut ? ` · ${ev.heure_debut}` : ''}</p>
-                {ev.source && <p style={{ color: '#555', fontSize: 11, marginTop: 2 }}>Source : {ev.source}</p>}
-                <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                  <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.categorie}</span>
-                  <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.acces}</span>
-                  <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.prix}</span>
-                  <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, background: couleurStatut(ev.statut).bg, color: couleurStatut(ev.statut).color }}>{labelStatut(ev.statut)}</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                <a href={'/evenement/' + ev.id} target="_blank" style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}>Voir</a>
-                {ev.statut !== 'approuve' && <button onClick={() => approuver(ev.id)} style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>Approuver</button>}
-                {ev.statut !== 'rejete' && <button onClick={() => rejeter(ev.id)} style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>Rejeter</button>}
-                <button onClick={() => supprimer(ev.id)} style={{ background: 'rgba(180,40,40,0.2)', color: '#e57373', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>Supprimer</button>
-              </div>
+        {/* ══════════════════════════════════════════════════════════════
+            ONGLET ÉVÉNEMENTS
+        ══════════════════════════════════════════════════════════════ */}
+        {onglet === 'evenements' && (
+          <>
+            {/* ── Filtres statut ──────────────────────────────────────── */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              {([
+                { key: 'en_attente', label: `⏳ En attente`, count: nbEnAttente },
+                { key: 'approuve',   label: `✓ Approuvés`,   count: nbApprouves },
+                { key: 'rejete',     label: `✗ Rejetés`,     count: nbRejetes   },
+                { key: 'tous',       label: `Tous`,           count: nbTotal     },
+              ] as { key: FiltreStatut; label: string; count: number }[]).map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setFiltreStatut(f.key)}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: 999,
+                    fontSize: 12,
+                    fontWeight: 'bold',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: filtreStatut === f.key ? '#C8431A' : 'rgba(255,255,255,0.06)',
+                    color:      filtreStatut === f.key ? 'white'   : '#8C5A40',
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
+                >
+                  {f.label} ({f.count})
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div>
-          <h2 style={{ color: '#C8431A', fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>Signalements ({signalements.length})</h2>
-          {signalements.length === 0 ? <p style={{ color: '#8C5A40' }}>Aucun signalement</p> : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {signalements.map(sig => (
-                <div key={sig.id} style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}>
-                  <p style={{ color: '#8C5A40', fontSize: 11 }}>ID: {sig.evenement_id}</p>
-                  <p style={{ color: '#e57373', fontSize: 13, marginTop: 4 }}>{sig.raison}</p>
-                  <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>{new Date(sig.created_at).toLocaleDateString()}</p>
+            {/* ══════════════════════════════════════════════════════════
+                ADMIN1 — Filtres temporels
+            ══════════════════════════════════════════════════════════ */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ color: '#555', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>
+                Période :
+              </span>
+              {([
+                { key: 'aujourd_hui',   label: "Aujourd'hui"   },
+                { key: 'cette_semaine', label: 'Cette semaine' },
+                { key: 'ce_mois',       label: 'Ce mois'       },
+                { key: 'tous',          label: 'Toutes dates'  },
+              ] as { key: FiltreTemporel; label: string }[]).map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setFiltreTemporel(f.key)}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                    border: filtreTemporel === f.key ? '1px solid #C8431A' : '1px solid #2a2a2a',
+                    cursor: 'pointer',
+                    background: filtreTemporel === f.key ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
+                    color:      filtreTemporel === f.key ? '#C8431A'              : '#555',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {f.label}
+                  <span style={{ marginLeft: 5, opacity: 0.7 }}>
+                    {nbParTemps(f.key)}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* ── Recherche ───────────────────────────────────────────── */}
+            <div style={{ marginBottom: 16 }}>
+              <input
+                type="text"
+                placeholder="Rechercher par titre, lieu, organisateur…"
+                value={recherche}
+                onChange={e => setRecherche(e.target.value)}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid #333',
+                  borderRadius: 999,
+                  padding: '8px 16px',
+                  fontSize: 12,
+                  color: '#F7F2E8',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            {/* ── Résultat filtres ────────────────────────────────────── */}
+            {recherche || filtreTemporel !== 'tous' ? (
+              <p style={{ color: '#555', fontSize: 11, marginBottom: 12 }}>
+                {evenementsFiltres.length} résultat{evenementsFiltres.length !== 1 ? 's' : ''}
+                {filtreTemporel !== 'tous' && ` · ${['aujourd_hui','cette_semaine','ce_mois'].includes(filtreTemporel) ? { aujourd_hui: "aujourd'hui", cette_semaine: 'cette semaine', ce_mois: 'ce mois', tous: '' }[filtreTemporel] : ''}`}
+              </p>
+            ) : null}
+
+            {/* ── Liste événements ────────────────────────────────────── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
+              {evenementsFiltres.length === 0 && (
+                <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>
+                  Aucun événement dans cette catégorie.
+                </p>
+              )}
+              {evenementsFiltres.map(ev => (
+                <div
+                  key={ev.id}
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: ev.statut === 'en_attente' ? '1px solid rgba(212,168,32,0.3)' : '1px solid #2a2a2a',
+                    borderRadius: 12,
+                    padding: 16,
+                    display: 'flex',
+                    gap: 12,
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  {ev.image_url && (
+                    <img
+                      src={ev.image_url}
+                      alt={ev.titre}
+                      style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2 style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 15, marginBottom: 2 }}>{ev.titre}</h2>
+                    {ev.organisateur && (
+                      <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 4 }}>👤 {ev.organisateur}</p>
+                    )}
+                    <p style={{ color: '#8C5A40', fontSize: 12 }}>📍 {ev.lieu}</p>
+                    <p style={{ color: '#8C5A40', fontSize: 12 }}>
+                      📅 {ev.date}{ev.heure_debut ? ` · ${ev.heure_debut}` : ''}
+                    </p>
+                    {ev.source && (
+                      <p style={{ color: '#555', fontSize: 11, marginTop: 2 }}>Source : {ev.source}</p>
+                    )}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                      <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.categorie}</span>
+                      <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.acces}</span>
+                      <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.prix}</span>
+                      <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, background: couleurStatut(ev.statut).bg, color: couleurStatut(ev.statut).color }}>
+                        {labelStatut(ev.statut)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                    <a
+                      href={'/evenement/' + ev.id}
+                      target="_blank"
+                      style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}
+                    >
+                      Voir
+                    </a>
+                    {ev.statut !== 'approuve' && (
+                      <button onClick={() => approuver(ev.id)} style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+                        Approuver
+                      </button>
+                    )}
+                    {ev.statut !== 'rejete' && (
+                      <button onClick={() => rejeter(ev.id)} style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+                        Rejeter
+                      </button>
+                    )}
+                    <button onClick={() => supprimer(ev.id)} style={{ background: 'rgba(180,40,40,0.2)', color: '#e57373', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+                      Supprimer
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            ONGLET SIGNALEMENTS
+        ══════════════════════════════════════════════════════════════ */}
+        {onglet === 'signalements' && (
+          <div>
+            {signalements.length === 0 ? (
+              <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucun signalement pour l'instant.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {signalements.map(sig => (
+                  <div
+                    key={sig.id}
+                    style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}
+                  >
+                    <p style={{ color: '#555', fontSize: 11 }}>Événement ID : {sig.evenement_id}</p>
+                    <p style={{ color: '#e57373', fontSize: 13, marginTop: 4 }}>{sig.raison}</p>
+                    <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
+                      {new Date(sig.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </main>
