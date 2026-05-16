@@ -205,7 +205,7 @@ function CarteInteractive({
 export default function AjouterEvenement() {
   const [loading, setLoading] = useState(false)
   const [succes, setSucces] = useState(false)
-  const [succesData, setSuccesData] = useState<{ lienSecret?: string; codeAcces?: string; visibilite?: string } | null>(null)
+  const [succesData, setSuccesData] = useState<{ lienSecret?: string; codeAcces?: string; visibilite?: string; role?: string; nbContributions?: number; evenementId?: string } | null>(null)
   const [image, setImage] = useState<File | null>(null)
   const [selectedType, setSelectedType] = useState<number | null>(null)
   const [selectedThemes, setSelectedThemes] = useState<number[]>([])
@@ -410,7 +410,7 @@ export default function AjouterEvenement() {
       soumis_en_tant_que: soumisEnTantQue || (statutInsertion === 'approuve' ? 'contributeur' : 'organisateur'),
       visibilite,
       code_acces: visibilite === 'discret' ? codeAcces : null,
-    }]).select('lien_secret').single()
+    }]).select('id, lien_secret').single()
 
     if (!error) {
       fetch('/api/notify-admin', {
@@ -418,7 +418,19 @@ export default function AjouterEvenement() {
         headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
         body: JSON.stringify({ titre: form.titre, lieu: lieuAffiche, date: form.date, categorie: categorieNom })
       }).catch(() => {})
-      setSuccesData({ lienSecret: inserted?.lien_secret, codeAcces: visibilite === 'discret' ? codeAcces : undefined, visibilite })
+      // Compter les contributions de l'utilisateur
+      const { count: nbEvts } = await supabase
+        .from('evenements')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', session?.user?.id || '')
+      setSuccesData({
+        lienSecret: inserted?.lien_secret,
+        codeAcces: visibilite === 'discret' ? codeAcces : undefined,
+        visibilite,
+        role: soumisEnTantQue || (statutInsertion === 'approuve' ? 'contributeur' : 'organisateur'),
+        nbContributions: nbEvts || 1,
+        evenementId: inserted?.id,
+      })
     }
 
     setLoading(false)
@@ -427,12 +439,43 @@ export default function AjouterEvenement() {
 
   // ── Écran succès ──────────────────────────────────────────────────────────
   if (succes) {
+    const isContrib = succesData?.role === 'contributeur'
+    const nb = succesData?.nbContributions || 1
+    const ordinal = nb === 1 ? '1ère' : `${nb}e`
     return (
-      <main style={{ minHeight: '100dvh', background: '#F7F2E8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
-        <div style={{ textAlign: 'center', maxWidth: 440 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-          <h2 style={{ color: '#1A1410', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>Événement soumis !</h2>
-          <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Ton événement est en attente de validation.</p>
+      <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+        <div style={{ maxWidth: 480, width: '100%' }}>
+
+          {/* Animation confetti emoji */}
+          <div style={{ textAlign: 'center', fontSize: 52, marginBottom: 20 }}>
+            {isContrib ? '⭐' : '🎪'}
+          </div>
+
+          {/* Titre */}
+          <h2 style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 }}>
+            {isContrib ? `Félicitations pour ta ${ordinal} contribution !` : `Événement soumis avec succès !`}
+          </h2>
+
+          {/* Message personnalisé */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
+            <p style={{ color: '#8C5A40', fontSize: 14, lineHeight: 1.7 }}>
+              {isContrib
+                ? `Tu viens de contribuer à un projet communautaire mondial né en Haïti. Chaque événement ajouté connecte des gens autour de moments qui comptent. Continue comme ça — la communauté te voit ! 🌍`
+                : `Ton événement est en cours de validation par notre équipe. Tu seras notifié dès qu'il sera approuvé et visible sur la carte. Merci de faire vibrer ta communauté ! 🎉`
+              }
+            </p>
+          </div>
+
+          {/* Badge rôle */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <span style={{
+              background: isContrib ? 'rgba(212,168,32,0.15)' : 'rgba(200,67,26,0.15)',
+              color: isContrib ? '#D4A820' : '#C8431A',
+              padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold'
+            }}>
+              {isContrib ? `⭐ Contributeur · ${ordinal} contribution` : `🎪 Organisateur · ${ordinal} événement`}
+            </span>
+          </div>
 
           {succesData?.visibilite === 'prive' && succesData.lienSecret && (
             <div style={{ background: 'rgba(200,67,26,0.1)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
@@ -455,8 +498,20 @@ export default function AjouterEvenement() {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a href="/" style={{ background: '#C8431A', color: '#F7F2E8', padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>Retour à la carte</a>
-            <a href="/ajouter" style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>+ Ajouter un autre événement</a>
+            {succesData?.evenementId && (
+              <a href={"/evenement/" + succesData.evenementId} style={{ background: '#C8431A', color: 'white', padding: '13px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                👁️ Voir l'événement
+              </a>
+            )}
+            <a href="/ajouter" style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', border: '1px solid #2a2a2a', padding: '13px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+              + Ajouter un autre événement
+            </a>
+            <a href="/profil" style={{ background: 'rgba(255,255,255,0.04)', color: '#8C5A40', border: '1px solid #2a2a2a', padding: '13px 24px', borderRadius: 10, fontSize: 14, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+              Mon tableau de bord →
+            </a>
+            <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'block', textAlign: 'center', marginTop: 4 }}>
+              ← Retour à la carte
+            </a>
           </div>
         </div>
       </main>
