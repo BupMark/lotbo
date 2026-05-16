@@ -212,6 +212,8 @@ export default function AjouterEvenement() {
   const [multiJours, setMultiJours] = useState(false)
   const [visibilite, setVisibilite] = useState<'public' | 'discret' | 'prive'>('public')
   const [codeAcces, setCodeAcces] = useState('')
+  const [soumisEnTantQue, setSoumisEnTantQue] = useState<'organisateur' | 'contributeur' | null>(null)
+  const [aDoubleRole, setADoubleRole] = useState(false)
 
   // Recherche carte
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -355,7 +357,12 @@ export default function AjouterEvenement() {
     const role = session?.user?.user_metadata?.role
     const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session?.user?.id || '').single()
     const estContributeur = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
-    const statutInsertion = estContributeur && profile?.charte_acceptee ? 'approuve' : 'en_attente'
+    const estOrganisateur = true // tout utilisateur connecté peut être organisateur
+    if (estContributeur && estOrganisateur && profile?.charte_acceptee) {
+      setADoubleRole(true)
+    }
+    const choix = soumisEnTantQue || (estContributeur && profile?.charte_acceptee ? 'contributeur' : 'organisateur')
+    const statutInsertion = choix === 'contributeur' && estContributeur && profile?.charte_acceptee ? 'approuve' : 'en_attente'
 
     const lieuAffiche = form.nom_lieu
       ? `${form.nom_lieu}${form.ville ? ', ' + form.ville : ''}`
@@ -386,6 +393,7 @@ export default function AjouterEvenement() {
       prix: form.prix,
       image_url,
       statut: statutInsertion,
+      soumis_en_tant_que: soumisEnTantQue || (statutInsertion === 'approuve' ? 'contributeur' : 'organisateur'),
       visibilite,
       code_acces: visibilite === 'discret' ? codeAcces : null,
     }]).select('lien_secret').single()
@@ -719,6 +727,33 @@ export default function AjouterEvenement() {
               </div>
             )}
           </div>
+
+          {/* ROLE4 — Question discrète si double rôle */}
+          {aDoubleRole && (
+            <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '16px 20px' }}>
+              <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 12 }}>Cet événement est le vôtre ou vous l'avez repéré ?</p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={() => setSoumisEnTantQue('organisateur')} style={{
+                  flex: 1, padding: '12px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                  background: soumisEnTantQue === 'organisateur' ? 'rgba(200,67,26,0.15)' : 'white',
+                  border: soumisEnTantQue === 'organisateur' ? '2px solid #C8431A' : '1px solid #E8E0D0',
+                  color: soumisEnTantQue === 'organisateur' ? '#C8431A' : '#8C5A40',
+                }}>🎪 Mon événement</button>
+                <button type="button" onClick={() => setSoumisEnTantQue('contributeur')} style={{
+                  flex: 1, padding: '12px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                  background: soumisEnTantQue === 'contributeur' ? 'rgba(212,168,32,0.15)' : 'white',
+                  border: soumisEnTantQue === 'contributeur' ? '2px solid #D4A820' : '1px solid #E8E0D0',
+                  color: soumisEnTantQue === 'contributeur' ? '#D4A820' : '#8C5A40',
+                }}>⭐ Je l'ai repéré</button>
+              </div>
+              {soumisEnTantQue === 'contributeur' && (
+                <p style={{ color: '#D4A820', fontSize: 11, marginTop: 8 }}>✓ Publié directement — points contributeur</p>
+              )}
+              {soumisEnTantQue === 'organisateur' && (
+                <p style={{ color: '#C8431A', fontSize: 11, marginTop: 8 }}>✓ En attente de validation — points organisateur</p>
+              )}
+            </div>
+          )}
 
           {/* Submit */}
           <button type="submit" disabled={loading} style={{
