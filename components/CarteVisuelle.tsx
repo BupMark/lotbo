@@ -450,7 +450,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200,
       background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
       padding: '16px', overflowY: 'auto'
     }}>
       <div style={{
@@ -551,8 +551,9 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                     <input type="range" min="1" max="3" step="0.05"
                       value={zoom}
                       onChange={e => setZoom(parseFloat(e.target.value))}
-                      style={{ flex: 1, accentColor: '#C8431A' }}
+                      style={{ flex: 1, accentColor: '#C8431A', maxWidth: 160 }}
                     />
+                    <span style={{ color: '#8C5A40', fontSize: 11, minWidth: 30 }}>{zoom.toFixed(1)}x</span>
                     <button onClick={() => { setOffsetX(0); setOffsetY(0); setZoom(1) }}
                       style={{ background: 'none', border: '1px solid #333', borderRadius: 6, padding: '4px 10px', color: '#8C5A40', fontSize: 11, cursor: 'pointer' }}>
                       ↺ Reset
