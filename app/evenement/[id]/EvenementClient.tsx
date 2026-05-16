@@ -79,7 +79,7 @@ function CommentaireForm({ evenementId, onNouveau }: { evenementId: string, onNo
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {envoye ? <p style={{ color: '#2D9E6B', fontSize: 13 }}>✓ Commentaire ajouté !</p> : <div />}
           <button type="submit" disabled={loading} style={{
-            background: loading ? '#E8E0D0' : '#C8431A', color: '#F7F2E8',
+            background: loading ? '#E8E0D0' : '#C8431A', color: '#1A1410',
             fontWeight: 'bold', padding: '10px 20px', borderRadius: 10,
             border: 'none', fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer'
           }}>{loading ? '...' : 'Commenter →'}</button>
@@ -269,7 +269,7 @@ export default function EvenementPage() {
     <main style={{ minHeight: '100dvh', background: '#F7F2E8' }} className="flex items-center justify-center">
       <div style={{ textAlign: 'center' }}>
         <p style={{ color: '#8C5A40', marginBottom: 16 }}>Événement introuvable.</p>
-        <button onClick={() => router.push('/')} style={{ background: '#C8431A', color: '#F7F2E8', padding: '10px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 14 }}>Retour à la carte</button>
+        <button onClick={() => router.push('/')} style={{ background: '#C8431A', color: '#1A1410', padding: '10px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 14 }}>Retour à la carte</button>
       </div>
     </main>
   )
@@ -360,15 +360,15 @@ export default function EvenementPage() {
           )}
         </div>
 
-        <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 'bold', marginBottom: 16, fontFamily: 'serif', fontStyle: 'italic', color: '#F7F2E8', lineHeight: 1.2 }}>{ev.titre}</h1>
+        <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 'bold', marginBottom: 16, fontFamily: 'serif', fontStyle: 'italic', color: '#1A1410', lineHeight: 1.2 }}>{ev.titre}</h1>
 
         {/* Badges + E10 */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
           <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>{ev.categorie}</span>
           {enLigne && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>🌐 En ligne</span>}
           {estMultiJours && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>🗓️ Multi-jours</span>}
-          <span style={{ background: 'rgba(26,20,16,0.06)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.acces || 'public'}</span>
-          <span style={{ background: 'rgba(26,20,16,0.06)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.prix || 'gratuit'}</span>
+          <span style={{ background: 'rgba(26,20,16,0.04)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.acces || 'public'}</span>
+          <span style={{ background: 'rgba(26,20,16,0.04)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.prix || 'gratuit'}</span>
           {nbParticipants > 0 && (
             <span style={{ background: 'rgba(200,67,26,0.1)', color: '#C8431A', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>
               🙋 {nbParticipants} {nbParticipants === 1 ? 'personne' : 'personnes'} seront là
@@ -379,27 +379,27 @@ export default function EvenementPage() {
         {/* Infos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
           {enLigne ? (
-            <p style={{ color: '#E8E0D0', fontSize: 15 }}>🌐 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu}</span></p>
+            <p style={{ color: '#E8E0D0', fontSize: 15 }}>🌐 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu}</span></p>
           ) : sansCoordonnes ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <p style={{ color: '#E8E0D0', fontSize: 15 }}>📍 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu || 'Lieu à confirmer'}</span></p>
+              <p style={{ color: '#E8E0D0', fontSize: 15 }}>📍 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu || 'Lieu à confirmer'}</span></p>
               <span style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>📍 Adresse non communiquée</span>
             </div>
           ) : (
-            <p style={{ color: '#E8E0D0', fontSize: 15 }}>📍 <span style={{ color: '#F7F2E8', fontWeight: 'bold' }}>{ev.lieu}</span></p>
+            <p style={{ color: '#E8E0D0', fontSize: 15 }}>📍 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu}</span></p>
           )}
-          <p style={{ color: '#E8E0D0', fontSize: 15 }}>📅 <span style={{ color: '#F7F2E8' }}>{periodeAffichee}</span></p>
+          <p style={{ color: '#E8E0D0', fontSize: 15 }}>📅 <span style={{ color: '#1A1410' }}>{periodeAffichee}</span></p>
           {ev.heure_debut && (
             <p style={{ color: '#E8E0D0', fontSize: 15 }}>
-              🕐 <span style={{ color: '#F7F2E8' }}>
+              🕐 <span style={{ color: '#1A1410' }}>
                 {afficherHeureFuseau(ev.heure_debut, ev.fuseau_organisateur || 'America/Port-au-Prince')}
                 {ev.heure_fin ? ` → ${afficherHeureFuseau(ev.heure_fin, ev.fuseau_organisateur || 'America/Port-au-Prince')}` : ''}
               </span>
             </p>
           )}
-          {ev.organisateur && <p style={{ color: '#E8E0D0', fontSize: 15 }}>👤 <span style={{ color: '#F7F2E8' }}>{ev.organisateur}</span></p>}
+          {ev.organisateur && <p style={{ color: '#E8E0D0', fontSize: 15 }}>👤 <span style={{ color: '#1A1410' }}>{ev.organisateur}</span></p>}
           {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
-            <a href={urlGoogleMaps} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>
+            <a href={urlGoogleMaps} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}>
               <span style={{ fontSize: 20 }}>🧭</span>S'y rendre · Ouvrir dans Google Maps
             </a>
           )}
@@ -412,13 +412,13 @@ export default function EvenementPage() {
 
         {ev.description && (
           <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#F7F2E8' }}>À propos</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#1A1410' }}>À propos</h2>
             <p style={{ color: '#E8E0D0', lineHeight: 1.7, fontSize: 14 }}>{ev.description}</p>
           </div>
         )}
 
         {ev.lien && !enLigne && (
-          <a href={ev.lien} target="_blank" style={{ display: 'block', width: '100%', textAlign: 'center', background: '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 12, marginBottom: 12, textDecoration: 'none', fontSize: 15 }}>
+          <a href={ev.lien} target="_blank" style={{ display: 'block', width: '100%', textAlign: 'center', background: '#C8431A', color: '#1A1410', fontWeight: 'bold', padding: '14px', borderRadius: 12, marginBottom: 12, textDecoration: 'none', fontSize: 15 }}>
             Plus de détails →
           </a>
         )}
@@ -492,7 +492,7 @@ export default function EvenementPage() {
 
         {/* Commentaires */}
         <div style={{ marginBottom: 48 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: '#F7F2E8' }}>Commentaires</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: '#1A1410' }}>Commentaires</h2>
           <CommentaireForm evenementId={ev.id} onNouveau={(c) => setCommentaires(prev => [c, ...prev])} />
           <CommentairesList commentaires={commentaires} />
         </div>
@@ -500,10 +500,10 @@ export default function EvenementPage() {
         {/* Similaires */}
         {similaires.length > 0 && (
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#F7F2E8' }}>Événements similaires</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1A1410' }}>Événements similaires</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {similaires.map(sim => (
-                <a href={'/evenement/' + sim.id} key={sim.id} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 12, textDecoration: 'none', color: '#F7F2E8' }}>
+                <a href={'/evenement/' + sim.id} key={sim.id} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 12, textDecoration: 'none', color: '#1A1410' }}>
                   {sim.image_url && <img src={sim.image_url} alt={sim.titre} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sim.titre}</p>
