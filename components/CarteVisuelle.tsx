@@ -327,9 +327,10 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
     const exprColor = getExprColor(bg, false)
-
+    const photoZoneSource = evenement.image_url || photoProfil || null
+    await dessinerZonePhoto(ctx, 0, 0, W, photoH, photoZoneSource, '#C8431A')
     await dessinerZonePhoto(ctx, 0, 0, W, photoH, evenement.image_url || null, '#C8431A')
-    if (evenement.image_url) {
+    if (photoZoneSource) {
       ctx.fillStyle = 'rgba(26,20,16,0.42)'; ctx.fillRect(0, 0, W, photoH)
     }
 
