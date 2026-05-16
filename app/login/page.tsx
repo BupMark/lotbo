@@ -18,7 +18,34 @@ export default function Login() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) {
-      setMessage('Erreur : ' + error.message)
+      const lang = navigator.language.slice(0, 2)
+      const msgs: Record<string, Record<string, string>> = {
+        fr: {
+          anonymous: 'Veuillez entrer votre email et mot de passe.',
+          invalid: 'Email ou mot de passe incorrect.',
+          default: 'Erreur de connexion. Veuillez réessayer.'
+        },
+        en: {
+          anonymous: 'Please enter your email and password.',
+          invalid: 'Invalid email or password.',
+          default: 'Login error. Please try again.'
+        },
+        es: {
+          anonymous: 'Por favor ingresa tu email y contraseña.',
+          invalid: 'Email o contraseña incorrectos.',
+          default: 'Error de inicio de sesión.'
+        },
+        pt: {
+          anonymous: 'Por favor insira seu email e senha.',
+          invalid: 'Email ou senha incorretos.',
+          default: 'Erro de login. Tente novamente.'
+        },
+      }
+      const t = msgs[lang] || msgs['fr']
+      const msg = error.message.includes('Anonymous') ? t.anonymous
+        : error.message.includes('Invalid') ? t.invalid
+        : t.default
+      setMessage(msg)
       return
     }
     const role = data.session?.user?.user_metadata?.role
