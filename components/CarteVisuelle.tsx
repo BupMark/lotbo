@@ -260,8 +260,11 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   }
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging.current) return
-    const dx = (e.clientX - dragStart.current.x) * 3
-    const dy = (e.clientY - dragStart.current.y) * 3
+    const rect = previewRef.current?.getBoundingClientRect()
+    const { W } = getDimensions()
+    const scale = rect ? W / rect.width : 3
+    const dx = (e.clientX - dragStart.current.x) * scale
+    const dy = (e.clientY - dragStart.current.y) * scale
     setOffsetX(dragStart.current.ox + dx)
     setOffsetY(dragStart.current.oy + dy)
   }
@@ -274,8 +277,11 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offsetX, oy: offsetY }
   }
   const handleTouchMove = (e: React.TouchEvent) => {
-    const dx = (e.touches[0].clientX - touchStart.current.x) * 3
-    const dy = (e.touches[0].clientY - touchStart.current.y) * 3
+    const rect = previewRef.current?.getBoundingClientRect()
+    const { W } = getDimensions()
+    const scale = rect ? W / rect.width : 3
+    const dx = (e.touches[0].clientX - touchStart.current.x) * scale
+    const dy = (e.touches[0].clientY - touchStart.current.y) * scale
     setOffsetX(touchStart.current.ox + dx)
     setOffsetY(touchStart.current.oy + dy)
   }
@@ -533,7 +539,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
               >
-                <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+                <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
               </div>
 
               {/* Contrôles ajustement photo fond — uniquement en paysage */}
