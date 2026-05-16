@@ -172,6 +172,15 @@ export default function EvenementPage() {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
       .then(async ({ data }) => {
         setEv(data)
+        // F9 — Image automatique Unsplash si pas d'image
+        if (data && !data.image_url && data.categorie) {
+          fetch(`/api/unsplash?categorie=${encodeURIComponent(data.categorie)}&q=${encodeURIComponent(data.titre)}`)
+            .then(r => r.json())
+            .then(img => {
+              if (img.url) { setImageAuto(img.url); setImageAuteur(img.author) }
+            })
+            .catch(() => {})
+        }
         if (data) {
           const { data: sims } = await supabase.from('evenements').select('*')
             .eq('categorie', data.categorie).eq('statut', 'approuve').neq('id', id).limit(3)
@@ -201,18 +210,7 @@ export default function EvenementPage() {
       if (session?.user?.user_metadata?.role === 'admin') setIsAdmin(true)
     })
 
-    // F9 — Image automatique Unsplash si pas d'image
-    if (!ev.image_url && ev.categorie) {
-      fetch(`/api/unsplash?categorie=${encodeURIComponent(ev.categorie)}&q=${encodeURIComponent(ev.titre)}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.url) {
-            setImageAuto(data.url)
-            setImageAuteur(data.author)
-          }
-        })
-        .catch(() => {})
-    }
+
     const expressions = JSON.parse(localStorage.getItem('lotbo_expressions') || '{}')
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
   }, [id])
