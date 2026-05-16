@@ -282,10 +282,10 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const rw = W - photoW - 96
 
     // Logo
-    dessinerLogo(ctx, rx, 72, 40, textColor)
+    dessinerLogo(ctx, rx, 88, 40, textColor)
 
-    // Avatar — centré verticalement dans la zone droite
-    const avatarX = rx + 52, avatarY = Math.round(H * 0.28), avatarR = 52
+    // Avatar
+    const avatarX = rx + 52, avatarY = 210, avatarR = 52
     await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
 
     // Expression
@@ -327,10 +327,9 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
     const exprColor = getExprColor(bg, false)
-    const photoZoneSource = evenement.image_url || photoProfil || null
-    await dessinerZonePhoto(ctx, 0, 0, W, photoH, photoZoneSource, '#C8431A')
+
     await dessinerZonePhoto(ctx, 0, 0, W, photoH, evenement.image_url || null, '#C8431A')
-    if (photoZoneSource) {
+    if (evenement.image_url) {
       ctx.fillStyle = 'rgba(26,20,16,0.42)'; ctx.fillRect(0, 0, W, photoH)
     }
 
