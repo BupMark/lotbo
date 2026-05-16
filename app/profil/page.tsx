@@ -142,7 +142,7 @@ export default function Profil() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
           <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
-            <span style={{ color: '#F7F2E8' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
+            <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Carte</a>
@@ -182,7 +182,7 @@ export default function Profil() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <p style={{ fontWeight: 'bold', fontSize: 17, color: '#F7F2E8' }}>{nomAffiche}</p>
+                  <p style={{ fontWeight: 'bold', fontSize: 17, color: '#1A1410' }}>{nomAffiche}</p>
                   <button onClick={() => setEditNom(true)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', padding: '2px 6px', borderRadius: 4, textDecoration: 'underline' }}>✏️ Modifier</button>
                 </div>
               )}
@@ -235,7 +235,7 @@ export default function Profil() {
         {onglet === 'evenements' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 'bold', color: '#F7F2E8' }}>Mes événements</h2>
+              <h2 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410' }}>Mes événements</h2>
               <a href="/ajouter" style={{ background: '#C8431A', color: '#F7F2E8', padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>+ Ajouter</a>
             </div>
 
