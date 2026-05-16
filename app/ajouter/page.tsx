@@ -252,6 +252,20 @@ export default function AjouterEvenement() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // Détecter double rôle au chargement
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return
+      const role = session.user.user_metadata?.role
+      const { data: profile } = await supabase.from('profiles')
+        .select('role, charte_acceptee').eq('id', session.user.id).single()
+      const estContrib = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
+      if (estContrib && profile?.charte_acceptee) {
+        setADoubleRole(true)
+      }
+    })
+  }, [])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
