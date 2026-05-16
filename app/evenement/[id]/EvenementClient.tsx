@@ -427,9 +427,9 @@ export default function EvenementPage() {
         <div style={{ marginBottom: 16 }}>
           <button onClick={handleSeraiLa} disabled={loadingParticipation} style={{
             width: '100%', padding: '16px', borderRadius: 12,
-            border: seraiLa ? '2px solid #C8431A' : '2px solid rgba(255,255,255,0.1)',
-            background: seraiLa ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-            color: seraiLa ? '#C8431A' : '#F7F2E8',
+            border: seraiLa ? '2px solid #C8431A' : '2px solid rgba(26,20,16,0.2)',
+            background: seraiLa ? 'rgba(200,67,26,0.15)' : 'rgba(26,20,16,0.04)',
+            color: seraiLa ? '#C8431A' : '#1A1410',
             fontSize: 16, fontWeight: 'bold', cursor: loadingParticipation ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s'
           }}>
