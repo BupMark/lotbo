@@ -458,7 +458,7 @@ export default function AjouterEvenement() {
 
           {/* Message personnalisé */}
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
-            <p style={{ color: '#8C5A40', fontSize: 14, lineHeight: 1.7 }}>
+            <p style={{ color: '#F7F2E8', fontSize: 14, lineHeight: 1.7 }}>
               {isContrib
                 ? `Tu viens de contribuer à un projet communautaire mondial né en Haïti. Chaque événement ajouté connecte des gens autour de moments qui comptent. Continue comme ça — la communauté te voit ! 🌍`
                 : `Ton événement est en cours de validation par notre équipe. Tu seras notifié dès qu'il sera approuvé et visible sur la carte. Merci de faire vibrer ta communauté ! 🎉`
@@ -506,10 +506,10 @@ export default function AjouterEvenement() {
             <a href="/ajouter" style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', border: '1px solid #2a2a2a', padding: '13px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
               + Ajouter un autre événement
             </a>
-            <a href="/profil" style={{ background: 'rgba(255,255,255,0.04)', color: '#8C5A40', border: '1px solid #2a2a2a', padding: '13px 24px', borderRadius: 10, fontSize: 14, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+            <a href="/profil" style={{ background: 'rgba(255,255,255,0.10)', color: '#F7F2E8', border: '1px solid #444', padding: '13px 24px', borderRadius: 10, fontSize: 14, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
               Mon tableau de bord →
             </a>
-            <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'block', textAlign: 'center', marginTop: 4 }}>
+            <a href="/" style={{ color: '#C8431A', fontSize: 13, textDecoration: 'none', display: 'block', textAlign: 'center', marginTop: 4, fontWeight: 'bold' }}>
               ← Retour à la carte
             </a>
           </div>
