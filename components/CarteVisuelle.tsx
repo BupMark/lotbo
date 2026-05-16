@@ -195,6 +195,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   const isDragging = useRef(false)
   const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
   const previewRef = useRef<HTMLDivElement>(null)
+  const offsetRef = useRef({ x: 0, y: 0 })
 
   const texteExpression = expressionSelectionnee.id === 'custom'
     ? (texteCustom || 'Personnalisé')
@@ -254,13 +255,15 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
   // ── Drag handlers pour ajustement photo fond ──────────────────────────────
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (disposition !== 'paysage') return
+    const hasPhoto = photoFond || photoProfil || evenement.image_url
+    if (!hasPhoto) return
     isDragging.current = true
     dragStart.current = { x: e.clientX, y: e.clientY, ox: offsetX, oy: offsetY }
+    e.preventDefault()
   }
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging.current) return
-    const rect = previewRef.current?.getBoundingClientRect()
+    const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect()
     const { W } = getDimensions()
     const scale = rect ? W / rect.width : 3
     const dx = (e.clientX - dragStart.current.x) * scale
@@ -273,11 +276,12 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   // Touch drag
   const touchStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (disposition !== 'paysage') return
+    const hasPhoto = photoFond || photoProfil || evenement.image_url
+    if (!hasPhoto) return
     touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offsetX, oy: offsetY }
   }
   const handleTouchMove = (e: React.TouchEvent) => {
-    const rect = previewRef.current?.getBoundingClientRect()
+    const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect()
     const { W } = getDimensions()
     const scale = rect ? W / rect.width : 3
     const dx = (e.touches[0].clientX - touchStart.current.x) * scale
