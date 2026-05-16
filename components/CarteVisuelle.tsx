@@ -29,6 +29,7 @@ const DISPOSITIONS = [
   { id: 'paysage' as Disposition, label: 'Paysage', icon: '▬', size: '1200×630' },
 ]
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function getLuminance(hex: string): number {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
@@ -85,11 +86,15 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines
 }
 
-async function dessinerZonePhoto(
+// ── Dessiner zone photo avec offset (drag/zoom) ───────────────────────────────
+async function dessinerZonePhotoAjustable(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number,
   photoUrl: string | null,
-  fallbackBg: string
+  fallbackBg: string,
+  offsetX: number = 0,
+  offsetY: number = 0,
+  zoom: number = 1
 ) {
   ctx.save()
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip()
@@ -97,11 +102,13 @@ async function dessinerZonePhoto(
   if (photoUrl) {
     const img = await chargerImage(photoUrl)
     if (img) {
-      const ratio = Math.max(w / img.naturalWidth, h / img.naturalHeight)
+      const baseRatio = Math.max(w / img.naturalWidth, h / img.naturalHeight)
+      const ratio = baseRatio * zoom
       const dw = img.naturalWidth * ratio
       const dh = img.naturalHeight * ratio
-      const dx = x + (w - dw) / 2
-      const dy = y + (h - dh) / 2
+      // Centrer + offset drag
+      const dx = x + (w - dw) / 2 + offsetX
+      const dy = y + (h - dh) / 2 + offsetY
       ctx.drawImage(img, dx, dy, dw, dh)
       ctx.restore()
       return
@@ -156,15 +163,19 @@ function dessinerLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size:
   ctx.restore()
 }
 
+// ── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
   evenement: { titre: string; lieu: string; date: string; date_fin?: string; image_url?: string }
   expression: string
+  photoProfil?: string | null  // Photo profil depuis page événement
   onClose: () => void
 }
 
-export default function CarteVisuelle({ evenement, expression: expressionInitiale, onClose }: Props) {
+export default function CarteVisuelle({ evenement, expression: expressionInitiale, photoProfil: photoProfilProp, onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputFondRef = useRef<HTMLInputElement>(null)
+
   const [fondActif, setFondActif] = useState(FONDS[0])
   const [useFotoEvent, setUseFotoEvent] = useState(false)
   const [expressionSelectionnee, setExpressionSelectionnee] = useState(
@@ -172,9 +183,18 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   )
   const [texteCustom, setTexteCustom] = useState('')
   const [nomUtilisateur, setNomUtilisateur] = useState('Moi')
-  const [photoProfil, setPhotoProfil] = useState<string | null>(null)
+  const [photoProfil, setPhotoProfil] = useState<string | null>(photoProfilProp || null)
+  const [photoFond, setPhotoFond] = useState<string | null>(null) // UX14 — photo fond dédiée
   const [disposition, setDisposition] = useState<Disposition>('centree')
   const [etape, setEtape] = useState<'expression' | 'carte'>('expression')
+
+  // UX14 — Ajustement drag/zoom photo fond
+  const [offsetX, setOffsetX] = useState(0)
+  const [offsetY, setOffsetY] = useState(0)
+  const [zoom, setZoom] = useState(1)
+  const isDragging = useRef(false)
+  const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
+  const previewRef = useRef<HTMLDivElement>(null)
 
   const texteExpression = expressionSelectionnee.id === 'custom'
     ? (texteCustom || 'Personnalisé')
@@ -186,24 +206,30 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ? `${formatDateCourte(evenement.date)} → ${formatDateCourte(evenement.date_fin)}`
     : formatDateCourte(evenement.date)
 
+  // Photo utilisée pour le fond paysage — priorité : photo fond > photo profil > image événement
+  const photoFondPaysage = photoFond || photoProfil || evenement.image_url || null
+
   useEffect(() => {
-    if (!evenement.image_url) { setDisposition('centree'); return }
-    const img = new Image()
-    img.onload = () => {
-      if (img.naturalWidth > img.naturalHeight * 1.25) setDisposition('paysage')
-      else if (img.naturalHeight > img.naturalWidth * 1.1) setDisposition('split')
-      else setDisposition('centree')
+    if (!evenement.image_url && !photoProfil) { setDisposition('centree'); return }
+    if (evenement.image_url) {
+      const img = new Image()
+      img.onload = () => {
+        if (img.naturalWidth > img.naturalHeight * 1.25) setDisposition('paysage')
+        else if (img.naturalHeight > img.naturalWidth * 1.1) setDisposition('split')
+        else setDisposition('centree')
+      }
+      img.src = evenement.image_url
     }
-    img.src = evenement.image_url
-  }, [evenement.image_url])
+  }, [evenement.image_url, photoProfil])
 
   useEffect(() => {
     if (etape !== 'carte') return
     dessinerCarte()
-  }, [fondActif, useFotoEvent, texteExpression, etape, nomUtilisateur, disposition, photoProfil])
+  }, [fondActif, useFotoEvent, texteExpression, etape, nomUtilisateur, disposition, photoProfil, photoFond, offsetX, offsetY, zoom])
 
   const getDimensions = () => disposition === 'paysage' ? { W: 1200, H: 630 } : { W: 1080, H: 1080 }
 
+  // ── Upload photo profil carte ─────────────────────────────────────────────
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -211,6 +237,47 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const reader = new FileReader()
     reader.onload = (ev) => setPhotoProfil(ev.target?.result as string)
     reader.readAsDataURL(file)
+  }
+
+  // ── Upload photo fond paysage (UX14) ─────────────────────────────────────
+  const handlePhotoFondUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { alert('Photo max 5MB'); return }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setPhotoFond(ev.target?.result as string)
+      setOffsetX(0); setOffsetY(0); setZoom(1)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // ── Drag handlers pour ajustement photo fond ──────────────────────────────
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (disposition !== 'paysage') return
+    isDragging.current = true
+    dragStart.current = { x: e.clientX, y: e.clientY, ox: offsetX, oy: offsetY }
+  }
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return
+    const dx = (e.clientX - dragStart.current.x) * 3
+    const dy = (e.clientY - dragStart.current.y) * 3
+    setOffsetX(dragStart.current.ox + dx)
+    setOffsetY(dragStart.current.oy + dy)
+  }
+  const handleMouseUp = () => { isDragging.current = false }
+
+  // Touch drag
+  const touchStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (disposition !== 'paysage') return
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offsetX, oy: offsetY }
+  }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const dx = (e.touches[0].clientX - touchStart.current.x) * 3
+    const dy = (e.touches[0].clientY - touchStart.current.y) * 3
+    setOffsetX(touchStart.current.ox + dx)
+    setOffsetY(touchStart.current.oy + dy)
   }
 
   // ── Centrée ───────────────────────────────────────────────────────────────
@@ -226,34 +293,27 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     } else { ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H) }
 
     dessinerLogo(ctx, 60, 100, 46, textColor)
-
     const avatarX = W / 2, avatarY = 330, avatarR = 88
     await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
-
     ctx.font = 'bold 46px system-ui, sans-serif'
     ctx.fillStyle = exprColor; ctx.textAlign = 'center'
     ctx.fillText(texteExpression, W / 2, avatarY + avatarR + 70)
-
     ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.15)' : 'rgba(26,20,16,0.12)'
     ctx.fillRect(80, avatarY + avatarR + 96, W - 160, 1)
-
     ctx.font = 'bold italic 52px Georgia, serif'
     ctx.fillStyle = textColor; ctx.textAlign = 'center'
     const titreLines = wrapText(ctx, evenement.titre, W - 120)
     const startTitre = avatarY + avatarR + 166
     titreLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, W / 2, startTitre + i * 60))
-
     const after = startTitre + Math.min(titreLines.length, 2) * 60
     const remaining = H - after - 80
     const spacing = Math.min(52, remaining / 3)
-
     ctx.font = '32px system-ui, sans-serif'
     ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
     const dateDisplay = periode.length > 42 ? periode.slice(0, 42) + '…' : periode
     ctx.fillText(`📅 ${dateDisplay}`, W / 2, after + spacing)
     const lieuDisplay = evenement.lieu.length > 46 ? evenement.lieu.slice(0, 46) + '…' : evenement.lieu
     ctx.fillText(`📍 ${lieuDisplay}`, W / 2, after + spacing * 2)
-
     ctx.font = '26px system-ui, sans-serif'
     ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.28)'
     ctx.fillText('app.lotbo.app', W / 2, H - 48)
@@ -266,46 +326,25 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
     const exprColor = getExprColor(bg, false)
-
-    // Zone photo gauche
     const photoSource = photoProfil || evenement.image_url || null
-    await dessinerZonePhoto(ctx, 0, 0, photoW, H, photoSource, '#C8431A')
-    if (photoSource) {
-      ctx.fillStyle = 'rgba(26,20,16,0.15)'; ctx.fillRect(0, 0, photoW, H)
-    }
-
-    // Fond droite
+    await dessinerZonePhotoAjustable(ctx, 0, 0, photoW, H, photoSource, '#C8431A')
+    if (photoSource) { ctx.fillStyle = 'rgba(26,20,16,0.15)'; ctx.fillRect(0, 0, photoW, H) }
     ctx.fillStyle = bg; ctx.fillRect(photoW, 0, W - photoW, H)
-
-    // Contenu droite
-    const rx = photoW + 56
-    const rw = W - photoW - 96
-
-    // Logo
-    dessinerLogo(ctx, rx, 88, 40, textColor)
-
-    // Avatar
-    const avatarX = rx + 52, avatarY = 210, avatarR = 52
+    const rx = photoW + 56, rw = W - photoW - 96
+    dessinerLogo(ctx, rx, 72, 40, textColor)
+    const avatarX = rx + 52, avatarY = Math.round(H * 0.28), avatarR = 52
     await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
-
-    // Expression
     ctx.font = 'bold 36px system-ui, sans-serif'
     ctx.fillStyle = exprColor; ctx.textAlign = 'left'
     ctx.fillText(texteExpression, rx, avatarY + avatarR + 56)
-
-    // Séparateur
     ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.15)' : 'rgba(26,20,16,0.12)'
     ctx.fillRect(rx, avatarY + avatarR + 76, rw, 1)
-
-    // Titre
     ctx.font = 'bold italic 44px Georgia, serif'
     ctx.fillStyle = textColor; ctx.textAlign = 'left'
     const titreLines = wrapText(ctx, evenement.titre, rw)
     const titreStartY = avatarY + avatarR + 138
     titreLines.slice(0, 3).forEach((line, i) => ctx.fillText(line, rx, titreStartY + i * 52))
     const afterTitre = titreStartY + Math.min(titreLines.length, 3) * 52
-
-    // Date + Lieu
     const remaining = H - afterTitre - 80
     const spacing = Math.max(44, Math.min(56, remaining / 2.5))
     ctx.font = '28px system-ui, sans-serif'
@@ -313,52 +352,49 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ctx.fillText(`📅 ${formatDateCourte(evenement.date)}`, rx, afterTitre + spacing)
     const lieuDisplay = evenement.lieu.length > 32 ? evenement.lieu.slice(0, 32) + '…' : evenement.lieu
     ctx.fillText(`📍 ${lieuDisplay}`, rx, afterTitre + spacing * 2)
-
-    // Footer
     ctx.font = '22px system-ui, sans-serif'
     ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.28)'
     ctx.fillText('app.lotbo.app', rx, H - 44)
     ctx.textAlign = 'left'
   }
 
-  // ── Paysage ───────────────────────────────────────────────────────────────
+  // ── Paysage — UX13/UX14 ──────────────────────────────────────────────────
   const dessinerPaysage = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    const photoH = Math.round(H * 0.56)
+    const photoH = Math.round(H * 0.62) // Zone photo plus grande
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
-    const exprColor = getExprColor(bg, false)
 
-    await dessinerZonePhoto(ctx, 0, 0, W, photoH, evenement.image_url || null, '#C8431A')
-    if (evenement.image_url) {
-      ctx.fillStyle = 'rgba(26,20,16,0.42)'; ctx.fillRect(0, 0, W, photoH)
+    // Photo fond avec drag/zoom
+    await dessinerZonePhotoAjustable(ctx, 0, 0, W, photoH, photoFondPaysage, '#C8431A', offsetX, offsetY, zoom)
+
+    // Overlay sombre
+    if (photoFondPaysage) {
+      ctx.fillStyle = 'rgba(26,20,16,0.38)'; ctx.fillRect(0, 0, W, photoH)
     }
 
+    // Logo
     dessinerLogo(ctx, 48, 66, 40, '#F7F2E8')
 
-    const avatarX = 76, avatarY = photoH - 64, avatarR = 46
+    // Avatar + expression — bas gauche de la zone photo
+    const avatarX = 76, avatarY = photoH - 70, avatarR = 50
     await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
-
-    ctx.font = 'bold 32px system-ui, sans-serif'
+    ctx.font = 'bold 34px system-ui, sans-serif'
     ctx.fillStyle = '#F7F2E8'; ctx.textAlign = 'left'
     ctx.fillText(texteExpression, avatarX + avatarR + 18, avatarY + 12)
 
+    // Bande inférieure
     ctx.fillStyle = bg; ctx.fillRect(0, photoH, W, H - photoH)
-
     const bandH = H - photoH
-    const contentH = 140
-    const startY = photoH + (bandH - contentH) / 2 + 40
-
+    const startY = photoH + (bandH - 130) / 2 + 38
     ctx.font = 'bold italic 44px Georgia, serif'
     ctx.fillStyle = textColor; ctx.textAlign = 'left'
     const titreLines = wrapText(ctx, evenement.titre, W - 96)
     titreLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, 48, startY + i * 52))
     const afterTitre = startY + Math.min(titreLines.length, 2) * 52
-
     ctx.font = '26px system-ui, sans-serif'
     ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.65)' : 'rgba(26,20,16,0.55)'
     const lieuDisplay = evenement.lieu.length > 38 ? evenement.lieu.slice(0, 38) + '…' : evenement.lieu
     ctx.fillText(`📅 ${formatDateCourte(evenement.date)}  ·  📍 ${lieuDisplay}`, 48, afterTitre + 30)
-
     ctx.font = '20px system-ui, sans-serif'
     ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.3)' : 'rgba(26,20,16,0.28)'
     ctx.textAlign = 'right'
@@ -402,6 +438,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   const textePartage = encodeURIComponent(`${texteExpression} · ${evenement.titre} — ${urlEvent}`)
   const { W: cW, H: cH } = getDimensions()
   const aspectRatio = `${cW}/${cH}`
+  const isPaysage = disposition === 'paysage'
 
   return (
     <div style={{
@@ -423,6 +460,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
         <div style={{ padding: '20px 24px 28px' }}>
 
+          {/* ── Étape 1 — Expression ── */}
           {etape === 'expression' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ color: '#8C5A40', fontSize: 13 }}>Comment tu veux exprimer ta présence ?</p>
@@ -440,27 +478,15 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                   {photoProfil ? (
                     <div style={{ position: 'relative' }}>
                       <img src={photoProfil} alt="profil" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid #C8431A' }} />
-                      <button onClick={() => setPhotoProfil(null)} style={{
-                        position: 'absolute', top: -6, right: -6, width: 20, height: 20,
-                        borderRadius: '50%', background: '#C8431A', border: 'none',
-                        color: 'white', fontSize: 11, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>✕</button>
+                      <button onClick={() => setPhotoProfil(null)} style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#C8431A', border: 'none', color: 'white', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                     </div>
                   ) : (
-                    <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F7F2E8', fontWeight: 'bold', fontSize: 18 }}>
-                      {initiales}
-                    </div>
+                    <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F7F2E8', fontWeight: 'bold', fontSize: 18 }}>{initiales}</div>
                   )}
-                  <button onClick={() => fileInputRef.current?.click()} style={{
-                    flex: 1, padding: '10px 16px', borderRadius: 10, fontSize: 13,
-                    background: 'rgba(255,255,255,0.06)', border: '1px solid #333',
-                    color: '#8C5A40', cursor: 'pointer', textAlign: 'left'
-                  }}>
+                  <button onClick={() => fileInputRef.current?.click()} style={{ flex: 1, padding: '10px 16px', borderRadius: 10, fontSize: 13, background: 'rgba(255,255,255,0.06)', border: '1px solid #333', color: '#8C5A40', cursor: 'pointer', textAlign: 'left' }}>
                     📷 {photoProfil ? 'Changer ma photo' : 'Ajouter ma photo'}
                   </button>
-                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-                    onChange={handlePhotoUpload} style={{ display: 'none' }} />
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
                 </div>
                 <p style={{ color: '#555', fontSize: 11, marginTop: 6 }}>JPG, PNG, WebP · max 2MB</p>
               </div>
@@ -486,19 +512,72 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #C8431A', borderRadius: 10, padding: '10px 14px', color: '#F7F2E8', fontSize: 14, outline: 'none', width: '100%' }} />
               )}
 
-              <button onClick={() => setEtape('carte')} style={{
-                background: '#C8431A', color: 'white', border: 'none', borderRadius: 10,
-                padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', marginTop: 8
-              }}>Créer ma carte →</button>
+              <button onClick={() => setEtape('carte')} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', marginTop: 8 }}>
+                Créer ma carte →
+              </button>
             </div>
           )}
 
+          {/* ── Étape 2 — Carte ── */}
           {etape === 'carte' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a', aspectRatio }}>
+
+              {/* Aperçu canvas avec drag si paysage */}
+              <div
+                ref={previewRef}
+                style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a', aspectRatio, cursor: isPaysage && photoFondPaysage ? 'grab' : 'default', userSelect: 'none' }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+              >
                 <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
               </div>
 
+              {/* Contrôles ajustement photo fond — uniquement en paysage */}
+              {isPaysage && photoFondPaysage && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 14px' }}>
+                  <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8 }}>🖱️ Glisse l'aperçu pour repositionner la photo</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ color: '#8C5A40', fontSize: 11 }}>Zoom</span>
+                    <input type="range" min="1" max="3" step="0.05"
+                      value={zoom}
+                      onChange={e => setZoom(parseFloat(e.target.value))}
+                      style={{ flex: 1, accentColor: '#C8431A' }}
+                    />
+                    <button onClick={() => { setOffsetX(0); setOffsetY(0); setZoom(1) }}
+                      style={{ background: 'none', border: '1px solid #333', borderRadius: 6, padding: '4px 10px', color: '#8C5A40', fontSize: 11, cursor: 'pointer' }}>
+                      ↺ Reset
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload photo fond dédiée (paysage) */}
+              {isPaysage && (
+                <div>
+                  <button onClick={() => fileInputFondRef.current?.click()} style={{
+                    width: '100%', padding: '10px', borderRadius: 10, fontSize: 13,
+                    background: photoFond ? 'rgba(200,67,26,0.10)' : 'rgba(255,255,255,0.04)',
+                    border: photoFond ? '1px solid rgba(200,67,26,0.4)' : '1px solid #333',
+                    color: photoFond ? '#C8431A' : '#8C5A40', cursor: 'pointer'
+                  }}>
+                    🖼️ {photoFond ? 'Changer la photo de fond' : 'Ajouter une photo de fond'}
+                    {!photoFond && photoProfil && <span style={{ fontSize: 11, marginLeft: 8, opacity: 0.6 }}>(photo profil utilisée par défaut)</span>}
+                  </button>
+                  <input ref={fileInputFondRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoFondUpload} style={{ display: 'none' }} />
+                  {photoFond && (
+                    <button onClick={() => { setPhotoFond(null); setOffsetX(0); setOffsetY(0); setZoom(1) }}
+                      style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', marginTop: 6, textDecoration: 'underline' }}>
+                      Supprimer la photo de fond
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Disposition */}
               <div>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Disposition</p>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -518,8 +597,9 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                 </div>
               </div>
 
+              {/* Fonds */}
               <div>
-                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Fond</p>
+                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Fond bande</p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {FONDS.map(f => (
                     <button key={f.id} onClick={() => { setFondActif(f); setUseFotoEvent(false) }} style={{
@@ -528,7 +608,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                       cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
                     }} title={f.label} />
                   ))}
-                  {evenement.image_url && (
+                  {evenement.image_url && !isPaysage && (
                     <button onClick={() => setUseFotoEvent(true)} style={{
                       width: 38, height: 38, borderRadius: '50%',
                       backgroundImage: `url(${evenement.image_url})`,
@@ -540,25 +620,20 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                 </div>
               </div>
 
-              <button onClick={() => setEtape('expression')} style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid #333',
-                borderRadius: 10, padding: '10px', color: '#8C5A40', fontSize: 13, cursor: 'pointer'
-              }}>← Modifier l'expression</button>
+              <button onClick={() => setEtape('expression')} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 10, padding: '10px', color: '#8C5A40', fontSize: 13, cursor: 'pointer' }}>
+                ← Modifier l'expression
+              </button>
 
+              {/* Partage */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <p style={{ color: '#8C5A40', fontSize: 12 }}>Partager</p>
-                <button onClick={telecharger} style={{
-                  background: '#C8431A', color: 'white', border: 'none', borderRadius: 10,
-                  padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                }}>⬇️ Télécharger l'image</button>
+                <button onClick={telecharger} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  ⬇️ Télécharger l'image
+                </button>
                 {typeof window !== 'undefined' && 'share' in navigator && (
-                  <button onClick={partagerNatif} style={{
-                    background: 'rgba(255,255,255,0.08)', color: '#F7F2E8',
-                    border: '1px solid #333', borderRadius: 10, padding: '13px',
-                    fontSize: 14, fontWeight: 'bold', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                  }}>📤 Partager (mobile)</button>
+                  <button onClick={partagerNatif} style={{ background: 'rgba(255,255,255,0.08)', color: '#F7F2E8', border: '1px solid #333', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    📤 Partager (mobile)
+                  </button>
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
                   <a href={`https://wa.me/?text=${textePartage}`} target="_blank" style={{ flex: 1, background: '#25D366', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' }}>WhatsApp</a>
