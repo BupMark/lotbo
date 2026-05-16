@@ -327,7 +327,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const textColor = getTextColor(bg)
     const exprColor = getExprColor(bg, false)
     const photoSource = photoProfil || evenement.image_url || null
-    await dessinerZonePhotoAjustable(ctx, 0, 0, photoW, H, photoSource, '#C8431A')
+    await dessinerZonePhotoAjustable(ctx, 0, 0, photoW, H, photoSource, '#C8431A', offsetX, offsetY, zoom)
     if (photoSource) { ctx.fillStyle = 'rgba(26,20,16,0.15)'; ctx.fillRect(0, 0, photoW, H) }
     ctx.fillStyle = bg; ctx.fillRect(photoW, 0, W - photoW, H)
     const rx = photoW + 56, rw = W - photoW - 96
@@ -537,7 +537,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               </div>
 
               {/* Contrôles ajustement photo fond — uniquement en paysage */}
-              {isPaysage && photoFondPaysage && (
+              {(isPaysage || disposition === 'split') && (photoFondPaysage || photoProfil || evenement.image_url) && (
                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 14px' }}>
                   <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8 }}>🖱️ Glisse l'aperçu pour repositionner la photo</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -556,7 +556,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               )}
 
               {/* Upload photo fond dédiée (paysage) */}
-              {isPaysage && (
+              {(isPaysage || disposition === 'split') && (
                 <div>
                   <button onClick={() => fileInputFondRef.current?.click()} style={{
                     width: '100%', padding: '10px', borderRadius: 10, fontSize: 13,
