@@ -13,6 +13,8 @@ export default function Profil() {
   const [editNom, setEditNom] = useState(false)
   const [nomInput, setNomInput] = useState('')
   const [savingNom, setSavingNom] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -21,11 +23,12 @@ export default function Profil() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points, badge, nom')
+        .select('role, charte_acceptee, points, badge, nom, photo_url')
         .eq('id', data.session.user.id)
         .single()
       setProfile(prof)
       if (prof?.nom) setNomInput(prof.nom)
+      if (prof?.photo_url) setPhotoUrl(prof.photo_url)
 
       const { data: evs } = await supabase
         .from('evenements')
@@ -40,6 +43,24 @@ export default function Profil() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    if (file.size > 2 * 1024 * 1024) { alert('Photo max 2MB'); return }
+    setUploadingPhoto(true)
+    const ext = file.name.split('.').pop()
+    const path = `avatars/${user.id}.${ext}`
+    const { data: uploadData, error } = await supabase.storage
+      .from('evenements').upload(path, file, { upsert: true })
+    if (!error && uploadData) {
+      const { data: urlData } = supabase.storage.from('evenements').getPublicUrl(path)
+      const url = urlData.publicUrl
+      await supabase.from('profiles').upsert({ id: user.id, photo_url: url, updated_at: new Date().toISOString() })
+      setPhotoUrl(url)
+    }
+    setUploadingPhoto(false)
   }
 
   const handleSaveNom = async () => {
@@ -103,14 +124,19 @@ export default function Profil() {
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 16, padding: 24, marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
 
-            {/* Avatar initiales */}
-            <div style={{
-              width: 64, height: 64, background: '#C8431A', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24, fontWeight: 'bold', color: '#F7F2E8', flexShrink: 0,
-              border: '3px solid rgba(200,67,26,0.3)'
-            }}>
-              {initiales}
+            {/* Avatar — photo ou initiales */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {photoUrl ? (
+                <img src={photoUrl} alt="photo profil" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(200,67,26,0.3)' }} />
+              ) : (
+                <div style={{ width: 64, height: 64, background: '#C8431A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 'bold', color: '#F7F2E8', border: '3px solid rgba(200,67,26,0.3)' }}>
+                  {initiales}
+                </div>
+              )}
+              <label style={{ position: 'absolute', bottom: -2, right: -2, background: '#1A1410', border: '1px solid #2a2a2a', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 12 }}>
+                {uploadingPhoto ? '⏳' : '📷'}
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleUploadPhoto} style={{ display: 'none' }} />
+              </label>
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -149,7 +175,7 @@ export default function Profil() {
                 </div>
               )}
 
-              <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 4 }}>{user?.email}</p>
+              <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 4 }}>{user?.email?.replace(/(.{2}).*(@.*)/, '$1***$2')}</p>
               <p style={{ color: '#8C5A40', fontSize: 13 }}>
                 {isAdmin ? '⚙️ Administrateur' : 'Organisateur Lotbo'}
               </p>
