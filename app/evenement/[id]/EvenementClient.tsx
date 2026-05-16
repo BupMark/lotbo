@@ -135,7 +135,7 @@ function CommentairesList({ commentaires }: { commentaires: any[] }) {
       {nbVisible < commentaires.length && (
         <button onClick={() => setNbVisible(n => n + COMMENTS_PER_PAGE)} style={{
           width: '100%', marginTop: 16, background: 'rgba(255,255,255,0.04)',
-          border: '1px solid #2a2a2a', borderRadius: 10, padding: '12px',
+          border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px',
           fontSize: 13, color: '#8C5A40', cursor: 'pointer', fontWeight: 'bold'
         }}>Voir plus ({commentaires.length - nbVisible} restants)</button>
       )}
@@ -159,6 +159,8 @@ export default function EvenementPage() {
 
   // ── E1 + E3b : Je serai là ────────────────────────────────────────────────
   const [isAdmin, setIsAdmin] = useState(false)
+  const [imageAuto, setImageAuto] = useState<string | null>(null)
+  const [imageAuteur, setImageAuteur] = useState<string | null>(null)
   const [seraiLa, setSeraiLa] = useState(false)
   const [nbParticipants, setNbParticipants] = useState(0)
   const [loadingParticipation, setLoadingParticipation] = useState(false)
@@ -198,6 +200,19 @@ export default function EvenementPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.user_metadata?.role === 'admin') setIsAdmin(true)
     })
+
+    // F9 — Image automatique Unsplash si pas d'image
+    if (!ev.image_url && ev.categorie) {
+      fetch(`/api/unsplash?categorie=${encodeURIComponent(ev.categorie)}&q=${encodeURIComponent(ev.titre)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.url) {
+            setImageAuto(data.url)
+            setImageAuteur(data.author)
+          }
+        })
+        .catch(() => {})
+    }
     const expressions = JSON.parse(localStorage.getItem('lotbo_expressions') || '{}')
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
   }, [id])
@@ -247,13 +262,13 @@ export default function EvenementPage() {
   }
 
   if (loading) return (
-    <main style={{ minHeight: '100dvh', background: '#1A1410' }} className="flex items-center justify-center">
+    <main style={{ minHeight: '100dvh', background: '#F7F2E8' }} className="flex items-center justify-center">
       <p style={{ color: '#8C5A40' }}>Chargement...</p>
     </main>
   )
 
   if (!ev) return (
-    <main style={{ minHeight: '100dvh', background: '#1A1410' }} className="flex items-center justify-center">
+    <main style={{ minHeight: '100dvh', background: '#F7F2E8' }} className="flex items-center justify-center">
       <div style={{ textAlign: 'center' }}>
         <p style={{ color: '#8C5A40', marginBottom: 16 }}>Événement introuvable.</p>
         <button onClick={() => router.push('/')} style={{ background: '#C8431A', color: '#F7F2E8', padding: '10px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 14 }}>Retour à la carte</button>
@@ -272,7 +287,7 @@ export default function EvenementPage() {
   const sansCoordonnes = adresseIncomplete(ev)
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8' }}>
+    <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
 
       {/* ── E3b : Modal carte visuelle ── */}
       {carteVisuelleouverte && (
@@ -287,8 +302,8 @@ export default function EvenementPage() {
       {signalementModal && (
         <>
           <div onClick={() => setSignalementModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#1A1410', borderTop: '1px solid #2a2a2a', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
-            <h3 style={{ color: '#F7F2E8', fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Signaler cet événement</h3>
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#F7F2E8', borderTop: '1px solid #E8E0D0', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
+            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Signaler cet événement</h3>
             {signalementEnvoye ? (
               <p style={{ color: '#D4A820', fontSize: 14 }}>✓ Signalement envoyé, merci !</p>
             ) : (
@@ -299,7 +314,7 @@ export default function EvenementPage() {
                       padding: '12px 16px', borderRadius: 10, fontSize: 14, textAlign: 'left', cursor: 'pointer',
                       background: raisonSignalement === raison ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
                       border: raisonSignalement === raison ? '1px solid #C8431A' : '1px solid #2a2a2a',
-                      color: raisonSignalement === raison ? '#F7F2E8' : '#8C5A40',
+                      color: raisonSignalement === raison ? '#F7F2E8' : '#1A1410',
                     }}>{raison}</button>
                   ))}
                 </div>
@@ -316,9 +331,14 @@ export default function EvenementPage() {
         </>
       )}
 
-      {ev.image_url && (
-        <div style={{ width: '100%', height: 280, overflow: 'hidden' }}>
-          <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      {(ev.image_url || imageAuto) && (
+        <div style={{ width: '100%', height: 280, overflow: 'hidden', position: 'relative' }}>
+          <img src={ev.image_url || imageAuto || ''} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {!ev.image_url && imageAuteur && (
+            <p style={{ position: 'absolute', bottom: 6, right: 10, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+              Photo: {imageAuteur} / Unsplash
+            </p>
+          )}
         </div>
       )}
 
@@ -349,8 +369,8 @@ export default function EvenementPage() {
           <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>{ev.categorie}</span>
           {enLigne && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>🌐 En ligne</span>}
           {estMultiJours && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>🗓️ Multi-jours</span>}
-          <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.acces || 'public'}</span>
-          <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.prix || 'gratuit'}</span>
+          <span style={{ background: 'rgba(26,20,16,0.06)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.acces || 'public'}</span>
+          <span style={{ background: 'rgba(26,20,16,0.06)', color: '#8C5A40', padding: '4px 12px', borderRadius: 999, fontSize: 13 }}>{ev.prix || 'gratuit'}</span>
           {nbParticipants > 0 && (
             <span style={{ background: 'rgba(200,67,26,0.1)', color: '#C8431A', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>
               🙋 {nbParticipants} {nbParticipants === 1 ? 'personne' : 'personnes'} seront là
@@ -381,7 +401,7 @@ export default function EvenementPage() {
           )}
           {ev.organisateur && <p style={{ color: '#E8E0D0', fontSize: 15 }}>👤 <span style={{ color: '#F7F2E8' }}>{ev.organisateur}</span></p>}
           {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
-            <a href={urlGoogleMaps} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>
+            <a href={urlGoogleMaps} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>
               <span style={{ fontSize: 20 }}>🧭</span>S'y rendre · Ouvrir dans Google Maps
             </a>
           )}
@@ -393,7 +413,7 @@ export default function EvenementPage() {
         </div>
 
         {ev.description && (
-          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+          <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#F7F2E8' }}>À propos</h2>
             <p style={{ color: '#E8E0D0', lineHeight: 1.7, fontSize: 14 }}>{ev.description}</p>
           </div>
@@ -427,7 +447,7 @@ export default function EvenementPage() {
           {seraiLa && (
             <button onClick={() => setCarteVisuelleouverte(true)} style={{
               width: '100%', marginTop: 8, padding: '11px',
-              background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a',
+              background: 'white', border: '1px solid #E8E0D0',
               borderRadius: 10, color: '#8C5A40', fontSize: 13, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
             }}>
@@ -451,7 +471,7 @@ export default function EvenementPage() {
             </button>
             <button onClick={() => setSignalementModal(true)} style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a',
+              background: 'white', border: '1px solid #E8E0D0',
               borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12
             }}>
               <span style={{ fontSize: 14 }}>⚠️</span><span>Signaler</span>
@@ -485,7 +505,7 @@ export default function EvenementPage() {
             <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#F7F2E8' }}>Événements similaires</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {similaires.map(sim => (
-                <a href={'/evenement/' + sim.id} key={sim.id} style={{ display: 'flex', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 12, textDecoration: 'none', color: '#F7F2E8' }}>
+                <a href={'/evenement/' + sim.id} key={sim.id} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 12, textDecoration: 'none', color: '#F7F2E8' }}>
                   {sim.image_url && <img src={sim.image_url} alt={sim.titre} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sim.titre}</p>
