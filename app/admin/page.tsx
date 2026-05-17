@@ -253,7 +253,7 @@ if (statsPays) {
         {/* ── Stats ───────────────────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'Total',      valeur: nbTotal,     couleur: '#F7F2E8' },
+            { label: 'Total',      valeur: nbTotal,     couleur: '#1A1410' },
             { label: 'En attente', valeur: nbEnAttente, couleur: '#D4A820' },
             { label: 'Approuvés',  valeur: nbApprouves, couleur: '#2D9E6B' },
             { label: 'Rejetés',    valeur: nbRejetes,   couleur: '#e57373' },
@@ -293,7 +293,7 @@ if (statsPays) {
                 border: 'none',
                 cursor: 'pointer',
                 background: 'transparent',
-                color: onglet === tab.key ? '#F7F2E8' : '#8C5A40',
+                color: onglet === tab.key ? 'white' : '#8C5A40',
                 borderBottom: onglet === tab.key ? '2px solid #C8431A' : '2px solid transparent',
                 marginBottom: -1,
                 transition: 'color 0.15s, border-color 0.15s',
@@ -525,7 +525,7 @@ if (statsPays) {
             {/* Stats globales */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
               {[
-                { label: 'Sources actives', valeur: statsImport.length, couleur: '#F7F2E8' },
+                { label: 'Sources actives', valeur: statsImport.length, couleur: '#1A1410' },
                 { label: 'Total approuvés', valeur: nbApprouves,        couleur: '#2D9E6B' },
                 { label: 'En attente',      valeur: nbEnAttente,        couleur: '#D4A820' },
                 { label: 'Pays couverts',   valeur: repartitionPays.length, couleur: '#C8431A' },
