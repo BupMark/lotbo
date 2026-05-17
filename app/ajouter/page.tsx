@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { attributerPoints } from '../../lib/points'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -734,6 +735,15 @@ recurrence_regle: estRecurrent ? {
       nouveauBadge: nouveauBadge || undefined,
     })
     setSucces(true)
+    // GM1/GM2 — Points soumission
+if (userId) {
+  attributerPoints({
+    user_id: userId,
+    action: statutInsertion === 'approuve' ? 'evenement_approuve' : 'commenter',
+    evenement_id: inserted?.id,
+    type_role: choix === 'contributeur' ? 'utilisateur' : 'organisateur',
+  })
+}
 if (nouveauBadge) {
   setShowBadgePopup(true)
 // F8 — Générer les occurrences si récurrent

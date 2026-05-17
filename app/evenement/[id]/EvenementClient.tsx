@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 import CarteVisuelle from '../../../components/CarteVisuelle'
+import { attributerPoints } from '../../../lib/points'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(dateStr: string): string {
@@ -195,6 +196,17 @@ function CommentaireForm({
     setLoading(false)
     if (!error && data) {
       onNouveau(data as Commentaire)
+      // GM1 — Points commentaire ou réponse
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session?.user?.id) {
+    attributerPoints({
+      user_id: session.user.id,
+      action: parentId ? 'repondre' : 'commenter',
+      evenement_id: evenementId,
+      type_role: 'utilisateur'
+    })
+  }
+})
       setAuteur('')
       setContenu('')
       setEnvoye(true)
@@ -516,15 +528,24 @@ export default function EvenementPage() {
   }, [id])
 
   const handleLike = () => {
-    if (!id) return
-    const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
-    const count = JSON.parse(localStorage.getItem('lotbo_likes_count') || '{}')
-    if (liked) { delete likes[id as string]; count[id as string] = Math.max(0, (count[id as string] || 1) - 1) }
-    else { likes[id as string] = true; count[id as string] = (count[id as string] || 0) + 1 }
-    localStorage.setItem('lotbo_likes', JSON.stringify(likes))
-    localStorage.setItem('lotbo_likes_count', JSON.stringify(count))
-    setLiked(!liked); setNbLikes(count[id as string])
+  if (!id) return
+  const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
+  const count = JSON.parse(localStorage.getItem('lotbo_likes_count') || '{}')
+  if (liked) { delete likes[id as string]; count[id as string] = Math.max(0, (count[id as string] || 1) - 1) }
+  else {
+    likes[id as string] = true
+    count[id as string] = (count[id as string] || 0) + 1
+    // GM1 — Points like
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        attributerPoints({ user_id: session.user.id, action: 'liker', evenement_id: id as string, type_role: 'utilisateur' })
+      }
+    })
   }
+  localStorage.setItem('lotbo_likes', JSON.stringify(likes))
+  localStorage.setItem('lotbo_likes_count', JSON.stringify(count))
+  setLiked(!liked); setNbLikes(count[id as string])
+}
 
   const handleSeraiLa = async () => {
     if (!id || loadingParticipation) return
@@ -541,6 +562,12 @@ export default function EvenementPage() {
       participations[id as string] = true
       setNbParticipants(n => n + 1)
       setSeraiLa(true)
+      // GM1 — Points "Je serai là"
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session?.user?.id) {
+    attributerPoints({ user_id: session.user.id, action: 'serai_la', evenement_id: id as string, type_role: 'utilisateur' })
+  }
+})
       setCarteVisuelleouverte(true)
     }
     localStorage.setItem('lotbo_participations', JSON.stringify(participations))
