@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
   try {
-    const { endpoint, p256dh, auth } = await request.json()
+    const { endpoint, p256dh, auth, user_id } = await request.json()
 
     if (!endpoint || !p256dh || !auth) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
@@ -16,7 +16,10 @@ export async function POST(request: Request) {
 
     const { error } = await supabase
       .from('push_subscriptions')
-      .upsert([{ endpoint, p256dh, auth }], { onConflict: 'endpoint' })
+      .upsert(
+        [{ endpoint, p256dh, auth, user_id: user_id || null }],
+        { onConflict: 'endpoint' }
+      )
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

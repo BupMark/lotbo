@@ -719,7 +719,22 @@ export default function AjouterEvenement() {
       nouveauBadge: nouveauBadge || undefined,
     })
     setSucces(true)
-    if (nouveauBadge) setShowBadgePopup(true)
+if (nouveauBadge) {
+  setShowBadgePopup(true)
+  fetch('/api/push-notify-badge', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      badge_emoji: nouveauBadge.emoji,
+      badge_label: nouveauBadge.label,
+      badge_desc: nouveauBadge.desc,
+    }),
+  }).catch(() => {})
+}
   }
 
   const handleContinuerApresBadge = () => {
