@@ -24,7 +24,7 @@ function estEnLigne(lieu: string): boolean {
   return mots.some(m => lieu.toLowerCase().includes(m))
 }
 
-function adresseIncomplete(ev: { latitude?: number; longitude?: number }): boolean {
+function adresseIncomplete(ev: { latitude?: number | null; longitude?: number | null }): boolean {
   return !ev.latitude || !ev.longitude
 }
 
