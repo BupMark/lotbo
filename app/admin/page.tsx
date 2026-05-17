@@ -281,6 +281,7 @@ if (statsPays) {
           {[
             { key: 'evenements',   label: `Événements`,                         count: nbTotal            },
             { key: 'signalements', label: `Signalements`,                       count: signalements.length },
+            { key: 'import', label: `📥 Import`, count: statsImport.length },
           ].map(tab => (
             <button
               key={tab.key}
