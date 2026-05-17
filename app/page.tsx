@@ -59,7 +59,7 @@ export default function Home() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user as Record<string, unknown> | null || null)
+      setUser(data.session?.user as unknown as Record<string, unknown> | null || null)
     })
   }, [])
 
