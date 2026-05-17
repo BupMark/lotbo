@@ -33,7 +33,7 @@ interface Signalement {
 
 type FiltreStatut = 'en_attente' | 'approuve' | 'rejete' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
-type Onglet = 'evenements' | 'signalements'
+type Onglet = 'evenements' | 'signalements' | 'import'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -98,6 +98,14 @@ export default function Admin() {
   const [filtreTemporel, setFiltreTemporel] = useState<FiltreTemporel>('tous')
   const [recherche, setRecherche]           = useState('')
   const [onglet, setOnglet]                 = useState<Onglet>('evenements')
+// SC7 — Dashboard import
+const [statsImport, setStatsImport] = useState<{
+  source: string
+  nb: number
+  dernierImport: string | null
+}[]>([])
+const [repartitionPays, setRepartitionPays] = useState<{ pays: string; nb: number }[]>([])
+const [loadingImport, setLoadingImport] = useState(false)
 
   // Headers sécurisés pour les routes API internes
   const hi: Record<string, string> = {
@@ -120,6 +128,39 @@ export default function Admin() {
       supabase.from('evenements').select('*').order('created_at', { ascending: false }),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
     ])
+    // SC7 — Stats import par source
+const { data: statsSource } = await supabase
+  .from('evenements')
+  .select('source, created_at')
+  .eq('statut', 'approuve')
+  .not('source', 'is', null)
+
+if (statsSource) {
+  const map: Record<string, { nb: number; dernierImport: string }> = {}
+  for (const ev of statsSource) {
+    if (!ev.source) continue
+    if (!map[ev.source]) map[ev.source] = { nb: 0, dernierImport: ev.created_at }
+    map[ev.source].nb++
+    if (ev.created_at > map[ev.source].dernierImport) map[ev.source].dernierImport = ev.created_at
+  }
+  setStatsImport(Object.entries(map).map(([source, v]) => ({ source, nb: v.nb, dernierImport: v.dernierImport })).sort((a, b) => b.nb - a.nb))
+}
+
+// SC7 — Répartition par pays
+const { data: statsPays } = await supabase
+  .from('evenements')
+  .select('pays')
+  .eq('statut', 'approuve')
+  .not('pays', 'is', null)
+
+if (statsPays) {
+  const map: Record<string, number> = {}
+  for (const ev of statsPays) {
+    if (!ev.pays) continue
+    map[ev.pays] = (map[ev.pays] || 0) + 1
+  }
+  setRepartitionPays(Object.entries(map).map(([pays, nb]) => ({ pays, nb })).sort((a, b) => b - a).slice(0, 10))
+}
     setEvenements((evs as Evenement[]) || [])
     setSignalements((sigs as Signalement[]) || [])
     setLoading(false)
