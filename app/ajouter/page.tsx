@@ -980,9 +980,10 @@ export default function AjouterEvenement() {
             {/* Bloc incitatif — visible si pas encore d'image et pas ignoré */}
             {showImageBloc && !imageConfirmee && !imageBlocIgnore && (
               <BlocIncitatiImage
-                locale={locale}
-                titre={form.titre}
-                categorie={categorieNomSelectionnee}
+  locale={locale}
+  titre={form.titre}
+  categorie={categorieNomSelectionnee}
+  imageDejaSelectionnee={imageConfirmee}
                 onSelectUnsplash={(photo) => {
                   setImageUnsplash(photo)
                   setShowImageBloc(false)
