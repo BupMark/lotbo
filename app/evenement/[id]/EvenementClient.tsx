@@ -13,9 +13,9 @@ function formatDate(dateStr: string): string {
   return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
 }
 
-function afficherPeriode(ev: any): string {
-  if (ev.date_fin && ev.date_fin !== ev.date) return `${formatDate(ev.date)} → ${formatDate(ev.date_fin)}`
-  return formatDate(ev.date) || ev.date
+function afficherPeriode(ev: { date?: string; date_fin?: string }): string {
+  if (ev.date_fin && ev.date_fin !== ev.date) return `${formatDate(ev.date || '')} → ${formatDate(ev.date_fin)}`
+  return formatDate(ev.date || '') || ev.date || ''
 }
 
 function estEnLigne(lieu: string): boolean {
@@ -24,7 +24,7 @@ function estEnLigne(lieu: string): boolean {
   return mots.some(m => lieu.toLowerCase().includes(m))
 }
 
-function adresseIncomplete(ev: any): boolean {
+function adresseIncomplete(ev: { latitude?: number; longitude?: number }): boolean {
   return !ev.latitude || !ev.longitude
 }
 
@@ -43,64 +43,332 @@ function afficherHeureFuseau(heure: string, fuseauOrganisateur: string): string 
   } catch { return heure }
 }
 
-// ── E15 : Pagination commentaires ─────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface Commentaire {
+  id: string
+  evenement_id: string
+  auteur: string
+  contenu: string
+  created_at: string
+  nb_likes: number
+  parent_id: string | null
+  reponses?: Commentaire[]
+  reactions?: Record<string, number>
+}
+
+interface Evenement {
+  id: string
+  titre: string
+  lieu: string
+  date: string
+  date_fin: string | null
+  heure_debut: string | null
+  heure_fin: string | null
+  fuseau_organisateur: string | null
+  categorie: string
+  acces: string
+  prix: string
+  statut: string
+  image_url: string | null
+  latitude: number | null
+  longitude: number | null
+  description: string | null
+  lien: string | null
+  organisateur: string | null
+}
+
+// ── E12 — 6 réactions ────────────────────────────────────────────────────────
+const REACTIONS_DISPONIBLES = ['👍', '❤️', '😂', '😮', '🙏', '🔥']
+
 const COMMENTS_PER_PAGE = 10
 
-// ── Formulaire commentaire ────────────────────────────────────────────────────
-function CommentaireForm({ evenementId, onNouveau }: { evenementId: string, onNouveau: (c: any) => void }) {
-  const [auteur, setAuteur] = useState('')
+// ── Obtenir ou créer session_id ───────────────────────────────────────────────
+function getSessionId(): string {
+  if (typeof window === 'undefined') return ''
+  const existing = localStorage.getItem('lotbo_session_id')
+  if (existing) return existing
+  const newId = Math.random().toString(36).slice(2)
+  localStorage.setItem('lotbo_session_id', newId)
+  return newId
+}
+
+// ── Composant Réactions ───────────────────────────────────────────────────────
+function ReactionBar({ commentaireId, reactionsInitiales }: {
+  commentaireId: string
+  reactionsInitiales: Record<string, number>
+}) {
+  const [reactions, setReactions]   = useState<Record<string, number>>(reactionsInitiales)
+  const [mesReactions, setMesReactions] = useState<string[]>([])
+  const sessionId = getSessionId()
+
+  useEffect(() => {
+    // Charger les réactions de cet utilisateur
+    supabase.from('reactions')
+      .select('emoji')
+      .eq('commentaire_id', commentaireId)
+      .eq('session_id', sessionId)
+      .then(({ data }) => {
+        setMesReactions((data || []).map((r: { emoji: string }) => r.emoji))
+      })
+  }, [commentaireId])
+
+  const toggleReaction = async (emoji: string) => {
+    const aReagi = mesReactions.includes(emoji)
+    if (aReagi) {
+      // Supprimer
+      await supabase.from('reactions')
+        .delete()
+        .eq('commentaire_id', commentaireId)
+        .eq('session_id', sessionId)
+        .eq('emoji', emoji)
+      setMesReactions(prev => prev.filter(e => e !== emoji))
+      setReactions(prev => ({ ...prev, [emoji]: Math.max(0, (prev[emoji] || 1) - 1) }))
+    } else {
+      // Ajouter
+      await supabase.from('reactions')
+        .insert([{ commentaire_id: commentaireId, session_id: sessionId, emoji }])
+      setMesReactions(prev => [...prev, emoji])
+      setReactions(prev => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }))
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 8 }}>
+      {REACTIONS_DISPONIBLES.map(emoji => {
+        const count   = reactions[emoji] || 0
+        const aReagi  = mesReactions.includes(emoji)
+        return (
+          <button
+            key={emoji}
+            onClick={() => toggleReaction(emoji)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 3,
+              padding: '3px 8px', borderRadius: 999, fontSize: 13,
+              border: aReagi ? '1px solid #C8431A' : '1px solid #E8E0D0',
+              background: aReagi ? 'rgba(200,67,26,0.1)' : 'rgba(255,255,255,0.5)',
+              cursor: 'pointer', transition: 'all 0.15s',
+              color: aReagi ? '#C8431A' : '#8C5A40',
+            }}
+          >
+            <span>{emoji}</span>
+            {count > 0 && <span style={{ fontSize: 11, fontWeight: 'bold' }}>{count}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Formulaire commentaire / réponse ─────────────────────────────────────────
+function CommentaireForm({
+  evenementId,
+  parentId,
+  onNouveau,
+  onCancel,
+  placeholder,
+  compact,
+}: {
+  evenementId: string
+  parentId?: string
+  onNouveau: (c: Commentaire) => void
+  onCancel?: () => void
+  placeholder?: string
+  compact?: boolean
+}) {
+  const [auteur, setAuteur]   = useState('')
   const [contenu, setContenu] = useState('')
   const [loading, setLoading] = useState(false)
-  const [envoye, setEnvoye] = useState(false)
+  const [envoye, setEnvoye]   = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!auteur.trim() || !contenu.trim()) return
     setLoading(true)
     const { data, error } = await supabase.from('commentaires')
-      .insert([{ evenement_id: evenementId, auteur: auteur.trim(), contenu: contenu.trim() }])
+      .insert([{
+        evenement_id: evenementId,
+        auteur: auteur.trim(),
+        contenu: contenu.trim(),
+        parent_id: parentId || null,
+      }])
       .select().single()
     setLoading(false)
     if (!error && data) {
-      onNouveau(data); setAuteur(''); setContenu('')
-      setEnvoye(true); setTimeout(() => setEnvoye(false), 3000)
+      onNouveau(data as Commentaire)
+      setAuteur('')
+      setContenu('')
+      setEnvoye(true)
+      setTimeout(() => { setEnvoye(false); if (onCancel) onCancel() }, 2000)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <input value={auteur} onChange={e => setAuteur(e.target.value)}
-          placeholder="Ton prénom ou pseudo" maxLength={50} required
-          style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1A1410', outline: 'none' }} />
-        <textarea value={contenu} onChange={e => setContenu(e.target.value)}
-          placeholder="Laisse un commentaire..." maxLength={500} rows={3} required
-          style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1A1410', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {envoye ? <p style={{ color: '#2D9E6B', fontSize: 13 }}>✓ Commentaire ajouté !</p> : <div />}
-          <button type="submit" disabled={loading} style={{
-            background: loading ? '#E8E0D0' : '#C8431A', color: '#1A1410',
-            fontWeight: 'bold', padding: '10px 20px', borderRadius: 10,
-            border: 'none', fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer'
-          }}>{loading ? '...' : 'Commenter →'}</button>
+    <form onSubmit={handleSubmit} style={{ marginBottom: compact ? 0 : 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <input
+          value={auteur}
+          onChange={e => setAuteur(e.target.value)}
+          placeholder="Ton prénom ou pseudo"
+          maxLength={50}
+          required
+          style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: compact ? '8px 12px' : '10px 14px', fontSize: 13, color: '#1A1410', outline: 'none' }}
+        />
+        <textarea
+          value={contenu}
+          onChange={e => setContenu(e.target.value)}
+          placeholder={placeholder || 'Laisse un commentaire...'}
+          maxLength={500}
+          rows={compact ? 2 : 3}
+          required
+          style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: compact ? '8px 12px' : '10px 14px', fontSize: 13, color: '#1A1410', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          {envoye
+            ? <p style={{ color: '#2D9E6B', fontSize: 13 }}>✓ {parentId ? 'Réponse ajoutée !' : 'Commentaire ajouté !'}</p>
+            : <div />
+          }
+          <div style={{ display: 'flex', gap: 8 }}>
+            {onCancel && (
+              <button type="button" onClick={onCancel} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', padding: '8px 12px' }}>
+                Annuler
+              </button>
+            )}
+            <button type="submit" disabled={loading} style={{
+              background: loading ? '#E8E0D0' : '#C8431A',
+              color: '#F7F2E8', fontWeight: 'bold',
+              padding: compact ? '8px 16px' : '10px 20px',
+              borderRadius: 10, border: 'none', fontSize: 13,
+              cursor: loading ? 'not-allowed' : 'pointer',
+            }}>
+              {loading ? '...' : parentId ? 'Répondre →' : 'Commenter →'}
+            </button>
+          </div>
         </div>
       </div>
     </form>
   )
 }
 
-// ── E14 + E15 : Liste commentaires ────────────────────────────────────────────
-function CommentairesList({ commentaires }: { commentaires: any[] }) {
-  const [tri, setTri] = useState<'recent' | 'likes'>('recent')
+// ── Carte commentaire individuel ──────────────────────────────────────────────
+function CarteCommentaire({
+  commentaire,
+  evenementId,
+  onNouvelleReponse,
+  estReponse,
+}: {
+  commentaire: Commentaire
+  evenementId: string
+  onNouvelleReponse: (parentId: string, reponse: Commentaire) => void
+  estReponse?: boolean
+}) {
+  const [showRepondre, setShowRepondre] = useState(false)
+
+  return (
+    <div style={{
+      background: estReponse ? 'rgba(26,20,16,0.02)' : 'white',
+      border: '1px solid #E8E0D0',
+      borderRadius: 12,
+      padding: '14px 16px',
+      marginLeft: estReponse ? 20 : 0,
+      borderLeft: estReponse ? '3px solid rgba(200,67,26,0.3)' : '1px solid #E8E0D0',
+    }}>
+      {/* En-tête */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold', color: 'white', flexShrink: 0 }}>
+            {commentaire.auteur[0]?.toUpperCase()}
+          </div>
+          <span style={{ fontWeight: 'bold', fontSize: 13, color: '#1A1410' }}>{commentaire.auteur}</span>
+        </div>
+        <span style={{ fontSize: 11, color: '#8C5A40' }}>
+          {new Date(commentaire.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </span>
+      </div>
+
+      {/* Contenu */}
+      <p style={{ fontSize: 13, color: '#3D2B1F', lineHeight: 1.6, marginBottom: 8 }}>{commentaire.contenu}</p>
+
+      {/* E12 — Réactions */}
+      <ReactionBar
+        commentaireId={commentaire.id}
+        reactionsInitiales={commentaire.reactions || {}}
+      />
+
+      {/* E11 — Bouton répondre (uniquement sur commentaires racine) */}
+      {!estReponse && (
+        <div style={{ marginTop: 8 }}>
+          {!showRepondre ? (
+            <button
+              onClick={() => setShowRepondre(true)}
+              style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              💬 Répondre
+              {commentaire.reponses && commentaire.reponses.length > 0 && (
+                <span style={{ background: 'rgba(200,67,26,0.1)', color: '#C8431A', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 'bold' }}>
+                  {commentaire.reponses.length}
+                </span>
+              )}
+            </button>
+          ) : (
+            <div style={{ marginTop: 10 }}>
+              <CommentaireForm
+                evenementId={evenementId}
+                parentId={commentaire.id}
+                onNouveau={(reponse) => {
+                  onNouvelleReponse(commentaire.id, reponse)
+                  setShowRepondre(false)
+                }}
+                onCancel={() => setShowRepondre(false)}
+                placeholder={`Répondre à ${commentaire.auteur}...`}
+                compact
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* E11 — Réponses imbriquées */}
+      {!estReponse && commentaire.reponses && commentaire.reponses.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+          {commentaire.reponses.map(rep => (
+            <CarteCommentaire
+              key={rep.id}
+              commentaire={rep}
+              evenementId={evenementId}
+              onNouvelleReponse={onNouvelleReponse}
+              estReponse
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Liste commentaires ────────────────────────────────────────────────────────
+function CommentairesList({
+  commentaires,
+  evenementId,
+  onNouvelleReponse,
+}: {
+  commentaires: Commentaire[]
+  evenementId: string
+  onNouvelleReponse: (parentId: string, reponse: Commentaire) => void
+}) {
+  const [tri, setTri]         = useState<'recent' | 'likes'>('recent')
   const [nbVisible, setNbVisible] = useState(COMMENTS_PER_PAGE)
 
-  const tries = [...commentaires].sort((a, b) => {
+  // Uniquement les commentaires racine (pas de parent_id)
+  const racines = commentaires.filter(c => !c.parent_id)
+
+  const tries = [...racines].sort((a, b) => {
     if (tri === 'likes') return (b.nb_likes || 0) - (a.nb_likes || 0)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
+
   const visibles = tries.slice(0, nbVisible)
 
-  if (commentaires.length === 0) {
+  if (racines.length === 0) {
     return <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Aucun commentaire. Sois le premier à commenter !</p>
   }
 
@@ -108,7 +376,7 @@ function CommentairesList({ commentaires }: { commentaires: any[] }) {
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {[{ key: 'recent', label: '🕐 Plus récents' }, { key: 'likes', label: '❤️ Plus likés' }].map(t => (
-          <button key={t.key} onClick={() => setTri(t.key as any)} style={{
+          <button key={t.key} onClick={() => setTri(t.key as 'recent' | 'likes')} style={{
             padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
             border: 'none', cursor: 'pointer',
             background: tri === t.key ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
@@ -116,28 +384,31 @@ function CommentairesList({ commentaires }: { commentaires: any[] }) {
           }}>{t.label}</button>
         ))}
         <span style={{ color: '#555', fontSize: 12, marginLeft: 'auto', alignSelf: 'center' }}>
-          {commentaires.length} commentaire{commentaires.length > 1 ? 's' : ''}
+          {racines.length} commentaire{racines.length > 1 ? 's' : ''}
         </span>
       </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {visibles.map(c => (
-          <div key={c.id} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '14px 16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontWeight: 'bold', fontSize: 13, color: '#1A1410' }}>{c.auteur}</span>
-              <span style={{ fontSize: 11, color: '#8C5A40' }}>
-                {new Date(c.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            </div>
-            <p style={{ fontSize: 13, color: '#8C5A40', lineHeight: 1.6 }}>{c.contenu}</p>
-          </div>
+          <CarteCommentaire
+            key={c.id}
+            commentaire={c}
+            evenementId={evenementId}
+            onNouvelleReponse={onNouvelleReponse}
+          />
         ))}
       </div>
-      {nbVisible < commentaires.length && (
+
+      {nbVisible < racines.length && (
         <button onClick={() => setNbVisible(n => n + COMMENTS_PER_PAGE)} style={{
-          width: '100%', marginTop: 16, background: 'rgba(255,255,255,0.04)',
-          border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px',
-          fontSize: 13, color: '#8C5A40', cursor: 'pointer', fontWeight: 'bold'
-        }}>Voir plus ({commentaires.length - nbVisible} restants)</button>
+          width: '100%', marginTop: 16,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid #E8E0D0', borderRadius: 10,
+          padding: '12px', fontSize: 13, color: '#8C5A40',
+          cursor: 'pointer', fontWeight: 'bold',
+        }}>
+          Voir plus ({racines.length - nbVisible} restants)
+        </button>
       )}
     </div>
   )
@@ -145,53 +416,86 @@ function CommentairesList({ commentaires }: { commentaires: any[] }) {
 
 // ── Page principale ───────────────────────────────────────────────────────────
 export default function EvenementPage() {
-  const { id } = useParams()
-  const router = useRouter()
-  const [ev, setEv] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [similaires, setSimilaires] = useState<any[]>([])
+  const { id }   = useParams()
+  const router   = useRouter()
+  const [ev, setEv]                         = useState<Evenement | null>(null)
+  const [loading, setLoading]               = useState(true)
+  const [similaires, setSimilaires]         = useState<Evenement[]>([])
   const [signalementModal, setSignalementModal] = useState(false)
   const [raisonSignalement, setRaisonSignalement] = useState('')
   const [signalementEnvoye, setSignalementEnvoye] = useState(false)
-  const [liked, setLiked] = useState(false)
-  const [nbLikes, setNbLikes] = useState(0)
-  const [commentaires, setCommentaires] = useState<any[]>([])
-
-  // ── E1 + E3b : Je serai là ────────────────────────────────────────────────
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [imageAuto, setImageAuto] = useState<string | null>(null)
-  const [imageAuteur, setImageAuteur] = useState<string | null>(null)
-  const [seraiLa, setSeraiLa] = useState(false)
+  const [liked, setLiked]                   = useState(false)
+  const [nbLikes, setNbLikes]               = useState(0)
+  const [commentaires, setCommentaires]     = useState<Commentaire[]>([])
+  const [isAdmin, setIsAdmin]               = useState(false)
+  const [imageAuto, setImageAuto]           = useState<string | null>(null)
+  const [imageAuteur, setImageAuteur]       = useState<string | null>(null)
+  const [seraiLa, setSeraiLa]               = useState(false)
   const [nbParticipants, setNbParticipants] = useState(0)
   const [loadingParticipation, setLoadingParticipation] = useState(false)
   const [carteVisuelleouverte, setCarteVisuelleouverte] = useState(false)
-  const [expressionChoisie, setExpressionChoisie] = useState('🙋 Je serai là')
-  // ─────────────────────────────────────────────────────────────────────────
+  const [expressionChoisie, setExpressionChoisie]       = useState('🙋 Je serai là')
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
       .then(async ({ data }) => {
-        setEv(data)
-        // F9 — Image automatique Unsplash si pas d'image
+        setEv(data as Evenement)
         if (data && !data.image_url && data.categorie) {
           fetch(`/api/unsplash?categorie=${encodeURIComponent(data.categorie)}&q=${encodeURIComponent(data.titre)}`)
             .then(r => r.json())
-            .then(img => {
-              if (img.url) { setImageAuto(img.url); setImageAuteur(img.author) }
-            })
+            .then(img => { if (img.url) { setImageAuto(img.url); setImageAuteur(img.author) } })
             .catch(() => {})
         }
         if (data) {
           const { data: sims } = await supabase.from('evenements').select('*')
             .eq('categorie', data.categorie).eq('statut', 'approuve').neq('id', id).limit(3)
-          setSimilaires(sims || [])
+          setSimilaires((sims as Evenement[]) || [])
           const { count } = await supabase.from('participations')
             .select('*', { count: 'exact', head: true }).eq('evenement_id', id)
           setNbParticipants(count || 0)
         }
+
+        // Charger commentaires + réponses + réactions
         const { data: comms } = await supabase.from('commentaires').select('*')
           .eq('evenement_id', id).order('created_at', { ascending: false })
-        setCommentaires(comms || [])
+
+        if (comms) {
+          // Charger les réactions pour tous les commentaires
+          const ids = comms.map((c: Commentaire) => c.id)
+          const { data: reactions } = await supabase.from('reactions')
+            .select('commentaire_id, emoji').in('commentaire_id', ids)
+
+          // Agréger réactions par commentaire
+          const reactionsMap: Record<string, Record<string, number>> = {}
+          if (reactions) {
+            for (const r of reactions as { commentaire_id: string; emoji: string }[]) {
+              if (!reactionsMap[r.commentaire_id]) reactionsMap[r.commentaire_id] = {}
+              reactionsMap[r.commentaire_id][r.emoji] = (reactionsMap[r.commentaire_id][r.emoji] || 0) + 1
+            }
+          }
+
+          // Construire arbre parent/enfants
+          const tousLesCommentaires: Commentaire[] = comms.map((c: Commentaire) => ({
+            ...c,
+            reactions: reactionsMap[c.id] || {},
+            reponses: [],
+          }))
+
+          const racines: Commentaire[] = []
+          const map: Record<string, Commentaire> = {}
+          tousLesCommentaires.forEach(c => { map[c.id] = c })
+          tousLesCommentaires.forEach(c => {
+            if (c.parent_id && map[c.parent_id]) {
+              map[c.parent_id].reponses = map[c.parent_id].reponses || []
+              map[c.parent_id].reponses!.push(c)
+            } else if (!c.parent_id) {
+              racines.push(c)
+            }
+          })
+
+          setCommentaires(tousLesCommentaires)
+        }
+
         setLoading(false)
       })
   }, [id])
@@ -204,13 +508,9 @@ export default function EvenementPage() {
     setNbLikes(count[id as string] || 0)
     const participations = JSON.parse(localStorage.getItem('lotbo_participations') || '{}')
     setSeraiLa(!!participations[id as string])
-
-    // Vérifier rôle admin
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.user_metadata?.role === 'admin') setIsAdmin(true)
     })
-
-
     const expressions = JSON.parse(localStorage.getItem('lotbo_expressions') || '{}')
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
   }, [id])
@@ -226,16 +526,11 @@ export default function EvenementPage() {
     setLiked(!liked); setNbLikes(count[id as string])
   }
 
-  // ── E1 : Toggle participation + ouvre carte visuelle ─────────────────────
   const handleSeraiLa = async () => {
     if (!id || loadingParticipation) return
     setLoadingParticipation(true)
     const participations = JSON.parse(localStorage.getItem('lotbo_participations') || '{}')
-    const sessionId = localStorage.getItem('lotbo_session_id') || (() => {
-      const s = Math.random().toString(36).slice(2)
-      localStorage.setItem('lotbo_session_id', s); return s
-    })()
-
+    const sessionId = getSessionId()
     if (seraiLa) {
       await supabase.from('participations').delete().eq('evenement_id', id).eq('session_id', sessionId)
       delete participations[id as string]
@@ -246,7 +541,6 @@ export default function EvenementPage() {
       participations[id as string] = true
       setNbParticipants(n => n + 1)
       setSeraiLa(true)
-      // ── E3b : Ouvrir carte visuelle après participation ──
       setCarteVisuelleouverte(true)
     }
     localStorage.setItem('lotbo_participations', JSON.stringify(participations))
@@ -254,9 +548,19 @@ export default function EvenementPage() {
   }
 
   const handleSignalement = async () => {
-    if (!raisonSignalement) return
+    if (!raisonSignalement || !ev) return
     await supabase.from('signalements').insert([{ evenement_id: ev.id, raison: raisonSignalement }])
     setSignalementEnvoye(true); setSignalementModal(false)
+  }
+
+  // E11 — Ajouter une réponse à l'arbre local
+  const handleNouvelleReponse = (parentId: string, reponse: Commentaire) => {
+    setCommentaires(prev => prev.map(c => {
+      if (c.id === parentId) {
+        return { ...c, reponses: [...(c.reponses || []), reponse] }
+      }
+      return c
+    }))
   }
 
   if (loading) return (
@@ -269,25 +573,24 @@ export default function EvenementPage() {
     <main style={{ minHeight: '100dvh', background: '#F7F2E8' }} className="flex items-center justify-center">
       <div style={{ textAlign: 'center' }}>
         <p style={{ color: '#8C5A40', marginBottom: 16 }}>Événement introuvable.</p>
-        <button onClick={() => router.push('/')} style={{ background: '#C8431A', color: '#1A1410', padding: '10px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 14 }}>Retour à la carte</button>
+        <button onClick={() => router.push('/')} style={{ background: '#C8431A', color: '#F7F2E8', padding: '10px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 14 }}>Retour à la carte</button>
       </div>
     </main>
   )
 
-  const urlEvenement = 'https://app.lotbo.app/evenement/' + ev.id
+  const urlEvenement  = 'https://app.lotbo.app/evenement/' + ev.id
   const texteWhatsapp = 'Découvre cet événement sur Lotbo : ' + ev.titre + ' — ' + urlEvenement
-  const urlWhatsapp = 'https://wa.me/?text=' + encodeURIComponent(texteWhatsapp)
-  const urlFacebook = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)
+  const urlWhatsapp   = 'https://wa.me/?text=' + encodeURIComponent(texteWhatsapp)
+  const urlFacebook   = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)
   const urlGoogleMaps = 'https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude
   const periodeAffichee = afficherPeriode(ev)
-  const estMultiJours = ev.date_fin && ev.date_fin !== ev.date
-  const enLigne = estEnLigne(ev.lieu || '')
-  const sansCoordonnes = adresseIncomplete(ev)
+  const estMultiJours   = ev.date_fin && ev.date_fin !== ev.date
+  const enLigne         = estEnLigne(ev.lieu || '')
+  const sansCoordonnes  = adresseIncomplete(ev)
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
 
-      {/* ── E3b : Modal carte visuelle ── */}
       {carteVisuelleouverte && (
         <CarteVisuelle
           evenement={{ titre: ev.titre, lieu: ev.lieu, date: ev.date, date_fin: ev.date_fin, image_url: ev.image_url }}
@@ -296,7 +599,6 @@ export default function EvenementPage() {
         />
       )}
 
-      {/* Modal signalement */}
       {signalementModal && (
         <>
           <div onClick={() => setSignalementModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
@@ -310,9 +612,9 @@ export default function EvenementPage() {
                   {['Fausse information', 'Contenu inapproprié', 'Événement annulé', 'Spam', 'Autre'].map(raison => (
                     <button key={raison} onClick={() => setRaisonSignalement(raison)} style={{
                       padding: '12px 16px', borderRadius: 10, fontSize: 14, textAlign: 'left', cursor: 'pointer',
-                      background: raisonSignalement === raison ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-                      border: raisonSignalement === raison ? '1px solid #C8431A' : '1px solid #2a2a2a',
-                      color: raisonSignalement === raison ? '#F7F2E8' : '#1A1410',
+                      background: raisonSignalement === raison ? 'rgba(200,67,26,0.15)' : 'white',
+                      border: raisonSignalement === raison ? '1px solid #C8431A' : '1px solid #E8E0D0',
+                      color: '#1A1410',
                     }}>{raison}</button>
                   ))}
                 </div>
@@ -321,7 +623,7 @@ export default function EvenementPage() {
                   background: raisonSignalement ? '#C8431A' : 'rgba(255,255,255,0.04)',
                   color: raisonSignalement ? '#F7F2E8' : '#555',
                   border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold',
-                  cursor: raisonSignalement ? 'pointer' : 'not-allowed'
+                  cursor: raisonSignalement ? 'pointer' : 'not-allowed',
                 }}>Envoyer le signalement</button>
               </>
             )}
@@ -352,17 +654,14 @@ export default function EvenementPage() {
               await supabase.from('evenements').update({ statut: 'hors_ligne' }).eq('id', ev.id)
               alert('Événement mis hors ligne ✓')
               router.push('/')
-            }} style={{
-              background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)',
-              color: '#D4A820', borderRadius: 8, padding: '6px 12px',
-              fontSize: 12, fontWeight: 'bold', cursor: 'pointer'
-            }}>⚠️ Mettre hors ligne</button>
+            }} style={{ background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)', color: '#D4A820', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}>
+              ⚠️ Mettre hors ligne
+            </button>
           )}
         </div>
 
         <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 'bold', marginBottom: 16, fontFamily: 'serif', fontStyle: 'italic', color: '#1A1410', lineHeight: 1.2 }}>{ev.titre}</h1>
 
-        {/* Badges + E10 */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
           <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>{ev.categorie}</span>
           {enLigne && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '4px 12px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>🌐 En ligne</span>}
@@ -376,28 +675,27 @@ export default function EvenementPage() {
           )}
         </div>
 
-        {/* Infos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
           {enLigne ? (
-            <p style={{ color: '#E8E0D0', fontSize: 15 }}>🌐 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu}</span></p>
+            <p style={{ color: '#8C5A40', fontSize: 15 }}>🌐 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu}</span></p>
           ) : sansCoordonnes ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <p style={{ color: '#E8E0D0', fontSize: 15 }}>📍 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu || 'Lieu à confirmer'}</span></p>
+              <p style={{ color: '#8C5A40', fontSize: 15 }}>📍 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu || 'Lieu à confirmer'}</span></p>
               <span style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>📍 Adresse non communiquée</span>
             </div>
           ) : (
-            <p style={{ color: '#E8E0D0', fontSize: 15 }}>📍 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu}</span></p>
+            <p style={{ color: '#8C5A40', fontSize: 15 }}>📍 <span style={{ color: '#1A1410', fontWeight: 'bold' }}>{ev.lieu}</span></p>
           )}
-          <p style={{ color: '#E8E0D0', fontSize: 15 }}>📅 <span style={{ color: '#1A1410' }}>{periodeAffichee}</span></p>
+          <p style={{ color: '#8C5A40', fontSize: 15 }}>📅 <span style={{ color: '#1A1410' }}>{periodeAffichee}</span></p>
           {ev.heure_debut && (
-            <p style={{ color: '#E8E0D0', fontSize: 15 }}>
+            <p style={{ color: '#8C5A40', fontSize: 15 }}>
               🕐 <span style={{ color: '#1A1410' }}>
                 {afficherHeureFuseau(ev.heure_debut, ev.fuseau_organisateur || 'America/Port-au-Prince')}
                 {ev.heure_fin ? ` → ${afficherHeureFuseau(ev.heure_fin, ev.fuseau_organisateur || 'America/Port-au-Prince')}` : ''}
               </span>
             </p>
           )}
-          {ev.organisateur && <p style={{ color: '#E8E0D0', fontSize: 15 }}>👤 <span style={{ color: '#1A1410' }}>{ev.organisateur}</span></p>}
+          {ev.organisateur && <p style={{ color: '#8C5A40', fontSize: 15 }}>👤 <span style={{ color: '#1A1410' }}>{ev.organisateur}</span></p>}
           {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
             <a href={urlGoogleMaps} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}>
               <span style={{ fontSize: 20 }}>🧭</span>S'y rendre · Ouvrir dans Google Maps
@@ -418,12 +716,11 @@ export default function EvenementPage() {
         )}
 
         {ev.lien && !enLigne && (
-          <a href={ev.lien} target="_blank" style={{ display: 'block', width: '100%', textAlign: 'center', background: '#C8431A', color: '#1A1410', fontWeight: 'bold', padding: '14px', borderRadius: 12, marginBottom: 12, textDecoration: 'none', fontSize: 15 }}>
+          <a href={ev.lien} target="_blank" style={{ display: 'block', width: '100%', textAlign: 'center', background: '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 12, marginBottom: 12, textDecoration: 'none', fontSize: 15 }}>
             Plus de détails →
           </a>
         )}
 
-        {/* ── E1 + E3b : Bouton Je serai là ── */}
         <div style={{ marginBottom: 16 }}>
           <button onClick={handleSeraiLa} disabled={loadingParticipation} style={{
             width: '100%', padding: '16px', borderRadius: 12,
@@ -431,7 +728,7 @@ export default function EvenementPage() {
             background: seraiLa ? 'rgba(200,67,26,0.15)' : 'rgba(26,20,16,0.04)',
             color: seraiLa ? '#C8431A' : '#1A1410',
             fontSize: 16, fontWeight: 'bold', cursor: loadingParticipation ? 'not-allowed' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s'
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s',
           }}>
             <span style={{ fontSize: 20 }}>{seraiLa ? '✅' : '🙋'}</span>
             <span>{seraiLa ? `${expressionChoisie} ✓` : 'Je serai là · M ap la'}</span>
@@ -441,28 +738,26 @@ export default function EvenementPage() {
               </span>
             )}
           </button>
-          {/* Bouton créer carte si déjà participé */}
           {seraiLa && (
             <button onClick={() => setCarteVisuelleouverte(true)} style={{
               width: '100%', marginTop: 8, padding: '11px',
               background: 'white', border: '1px solid #E8E0D0',
               borderRadius: 10, color: '#8C5A40', fontSize: 13, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
               🎨 Créer ma carte visuelle
             </button>
           )}
         </div>
 
-        {/* Barre actions */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32, gap: 12 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button onClick={handleLike} style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: liked ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-              border: liked ? '1px solid #C8431A' : '1px solid #2a2a2a',
+              border: liked ? '1px solid #C8431A' : '1px solid #E8E0D0',
               borderRadius: 999, padding: '8px 14px', cursor: 'pointer',
-              color: liked ? '#C8431A' : '#8C5A40', fontSize: 13, fontWeight: 'bold', transition: 'all 0.15s'
+              color: liked ? '#C8431A' : '#8C5A40', fontSize: 13, fontWeight: 'bold', transition: 'all 0.15s',
             }}>
               <span style={{ fontSize: 16 }}>{liked ? '❤️' : '🤍'}</span>
               <span>J'aime{nbLikes > 0 ? ` ${nbLikes}` : ''}</span>
@@ -470,7 +765,7 @@ export default function EvenementPage() {
             <button onClick={() => setSignalementModal(true)} style={{
               display: 'flex', alignItems: 'center', gap: 5,
               background: 'white', border: '1px solid #E8E0D0',
-              borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12
+              borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12,
             }}>
               <span style={{ fontSize: 14 }}>⚠️</span><span>Signaler</span>
             </button>
@@ -488,16 +783,24 @@ export default function EvenementPage() {
           </div>
         </div>
 
-        <div style={{ height: 1, background: '#2a2a2a', marginBottom: 32 }} />
+        <div style={{ height: 1, background: '#E8E0D0', marginBottom: 32 }} />
 
-        {/* Commentaires */}
+        {/* ── Commentaires E11 + E12 ── */}
         <div style={{ marginBottom: 48 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: '#1A1410' }}>Commentaires</h2>
-          <CommentaireForm evenementId={ev.id} onNouveau={(c) => setCommentaires(prev => [c, ...prev])} />
-          <CommentairesList commentaires={commentaires} />
+          <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: '#1A1410' }}>
+            Commentaires
+          </h2>
+          <CommentaireForm
+            evenementId={ev.id}
+            onNouveau={(c) => setCommentaires(prev => [{ ...c, reponses: [], reactions: {} }, ...prev])}
+          />
+          <CommentairesList
+            commentaires={commentaires}
+            evenementId={ev.id}
+            onNouvelleReponse={handleNouvelleReponse}
+          />
         </div>
 
-        {/* Similaires */}
         {similaires.length > 0 && (
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1A1410' }}>Événements similaires</h2>
