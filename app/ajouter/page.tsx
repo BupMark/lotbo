@@ -968,7 +968,103 @@ if (estRecurrent && inserted?.id) {
               <input type="time" name="heure_fin" onChange={handleChange} style={inputStyle} />
             </div>
           </div>
+{/* ── F8 — Récurrence ── */}
+<div>
+  <button type="button" onClick={() => setEstRecurrent(!estRecurrent)} style={{
+    display: 'flex', alignItems: 'center', gap: 10,
+    background: estRecurrent ? 'rgba(200,67,26,0.12)' : 'white',
+    border: estRecurrent ? '1px solid #C8431A' : '1px solid #E8E0D0',
+    borderRadius: 10, padding: '10px 14px',
+    color: estRecurrent ? '#1A1410' : '#8C5A40',
+    fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left' as const,
+  }}>
+    <span style={{ fontSize: 16 }}>{estRecurrent ? '✅' : '☐'}</span>
+    <span>Cet événement se répète</span>
+  </button>
 
+  {estRecurrent && (
+    <div style={{ background: 'rgba(200,67,26,0.04)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 12, padding: '16px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+      {/* Type récurrence */}
+      <div>
+        <label style={labelStyle}>Fréquence</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+          {[
+            { key: 'quotidien',    label: 'Tous les jours' },
+            { key: 'hebdomadaire', label: 'Toutes les semaines' },
+            { key: 'mensuel',      label: 'Tous les mois' },
+            { key: 'annuel',       label: 'Tous les ans' },
+          ].map(t => (
+            <button key={t.key} type="button"
+              onClick={() => setTypeRecurrence(t.key as typeof typeRecurrence)}
+              style={{
+                padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                border: 'none', cursor: 'pointer',
+                background: typeRecurrence === t.key ? '#C8431A' : 'rgba(255,255,255,0.6)',
+                color: typeRecurrence === t.key ? 'white' : '#8C5A40',
+              }}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Jours si hebdomadaire */}
+      {typeRecurrence === 'hebdomadaire' && (
+        <div>
+          <label style={labelStyle}>Jour(s) de la semaine</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+            {['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'].map(jour => {
+              const actif = joursRecurrence.includes(jour)
+              return (
+                <button key={jour} type="button"
+                  onClick={() => setJoursRecurrence(prev => actif ? prev.filter(j => j !== jour) : [...prev, jour])}
+                  style={{
+                    padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                    border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer',
+                    background: actif ? '#C8431A' : 'white',
+                    color: actif ? 'white' : '#8C5A40',
+                  }}>{jour}</button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Fin de récurrence */}
+      <div>
+        <label style={labelStyle}>Fin de la récurrence</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 10 }}>
+          {[
+            { key: 'sans_fin',     label: 'Sans fin' },
+            { key: 'date',         label: "Jusqu'à une date" },
+            { key: 'occurrences',  label: 'Après X fois' },
+          ].map(f => (
+            <button key={f.key} type="button"
+              onClick={() => setFinRecurrenceType(f.key as typeof finRecurrenceType)}
+              style={{
+                padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                border: 'none', cursor: 'pointer',
+                background: finRecurrenceType === f.key ? '#1A1410' : 'rgba(255,255,255,0.6)',
+                color: finRecurrenceType === f.key ? '#F7F2E8' : '#8C5A40',
+              }}>{f.label}</button>
+          ))}
+        </div>
+        {finRecurrenceType === 'date' && (
+          <input type="date" value={finRecurrenceDate} onChange={e => setFinRecurrenceDate(e.target.value)}
+            style={{ ...inputStyle, marginTop: 4 }} />
+        )}
+        {finRecurrenceType === 'occurrences' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+            <input type="number" min={2} max={52} value={finRecurrenceNb}
+              onChange={e => setFinRecurrenceNb(parseInt(e.target.value))}
+              style={{ ...inputStyle, width: 80 }} />
+            <span style={{ color: '#8C5A40', fontSize: 13 }}>occurrences</span>
+          </div>
+        )}
+      </div>
+
+    </div>
+  )}
+</div>
           <div>
             <label style={labelStyle}>Fuseau horaire <span style={{ color: '#8C5A40', marginLeft: 4 }}>(heure locale du lieu)</span></label>
             <select name="fuseau_organisateur" value={form.fuseau_organisateur} onChange={handleChange} style={inputStyle}>
@@ -1093,103 +1189,7 @@ if (estRecurrent && inserted?.id) {
               </div>
             )}
           </div>
-{/* ── F8 — Récurrence ── */}
-<div>
-  <button type="button" onClick={() => setEstRecurrent(!estRecurrent)} style={{
-    display: 'flex', alignItems: 'center', gap: 10,
-    background: estRecurrent ? 'rgba(200,67,26,0.12)' : 'white',
-    border: estRecurrent ? '1px solid #C8431A' : '1px solid #E8E0D0',
-    borderRadius: 10, padding: '10px 14px',
-    color: estRecurrent ? '#1A1410' : '#8C5A40',
-    fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left' as const,
-  }}>
-    <span style={{ fontSize: 16 }}>{estRecurrent ? '✅' : '☐'}</span>
-    <span>Cet événement se répète</span>
-  </button>
 
-  {estRecurrent && (
-    <div style={{ background: 'rgba(200,67,26,0.04)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 12, padding: '16px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-      {/* Type récurrence */}
-      <div>
-        <label style={labelStyle}>Fréquence</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-          {[
-            { key: 'quotidien',    label: 'Tous les jours' },
-            { key: 'hebdomadaire', label: 'Toutes les semaines' },
-            { key: 'mensuel',      label: 'Tous les mois' },
-            { key: 'annuel',       label: 'Tous les ans' },
-          ].map(t => (
-            <button key={t.key} type="button"
-              onClick={() => setTypeRecurrence(t.key as typeof typeRecurrence)}
-              style={{
-                padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-                border: 'none', cursor: 'pointer',
-                background: typeRecurrence === t.key ? '#C8431A' : 'rgba(255,255,255,0.6)',
-                color: typeRecurrence === t.key ? 'white' : '#8C5A40',
-              }}>{t.label}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* Jours si hebdomadaire */}
-      {typeRecurrence === 'hebdomadaire' && (
-        <div>
-          <label style={labelStyle}>Jour(s) de la semaine</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'].map(jour => {
-              const actif = joursRecurrence.includes(jour)
-              return (
-                <button key={jour} type="button"
-                  onClick={() => setJoursRecurrence(prev => actif ? prev.filter(j => j !== jour) : [...prev, jour])}
-                  style={{
-                    padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-                    border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer',
-                    background: actif ? '#C8431A' : 'white',
-                    color: actif ? 'white' : '#8C5A40',
-                  }}>{jour}</button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Fin de récurrence */}
-      <div>
-        <label style={labelStyle}>Fin de la récurrence</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 10 }}>
-          {[
-            { key: 'sans_fin',     label: 'Sans fin' },
-            { key: 'date',         label: "Jusqu'à une date" },
-            { key: 'occurrences',  label: 'Après X fois' },
-          ].map(f => (
-            <button key={f.key} type="button"
-              onClick={() => setFinRecurrenceType(f.key as typeof finRecurrenceType)}
-              style={{
-                padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-                border: 'none', cursor: 'pointer',
-                background: finRecurrenceType === f.key ? '#1A1410' : 'rgba(255,255,255,0.6)',
-                color: finRecurrenceType === f.key ? '#F7F2E8' : '#8C5A40',
-              }}>{f.label}</button>
-          ))}
-        </div>
-        {finRecurrenceType === 'date' && (
-          <input type="date" value={finRecurrenceDate} onChange={e => setFinRecurrenceDate(e.target.value)}
-            style={{ ...inputStyle, marginTop: 4 }} />
-        )}
-        {finRecurrenceType === 'occurrences' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
-            <input type="number" min={2} max={52} value={finRecurrenceNb}
-              onChange={e => setFinRecurrenceNb(parseInt(e.target.value))}
-              style={{ ...inputStyle, width: 80 }} />
-            <span style={{ color: '#8C5A40', fontSize: 13 }}>occurrences</span>
-          </div>
-        )}
-      </div>
-
-    </div>
-  )}
-</div>
           <div>
             <label style={labelStyle}>Visibilité de l'événement</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
