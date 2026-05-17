@@ -721,6 +721,8 @@ export default function AjouterEvenement() {
     setSucces(true)
 if (nouveauBadge) {
   setShowBadgePopup(true)
+
+  // ENG3-C — Push PWA
   fetch('/api/push-notify-badge', {
     method: 'POST',
     headers: {
@@ -732,6 +734,24 @@ if (nouveauBadge) {
       badge_emoji: nouveauBadge.emoji,
       badge_label: nouveauBadge.label,
       badge_desc: nouveauBadge.desc,
+    }),
+  }).catch(() => {})
+
+  // ENG3-D — Email Brevo
+  fetch('/api/notify-badge', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
+    },
+    body: JSON.stringify({
+      email: session?.user?.email,
+      nom: session?.user?.user_metadata?.nom || null,
+      badge_emoji: nouveauBadge.emoji,
+      badge_label: nouveauBadge.label,
+      badge_desc: nouveauBadge.desc,
+      nb_contributions: apres,
+      role: choix,
     }),
   }).catch(() => {})
 }
