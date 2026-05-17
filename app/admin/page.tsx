@@ -159,7 +159,7 @@ if (statsPays) {
     if (!ev.pays) continue
     map[ev.pays] = (map[ev.pays] || 0) + 1
   }
-  setRepartitionPays(Object.entries(map).map(([pays, nb]) => ({ pays, nb })).sort((a, b) => b - a).slice(0, 10))
+  setRepartitionPays(Object.entries(map).map(([pays, nb]) => ({ pays, nb })) .sort((a, b) => b.nb - a.nb).slice(0, 10))
 }
     setEvenements((evs as Evenement[]) || [])
     setSignalements((sigs as Signalement[]) || [])
