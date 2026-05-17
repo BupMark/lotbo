@@ -435,6 +435,7 @@ export default function EvenementPage() {
   const [ev, setEv]                         = useState<Evenement | null>(null)
   const [loading, setLoading]               = useState(true)
   const [similaires, setSimilaires]         = useState<Evenement[]>([])
+  const [occurrences, setOccurrences] = useState<Evenement[]>([])
   const [signalementModal, setSignalementModal] = useState(false)
   const [raisonSignalement, setRaisonSignalement] = useState('')
   const [signalementEnvoye, setSignalementEnvoye] = useState(false)
@@ -464,6 +465,27 @@ export default function EvenementPage() {
           const { data: sims } = await supabase.from('evenements').select('*')
             .eq('categorie', data.categorie).eq('statut', 'approuve').neq('id', id).limit(3)
           setSimilaires((sims as Evenement[]) || [])
+          // F8 — Charger occurrences futures si événement récurrent
+if (data?.est_recurrent) {
+  const aujourd_hui = new Date().toISOString().split('T')[0]
+  const { data: occ } = await supabase.from('evenements')
+    .select('id, titre, date, heure_debut, statut')
+    .eq('parent_id', data.id)
+    .eq('statut', 'approuve')
+    .gte('date', aujourd_hui)
+    .order('date', { ascending: true })
+    .limit(8)
+  setOccurrences((occ as Evenement[]) || [])
+}
+
+// F8 — Si c'est une occurrence, charger le parent
+if (data?.parent_id) {
+  const { data: parent } = await supabase.from('evenements')
+    .select('id, titre')
+    .eq('id', data.parent_id)
+    .single()
+  if (parent) setSimilaires([parent as Evenement])
+}
           const { count } = await supabase.from('participations')
             .select('*', { count: 'exact', head: true }).eq('evenement_id', id)
           setNbParticipants(count || 0)
@@ -852,7 +874,51 @@ supabase.auth.getSession().then(({ data: { session } }) => {
             onNouvelleReponse={handleNouvelleReponse}
           />
         </div>
+{/* ── F8 — Lien vers série si occurrence ── */}
+{ev.parent_id && similaires.length > 0 && (
+  <div style={{ marginBottom: 24 }}>
+    <a href={'/evenement/' + similaires[0].id} style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.2)',
+      borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#C8431A',
+      fontSize: 13, fontWeight: 'bold',
+    }}>
+      🔄 ↑ Voir la série complète — {similaires[0].titre}
+    </a>
+  </div>
+)}
 
+{/* ── F8 — Occurrences futures si événement récurrent ── */}
+{occurrences.length > 0 && (
+  <div style={{ marginBottom: 32 }}>
+    <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1A1410' }}>
+      🔄 Prochaines occurrences
+    </h2>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {occurrences.map(occ => (
+        <a key={occ.id} href={'/evenement/' + occ.id} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'white', border: '1px solid #E8E0D0',
+          borderRadius: 10, padding: '12px 16px',
+          textDecoration: 'none', color: '#1A1410',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 16 }}>📅</span>
+            <div>
+              <p style={{ fontWeight: 'bold', fontSize: 13, color: '#1A1410' }}>
+                {new Date(occ.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+              {occ.heure_debut && (
+                <p style={{ color: '#8C5A40', fontSize: 12 }}>🕐 {occ.heure_debut}</p>
+              )}
+            </div>
+          </div>
+          <span style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold' }}>→</span>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
         {similaires.length > 0 && (
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1A1410' }}>Événements similaires</h2>
