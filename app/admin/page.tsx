@@ -243,7 +243,7 @@ if (statsPays) {
         {/* ── En-tête ─────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ fontFamily: 'serif', fontStyle: 'italic' }}>
-            <span style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold' }}>lot</span>
+            <span style={{ color: '#1A1410', fontSize: 24, fontWeight: 'bold' }}>lot</span>
             <span style={{ color: '#C8431A', fontSize: 24, fontWeight: 'bold' }}>bo</span>
             <span style={{ color: '#8C5A40', fontSize: 14, marginLeft: 12 }}>admin</span>
           </div>
@@ -591,7 +591,7 @@ if (statsPays) {
                   return (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <span style={{ color: '#8C5A40', fontSize: 12, width: 24, textAlign: 'right' }}>#{i + 1}</span>
-                      <span style={{ color: '#F7F2E8', fontSize: 13, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.pays}</span>
+                      <span style={{ color: '#1A1410', fontSize: 13, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.pays}</span>
                       <div style={{ width: 100, background: 'rgba(255,255,255,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
                         <div style={{ width: `${pct}%`, height: '100%', background: '#C8431A', borderRadius: 999 }} />
                       </div>
