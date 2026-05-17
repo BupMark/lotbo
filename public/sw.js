@@ -7,6 +7,9 @@ self.addEventListener('activate', function(e) {
 })
 
 self.addEventListener('fetch', function(e) {
+  // Ne jamais intercepter les appels API
+  if (e.request.url.includes('/api/')) return
+
   e.respondWith(fetch(e.request))
 })
 
