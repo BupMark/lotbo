@@ -401,7 +401,7 @@ if (statsPays) {
                   borderRadius: 999,
                   padding: '8px 16px',
                   fontSize: 12,
-                  color: '#F7F2E8',
+                  color: '#1A1410',
                   outline: 'none',
                 }}
               />
@@ -443,7 +443,7 @@ if (statsPays) {
                     />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h2 style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 15, marginBottom: 2 }}>{ev.titre}</h2>
+                    <h2 style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 2 }}>{ev.titre}</h2>
                     {ev.organisateur && (
                       <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 4 }}>👤 {ev.organisateur}</p>
                     )}
@@ -469,7 +469,7 @@ if (statsPays) {
                     <a
                       href={'/evenement/' + ev.id}
                       target="_blank"
-                      style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}
+                      style={{ background: 'rgba(255,255,255,0.06)', color: '#1A1410', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}
                     >
                       Voir
                     </a>
@@ -540,7 +540,7 @@ if (statsPays) {
             {/* Tableau par source */}
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a2a' }}>
-                <h3 style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>📊 Par source</h3>
+                <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}>📊 Par source</h3>
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -561,7 +561,7 @@ if (statsPays) {
                           <td style={{ padding: '12px 16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <span>{statut}</span>
-                              <span style={{ color: '#F7F2E8', fontSize: 13, fontWeight: 'bold', textTransform: 'capitalize' }}>{s.source}</span>
+                              <span style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', textTransform: 'capitalize' }}>{s.source}</span>
                             </div>
                           </td>
                           <td style={{ padding: '12px 16px' }}>
@@ -583,7 +583,7 @@ if (statsPays) {
 
             {/* Top 10 pays */}
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 20 }}>
-              <h3 style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>🌍 Top pays</h3>
+              <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>🌍 Top pays</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {repartitionPays.map((p, i) => {
                   const total = repartitionPays.reduce((s, x) => s + x.nb, 0)
@@ -606,7 +606,7 @@ if (statsPays) {
 
             {/* Actions scrapers */}
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 20 }}>
-              <h3 style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>⚡ Relancer un scraper</h3>
+              <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>⚡ Relancer un scraper</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {[
                   { label: 'PredictHQ',       route: '/api/scrape-predicthq'       },
