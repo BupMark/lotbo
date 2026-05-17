@@ -237,7 +237,7 @@ if (statsPays) {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#1A1410', color: '#F7F2E8', padding: '24px 16px' }}>
+    <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410', padding: '24px 16px' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
         {/* ── En-tête ─────────────────────────────────────────────────── */}
@@ -277,7 +277,7 @@ if (statsPays) {
         {/* ══════════════════════════════════════════════════════════════
             ADMIN2 — Navigation onglets
         ══════════════════════════════════════════════════════════════ */}
-        <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid #2a2a2a' }}>
+        <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid #E8E0D0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {[
             { key: 'evenements',   label: `Événements`,                         count: nbTotal            },
             { key: 'signalements', label: `Signalements`,                       count: signalements.length },
