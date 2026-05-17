@@ -678,7 +678,10 @@ supabase.auth.getSession().then(({ data: { session } }) => {
           {isAdmin && (
             <button onClick={async () => {
               if (!confirm('Mettre cet événement hors ligne ?')) return
-              await supabase.from('evenements').update({ statut: 'hors_ligne' }).eq('id', ev.id)
+              const { data: { session } } = await supabase.auth.getSession()
+console.log('Session role:', session?.user?.user_metadata?.role)
+const { error } = await supabase.from('evenements').update({ statut: 'hors_ligne' }).eq('id', ev.id)
+console.log('Update error:', error)
               alert('Événement mis hors ligne ✓')
               router.push('/')
             }} style={{ background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)', color: '#D4A820', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}>
