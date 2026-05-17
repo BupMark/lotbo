@@ -9,6 +9,32 @@ import { langues, type Langue, getTraductions } from '../lib/i18n'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface Evenement {
+  id: string
+  titre: string
+  lieu: string
+  date: string
+  date_debut: string | null
+  date_fin: string | null
+  heure_debut: string | null
+  heure_fin: string | null
+  categorie: string
+  acces: string
+  prix: string
+  statut: string
+  image_url: string | null
+  latitude: number
+  longitude: number
+  description: string | null
+  lien: string | null
+}
+
+interface UserMeta {
+  user_metadata?: { role?: string }
+  email?: string
+}
+
 const CATEGORIES = ['Toutes', 'Festival', 'Musique', 'Art', 'Sport', 'Gastronomie', 'Culture', 'Conference', 'Autre']
 
 function formatDate(dateStr: string): string {
@@ -20,11 +46,24 @@ function formatDate(dateStr: string): string {
   return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
 }
 
-function afficherPeriode(ev: { date?: string; date_debut?: string; date_fin?: string }): string {
+function afficherPeriode(ev: Pick<Evenement, 'date' | 'date_fin'>): string {
   if (ev.date_fin && ev.date_fin !== ev.date) {
-    return `${formatDate(ev.date || '')} → ${formatDate(ev.date_fin)}`
+    return `${formatDate(ev.date)} → ${formatDate(ev.date_fin)}`
   }
-  return formatDate(ev.date || '') || ev.date || ''
+  return formatDate(ev.date) || ev.date || ''
+}
+
+function emojiCategorie(categorie: string): string {
+  switch (categorie) {
+    case 'Festival':              return '🎉'
+    case 'Concert / Spectacle':   return '🎶'
+    case 'Tournoi / Compétition': return '⚽'
+    case 'Gastronomie':           return '🍽️'
+    case 'Art':                   return '🎨'
+    case 'Conférence / Sommet':   return '🎤'
+    case 'Formation / Séminaire': return '📚'
+    default:                      return '📅'
+  }
 }
 
 export default function Home() {
@@ -32,20 +71,21 @@ export default function Home() {
   const mapRef       = useRef<mapboxgl.Map | null>(null)
   const markersRef   = useRef<mapboxgl.Marker[]>([])
 
-  const [categorie, setCategorie]         = useState('Toutes')
-  const [acces, setAcces]                 = useState('tous')
-  const [prix, setPrix]                   = useState('tous')
-  const [evenements, setEvenements]       = useState<Record<string, unknown>[]>([])
-  const [user, setUser]                   = useState<Record<string, unknown> | null>(null)
-  const [recherche, setRecherche]         = useState('')
-  const [mode, setMode]                   = useState<'carte' | 'liste'>('carte')
-  const [langue, setLangue]               = useState<Langue>('fr')
-  const [dateDebut, setDateDebut]         = useState('')
-  const [dateFin, setDateFin]             = useState('')
+  const [categorie, setCategorie]           = useState('Toutes')
+  const [acces, setAcces]                   = useState('tous')
+  const [prix, setPrix]                     = useState('tous')
+  const [evenements, setEvenements]         = useState<Evenement[]>([])
+  const [user, setUser]                     = useState<UserMeta | null>(null)
+  const [recherche, setRecherche]           = useState('')
+  const [mode, setMode]                     = useState<'carte' | 'liste'>('carte')
+  const [langue, setLangue]                 = useState<Langue>('fr')
+  const [dateDebut, setDateDebut]           = useState('')
+  const [dateFin, setDateFin]               = useState('')
   const [filtresOuverts, setFiltresOuverts] = useState(false)
-  const [drawerOuvert, setDrawerOuvert]   = useState(false)
+  const [drawerOuvert, setDrawerOuvert]     = useState(false)
 
-  const t = getTraductions(langue)
+  const t       = getTraductions(langue)
+  const isAdmin = user?.user_metadata?.role === 'admin'
 
   const nbFiltres = [
     categorie !== 'Toutes',
@@ -55,11 +95,9 @@ export default function Home() {
     !!dateFin,
   ].filter(Boolean).length
 
-  const isAdmin = (user?.user_metadata as Record<string, unknown>)?.role === 'admin'
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user as unknown as Record<string, unknown> | null || null)
+      setUser((data.session?.user ?? null) as UserMeta | null)
     })
   }, [])
 
@@ -84,19 +122,19 @@ export default function Home() {
         .eq('statut', 'approuve')
         .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
         .neq('statut', 'hors_ligne')
-      setEvenements((data as Record<string, unknown>[]) || [])
+      setEvenements((data as Evenement[]) || [])
     })
     mapRef.current = map
     return () => map.remove()
   }, [])
 
-  const filtreActif = (ev: Record<string, unknown>) => {
+  const filtreActif = (ev: Evenement) => {
     if (categorie !== 'Toutes' && ev.categorie !== categorie) return false
     if (acces !== 'tous' && ev.acces !== acces) return false
     if (prix !== 'tous' && ev.prix !== prix) return false
-    if (recherche && !(ev.titre as string)?.toLowerCase().includes(recherche.toLowerCase()) && !(ev.lieu as string)?.toLowerCase().includes(recherche.toLowerCase())) return false
-    if (dateDebut && ev.date_debut && (ev.date_debut as string) < dateDebut) return false
-    if (dateFin && ev.date_debut && (ev.date_debut as string) > dateFin) return false
+    if (recherche && !ev.titre?.toLowerCase().includes(recherche.toLowerCase()) && !ev.lieu?.toLowerCase().includes(recherche.toLowerCase())) return false
+    if (dateDebut && ev.date_debut && ev.date_debut < dateDebut) return false
+    if (dateFin && ev.date_debut && ev.date_debut > dateFin) return false
     return true
   }
 
@@ -106,7 +144,7 @@ export default function Home() {
     markersRef.current = []
 
     evenements.filter(filtreActif).forEach(ev => {
-      const periodePopup = afficherPeriode(ev as { date?: string; date_debut?: string; date_fin?: string })
+      const periodePopup = afficherPeriode(ev)
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
         '<div style="font-family:sans-serif;padding:12px;background:#1A1410;color:#F7F2E8;border-radius:8px;min-width:200px">' +
         (ev.image_url ? '<img src="' + ev.image_url + '" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />' : '') +
@@ -130,7 +168,7 @@ export default function Home() {
       )
       const markerColor = ev.statut === 'à compléter' ? '#E87C2A' : '#C8431A'
       const marker = new mapboxgl.Marker({ color: markerColor })
-        .setLngLat([ev.longitude as number, ev.latitude as number])
+        .setLngLat([ev.longitude, ev.latitude])
         .setPopup(popup)
         .addTo(mapRef.current!)
       markersRef.current.push(marker)
@@ -145,12 +183,10 @@ export default function Home() {
   })
 
   const centrerSurPosition = () => {
-    if (!mapRef.current) return
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        mapRef.current!.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 13 })
-      })
-    }
+    if (!mapRef.current || !navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(pos => {
+      mapRef.current!.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 13 })
+    })
   }
 
   const evenementsFiltres = evenements.filter(filtreActif)
@@ -164,8 +200,8 @@ export default function Home() {
           display: grid;
           grid-template-columns: 1fr;
           gap: 12px;
+          margin-bottom: 24px;
         }
-        /* Carte événement — layout mobile : flex horizontal */
         .lotbo-event-card {
           display: flex;
           flex-direction: row;
@@ -191,76 +227,93 @@ export default function Home() {
           border-radius: 8px;
           flex-shrink: 0;
         }
+        .lotbo-event-card .card-image-placeholder {
+          width: 72px;
+          height: 72px;
+          background: linear-gradient(135deg, #F7F2E8 0%, #E8E0D0 100%);
+          border-radius: 8px;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+        }
         .lotbo-event-card .card-body {
           flex: 1;
           min-width: 0;
         }
+        .card-titre {
+          font-weight: bold;
+          font-size: 14px;
+          margin-bottom: 3px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          color: #1A1410;
+        }
 
-        /* Desktop 2 colonnes ≥ 768px */
+        /* Tablette — 2 colonnes ≥ 768px */
         @media (min-width: 768px) {
           .lotbo-grid-evenements {
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
           }
-          /* Sur desktop : image en haut, infos en dessous */
           .lotbo-event-card {
             flex-direction: column;
             gap: 0;
             padding: 0;
             border-radius: 14px;
+            align-items: stretch;
           }
           .lotbo-event-card .card-image {
             width: 100%;
             height: 160px;
             border-radius: 14px 14px 0 0;
+            aspect-ratio: 16/9;
           }
           .lotbo-event-card .card-image-placeholder {
             width: 100%;
             height: 160px;
-            background: linear-gradient(135deg, #F7F2E8 0%, #E8E0D0 100%);
             border-radius: 14px 14px 0 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-size: 40px;
+            aspect-ratio: 16/9;
           }
           .lotbo-event-card .card-body {
             padding: 14px;
           }
-          .lotbo-event-card .card-titre {
-            font-size: 15px !important;
-            white-space: normal !important;
-            overflow: visible !important;
+          .card-titre {
+            font-size: 15px;
+            white-space: normal;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            text-overflow: unset;
           }
-        }
-
-        /* Grand écran 3 colonnes ≥ 1200px */
-        @media (min-width: 1200px) {
-          .lotbo-grid-evenements {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-          }
-          .lotbo-event-card .card-image {
-            height: 180px;
-          }
-          .lotbo-event-card .card-image-placeholder {
-            height: 180px;
-          }
-        }
-
-        /* Vue liste desktop — padding et largeur max */
-        @media (min-width: 768px) {
           .lotbo-vue-liste {
-            padding-top: 100px !important;
             padding-left: 32px !important;
             padding-right: 32px !important;
           }
         }
-        @media (min-width: 1200px) {
+
+        /* Desktop — 3 colonnes ≥ 1024px */
+        @media (min-width: 1024px) {
+          .lotbo-grid-evenements {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+          }
+          .lotbo-event-card .card-image,
+          .lotbo-event-card .card-image-placeholder {
+            height: 170px;
+          }
+        }
+
+        /* Grand écran — 4 colonnes ≥ 1280px */
+        @media (min-width: 1280px) {
+          .lotbo-grid-evenements {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+          }
           .lotbo-vue-liste {
             padding-left: 48px !important;
             padding-right: 48px !important;
@@ -269,16 +322,15 @@ export default function Home() {
       `}</style>
 
       {/* ══════════════════════════════════════
-          DRAWER — menu hamburger mobile
+          DRAWER
       ══════════════════════════════════════ */}
       {drawerOuvert && (
         <>
           <div onClick={() => setDrawerOuvert(false)} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 280, zIndex: 51, background: '#1A1410', borderRight: '1px solid #2a2a2a', display: 'flex', flexDirection: 'column', padding: '24px 20px', gap: 0 }}>
+          <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 280, zIndex: 51, background: '#1A1410', borderRight: '1px solid #2a2a2a', display: 'flex', flexDirection: 'column', padding: '24px 20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
               <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
-                <span style={{ color: '#F7F2E8' }}>lot</span>
-                <span style={{ color: '#C8431A' }}>bo</span>
+                <span style={{ color: '#F7F2E8' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
               </div>
               <button onClick={() => setDrawerOuvert(false)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#F7F2E8', borderRadius: 999, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
@@ -287,7 +339,7 @@ export default function Home() {
               <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Langue</p>
               <select value={langue} onChange={e => setLangue(e.target.value as Langue)} style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', border: '1px solid #2a2a2a', borderRadius: 10, padding: '10px 12px', fontSize: 14, cursor: 'pointer', outline: 'none', width: '100%' }}>
                 {Object.entries(langues).map(([code, info]) => (
-                  <option key={code} value={code}>{info.drapeau} {(info as Record<string, unknown>).nom as string ?? code}</option>
+                  <option key={code} value={code}>{info.drapeau} {String((info as Record<string, unknown>).nom ?? code)}</option>
                 ))}
               </select>
             </div>
@@ -304,11 +356,9 @@ export default function Home() {
                 <>
                   <a href="/profil" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>👤 Mon profil</a>
                   <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>🔔 Recevoir les événements</a>
-                  {isAdmin && (
-                    <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#D4A820', textDecoration: 'none', fontSize: 14 }}>⚙️ Panel admin</a>
-                  )}
+                  {isAdmin && <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#D4A820', textDecoration: 'none', fontSize: 14 }}>⚙️ Panel admin</a>}
                   <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>ℹ️ À propos</a>
-                  <button onClick={async () => { await supabase.auth.signOut(); setUser(null); setDrawerOuvert(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', border: 'none', fontSize: 14, cursor: 'pointer', textAlign: 'left' }}>🚪 Déconnexion</button>
+                  <button onClick={async () => { await supabase.auth.signOut(); setUser(null); setDrawerOuvert(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', border: 'none', fontSize: 14, cursor: 'pointer', textAlign: 'left', width: '100%' }}>🚪 Déconnexion</button>
                 </>
               )}
             </div>
@@ -337,8 +387,7 @@ export default function Home() {
 
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <div style={{ padding: '5px 16px', fontSize: 18, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic' }}>
-              <span style={{ color: '#1A1410' }}>lot</span>
-              <span style={{ color: '#C8431A' }}>bo</span>
+              <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
             </div>
           </div>
 
@@ -374,12 +423,12 @@ export default function Home() {
             onKeyDown={async e => {
               if (e.key === 'Enter' && mapRef.current) {
                 const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-                const url   = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(recherche) + '.json?access_token=' + token + '&limit=1'
+                const url   = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(recherche)}.json?access_token=${token}&limit=1`
                 const res   = await fetch(url)
                 const data  = await res.json()
                 if (data.features?.length > 0) {
-                  const [lng, lat] = data.features[0].center
-                  mapRef.current.flyTo({ center: [lng as number, lat as number], zoom: 12 })
+                  const [lng, lat] = data.features[0].center as [number, number]
+                  mapRef.current.flyTo({ center: [lng, lat], zoom: 12 })
                 }
               }
             }}
@@ -456,7 +505,6 @@ export default function Home() {
       {mode === 'liste' && (
         <div className="lotbo-vue-liste" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: '#F7F2E8', zIndex: 5, overflowY: 'auto', paddingTop: 100, paddingLeft: 16, paddingRight: 16, paddingBottom: 80 }}>
 
-          {/* État vide */}
           {evenementsFiltres.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 16px 24px' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
@@ -469,12 +517,15 @@ export default function Home() {
                 <div style={{ textAlign: 'left' }}>
                   <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>Tu pourrais aimer</p>
                   {evenements.slice(0, 3).map(ev => (
-                    <a href={'/evenement/' + ev.id} key={ev.id as string} className="lotbo-event-card" style={{ marginBottom: 10 }}>
-                      {ev.image_url && <img src={ev.image_url as string} alt={ev.titre as string} className="card-image" />}
+                    <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" style={{ marginBottom: 10 }}>
+                      {ev.image_url
+                        ? <img src={ev.image_url} alt={ev.titre} className="card-image" />
+                        : <div className="card-image-placeholder">{emojiCategorie(ev.categorie)}</div>
+                      }
                       <div className="card-body">
-                        <p className="card-titre" style={{ fontWeight: 'bold', fontSize: 13, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre as string}</p>
-                        <p style={{ color: '#8C5A40', fontSize: 11 }}>📍 {ev.lieu as string}</p>
-                        <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie as string}</span>
+                        <p className="card-titre">{ev.titre}</p>
+                        <p style={{ color: '#8C5A40', fontSize: 11 }}>📍 {ev.lieu}</p>
+                        <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie}</span>
                       </div>
                     </a>
                   ))}
@@ -486,38 +537,21 @@ export default function Home() {
           {/* ── Grille UX4 ── */}
           <div className="lotbo-grid-evenements">
             {evenementsFiltres.map(ev => (
-              <a
-                href={'/evenement/' + (ev.id as string)}
-                key={ev.id as string}
-                className="lotbo-event-card"
-              >
-                {/* Image */}
+              <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card">
                 {ev.image_url
-                  ? <img src={ev.image_url as string} alt={ev.titre as string} className="card-image" />
-                  : <div className="card-image-placeholder">{
-                      ev.categorie === 'Festival' ? '🎉' :
-                      ev.categorie === 'Concert / Spectacle' ? '🎶' :
-                      ev.categorie === 'Sport' ? '⚽' :
-                      ev.categorie === 'Gastronomie' ? '🍽️' :
-                      ev.categorie === 'Art' ? '🎨' : '📅'
-                    }</div>
+                  ? <img src={ev.image_url} alt={ev.titre} className="card-image" />
+                  : <div className="card-image-placeholder">{emojiCategorie(ev.categorie)}</div>
                 }
-
-                {/* Infos */}
                 <div className="card-body">
-                  <p className="card-titre" style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#1A1410' }}>
-                    {ev.titre as string}
-                  </p>
-                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu as string}</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>
-                    📅 {afficherPeriode(ev as { date?: string; date_debut?: string; date_fin?: string })}
-                  </p>
+                  <p className="card-titre">{ev.titre}</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {afficherPeriode(ev)}</p>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie as string}</span>
+                    <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie}</span>
                     {ev.date_fin && ev.date_fin !== ev.date && (
                       <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>🗓️ Multi-jours</span>
                     )}
-                    <span style={{ background: '#E8E0D0', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix as string}</span>
+                    <span style={{ background: '#E8E0D0', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix}</span>
                   </div>
                 </div>
               </a>
@@ -544,7 +578,7 @@ export default function Home() {
       </div>
 
       {/* ══════════════════════════════════════
-          TAB BAR — mobile uniquement
+          TAB BAR mobile
       ══════════════════════════════════════ */}
       <div className="lotbo-tabbar">
         <button onClick={() => { setMode('carte'); setFiltresOuverts(false) }} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', background: 'transparent', border: 'none', cursor: 'pointer' }}>
