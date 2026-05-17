@@ -13,7 +13,7 @@ function formatDate(dateStr: string): string {
   return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
 }
 
-function afficherPeriode(ev: { date?: string; date_fin?: string }): string {
+function afficherPeriode(ev: { date?: string; date_fin?: string | null }): string {
   if (ev.date_fin && ev.date_fin !== ev.date) return `${formatDate(ev.date || '')} → ${formatDate(ev.date_fin)}`
   return formatDate(ev.date || '') || ev.date || ''
 }
