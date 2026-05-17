@@ -1,0 +1,26 @@
+import { supabase } from './supabase'
+
+interface AttributerPointsParams {
+  user_id: string
+  action: string
+  evenement_id?: string
+  type_role?: 'utilisateur' | 'organisateur'
+}
+
+export async function attributerPoints(params: AttributerPointsParams): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+
+    await fetch('/api/points', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(params),
+    })
+  } catch {
+    // Points non critiques
+  }
+}
