@@ -380,8 +380,34 @@ export default function Profil() {
             </div>
 
           </div>
-        )}
 
+            {/* ── GM12 — Mon classement ── */}
+            <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
+              <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>🏆 Mon classement</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[
+                  { emoji: '⭐', label: 'Contributeurs', points: nbContrib, colonne: 'points_utilisateur' },
+                  { emoji: '🎪', label: 'Organisateurs', points: nbApprouves, colonne: 'points_organisateur' },
+                  { emoji: '🌍', label: 'Global LOTBO',  points: nbTotal,    colonne: 'points_total' },
+                ].map(cat => (
+                  <div key={cat.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(26,20,16,0.03)', borderRadius: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                      <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold' }}>{cat.label}</p>
+                    </div>
+                    <a href="/classement" style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                      Voir →
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <a href="/classement" style={{ display: 'block', textAlign: 'center', marginTop: 16, background: '#C8431A', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                Voir le classement complet →
+              </a>
+            </div>
+
+          </div>
+        )}
       </div>
     </main>
   )
