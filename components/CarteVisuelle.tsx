@@ -86,7 +86,6 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines
 }
 
-// ── Dessiner zone photo avec offset (drag/zoom) ───────────────────────────────
 async function dessinerZonePhotoAjustable(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number,
@@ -106,7 +105,6 @@ async function dessinerZonePhotoAjustable(
       const ratio = baseRatio * zoom
       const dw = img.naturalWidth * ratio
       const dh = img.naturalHeight * ratio
-      // Centrer + offset drag
       const dx = x + (w - dw) / 2 + offsetX
       const dy = y + (h - dh) / 2 + offsetY
       ctx.drawImage(img, dx, dy, dw, dh)
@@ -115,7 +113,6 @@ async function dessinerZonePhotoAjustable(
     }
   }
 
-  // Fallback dégradé
   const grad = ctx.createLinearGradient(x, y, x + w, y + h)
   grad.addColorStop(0, fallbackBg)
   grad.addColorStop(1, '#1A1410')
@@ -163,11 +160,10 @@ function dessinerLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size:
   ctx.restore()
 }
 
-// ── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
   evenement: { titre: string; lieu: string; date: string; date_fin?: string; image_url?: string }
   expression: string
-  photoProfil?: string | null  // Photo profil depuis page événement
+  photoProfil?: string | null
   onClose: () => void
 }
 
@@ -184,18 +180,16 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   const [texteCustom, setTexteCustom] = useState('')
   const [nomUtilisateur, setNomUtilisateur] = useState('Moi')
   const [photoProfil, setPhotoProfil] = useState<string | null>(photoProfilProp || null)
-  const [photoFond, setPhotoFond] = useState<string | null>(null) // UX14 — photo fond dédiée
+  const [photoFond, setPhotoFond] = useState<string | null>(null)
   const [disposition, setDisposition] = useState<Disposition>('centree')
   const [etape, setEtape] = useState<'expression' | 'carte'>('expression')
 
-  // UX14 — Ajustement drag/zoom photo fond
   const [offsetX, setOffsetX] = useState(0)
   const [offsetY, setOffsetY] = useState(0)
   const [zoom, setZoom] = useState(1)
   const isDragging = useRef(false)
   const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
   const previewRef = useRef<HTMLDivElement>(null)
-  const offsetRef = useRef({ x: 0, y: 0 })
 
   const texteExpression = expressionSelectionnee.id === 'custom'
     ? (texteCustom || 'Personnalisé')
@@ -207,7 +201,6 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ? `${formatDateCourte(evenement.date)} → ${formatDateCourte(evenement.date_fin)}`
     : formatDateCourte(evenement.date)
 
-  // Photo utilisée pour le fond paysage — priorité : photo fond > photo profil > image événement
   const photoFondPaysage = photoFond || photoProfil || evenement.image_url || null
 
   useEffect(() => {
@@ -230,7 +223,6 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
   const getDimensions = () => disposition === 'paysage' ? { W: 1200, H: 630 } : { W: 1080, H: 1080 }
 
-  // ── Upload photo profil carte ─────────────────────────────────────────────
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -240,7 +232,6 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     reader.readAsDataURL(file)
   }
 
-  // ── Upload photo fond paysage (UX14) ─────────────────────────────────────
   const handlePhotoFondUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -253,7 +244,6 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     reader.readAsDataURL(file)
   }
 
-  // ── Drag handlers pour ajustement photo fond ──────────────────────────────
   const handleMouseDown = (e: React.MouseEvent) => {
     const hasPhoto = photoFond || photoProfil || evenement.image_url
     if (!hasPhoto) return
@@ -273,7 +263,6 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   }
   const handleMouseUp = () => { isDragging.current = false }
 
-  // Touch drag
   const touchStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
   const handleTouchStart = (e: React.TouchEvent) => {
     const hasPhoto = photoFond || photoProfil || evenement.image_url
@@ -290,7 +279,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     setOffsetY(touchStart.current.oy + dy)
   }
 
-  // ── Centrée ───────────────────────────────────────────────────────────────
+  // ── Dessiner centree ──────────────────────────────────────────────────────
   const dessinerCentree = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
     const bg = useFotoEvent && evenement.image_url ? '#1A1410' : fondActif.bg
     const textColor = useFotoEvent && evenement.image_url ? '#F7F2E8' : getTextColor(bg)
@@ -330,7 +319,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ctx.textAlign = 'left'
   }
 
-  // ── Split ─────────────────────────────────────────────────────────────────
+  // ── Dessiner split ────────────────────────────────────────────────────────
   const dessinerSplit = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
     const photoW = Math.round(W * 0.42)
     const bg = fondActif.bg
@@ -368,31 +357,26 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ctx.textAlign = 'left'
   }
 
-  // ── Paysage — UX13/UX14 ──────────────────────────────────────────────────
+  // ── Dessiner paysage ──────────────────────────────────────────────────────
   const dessinerPaysage = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    const photoH = Math.round(H * 0.62) // Zone photo plus grande
+    const photoH = Math.round(H * 0.62)
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
 
-    // Photo fond avec drag/zoom
     await dessinerZonePhotoAjustable(ctx, 0, 0, W, photoH, photoFondPaysage, '#C8431A', offsetX, offsetY, zoom)
 
-    // Overlay sombre
     if (photoFondPaysage) {
       ctx.fillStyle = 'rgba(26,20,16,0.38)'; ctx.fillRect(0, 0, W, photoH)
     }
 
-    // Logo
     dessinerLogo(ctx, 48, 66, 40, '#F7F2E8')
 
-    // Avatar + expression — bas gauche de la zone photo
     const avatarX = 76, avatarY = photoH - 70, avatarR = 50
     await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
     ctx.font = 'bold 34px system-ui, sans-serif'
     ctx.fillStyle = '#F7F2E8'; ctx.textAlign = 'left'
     ctx.fillText(texteExpression, avatarX + avatarR + 18, avatarY + 12)
 
-    // Bande inférieure
     ctx.fillStyle = bg; ctx.fillRect(0, photoH, W, H - photoH)
     const bandH = H - photoH
     const startY = photoH + (bandH - 130) / 2 + 38
@@ -450,19 +434,42 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   const aspectRatio = `${cW}/${cH}`
   const isPaysage = disposition === 'paysage'
 
+  // ── Styles communs mode clair ─────────────────────────────────────────────
+  const inputClair = {
+    background: 'white',
+    border: '1px solid #E8E0D0',
+    borderRadius: 10,
+    padding: '10px 14px',
+    color: '#1A1410',
+    fontSize: 14,
+    outline: 'none',
+    width: '100%',
+  }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200,
-      background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)',
+      background: 'rgba(26,20,16,0.7)', backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-      padding: '16px', overflowY: 'auto'
+      padding: '16px', overflowY: 'auto',
     }}>
+      {/* ── Card principale — fond clair ── */}
       <div style={{
-        background: '#1A1410', borderRadius: 20, width: '100%', maxWidth: 520,
-        border: '1px solid #2a2a2a', boxShadow: '0 24px 80px rgba(0,0,0,0.6)', overflow: 'hidden',
+        background: '#F7F2E8',
+        borderRadius: 20,
+        width: '100%',
+        maxWidth: 520,
+        border: '1px solid #E8E0D0',
+        boxShadow: '0 24px 80px rgba(26,20,16,0.25)',
+        overflow: 'hidden',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #2a2a2a' }}>
-          <p style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 16 }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '20px 24px', borderBottom: '1px solid #E8E0D0',
+          background: 'white',
+        }}>
+          <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 16 }}>
             {etape === 'expression' ? '🙋 Je serai là' : '🎨 Ma carte'}
           </p>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 22, cursor: 'pointer' }}>✕</button>
@@ -475,13 +482,19 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ color: '#8C5A40', fontSize: 13 }}>Comment tu veux exprimer ta présence ?</p>
 
+              {/* Nom */}
               <div>
                 <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Ton prénom</label>
-                <input value={nomUtilisateur} onChange={e => setNomUtilisateur(e.target.value)} maxLength={30}
+                <input
+                  value={nomUtilisateur}
+                  onChange={e => setNomUtilisateur(e.target.value)}
+                  maxLength={30}
                   placeholder="Ton prénom"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #333', borderRadius: 10, padding: '10px 14px', color: '#F7F2E8', fontSize: 14, outline: 'none', width: '100%' }} />
+                  style={inputClair}
+                />
               </div>
 
+              {/* Photo profil */}
               <div>
                 <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8, display: 'block' }}>Photo de profil</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -493,21 +506,22 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                   ) : (
                     <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F7F2E8', fontWeight: 'bold', fontSize: 18 }}>{initiales}</div>
                   )}
-                  <button onClick={() => fileInputRef.current?.click()} style={{ flex: 1, padding: '10px 16px', borderRadius: 10, fontSize: 13, background: 'rgba(255,255,255,0.06)', border: '1px solid #333', color: '#8C5A40', cursor: 'pointer', textAlign: 'left' }}>
+                  <button onClick={() => fileInputRef.current?.click()} style={{ flex: 1, padding: '10px 16px', borderRadius: 10, fontSize: 13, background: 'white', border: '1px solid #E8E0D0', color: '#8C5A40', cursor: 'pointer', textAlign: 'left' as const }}>
                     📷 {photoProfil ? 'Changer ma photo' : 'Ajouter ma photo'}
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
                 </div>
-                <p style={{ color: '#555', fontSize: 11, marginTop: 6 }}>JPG, PNG, WebP · max 2MB</p>
+                <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>JPG, PNG, WebP · max 2MB</p>
               </div>
 
+              {/* Expressions */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {EXPRESSIONS.map(exp => (
                   <button key={exp.id} onClick={() => setExpressionSelectionnee(exp)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, textAlign: 'left',
-                    background: expressionSelectionnee.id === exp.id ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: expressionSelectionnee.id === exp.id ? '1px solid #C8431A' : '1px solid #2a2a2a',
-                    color: '#F7F2E8', fontSize: 14, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, textAlign: 'left' as const,
+                    background: expressionSelectionnee.id === exp.id ? 'rgba(200,67,26,0.12)' : 'white',
+                    border: expressionSelectionnee.id === exp.id ? '1px solid #C8431A' : '1px solid #E8E0D0',
+                    color: '#1A1410', fontSize: 14, cursor: 'pointer',
                   }}>
                     <span style={{ fontSize: 20 }}>{exp.emoji}</span>
                     <span>{exp.texte}</span>
@@ -517,9 +531,13 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               </div>
 
               {expressionSelectionnee.id === 'custom' && (
-                <input value={texteCustom} onChange={e => setTexteCustom(e.target.value.slice(0, 30))}
-                  placeholder="Ton expression (30 caractères max)" maxLength={30}
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #C8431A', borderRadius: 10, padding: '10px 14px', color: '#F7F2E8', fontSize: 14, outline: 'none', width: '100%' }} />
+                <input
+                  value={texteCustom}
+                  onChange={e => setTexteCustom(e.target.value.slice(0, 30))}
+                  placeholder="Ton expression (30 caractères max)"
+                  maxLength={30}
+                  style={{ ...inputClair, border: '1px solid #C8431A' }}
+                />
               )}
 
               <button onClick={() => setEtape('carte')} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', marginTop: 8 }}>
@@ -532,12 +550,13 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
           {etape === 'carte' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-              {/* Aperçu canvas avec drag si paysage */}
+              {/* Canvas aperçu */}
               <div
                 ref={previewRef}
-                style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a', aspectRatio, userSelect: 'none' }}
+                style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #E8E0D0', aspectRatio, userSelect: 'none' }}
               >
-                <canvas ref={canvasRef}
+                <canvas
+                  ref={canvasRef}
                   style={{ width: '100%', height: '100%', display: 'block', cursor: (isPaysage || disposition === 'split') && photoFondPaysage ? 'grab' : 'default' }}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
@@ -548,9 +567,9 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                 />
               </div>
 
-              {/* Contrôles ajustement photo fond — uniquement en paysage */}
+              {/* Contrôles zoom/drag */}
               {(isPaysage || disposition === 'split') && (photoFondPaysage || photoProfil || evenement.image_url) && (
-                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px 14px' }}>
                   <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8 }}>🖱️ Glisse l'aperçu pour repositionner la photo</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ color: '#8C5A40', fontSize: 11 }}>Zoom</span>
@@ -561,21 +580,21 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                     />
                     <span style={{ color: '#8C5A40', fontSize: 11, minWidth: 30 }}>{zoom.toFixed(1)}x</span>
                     <button onClick={() => { setOffsetX(0); setOffsetY(0); setZoom(1) }}
-                      style={{ background: 'none', border: '1px solid #333', borderRadius: 6, padding: '4px 10px', color: '#8C5A40', fontSize: 11, cursor: 'pointer' }}>
+                      style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 6, padding: '4px 10px', color: '#8C5A40', fontSize: 11, cursor: 'pointer' }}>
                       ↺ Reset
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Upload photo fond dédiée (paysage) */}
+              {/* Upload photo fond */}
               {(isPaysage || disposition === 'split') && (
                 <div>
                   <button onClick={() => fileInputFondRef.current?.click()} style={{
                     width: '100%', padding: '10px', borderRadius: 10, fontSize: 13,
-                    background: photoFond ? 'rgba(200,67,26,0.10)' : 'rgba(255,255,255,0.04)',
-                    border: photoFond ? '1px solid rgba(200,67,26,0.4)' : '1px solid #333',
-                    color: photoFond ? '#C8431A' : '#8C5A40', cursor: 'pointer'
+                    background: photoFond ? 'rgba(200,67,26,0.08)' : 'white',
+                    border: photoFond ? '1px solid rgba(200,67,26,0.4)' : '1px solid #E8E0D0',
+                    color: photoFond ? '#C8431A' : '#8C5A40', cursor: 'pointer',
                   }}>
                     🖼️ {photoFond ? 'Changer la photo de fond' : 'Ajouter une photo de fond'}
                     {!photoFond && photoProfil && <span style={{ fontSize: 11, marginLeft: 8, opacity: 0.6 }}>(photo profil utilisée par défaut)</span>}
@@ -597,10 +616,10 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                   {DISPOSITIONS.map(d => (
                     <button key={d.id} onClick={() => setDisposition(d.id)} style={{
                       flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, cursor: 'pointer',
-                      background: disposition === d.id ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-                      border: disposition === d.id ? '1px solid #C8431A' : '1px solid #2a2a2a',
+                      background: disposition === d.id ? 'rgba(200,67,26,0.12)' : 'white',
+                      border: disposition === d.id ? '1px solid #C8431A' : '1px solid #E8E0D0',
                       color: disposition === d.id ? '#C8431A' : '#8C5A40',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                     }}>
                       <span style={{ fontSize: 18 }}>{d.icon}</span>
                       <span style={{ fontWeight: 'bold' }}>{d.label}</span>
@@ -610,15 +629,15 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                 </div>
               </div>
 
-              {/* Fonds */}
+              {/* Sélecteur fond */}
               <div>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Fond bande</p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {FONDS.map(f => (
                     <button key={f.id} onClick={() => { setFondActif(f); setUseFotoEvent(false) }} style={{
                       width: 38, height: 38, borderRadius: '50%', background: f.bg,
-                      border: fondActif.id === f.id && !useFotoEvent ? '3px solid #C8431A' : '3px solid transparent',
-                      cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                      border: fondActif.id === f.id && !useFotoEvent ? '3px solid #C8431A' : '3px solid #E8E0D0',
+                      cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                     }} title={f.label} />
                   ))}
                   {evenement.image_url && !isPaysage && (
@@ -626,14 +645,17 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                       width: 38, height: 38, borderRadius: '50%',
                       backgroundImage: `url(${evenement.image_url})`,
                       backgroundSize: 'cover', backgroundPosition: 'center',
-                      border: useFotoEvent ? '3px solid #C8431A' : '3px solid transparent',
-                      cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                      border: useFotoEvent ? '3px solid #C8431A' : '3px solid #E8E0D0',
+                      cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                     }} title="Photo événement" />
                   )}
                 </div>
               </div>
 
-              <button onClick={() => setEtape('expression')} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 10, padding: '10px', color: '#8C5A40', fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={() => setEtape('expression')} style={{
+                background: 'white', border: '1px solid #E8E0D0',
+                borderRadius: 10, padding: '10px', color: '#8C5A40', fontSize: 13, cursor: 'pointer',
+              }}>
                 ← Modifier l'expression
               </button>
 
@@ -644,17 +666,18 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
                   ⬇️ Télécharger l'image
                 </button>
                 {typeof window !== 'undefined' && 'share' in navigator && (
-                  <button onClick={partagerNatif} style={{ background: 'rgba(255,255,255,0.08)', color: '#F7F2E8', border: '1px solid #333', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <button onClick={partagerNatif} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     📤 Partager (mobile)
                   </button>
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <a href={`https://wa.me/?text=${textePartage}`} target="_blank" style={{ flex: 1, background: '#25D366', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' }}>WhatsApp</a>
-                  <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlEvent)}`} target="_blank" style={{ flex: 1, background: '#1877F2', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' }}>Facebook</a>
-                  <a href={`https://twitter.com/intent/tweet?text=${textePartage}`} target="_blank" style={{ flex: 1, background: '#000', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' }}>𝕏</a>
-                  <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(urlEvent)}`} target="_blank" style={{ flex: 1, background: '#0A66C2', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' }}>in</a>
+                  <a href={`https://wa.me/?text=${textePartage}`} target="_blank" style={{ flex: 1, background: '#25D366', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' as const }}>WhatsApp</a>
+                  <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlEvent)}`} target="_blank" style={{ flex: 1, background: '#1877F2', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' as const }}>Facebook</a>
+                  <a href={`https://twitter.com/intent/tweet?text=${textePartage}`} target="_blank" style={{ flex: 1, background: '#000', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' as const }}>𝕏</a>
+                  <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(urlEvent)}`} target="_blank" style={{ flex: 1, background: '#0A66C2', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' as const }}>in</a>
                 </div>
               </div>
+
             </div>
           )}
         </div>
