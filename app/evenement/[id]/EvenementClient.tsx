@@ -481,7 +481,7 @@ if (data?.est_recurrent) {
 // F8 — Si c'est une occurrence, charger le parent
 if (data?.parent_id) {
   const { data: parent } = await supabase.from('evenements')
-    .select('id, titre')
+  .select('id, titre, lieu, date, categorie, image_url')
     .eq('id', data.parent_id)
     .single()
   if (parent) setSimilaires([parent as Evenement])
