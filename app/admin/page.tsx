@@ -518,6 +518,135 @@ if (statsPays) {
             )}
           </div>
         )}
+        {/* ══ SC7 — ONGLET IMPORT ══ */}
+        {onglet === 'import' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+            {/* Stats globales */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+              {[
+                { label: 'Sources actives', valeur: statsImport.length, couleur: '#F7F2E8' },
+                { label: 'Total approuvés', valeur: nbApprouves,        couleur: '#2D9E6B' },
+                { label: 'En attente',      valeur: nbEnAttente,        couleur: '#D4A820' },
+                { label: 'Pays couverts',   valeur: repartitionPays.length, couleur: '#C8431A' },
+              ].map((c, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 28, fontWeight: 'bold', color: c.couleur, marginBottom: 4 }}>{c.valeur}</p>
+                  <p style={{ fontSize: 11, color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Tableau par source */}
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a2a' }}>
+                <h3 style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>📊 Par source</h3>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
+                      {['Source', 'Événements', 'Dernier import'].map(h => (
+                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statsImport.map((s, i) => {
+                      const dernierImport = s.dernierImport ? new Date(s.dernierImport) : null
+                      const heuresDepuis  = dernierImport ? Math.floor((Date.now() - dernierImport.getTime()) / 3600000) : null
+                      const statut        = heuresDepuis === null ? '⏳' : heuresDepuis < 6 ? '✅' : heuresDepuis < 24 ? '⚠️' : '🔴'
+                      return (
+                        <tr key={i} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                          <td style={{ padding: '12px 16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span>{statut}</span>
+                              <span style={{ color: '#F7F2E8', fontSize: 13, fontWeight: 'bold', textTransform: 'capitalize' }}>{s.source}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 'bold' }}>{s.nb}</span>
+                          </td>
+                          <td style={{ padding: '12px 16px', color: '#8C5A40', fontSize: 12 }}>
+                            {dernierImport ? dernierImport.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {statsImport.length === 0 && (
+                      <tr><td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: '#8C5A40', fontSize: 13 }}>Aucune donnée disponible</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Top 10 pays */}
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 20 }}>
+              <h3 style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>🌍 Top pays</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {repartitionPays.map((p, i) => {
+                  const total = repartitionPays.reduce((s, x) => s + x.nb, 0)
+                  const pct   = total > 0 ? Math.round((p.nb / total) * 100) : 0
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ color: '#8C5A40', fontSize: 12, width: 24, textAlign: 'right' }}>#{i + 1}</span>
+                      <span style={{ color: '#F7F2E8', fontSize: 13, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.pays}</span>
+                      <div style={{ width: 100, background: 'rgba(255,255,255,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: '#C8431A', borderRadius: 999 }} />
+                      </div>
+                      <span style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', width: 36, textAlign: 'right' }}>{p.nb}</span>
+                      <span style={{ color: '#555', fontSize: 11, width: 36 }}>{pct}%</span>
+                    </div>
+                  )
+                })}
+                {repartitionPays.length === 0 && <p style={{ color: '#8C5A40', fontSize: 13 }}>Aucune donnée disponible</p>}
+              </div>
+            </div>
+
+            {/* Actions scrapers */}
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 20 }}>
+              <h3 style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>⚡ Relancer un scraper</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                {[
+                  { label: 'PredictHQ',       route: '/api/scrape-predicthq'       },
+                  { label: 'Ticketmaster',     route: '/api/scrape-ticketmaster'    },
+                  { label: 'World Cup',        route: '/api/scrape-worldcup'        },
+                  { label: 'Ligue Haïtienne',  route: '/api/scrape-liguehaitienne'  },
+                  { label: 'Eventbrite',       route: '/api/scrape-eventbrite'      },
+                ].map(s => (
+                  <button
+                    key={s.route}
+                    disabled={loadingImport}
+                    onClick={async () => {
+                      setLoadingImport(true)
+                      try {
+                        const res  = await fetch(s.route, { headers: { 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' } })
+                        const data = await res.json()
+                        alert(`✅ ${s.label} : ${data.imported || 0} importés · ${data.skipped || 0} ignorés`)
+                        chargerDonnees()
+                      } catch {
+                        alert(`❌ Erreur lors du scraping ${s.label}`)
+                      }
+                      setLoadingImport(false)
+                    }}
+                    style={{
+                      background: loadingImport ? 'rgba(255,255,255,0.04)' : 'rgba(200,67,26,0.15)',
+                      color: loadingImport ? '#555' : '#C8431A',
+                      border: '1px solid rgba(200,67,26,0.3)',
+                      borderRadius: 8, padding: '8px 16px',
+                      fontSize: 13, fontWeight: 'bold',
+                      cursor: loadingImport ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {loadingImport ? '⏳' : '▶️'} {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
 
       </div>
     </main>
