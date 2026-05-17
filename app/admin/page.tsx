@@ -304,7 +304,7 @@ if (statsPays) {
             >
               {tab.label}
               <span style={{
-                background: onglet === tab.key ? '#C8431A' : 'rgba(255,255,255,0.08)',
+                background: onglet === tab.key ? '#C8431A' : 'rgba(26,20,16,0.06)',
                 color: onglet === tab.key ? 'white' : '#8C5A40',
                 borderRadius: 999,
                 padding: '1px 7px',
