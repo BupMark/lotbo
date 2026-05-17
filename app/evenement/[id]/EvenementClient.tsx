@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import CarteVisuelle from '../../../components/CarteVisuelle'
 import { attributerPoints } from '../../../lib/points'
 
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(dateStr: string): string {
   if (!dateStr) return dateStr
@@ -76,6 +77,7 @@ interface Evenement {
   description: string | null
   lien: string | null
   organisateur: string | null
+  parent_id: string | null
 }
 
 // ── E12 — 6 réactions ────────────────────────────────────────────────────────
@@ -676,18 +678,38 @@ supabase.auth.getSession().then(({ data: { session } }) => {
             ← Retour à la carte
           </button>
           {isAdmin && (
-            <button onClick={async () => {
-              if (!confirm('Mettre cet événement hors ligne ?')) return
-              const { data: { session } } = await supabase.auth.getSession()
-console.log('Session role:', session?.user?.user_metadata?.role)
-const { error } = await supabase.from('evenements').update({ statut: 'hors_ligne' }).eq('id', ev.id)
-console.log('Update error:', error)
-              alert('Événement mis hors ligne ✓')
-              router.push('/')
-            }} style={{ background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)', color: '#D4A820', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}>
-              ⚠️ Mettre hors ligne
-            </button>
-          )}
+  <button onClick={async () => {
+    // Si l'événement a un parent_id (occurrence récurrente)
+    if (ev.parent_id) {
+      const choix = window.confirm(
+        'Mettre hors ligne toutes les occurrences futures ?\n\nOK = Toutes les occurrences\nAnnuler = Seulement cet événement'
+      )
+      if (choix) {
+        // Toutes les occurrences du même parent
+        await supabase.from('evenements')
+          .update({ statut: 'hors_ligne' })
+          .eq('parent_id', ev.parent_id)
+        await supabase.from('evenements')
+          .update({ statut: 'hors_ligne' })
+          .eq('id', ev.parent_id)
+      } else {
+        // Seulement cet événement
+        await supabase.from('evenements')
+          .update({ statut: 'hors_ligne' })
+          .eq('id', ev.id)
+      }
+    } else {
+      if (!confirm('Mettre cet événement hors ligne ?')) return
+      await supabase.from('evenements')
+        .update({ statut: 'hors_ligne' })
+        .eq('id', ev.id)
+    }
+    alert('Événement(s) mis hors ligne ✓')
+    router.push('/')
+  }} style={{ background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)', color: '#D4A820', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}>
+    ⚠️ Mettre hors ligne
+  </button>
+)}
         </div>
 
         <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 'bold', marginBottom: 16, fontFamily: 'serif', fontStyle: 'italic', color: '#1A1410', lineHeight: 1.2 }}>{ev.titre}</h1>
