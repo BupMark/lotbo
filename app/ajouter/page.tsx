@@ -2,10 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
-import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
-export const dynamic = 'force-dynamic'
-// import CarteBadge from '../../components/CarteBadge'
+
+import dynamicImport from 'next/dynamic'
+const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
 // import { attributerPoints } from '../../lib/points'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
@@ -41,7 +40,7 @@ function detecterNouveauBadge(avant: number, apres: number, badges: Badge[]): Ba
   if (badgeApres.id !== badgeAvant.id) return badgeApres
   return null
 }
-const [badgeSelectionne, setBadgeSelectionne] = useState<{ emoji: string; label: string; desc: string; id: string } | null>(null)
+
 // ── Traductions F10 ───────────────────────────────────────────────────────────
 const T_IMAGE = {
   fr: {
@@ -459,11 +458,14 @@ function CarteInteractive({ coords, onCoordsChange }: {
   coords: Coords; onCoordsChange: (c: Coords) => void
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef          = useRef<mapboxgl.Map | null>(null)
-  const markerRef       = useRef<mapboxgl.Marker | null>(null)
+ const mapRef = useRef<any>(null)
+const markerRef = useRef<any>(null)
 
   useEffect(() => {
     if (!mapContainerRef.current) return
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mapboxgl = require('mapbox-gl')
+    require('mapbox-gl/dist/mapbox-gl.css')
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
@@ -478,7 +480,7 @@ function CarteInteractive({ coords, onCoordsChange }: {
       const lngLat = marker.getLngLat()
       onCoordsChange({ longitude: lngLat.lng, latitude: lngLat.lat, adresse: coords.adresse })
     })
-    map.on('click', (e) => {
+   map.on('click', (e: { lngLat: { lng: number; lat: number } }) => {
       marker.setLngLat([e.lngLat.lng, e.lngLat.lat])
       onCoordsChange({ longitude: e.lngLat.lng, latitude: e.lngLat.lat, adresse: coords.adresse })
     })
