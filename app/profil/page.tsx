@@ -315,7 +315,12 @@ export default function Profil() {
                       <span style={{ fontSize: 28 }}>{b.emoji}</span>
                       <p style={{ color: obtenu ? '#D4A820' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{b.label}</p>
                       <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{b.desc}</p>
-                    </div>
+{obtenu && (
+  <button onClick={() => setBadgeSelectionne(b)} style={{ background: 'rgba(200,67,26,0.12)', border: 'none', borderRadius: 6, padding: '3px 8px', color: '#C8431A', fontSize: 10, cursor: 'pointer', fontWeight: 'bold', marginTop: 2 }}>
+    🎨
+  </button>
+)}
+</div>
                   )
                 })}
               </div>
@@ -408,6 +413,15 @@ export default function Profil() {
           </div>
         )}
       </div>
+      {badgeSelectionne && (
+  <CarteBadge
+    badge={badgeSelectionne}
+    nom={profile?.nom || nomAffiche}
+    photoProfil={photoUrl}
+    points={profile?.points_total || 0}
+    onClose={() => setBadgeSelectionne(null)}
+  />
+)}
     </main>
   )
 }

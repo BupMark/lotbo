@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import CarteBadge from '../../components/CarteBadge' 
 import { attributerPoints } from '../../lib/points'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ function detecterNouveauBadge(avant: number, apres: number, badges: Badge[]): Ba
   if (badgeApres.id !== badgeAvant.id) return badgeApres
   return null
 }
-
+const [badgeSelectionne, setBadgeSelectionne] = useState<{ emoji: string; label: string; desc: string; id: string } | null>(null)
 // ── Traductions F10 ───────────────────────────────────────────────────────────
 const T_IMAGE = {
   fr: {
@@ -257,9 +258,10 @@ function Confetti() {
 }
 
 // ── Popup badge ───────────────────────────────────────────────────────────────
-function PopupBadge({ badge, nbContributions, role, onContinuer }: {
-  badge: Badge; nbContributions: number; role: string; onContinuer: () => void
-}) {
+function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte }: {
+  badge: Badge; nbContributions: number; role: string; onContinuer: () => void; onCreerCarte: () => void
+})
+{
   const isContrib = role === 'contributeur'
   const ordinal   = nbContributions === 1 ? '1ère' : `${nbContributions}e`
   return (
@@ -283,7 +285,8 @@ function PopupBadge({ badge, nbContributions, role, onContinuer }: {
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button onClick={onContinuer} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Voir mes badges →</button>
+<button onClick={onContinuer} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Voir mes badges →</button>
+<button onClick={onCreerCarte} style={{ background: 'rgba(247,242,232,0.1)', color: '#F7F2E8', border: '1px solid rgba(247,242,232,0.2)', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: 8 }}>🎨 Créer ma carte badge</button>
             <button onClick={onContinuer} style={{ background: 'transparent', color: '#8C5A40', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px' }}>Continuer</button>
           </div>
         </div>
@@ -506,6 +509,8 @@ export default function AjouterEvenement() {
   const [succes, setSucces]                 = useState(false)
   const [succesData, setSuccesData]         = useState<SuccesData | null>(null)
   const [showBadgePopup, setShowBadgePopup] = useState(false)
+  const [showCarteBadge, setShowCarteBadge] = useState(false)
+  const [nomUtilisateur, setNomUtilisateur] = useState('')
 
   // F10 — image state
   const [image, setImage]                         = useState<File | null>(null)
@@ -677,7 +682,8 @@ const [finRecurrenceNb, setFinRecurrenceNb]         = useState(10)
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
     const role         = session?.user?.user_metadata?.role
-    const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session?.user?.id || '').single()
+const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
+if (profile?.nom) setNomUtilisateur(profile.nom)
     const estContributeur = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
     if (estContributeur && profile?.charte_acceptee) setADoubleRole(true)
     const choix           = soumisEnTantQue || (estContributeur && profile?.charte_acceptee ? 'contributeur' : 'organisateur')
@@ -802,8 +808,16 @@ if (estRecurrent && inserted?.id) {
     return (
       <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
         {showBadgePopup && succesData?.nouveauBadge && (
-          <PopupBadge badge={succesData.nouveauBadge} nbContributions={nb} role={succesData.role || 'organisateur'} onContinuer={handleContinuerApresBadge} />
+<PopupBadge badge={succesData.nouveauBadge} nbContributions={nb} role={succesData.role || 'organisateur'} onContinuer={handleContinuerApresBadge} onCreerCarte={() => { setShowBadgePopup(false); setShowCarteBadge(true) }} />
         )}
+        {showCarteBadge && succesData?.nouveauBadge && (
+  <CarteBadge
+    badge={succesData.nouveauBadge}
+    nom={nomUtilisateur || 'LOTBO'}
+    onClose={() => setShowCarteBadge(false)}
+  />
+)}
+        
         <div style={{ maxWidth: 480, width: '100%' }}>
           <div style={{ textAlign: 'center', fontSize: 52, marginBottom: 20 }}>{isContrib ? '⭐' : '🎪'}</div>
           <h2 style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 }}>
