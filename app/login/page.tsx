@@ -84,7 +84,7 @@ export default function Login() {
 
       // Newsletter si coché
       if (newsletter) {
-        await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }).catch(() => {})
+       try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {}
       }
     }
 
