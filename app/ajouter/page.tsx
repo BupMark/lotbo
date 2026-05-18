@@ -4,8 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import CarteBadge from '../../components/CarteBadge' 
-import { attributerPoints } from '../../lib/points'
+// import CarteBadge from '../../components/CarteBadge'
+// import { attributerPoints } from '../../lib/points'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -741,15 +741,15 @@ recurrence_regle: estRecurrent ? {
       nouveauBadge: nouveauBadge || undefined,
     })
     setSucces(true)
-    // GM1/GM2 — Points soumission
-if (userId) {
-  attributerPoints({
-    user_id: userId,
-    action: statutInsertion === 'approuve' ? 'evenement_approuve' : 'commenter',
-    evenement_id: inserted?.id,
-    type_role: choix === 'contributeur' ? 'utilisateur' : 'organisateur',
-  })
-}
+// GM1/GM2 — Points soumission
+// if (userId) {
+//   attributerPoints({
+//     user_id: userId,
+//     action: statutInsertion === 'approuve' ? 'evenement_approuve' : 'commenter',
+//     evenement_id: inserted?.id,
+//     type_role: choix === 'contributeur' ? 'utilisateur' : 'organisateur',
+//   })
+// }
 if (nouveauBadge) {
   setShowBadgePopup(true)
 // F8 — Générer les occurrences si récurrent
@@ -810,13 +810,13 @@ if (estRecurrent && inserted?.id) {
         {showBadgePopup && succesData?.nouveauBadge && (
 <PopupBadge badge={succesData.nouveauBadge} nbContributions={nb} role={succesData.role || 'organisateur'} onContinuer={handleContinuerApresBadge} onCreerCarte={() => { setShowBadgePopup(false); setShowCarteBadge(true) }} />
         )}
-        {showCarteBadge && succesData?.nouveauBadge && (
+     {/* showCarteBadge && succesData?.nouveauBadge && (
   <CarteBadge
     badge={succesData.nouveauBadge}
     nom={nomUtilisateur || 'LOTBO'}
     onClose={() => setShowCarteBadge(false)}
   />
-)}
+) */}
         
         <div style={{ maxWidth: 480, width: '100%' }}>
           <div style={{ textAlign: 'center', fontSize: 52, marginBottom: 20 }}>{isContrib ? '⭐' : '🎪'}</div>

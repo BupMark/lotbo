@@ -1,3 +1,6 @@
+// lib/points.ts
+import { supabase } from './supabase'
+
 interface AttributerPointsParams {
   user_id: string
   action: string
@@ -7,7 +10,6 @@ interface AttributerPointsParams {
 
 export async function attributerPoints(params: AttributerPointsParams): Promise<void> {
   try {
-    const { supabase } = await import('./supabase')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
 
@@ -20,6 +22,6 @@ export async function attributerPoints(params: AttributerPointsParams): Promise<
       body: JSON.stringify(params),
     })
   } catch {
-    // Points non critiques
+    // Points non critiques — ne jamais bloquer l'UX
   }
 }

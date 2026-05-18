@@ -1,5 +1,5 @@
 # MASTER_CONTEXT — LOTBO
-> Dernière mise à jour : 16 mai 2026
+> Dernière mise à jour : 17 mai 2026
 > Architecte technique : Claude (Anthropic)
 > Fondateur : Handgod Abraham
 
@@ -79,12 +79,20 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_MAPBOX_TOKEN
 NEXT_PUBLIC_GOOGLE_PLACES_KEY
-NEXT_PUBLIC_INTERNAL_API_SECRET
+NEXT_PUBLIC_INTERNAL_API_SECRET  ← doit avoir même valeur que INTERNAL_API_SECRET
 INTERNAL_API_SECRET
 PREDICTHQ_API_KEY
 UNSPLASH_ACCESS_KEY
 BREVO_API_KEY
+VAPID_EMAIL
+NEXT_PUBLIC_VAPID_PUBLIC_KEY
+VAPID_PRIVATE_KEY
 ```
+
+### ⚠️ Règle variables d'environnement (établie 17 mai 2026)
+- `INTERNAL_API_SECRET` et `NEXT_PUBLIC_INTERNAL_API_SECRET` doivent avoir la **même valeur**
+- Une seule ligne par variable dans `.env.local` — jamais de doublons
+- Ne jamais utiliser de placeholder comme `lotbo_2026_[même valeur]`
 
 ---
 
@@ -103,6 +111,9 @@ lien_secret, code_acces, invites_emails, lieu_type,
 acces, prix, organisateur, user_id,
 nb_participants, source, source_id,
 soumis_en_tant_que (organisateur/contributeur),
+est_recurrent (boolean),
+recurrence_regle (jsonb),
+parent_id (uuid FK evenements.id),
 created_at, updated_at
 ```
 
@@ -114,9 +125,46 @@ charte_acceptee (boolean),
 charte_acceptee_le (timestamptz),
 badge (text),
 points (integer),
+points_utilisateur (integer),
+points_organisateur (integer),
+points_total (integer),
+niveau (text — decouvreur/actif/contributeur/top_contributeur/elite/legende),
 nom (text),
 photo_url (text),
 created_at, updated_at
+```
+
+### Table `commentaires`
+```
+id, evenement_id, auteur, contenu, nb_likes,
+parent_id (uuid FK commentaires.id — E11 réponses),
+created_at
+```
+
+### Table `reactions` (créée 17 mai 2026)
+```
+id, commentaire_id (FK), session_id, emoji, created_at
+UNIQUE(commentaire_id, session_id, emoji)
+RLS activé
+```
+
+### Table `push_subscriptions`
+```
+id, endpoint, p256dh, auth,
+user_id (uuid FK auth.users — ajouté 17 mai 2026),
+created_at
+```
+
+### Table `import_logs` (créée 17 mai 2026)
+```
+id, source, statut, nb_importes, nb_doublons,
+nb_erreurs, message_erreur, duree_ms, created_at
+```
+
+### Table `transactions_points` (créée 17 mai 2026)
+```
+id, user_id (FK auth.users), points, type, description,
+evenement_id (FK evenements), created_at
 ```
 
 ### RLS policies `evenements` (8 policies)
@@ -143,13 +191,14 @@ created_at, updated_at
 
 ---
 
-## 8. FONCTIONNALITÉS LIVRÉES (au 16 mai 2026)
+## 8. FONCTIONNALITÉS LIVRÉES (au 17 mai 2026)
 
 ### Carte & Filtres
 - ✅ Carte Mapbox interactive avec clusters
 - ✅ Filtres catégorie/prix/date/accès
 - ✅ Recherche full-text
 - ✅ Filtre événements passés (date_debut >= aujourd'hui)
+- ✅ UX4 — Grille desktop 2/3/4 colonnes selon breakpoint (17 mai 2026)
 
 ### Formulaire ajout événement
 - ✅ MAP1 — Champ "Nom du lieu" (texte libre) + "Adresse" (texte libre)
@@ -158,6 +207,8 @@ created_at, updated_at
 - ✅ F4-F6 — Visibilité 3 niveaux (public/discret/privé) + code_acces + lien_secret
 - ✅ ROLE4 — Question "Mon événement / Je l'ai repéré" si double rôle détecté
 - ✅ ENG1 — Page remerciement personnalisée (contributeur vs organisateur + ordinal)
+- ✅ F8 — Événements récurrents (quotidien/hebdo/mensuel/annuel) + génération occurrences (17 mai 2026)
+- ✅ F10 — Message incitatif image + 3 suggestions Unsplash automatiques 5 langues (17 mai 2026)
 
 ### Auth & Profil
 - ✅ Auth organisateurs (email/password)
@@ -178,7 +229,11 @@ created_at, updated_at
 
 ### Admin
 - ✅ Panel admin `/admin`
+- ✅ ADMIN1 — Filtres temporels (Aujourd'hui/Cette semaine/Ce mois/Toutes dates) (17 mai 2026)
+- ✅ ADMIN2 — Navigation onglets (Événements/Signalements/Import) (17 mai 2026)
+- ✅ SC7 — Dashboard import admin avec stats par source + top pays + boutons relance (17 mai 2026)
 - ✅ Item 5 — Bouton "Mettre hors ligne" sur pages événements
+- ✅ Hors ligne occurrences récurrentes — popup choix (cet événement / toutes occurrences) (17 mai 2026)
 - ✅ Policy RLS UPDATE admin
 
 ### Engagement (carte visuelle)
@@ -186,11 +241,26 @@ created_at, updated_at
 - ✅ E3b/E3c — CarteVisuelle 3 dispositions + expressions + upload photo
 - ✅ UX13 — Photo profil en fond paysage automatiquement
 - ✅ UX14 — Drag/zoom photo fond + upload photo dédiée
+- ✅ E11 — Réponses commentaires 2 niveaux avec indentation (17 mai 2026)
+- ✅ E12 — 6 réactions emoji (👍❤️😂😮🙏🔥) sur commentaires (17 mai 2026)
+
+### Badges & Gamification
+- ✅ ENG3-B — Popup confetti badge débloqué après soumission (17 mai 2026)
+- ✅ ENG3-C — Push PWA badge débloqué ciblé par user_id (17 mai 2026)
+- ✅ ENG3-D — Email Brevo badge débloqué aux couleurs LOTBO (17 mai 2026)
+- ✅ GM1 — Points utilisateur (like+1, serai_la+5, commenter+2, repondre+1, partager+3, referral+10) (17 mai 2026)
+- ✅ GM2 — Points organisateur (approuve+10, trending+5, commentaire_recu+2, like_recu+1) (17 mai 2026)
+- ✅ GM4 — Niveaux automatiques (Découvreur→Actif→Contributeur→Top→Élite→Légende) (17 mai 2026)
+
+### SEO
+- ✅ SEO dynamique `/evenement/[id]` — og:image, og:title, og:description (17 mai 2026)
+- ✅ Image OG : photo événement > Unsplash catégorie > og-default.png
 
 ### Scraping & Import
-- ✅ SC1 — PredictHQ (423+ événements, 11 zones, 7 catégories)
+- ✅ SC1 — PredictHQ (572+ événements, 11 zones, 7 catégories)
 - ✅ SC5 — GitHub Actions CRON toutes les 6h
-- ✅ Scraper Ticketmaster, World Cup, Wikimedia
+- ✅ Scraper Ticketmaster, World Cup, Wikimedia, Ligue Haïtienne, Eventbrite
+- ✅ SC6 — Déduplication cross-sources (algorithme Dice coefficient + Haversine) (17 mai 2026)
 - ✅ vercel.json `{}` (crons Vercel supprimés — plan Hobby)
 
 ### Landing lotbo.app
@@ -204,12 +274,14 @@ created_at, updated_at
 ### Image automatique
 - ✅ F9 — Image Unsplash automatique si pas de photo (par catégorie)
 - ✅ Crédit auteur affiché
+- ✅ Route `/api/unsplash` retourne 3 photos (count param ajouté 17 mai 2026)
 
 ### Analytics
 - ✅ Item 22 — Vercel Analytics actif
 
 ### PWA
 - ✅ manifest.json + sw.js configurés
+- ✅ SW corrigé — exclut `/api/` et `supabase.co` des requêtes interceptées (17 mai 2026)
 
 ---
 
@@ -218,17 +290,38 @@ created_at, updated_at
 |---|---|
 | `/api/stats` | Compteurs événements/villes/pays (CORS *) |
 | `/api/top` | Top villes + catégories (CORS *) |
-| `/api/scrape-predicthq` | Import PredictHQ |
-| `/api/scrape-ticketmaster` | Import Ticketmaster |
+| `/api/scrape-predicthq` | Import PredictHQ + déduplication SC6 |
+| `/api/scrape-ticketmaster` | Import Ticketmaster + déduplication SC6 |
 | `/api/scrape-worldcup` | Import World Cup |
+| `/api/scrape-liguehaitienne` | Import Ligue Haïtienne |
+| `/api/scrape-eventbrite` | Import Wikimedia (ancien nom — à renommer) |
 | `/api/places-autocomplete` | Proxy Google Places autocomplétion |
 | `/api/places-details` | Proxy Google Places coordonnées |
-| `/api/unsplash` | Image automatique par catégorie |
+| `/api/unsplash` | Image automatique par catégorie (1 ou 3 photos) |
 | `/api/notify-admin` | Notification email admin Brevo |
+| `/api/notify-badge` | Email Brevo badge débloqué utilisateur (ENG3-D) |
+| `/api/push-notify` | Push PWA broadcast tous abonnés |
+| `/api/push-notify-badge` | Push PWA ciblé badge utilisateur (ENG3-C) |
+| `/api/push-subscribe` | Enregistrement abonnement push + user_id |
+| `/api/notify-abonnes` | Notification abonnés newsletter |
+| `/api/points` | Attribution points gamification GM1/GM2/GM4 |
+| `/api/generer-occurrences` | Génération occurrences événements récurrents F8 |
 
 ---
 
-## 10. RÈGLES ABSOLUES
+## 10. FICHIERS CLÉS
+| Fichier | Usage |
+|---|---|
+| `lib/supabase.js` | Client Supabase |
+| `lib/i18n.ts` | Traductions 5 langues |
+| `lib/deduplication.ts` | Algorithme déduplication SC6 |
+| `lib/points.ts` | Helper attribution points GM1/GM2 |
+| `public/sw.js` | Service Worker PWA |
+| `public/og-default.png` | Image OG fallback (logo LOTBO) |
+
+---
+
+## 11. RÈGLES ABSOLUES
 
 ### Développement
 - Mobile-first — tester 375px en premier
@@ -238,6 +331,7 @@ created_at, updated_at
 - TypeScript strict — jamais de `any`
 - Jamais `position: absolute` dans le header
 - Toujours livrer des fichiers complets, jamais des extraits
+- Route API : double auth acceptée — secret interne OU token Supabase utilisateur
 
 ### Design
 - **Fond toutes les pages : `#F7F2E8`** — règle établie 16 mai 2026
@@ -250,38 +344,44 @@ created_at, updated_at
 
 ---
 
-## 11. BACKLOG PRIORITAIRE (au 16 mai 2026)
+## 12. BACKLOG PRIORITAIRE (au 17 mai 2026)
 
 ### 🔴 URGENT
-- ADMIN1 — Filtres temporels panel admin
-- ADMIN2 — Navigation onglets panel admin (6 onglets)
+- Middleware admin — protéger `/admin` côté serveur (jamais fait)
+- Header mobile — `position: absolute` à corriger sur 375px
+- E11 mobile — bouton "Mettre hors ligne" non visible sur mobile
 
 ### 🟡 IMPORTANT
-- ENG3 — Notification badge débloqué (confetti + push)
-- F10 — Message incitatif image avant soumission (5 langues)
-- ROLE5 — IA vérification soumission
-- E11 — Réponses commentaires 2 niveaux
-- E12 — 6 réactions commentaires
-- F8 — Événements récurrents
-- SC6 — Déduplication cross-sources
-- SC7 — Dashboard import admin
+- GM5 — Leaderboard public (filtres global/pays/ville/semaine/mois)
+- GM6 — Score événements + section Trending
+- GM8 — Section Trending temps réel page accueil
+- GM9 — Newsletter hebdomadaire Brevo gamifiée
+- GM11 — Notifications classement (push + email)
+- GM12 — Classement personnel dans profil
+- GM13 — Carte badge partageable (WhatsApp/Facebook/Instagram/TikTok)
+- GM7 — Score réputation organisateurs
+- ROLE5 — IA vérification soumission (nécessite budget Anthropic Console)
+- S7 — Footer "Un produit de Bup Mark · Propulsé par Claude AI"
 - UX3 — Pages desktop trop étroites
-- UX4 — Grille événements desktop 2-3 colonnes
+- F8 CRON — Régénération automatique occurrences récurrentes
+- SC7 — Intégration `import_logs` dans les scrapers (table créée, pas encore utilisée)
 
 ### 🟢 GROWTH
 - GR1 — Système referral
+- GM10 — Équilibre organique/sponsorisé
+- SC2 — Meetup API (nécessite abonnement Pro)
+- SC3 — Bandsintown API
+- GRP1-GRP4 — Groupes discussion
 - S4 — Dépôt marque MCI Haïti
 - S5 — Dépôt marque IPO UK (~£170)
-- GM1-GM10 — Gamification complète
-- GRP1-GRP4 — Groupes discussion
-- SC2 — Meetup API
-- SC3 — Bandsintown API
 
 ---
 
-## 12. CHIFFRES CLÉS (16 mai 2026)
+## 13. CHIFFRES CLÉS (17 mai 2026)
 - 572+ événements approuvés
 - 58+ villes
 - 9+ pays
 - 3 organisateurs inscrits
 - 1 admin (Handgod Abraham)
+- Système de points actif (GM1/GM2/GM4)
+- Déduplication cross-sources active (SC6)
