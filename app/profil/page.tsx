@@ -376,8 +376,7 @@ export default function Profil() {
                     {nbApprouves} / {prochainBadgeOrga.seuil} — encore {prochainBadgeOrga.seuil - nbApprouves} événement{prochainBadgeOrga.seuil - nbApprouves > 1 ? 's' : ''}
                   </p>
                 </div>
-              )}
-            </div>
+            )}
 
           </div>
 
