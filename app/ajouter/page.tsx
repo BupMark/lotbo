@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+export const dynamic = 'force-dynamic'
 // import CarteBadge from '../../components/CarteBadge'
 // import { attributerPoints } from '../../lib/points'
 
