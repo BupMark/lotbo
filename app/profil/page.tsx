@@ -41,6 +41,7 @@ export default function Profil() {
   const [nomInput, setNomInput] = useState('')
   const [savingNom, setSavingNom] = useState(false)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [badgeSelectionne, setBadgeSelectionne] = useState<{ emoji: string; label: string; desc: string; id: string } | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [onglet, setOnglet] = useState<'evenements' | 'badges'>('evenements')
 
