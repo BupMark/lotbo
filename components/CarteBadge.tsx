@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // ── Traductions GM13 ──────────────────────────────────────────────────────────
-const T: Record<string, Record<string, string>> = {
+const T: Record<string, { titre: string; partager: string; telecharger: string; fermer: string; expressions: Record<string, string> }> = {
   fr: {
     titre:      'Mon badge LOTBO',
     partager:   'Partager ce badge',
