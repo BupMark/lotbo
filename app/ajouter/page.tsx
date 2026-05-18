@@ -574,7 +574,10 @@ const [finRecurrenceNb, setFinRecurrenceNb]         = useState(10)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) return
+  if (!session) {
+    window.location.href = '/login?redirect=/ajouter'
+    return
+  }
       const role = session.user.user_metadata?.role
       const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session.user.id).single()
       const estContrib = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')

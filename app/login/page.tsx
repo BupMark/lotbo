@@ -47,8 +47,10 @@ export default function Login() {
       return
     }
     const role = data.session?.user?.user_metadata?.role
-    if (role === 'admin') router.push('/admin')
-    else router.push('/ajouter')
+const params = new URLSearchParams(window.location.search)
+const redirect = params.get('redirect')
+if (role === 'admin') router.push('/admin')
+else router.push(redirect || '/ajouter')
   }
 
   const handleSignup = async (e: React.MouseEvent) => {
