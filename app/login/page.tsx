@@ -241,7 +241,7 @@ export default function Login() {
         </div>
 
         {/* Formulaire email */}
-        <form style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <form onSubmit={e => e.preventDefault()} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
           {mode === 'inscription' && (
             <input type="text" placeholder="Ton prénom *" value={prenom} onChange={e => setPrenom(e.target.value)} style={inputStyle} required />
