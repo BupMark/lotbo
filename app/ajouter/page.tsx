@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase'
 
 import dynamicImport from 'next/dynamic'
 const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
-// import { attributerPoints } from '../../lib/points'
+import { attributerPoints } from '../../lib/points'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -285,8 +285,8 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte }:
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-<button onClick={onContinuer} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Voir mes badges →</button>
-<button onClick={onCreerCarte} style={{ background: 'rgba(247,242,232,0.1)', color: '#F7F2E8', border: '1px solid rgba(247,242,232,0.2)', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: 8 }}>🎨 Créer ma carte badge</button>
+            <button onClick={onContinuer} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Voir mes badges →</button>
+            <button onClick={onCreerCarte} style={{ background: 'rgba(247,242,232,0.1)', color: '#F7F2E8', border: '1px solid rgba(247,242,232,0.2)', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: 8 }}>🎨 Créer ma carte badge</button>
             <button onClick={onContinuer} style={{ background: 'transparent', color: '#8C5A40', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px' }}>Continuer</button>
           </div>
         </div>
@@ -345,7 +345,6 @@ function BlocIncitatiImage({
       padding: '20px 18px',
       marginTop: 4,
     }}>
-      {/* Titre incitatif */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14 }}>
         <span style={{ fontSize: 24, flexShrink: 0 }}>🖼️</span>
         <div>
@@ -358,7 +357,6 @@ function BlocIncitatiImage({
         </div>
       </div>
 
-      {/* Suggestions Unsplash */}
       <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {t.suggestions}
       </p>
@@ -397,7 +395,6 @@ function BlocIncitatiImage({
                   <span style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>✓</span>
                 </div>
               )}
-              {/* Crédit photo */}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', padding: '3px 6px' }}>
                 <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {t.credit} {photo.author}
@@ -414,7 +411,6 @@ function BlocIncitatiImage({
         </p>
       )}
 
-      {/* Actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button
           type="button"
@@ -458,8 +454,8 @@ function CarteInteractive({ coords, onCoordsChange }: {
   coords: Coords; onCoordsChange: (c: Coords) => void
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
- const mapRef = useRef<any>(null)
-const markerRef = useRef<any>(null)
+  const mapRef          = useRef<any>(null)
+  const markerRef       = useRef<any>(null)
 
   useEffect(() => {
     if (!mapContainerRef.current) return
@@ -480,7 +476,7 @@ const markerRef = useRef<any>(null)
       const lngLat = marker.getLngLat()
       onCoordsChange({ longitude: lngLat.lng, latitude: lngLat.lat, adresse: coords.adresse })
     })
-   map.on('click', (e: { lngLat: { lng: number; lat: number } }) => {
+    map.on('click', (e: { lngLat: { lng: number; lat: number } }) => {
       marker.setLngLat([e.lngLat.lng, e.lngLat.lat])
       onCoordsChange({ longitude: e.lngLat.lng, latitude: e.lngLat.lat, adresse: coords.adresse })
     })
@@ -516,14 +512,13 @@ export default function AjouterEvenement() {
   const [nomUtilisateur, setNomUtilisateur] = useState('')
 
   // F10 — image state
-  const [image, setImage]                         = useState<File | null>(null)
-  const [imageUnsplash, setImageUnsplash]         = useState<UnsplashPhoto | null>(null)
-  const [showImageBloc, setShowImageBloc]         = useState(false)
-  const [imageBlocIgnore, setImageBlocIgnore]     = useState(false)
-  const fileInputRef                              = useRef<HTMLInputElement>(null)
-  const imageSectionRef                           = useRef<HTMLDivElement>(null)
+  const [image, setImage]                     = useState<File | null>(null)
+  const [imageUnsplash, setImageUnsplash]     = useState<UnsplashPhoto | null>(null)
+  const [showImageBloc, setShowImageBloc]     = useState(false)
+  const [imageBlocIgnore, setImageBlocIgnore] = useState(false)
+  const fileInputRef                          = useRef<HTMLInputElement>(null)
+  const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
-  // Détecter la langue du navigateur
   const locale: Locale = (() => {
     if (typeof window === 'undefined') return 'fr'
     const l = navigator.language.slice(0, 2)
@@ -541,19 +536,20 @@ export default function AjouterEvenement() {
   const [codeAcces, setCodeAcces]             = useState('')
   const [soumisEnTantQue, setSoumisEnTantQue] = useState<'organisateur' | 'contributeur' | null>(null)
   const [aDoubleRole, setADoubleRole]         = useState(false)
-  // F8 — Récurrence
-const [estRecurrent, setEstRecurrent]               = useState(false)
-const [typeRecurrence, setTypeRecurrence]           = useState<'quotidien' | 'hebdomadaire' | 'mensuel' | 'annuel'>('hebdomadaire')
-const [joursRecurrence, setJoursRecurrence]         = useState<string[]>([])
-const [finRecurrenceType, setFinRecurrenceType]     = useState<'date' | 'occurrences' | 'sans_fin'>('sans_fin')
-const [finRecurrenceDate, setFinRecurrenceDate]     = useState('')
-const [finRecurrenceNb, setFinRecurrenceNb]         = useState(10)
 
-  const [suggestions, setSuggestions]           = useState<Suggestion[]>([])
-  const [showSuggestions, setShowSuggestions]   = useState(false)
-  const [coordsPin, setCoordsPin]               = useState<Coords | null>(null)
-  const [pinConfirme, setPinConfirme]           = useState(false)
-  const [rechercheTexte, setRechercheTexte]     = useState('')
+  // F8 — Récurrence
+  const [estRecurrent, setEstRecurrent]           = useState(false)
+  const [typeRecurrence, setTypeRecurrence]       = useState<'quotidien' | 'hebdomadaire' | 'mensuel' | 'annuel'>('hebdomadaire')
+  const [joursRecurrence, setJoursRecurrence]     = useState<string[]>([])
+  const [finRecurrenceType, setFinRecurrenceType] = useState<'date' | 'occurrences' | 'sans_fin'>('sans_fin')
+  const [finRecurrenceDate, setFinRecurrenceDate] = useState('')
+  const [finRecurrenceNb, setFinRecurrenceNb]     = useState(10)
+
+  const [suggestions, setSuggestions]         = useState<Suggestion[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [coordsPin, setCoordsPin]             = useState<Coords | null>(null)
+  const [pinConfirme, setPinConfirme]         = useState(false)
+  const [rechercheTexte, setRechercheTexte]   = useState('')
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -574,10 +570,10 @@ const [finRecurrenceNb, setFinRecurrenceNb]         = useState(10)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-  if (!session) {
-    window.location.href = '/login?redirect=/ajouter'
-    return
-  }
+      if (!session) {
+        window.location.href = '/login?redirect=/ajouter'
+        return
+      }
       const role = session.user.user_metadata?.role
       const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session.user.id).single()
       const estContrib = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
@@ -585,7 +581,6 @@ const [finRecurrenceNb, setFinRecurrenceNb]         = useState(10)
     })
   }, [])
 
-  // F10 — Intersection Observer : déclencher le bloc quand la section image est visible
   useEffect(() => {
     if (!imageSectionRef.current || imageBlocIgnore || image || imageUnsplash) return
     const observer = new IntersectionObserver(
@@ -672,7 +667,6 @@ const [finRecurrenceNb, setFinRecurrenceNb]         = useState(10)
 
     let image_url = ''
 
-    // Priorité : fichier local > suggestion Unsplash > fallback vide
     if (image) {
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('evenements').upload(`${Date.now()}-${image.name}`, image)
@@ -681,15 +675,14 @@ const [finRecurrenceNb, setFinRecurrenceNb]         = useState(10)
         image_url = urlData.publicUrl
       }
     } else if (imageUnsplash) {
-      // Utiliser directement l'URL Unsplash (regular)
       image_url = imageUnsplash.url
     }
 
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
     const role         = session?.user?.user_metadata?.role
-const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
-if (profile?.nom) setNomUtilisateur(profile.nom)
+    const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
+    if (profile?.nom) setNomUtilisateur(profile.nom)
     const estContributeur = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
     if (estContributeur && profile?.charte_acceptee) setADoubleRole(true)
     const choix           = soumisEnTantQue || (estContributeur && profile?.charte_acceptee ? 'contributeur' : 'organisateur')
@@ -713,15 +706,15 @@ if (profile?.nom) setNomUtilisateur(profile.nom)
       acces: form.acces, prix: form.prix, image_url,
       statut: statutInsertion,
       soumis_en_tant_que: soumisEnTantQue || (statutInsertion === 'approuve' ? 'contributeur' : 'organisateur'),
-     visibilite, code_acces: visibilite === 'discret' ? codeAcces : null,
-est_recurrent: estRecurrent,
-recurrence_regle: estRecurrent ? {
-  type: typeRecurrence,
-  jours: joursRecurrence,
-  fin_type: finRecurrenceType,
-  fin_date: finRecurrenceType === 'date' ? finRecurrenceDate : null,
-  fin_occurrences: finRecurrenceType === 'occurrences' ? finRecurrenceNb : null,
-} : null,
+      visibilite, code_acces: visibilite === 'discret' ? codeAcces : null,
+      est_recurrent: estRecurrent,
+      recurrence_regle: estRecurrent ? {
+        type: typeRecurrence,
+        jours: joursRecurrence,
+        fin_type: finRecurrenceType,
+        fin_date: finRecurrenceType === 'date' ? finRecurrenceDate : null,
+        fin_occurrences: finRecurrenceType === 'occurrences' ? finRecurrenceNb : null,
+      } : null,
     }]).select('id, lien_secret').single()
 
     setLoading(false)
@@ -733,11 +726,64 @@ recurrence_regle: estRecurrent ? {
     const badges       = choix === 'contributeur' ? BADGES_CONTRIBUTEUR : BADGES_ORGANISATEUR
     const nouveauBadge = detecterNouveauBadge(avant, apres, badges)
 
+    // ── Notif admin (fire & forget) ───────────────────────────────────────────
     fetch('/api/notify-admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
       body: JSON.stringify({ titre: form.titre, lieu: lieuAffiche, date: form.date, categorie: categorieNom })
     }).catch(() => {})
+
+    // ── F8 — Générer les occurrences si récurrent ─────────────────────────────
+    if (estRecurrent && inserted?.id) {
+      fetch('/api/generer-occurrences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        body: JSON.stringify({ parent_id: inserted.id }),
+      }).catch(() => {})
+    }
+
+    // ── GM1/GM2 — Points soumission ───────────────────────────────────────────
+    // Points attribués uniquement si l'événement est approuvé directement
+    // (contributeur avec charte acceptée). Pour les événements en_attente,
+    // les points seront attribués par l'admin au moment de l'approbation.
+    if (statutInsertion === 'approuve' && userId && inserted?.id) {
+      attributerPoints({
+        user_id: userId,
+        action: 'evenement_approuve',
+        evenement_id: inserted.id,
+        type_role: choix === 'contributeur' ? 'utilisateur' : 'organisateur',
+      })
+    }
+
+    // ── ENG3 — Badge débloqué ─────────────────────────────────────────────────
+    if (nouveauBadge) {
+      // ENG3-C — Push PWA ciblé
+      fetch('/api/push-notify-badge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        body: JSON.stringify({
+          user_id: userId,
+          badge_emoji: nouveauBadge.emoji,
+          badge_label: nouveauBadge.label,
+          badge_desc: nouveauBadge.desc,
+        }),
+      }).catch(() => {})
+
+      // ENG3-D — Email Brevo
+      fetch('/api/notify-badge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        body: JSON.stringify({
+          email: session?.user?.email,
+          nom: session?.user?.user_metadata?.nom || null,
+          badge_emoji: nouveauBadge.emoji,
+          badge_label: nouveauBadge.label,
+          badge_desc: nouveauBadge.desc,
+          nb_contributions: apres,
+          role: choix,
+        }),
+      }).catch(() => {})
+    }
 
     setSuccesData({
       lienSecret: inserted?.lien_secret,
@@ -747,58 +793,7 @@ recurrence_regle: estRecurrent ? {
       nouveauBadge: nouveauBadge || undefined,
     })
     setSucces(true)
-// GM1/GM2 — Points soumission
-// if (userId) {
-//   attributerPoints({
-//     user_id: userId,
-//     action: statutInsertion === 'approuve' ? 'evenement_approuve' : 'commenter',
-//     evenement_id: inserted?.id,
-//     type_role: choix === 'contributeur' ? 'utilisateur' : 'organisateur',
-//   })
-// }
-if (nouveauBadge) {
-  setShowBadgePopup(true)
-// F8 — Générer les occurrences si récurrent
-if (estRecurrent && inserted?.id) {
-  fetch('/api/generer-occurrences', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
-    body: JSON.stringify({ parent_id: inserted.id }),
-  }).catch(() => {})
-}
-  // ENG3-C — Push PWA
-  fetch('/api/push-notify-badge', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
-    },
-    body: JSON.stringify({
-      user_id: userId,
-      badge_emoji: nouveauBadge.emoji,
-      badge_label: nouveauBadge.label,
-      badge_desc: nouveauBadge.desc,
-    }),
-  }).catch(() => {})
-
-  // ENG3-D — Email Brevo
-  fetch('/api/notify-badge', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
-    },
-    body: JSON.stringify({
-      email: session?.user?.email,
-      nom: session?.user?.user_metadata?.nom || null,
-      badge_emoji: nouveauBadge.emoji,
-      badge_label: nouveauBadge.label,
-      badge_desc: nouveauBadge.desc,
-      nb_contributions: apres,
-      role: choix,
-    }),
-  }).catch(() => {})
-}
+    if (nouveauBadge) setShowBadgePopup(true)
   }
 
   const handleContinuerApresBadge = () => {
@@ -814,16 +809,22 @@ if (estRecurrent && inserted?.id) {
     return (
       <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
         {showBadgePopup && succesData?.nouveauBadge && (
-<PopupBadge badge={succesData.nouveauBadge} nbContributions={nb} role={succesData.role || 'organisateur'} onContinuer={handleContinuerApresBadge} onCreerCarte={() => { setShowBadgePopup(false); setShowCarteBadge(true) }} />
+          <PopupBadge
+            badge={succesData.nouveauBadge}
+            nbContributions={nb}
+            role={succesData.role || 'organisateur'}
+            onContinuer={handleContinuerApresBadge}
+            onCreerCarte={() => { setShowBadgePopup(false); setShowCarteBadge(true) }}
+          />
         )}
-     {/* showCarteBadge && succesData?.nouveauBadge && (
-  <CarteBadge
-    badge={succesData.nouveauBadge}
-    nom={nomUtilisateur || 'LOTBO'}
-    onClose={() => setShowCarteBadge(false)}
-  />
-) */}
-        
+        {showCarteBadge && succesData?.nouveauBadge && (
+          <CarteBadge
+            badge={succesData.nouveauBadge}
+            nom={nomUtilisateur || 'LOTBO'}
+            onClose={() => setShowCarteBadge(false)}
+          />
+        )}
+
         <div style={{ maxWidth: 480, width: '100%' }}>
           <div style={{ textAlign: 'center', fontSize: 52, marginBottom: 20 }}>{isContrib ? '⭐' : '🎪'}</div>
           <h2 style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 }}>
@@ -998,103 +999,69 @@ if (estRecurrent && inserted?.id) {
               <input type="time" name="heure_fin" onChange={handleChange} style={inputStyle} />
             </div>
           </div>
-{/* ── F8 — Récurrence ── */}
-<div>
-  <button type="button" onClick={() => setEstRecurrent(!estRecurrent)} style={{
-    display: 'flex', alignItems: 'center', gap: 10,
-    background: estRecurrent ? 'rgba(200,67,26,0.12)' : 'white',
-    border: estRecurrent ? '1px solid #C8431A' : '1px solid #E8E0D0',
-    borderRadius: 10, padding: '10px 14px',
-    color: estRecurrent ? '#1A1410' : '#8C5A40',
-    fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left' as const,
-  }}>
-    <span style={{ fontSize: 16 }}>{estRecurrent ? '✅' : '☐'}</span>
-    <span>Cet événement se répète</span>
-  </button>
 
-  {estRecurrent && (
-    <div style={{ background: 'rgba(200,67,26,0.04)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 12, padding: '16px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* ── F8 — Récurrence ── */}
+          <div>
+            <button type="button" onClick={() => setEstRecurrent(!estRecurrent)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: estRecurrent ? 'rgba(200,67,26,0.12)' : 'white', border: estRecurrent ? '1px solid #C8431A' : '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: estRecurrent ? '#1A1410' : '#8C5A40', fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left' as const }}>
+              <span style={{ fontSize: 16 }}>{estRecurrent ? '✅' : '☐'}</span>
+              <span>Cet événement se répète</span>
+            </button>
 
-      {/* Type récurrence */}
-      <div>
-        <label style={labelStyle}>Fréquence</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-          {[
-            { key: 'quotidien',    label: 'Tous les jours' },
-            { key: 'hebdomadaire', label: 'Toutes les semaines' },
-            { key: 'mensuel',      label: 'Tous les mois' },
-            { key: 'annuel',       label: 'Tous les ans' },
-          ].map(t => (
-            <button key={t.key} type="button"
-              onClick={() => setTypeRecurrence(t.key as typeof typeRecurrence)}
-              style={{
-                padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-                border: 'none', cursor: 'pointer',
-                background: typeRecurrence === t.key ? '#C8431A' : 'rgba(255,255,255,0.6)',
-                color: typeRecurrence === t.key ? 'white' : '#8C5A40',
-              }}>{t.label}</button>
-          ))}
-        </div>
-      </div>
+            {estRecurrent && (
+              <div style={{ background: 'rgba(200,67,26,0.04)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 12, padding: '16px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Fréquence</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                    {[
+                      { key: 'quotidien',    label: 'Tous les jours' },
+                      { key: 'hebdomadaire', label: 'Toutes les semaines' },
+                      { key: 'mensuel',      label: 'Tous les mois' },
+                      { key: 'annuel',       label: 'Tous les ans' },
+                    ].map(t => (
+                      <button key={t.key} type="button" onClick={() => setTypeRecurrence(t.key as typeof typeRecurrence)} style={{ padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: typeRecurrence === t.key ? '#C8431A' : 'rgba(255,255,255,0.6)', color: typeRecurrence === t.key ? 'white' : '#8C5A40' }}>{t.label}</button>
+                    ))}
+                  </div>
+                </div>
 
-      {/* Jours si hebdomadaire */}
-      {typeRecurrence === 'hebdomadaire' && (
-        <div>
-          <label style={labelStyle}>Jour(s) de la semaine</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'].map(jour => {
-              const actif = joursRecurrence.includes(jour)
-              return (
-                <button key={jour} type="button"
-                  onClick={() => setJoursRecurrence(prev => actif ? prev.filter(j => j !== jour) : [...prev, jour])}
-                  style={{
-                    padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-                    border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer',
-                    background: actif ? '#C8431A' : 'white',
-                    color: actif ? 'white' : '#8C5A40',
-                  }}>{jour}</button>
-              )
-            })}
+                {typeRecurrence === 'hebdomadaire' && (
+                  <div>
+                    <label style={labelStyle}>Jour(s) de la semaine</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                      {['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'].map(jour => {
+                        const actif = joursRecurrence.includes(jour)
+                        return (
+                          <button key={jour} type="button" onClick={() => setJoursRecurrence(prev => actif ? prev.filter(j => j !== jour) : [...prev, jour])} style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer', background: actif ? '#C8431A' : 'white', color: actif ? 'white' : '#8C5A40' }}>{jour}</button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label style={labelStyle}>Fin de la récurrence</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 10 }}>
+                    {[
+                      { key: 'sans_fin',    label: 'Sans fin' },
+                      { key: 'date',        label: "Jusqu'à une date" },
+                      { key: 'occurrences', label: 'Après X fois' },
+                    ].map(f => (
+                      <button key={f.key} type="button" onClick={() => setFinRecurrenceType(f.key as typeof finRecurrenceType)} style={{ padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: finRecurrenceType === f.key ? '#1A1410' : 'rgba(255,255,255,0.6)', color: finRecurrenceType === f.key ? '#F7F2E8' : '#8C5A40' }}>{f.label}</button>
+                    ))}
+                  </div>
+                  {finRecurrenceType === 'date' && (
+                    <input type="date" value={finRecurrenceDate} onChange={e => setFinRecurrenceDate(e.target.value)} style={{ ...inputStyle, marginTop: 4 }} />
+                  )}
+                  {finRecurrenceType === 'occurrences' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+                      <input type="number" min={2} max={52} value={finRecurrenceNb} onChange={e => setFinRecurrenceNb(parseInt(e.target.value))} style={{ ...inputStyle, width: 80 }} />
+                      <span style={{ color: '#8C5A40', fontSize: 13 }}>occurrences</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
 
-      {/* Fin de récurrence */}
-      <div>
-        <label style={labelStyle}>Fin de la récurrence</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 10 }}>
-          {[
-            { key: 'sans_fin',     label: 'Sans fin' },
-            { key: 'date',         label: "Jusqu'à une date" },
-            { key: 'occurrences',  label: 'Après X fois' },
-          ].map(f => (
-            <button key={f.key} type="button"
-              onClick={() => setFinRecurrenceType(f.key as typeof finRecurrenceType)}
-              style={{
-                padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
-                border: 'none', cursor: 'pointer',
-                background: finRecurrenceType === f.key ? '#1A1410' : 'rgba(255,255,255,0.6)',
-                color: finRecurrenceType === f.key ? '#F7F2E8' : '#8C5A40',
-              }}>{f.label}</button>
-          ))}
-        </div>
-        {finRecurrenceType === 'date' && (
-          <input type="date" value={finRecurrenceDate} onChange={e => setFinRecurrenceDate(e.target.value)}
-            style={{ ...inputStyle, marginTop: 4 }} />
-        )}
-        {finRecurrenceType === 'occurrences' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
-            <input type="number" min={2} max={52} value={finRecurrenceNb}
-              onChange={e => setFinRecurrenceNb(parseInt(e.target.value))}
-              style={{ ...inputStyle, width: 80 }} />
-            <span style={{ color: '#8C5A40', fontSize: 13 }}>occurrences</span>
-          </div>
-        )}
-      </div>
-
-    </div>
-  )}
-</div>
           <div>
             <label style={labelStyle}>Fuseau horaire <span style={{ color: '#8C5A40', marginLeft: 4 }}>(heure locale du lieu)</span></label>
             <select name="fuseau_organisateur" value={form.fuseau_organisateur} onChange={handleChange} style={inputStyle}>
@@ -1151,22 +1118,19 @@ if (estRecurrent && inserted?.id) {
             <input name="lien" placeholder="https://" onChange={handleChange} style={inputStyle} />
           </div>
 
-          {/* ══════════════════════════════════════════════════════════════
-              F10 — Section image avec bloc incitatif
-          ══════════════════════════════════════════════════════════════ */}
+          {/* ── F10 — Section image avec bloc incitatif ── */}
           <div ref={imageSectionRef}>
             <label style={labelStyle}>
               Photo de l'événement
               <span style={{ color: '#8C5A40', marginLeft: 6 }}>(optionnel)</span>
             </label>
 
-            {/* Bloc incitatif — visible si pas encore d'image et pas ignoré */}
             {showImageBloc && !imageConfirmee && !imageBlocIgnore && (
               <BlocIncitatiImage
-  locale={locale}
-  titre={form.titre}
-  categorie={categorieNomSelectionnee}
-  imageDejaSelectionnee={imageConfirmee}
+                locale={locale}
+                titre={form.titre}
+                categorie={categorieNomSelectionnee}
+                imageDejaSelectionnee={imageConfirmee}
                 onSelectUnsplash={(photo) => {
                   setImageUnsplash(photo)
                   setShowImageBloc(false)
@@ -1182,7 +1146,6 @@ if (estRecurrent && inserted?.id) {
               />
             )}
 
-            {/* Aperçu image Unsplash sélectionnée */}
             {imageUnsplash && !image && (
               <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '2px solid #2D9E6B', marginTop: 8 }}>
                 <img src={imageUnsplash.thumb} alt="suggestion" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
@@ -1193,7 +1156,6 @@ if (estRecurrent && inserted?.id) {
               </div>
             )}
 
-            {/* Input fichier — toujours présent mais caché si bloc incitatif actif */}
             <input
               ref={fileInputRef}
               type="file"
@@ -1211,7 +1173,6 @@ if (estRecurrent && inserted?.id) {
               }}
             />
 
-            {/* Aperçu fichier local */}
             {image && (
               <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold' }}>✓ {image.name}</span>
