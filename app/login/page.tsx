@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -31,12 +31,36 @@ export default function Login() {
     return params.get('redirect') || '/ajouter'
   }
 
+  // ── Intercepter le token OAuth dans le hash (flux implicite Supabase) ──────
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const hash = window.location.hash
+    if (!hash.includes('access_token=')) return
+    const params        = new URLSearchParams(hash.replace('#', ''))
+    const access_token  = params.get('access_token')
+    const refresh_token = params.get('refresh_token')
+    if (access_token && refresh_token) {
+      supabase.auth.setSession({ access_token, refresh_token }).then(({ data, error }) => {
+        if (!error && data.session) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+          const role = data.session.user?.user_metadata?.role
+          if (role === 'admin') router.push('/admin')
+          else router.push(getRedirect())
+        }
+      })
+    }
+  }, [])
+
   // ── Google OAuth ───────────────────────────────────────────────────────────
   const handleGoogle = async () => {
     setLoadingGoogle(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}`,
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+        flowType: 'pkce',
+      },
     })
     if (error) { setMessage('Erreur Google : ' + error.message); setMessageType('erreur'); setLoadingGoogle(false) }
   }
@@ -46,7 +70,10 @@ export default function Login() {
     setLoadingFacebook(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}`,
+        flowType: 'pkce',
+      },
     })
     if (error) { setMessage('Erreur Facebook : ' + error.message); setMessageType('erreur'); setLoadingFacebook(false) }
   }
