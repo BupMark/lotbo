@@ -44,8 +44,8 @@ export default function Login() {
         if (!error && data.session) {
           window.history.replaceState(null, '', window.location.pathname + window.location.search)
           const role = data.session.user?.user_metadata?.role
-          if (role === 'admin') router.push('/admin')
-          else router.push(getRedirect())
+          if (role === 'admin') window.location.href = '/admin'
+          else window.location.href = getRedirect()
         }
       })
     }
@@ -97,8 +97,8 @@ export default function Login() {
       setMessageType('erreur'); return
     }
     const role = data.session?.user?.user_metadata?.role
-    if (role === 'admin') router.push('/admin')
-    else router.push(getRedirect())
+    if (role === 'admin') window.location.href = '/admin'
+    else window.location.href = getRedirect()
   }
 
   // ── Inscription email ──────────────────────────────────────────────────────
