@@ -31,9 +31,9 @@ interface Signalement {
   created_at: string
 }
 
-type FiltreStatut = 'en_attente' | 'approuve' | 'rejete' | 'tous'
+type FiltreStatut  = 'en_attente' | 'approuve' | 'rejete' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
-type Onglet = 'evenements' | 'signalements' | 'import'
+type Onglet        = 'evenements' | 'signalements' | 'import'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -44,45 +44,28 @@ const couleurStatut = (s: string): { bg: string; color: string } => {
 }
 
 const labelStatut = (s: string): string => {
-  if (s === 'approuve')  return '✓ Approuvé'
-  if (s === 'rejete')    return '✗ Rejeté'
+  if (s === 'approuve')   return '✓ Approuvé'
+  if (s === 'rejete')     return '✗ Rejeté'
   if (s === 'en_attente') return '⏳ En attente'
   return s
 }
 
-/** Retourne true si la date ISO tombe dans la plage demandée */
 const matchTemporel = (dateStr: string, filtre: FiltreTemporel): boolean => {
   if (filtre === 'tous') return true
   if (!dateStr) return false
-
-  const now = new Date()
+  const now  = new Date()
   const date = new Date(dateStr)
-
   if (filtre === 'aujourd_hui') {
-    return (
-      date.getDate()     === now.getDate() &&
-      date.getMonth()    === now.getMonth() &&
-      date.getFullYear() === now.getFullYear()
-    )
+    return date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
   }
-
   if (filtre === 'cette_semaine') {
-    const debut = new Date(now)
-    debut.setDate(now.getDate() - now.getDay())
-    debut.setHours(0, 0, 0, 0)
-    const fin = new Date(debut)
-    fin.setDate(debut.getDate() + 6)
-    fin.setHours(23, 59, 59, 999)
+    const debut = new Date(now); debut.setDate(now.getDate() - now.getDay()); debut.setHours(0, 0, 0, 0)
+    const fin   = new Date(debut); fin.setDate(debut.getDate() + 6); fin.setHours(23, 59, 59, 999)
     return date >= debut && date <= fin
   }
-
   if (filtre === 'ce_mois') {
-    return (
-      date.getMonth()    === now.getMonth() &&
-      date.getFullYear() === now.getFullYear()
-    )
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
   }
-
   return true
 }
 
@@ -98,16 +81,19 @@ export default function Admin() {
   const [filtreTemporel, setFiltreTemporel] = useState<FiltreTemporel>('tous')
   const [recherche, setRecherche]           = useState('')
   const [onglet, setOnglet]                 = useState<Onglet>('evenements')
-// SC7 — Dashboard import
-const [statsImport, setStatsImport] = useState<{
-  source: string
-  nb: number
-  dernierImport: string | null
-}[]>([])
-const [repartitionPays, setRepartitionPays] = useState<{ pays: string; nb: number }[]>([])
-const [loadingImport, setLoadingImport] = useState(false)
 
-  // Headers sécurisés pour les routes API internes
+  // ── Counts exacts (indépendants de la liste chargée) ──────────────────────
+  const [countTotal,     setCountTotal]     = useState(0)
+  const [countApprouves, setCountApprouves] = useState(0)
+  const [countEnAttente, setCountEnAttente] = useState(0)
+  const [countRejetes,   setCountRejetes]   = useState(0)
+  const [countVilles,    setCountVilles]    = useState(0)
+
+  // SC7 — Dashboard import
+  const [statsImport,      setStatsImport]      = useState<{ source: string; nb: number; dernierImport: string | null }[]>([])
+  const [repartitionPays,  setRepartitionPays]  = useState<{ pays: string; nb: number }[]>([])
+  const [loadingImport,    setLoadingImport]     = useState(false)
+
   const hi: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
@@ -124,51 +110,92 @@ const [loadingImport, setLoadingImport] = useState(false)
   }, [])
 
   const chargerDonnees = async () => {
+    // ── 1. Counts exacts via count:exact — pas de limite 1000 ────────────────
+    const [
+      { count: total },
+      { count: approuves },
+      { count: enAttente },
+      { count: rejetes },
+    ] = await Promise.all([
+      supabase.from('evenements').select('*', { count: 'exact', head: true }),
+      supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'approuve'),
+      supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'en_attente'),
+      supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'rejete'),
+    ])
+    setCountTotal(total || 0)
+    setCountApprouves(approuves || 0)
+    setCountEnAttente(enAttente || 0)
+    setCountRejetes(rejetes || 0)
+
+    // ── 2. Villes distinctes (count côté client sur colonne ville) ───────────
+    const { data: villesData } = await supabase
+      .from('evenements')
+      .select('ville')
+      .eq('statut', 'approuve')
+      .not('ville', 'is', null)
+    setCountVilles(new Set(villesData?.map(e => e.ville?.trim()).filter(Boolean)).size)
+
+    // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
     const [{ data: evs }, { data: sigs }] = await Promise.all([
-      supabase.from('evenements').select('*').order('created_at', { ascending: false }),
+      supabase.from('evenements').select('*').order('created_at', { ascending: false }).limit(2000),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
     ])
-    // SC7 — Stats import par source
-const { data: statsSource } = await supabase
-  .from('evenements')
-  .select('source, created_at')
-  .eq('statut', 'approuve')
-  .not('source', 'is', null)
-
-if (statsSource) {
-  const map: Record<string, { nb: number; dernierImport: string }> = {}
-  for (const ev of statsSource) {
-    if (!ev.source) continue
-    if (!map[ev.source]) map[ev.source] = { nb: 0, dernierImport: ev.created_at }
-    map[ev.source].nb++
-    if (ev.created_at > map[ev.source].dernierImport) map[ev.source].dernierImport = ev.created_at
-  }
-  setStatsImport(Object.entries(map).map(([source, v]) => ({ source, nb: v.nb, dernierImport: v.dernierImport })).sort((a, b) => b.nb - a.nb))
-}
-
-// SC7 — Répartition par pays
-const { data: statsPays } = await supabase
-  .from('evenements')
-  .select('pays')
-  .eq('statut', 'approuve')
-  .not('pays', 'is', null)
-
-if (statsPays) {
-  const map: Record<string, number> = {}
-  for (const ev of statsPays) {
-    if (!ev.pays) continue
-    map[ev.pays] = (map[ev.pays] || 0) + 1
-  }
-  setRepartitionPays(Object.entries(map).map(([pays, nb]) => ({ pays, nb })) .sort((a, b) => b.nb - a.nb).slice(0, 10))
-}
     setEvenements((evs as Evenement[]) || [])
     setSignalements((sigs as Signalement[]) || [])
+
+    // ── 4. SC7 — Stats import par source ─────────────────────────────────────
+    const { data: statsSource } = await supabase
+      .from('evenements')
+      .select('source, created_at')
+      .eq('statut', 'approuve')
+      .not('source', 'is', null)
+      .limit(2000)
+
+    if (statsSource) {
+      const map: Record<string, { nb: number; dernierImport: string }> = {}
+      for (const ev of statsSource) {
+        if (!ev.source) continue
+        if (!map[ev.source]) map[ev.source] = { nb: 0, dernierImport: ev.created_at }
+        map[ev.source].nb++
+        if (ev.created_at > map[ev.source].dernierImport) map[ev.source].dernierImport = ev.created_at
+      }
+      setStatsImport(
+        Object.entries(map)
+          .map(([source, v]) => ({ source, nb: v.nb, dernierImport: v.dernierImport }))
+          .sort((a, b) => b.nb - a.nb)
+      )
+    }
+
+    // ── 5. SC7 — Répartition par pays ────────────────────────────────────────
+    const { data: statsPays } = await supabase
+      .from('evenements')
+      .select('pays')
+      .eq('statut', 'approuve')
+      .not('pays', 'is', null)
+      .limit(2000)
+
+    if (statsPays) {
+      const map: Record<string, number> = {}
+      for (const ev of statsPays) {
+        if (!ev.pays) continue
+        map[ev.pays] = (map[ev.pays] || 0) + 1
+      }
+      setRepartitionPays(
+        Object.entries(map)
+          .map(([pays, nb]) => ({ pays, nb }))
+          .sort((a, b) => b.nb - a.nb)
+          .slice(0, 10)
+      )
+    }
+
     setLoading(false)
   }
 
   const approuver = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'approuve' }).eq('id', id)
     setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, statut: 'approuve' } : ev))
+    setCountApprouves(c => c + 1)
+    setCountEnAttente(c => Math.max(0, c - 1))
     const ev = evenements.find(e => e.id === id)
     if (ev) {
       fetch('/api/notify-abonnes', { method: 'POST', headers: hi, body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
@@ -179,33 +206,26 @@ if (statsPays) {
   const rejeter = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'rejete' }).eq('id', id)
     setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, statut: 'rejete' } : ev))
+    setCountRejetes(c => c + 1)
+    setCountEnAttente(c => Math.max(0, c - 1))
   }
 
   const supprimer = async (id: string) => {
     if (!confirm('Supprimer cet événement ?')) return
     await supabase.from('evenements').delete().eq('id', id)
     setEvenements(prev => prev.filter(ev => ev.id !== id))
+    setCountTotal(c => Math.max(0, c - 1))
   }
 
-  // ─── Stats ─────────────────────────────────────────────────────────────────
+  // ─── Stats affichées — counts exacts + dérivés de la liste ───────────────
 
-  const nbTotal     = evenements.length
-  const nbApprouves = evenements.filter(e => e.statut === 'approuve').length
-  const nbEnAttente = evenements.filter(e => e.statut === 'en_attente').length
-  const nbRejetes   = evenements.filter(e => e.statut === 'rejete').length
-  const nbVilles    = new Set(
-    evenements
-      .filter(e => e.statut === 'approuve')
-      .map(e => e.lieu?.split(',').pop()?.trim())
-      .filter(Boolean)
-  ).size
   const nbRegions = new Set(
     evenements
       .filter(e => e.statut === 'approuve' && e.longitude !== null)
       .map(e => (e.longitude! < -30 ? 'Amériques' : e.longitude! < 60 ? 'Europe/Afrique' : 'Asie/Pacifique'))
   ).size
 
-  // ─── Filtre combiné ────────────────────────────────────────────────────────
+  // ─── Filtre combiné ───────────────────────────────────────────────────────
 
   const evenementsFiltres = evenements.filter(ev => {
     const matchStatut    = filtreStatut === 'tous' || ev.statut === filtreStatut
@@ -218,15 +238,13 @@ if (statsPays) {
     return matchStatut && matchTemps && matchRecherche
   })
 
-  // ─── Labels filtres temporels ──────────────────────────────────────────────
-
   const nbParTemps = (f: FiltreTemporel) =>
     evenements.filter(ev =>
       (filtreStatut === 'tous' || ev.statut === filtreStatut) &&
       matchTemporel(ev.date, f)
     ).length
 
-  // ─── Loading ───────────────────────────────────────────────────────────────
+  // ─── Loading ──────────────────────────────────────────────────────────────
 
   if (loading) return (
     <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -234,13 +252,13 @@ if (statsPays) {
     </main>
   )
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410', padding: '24px 16px' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
-        {/* ── En-tête ─────────────────────────────────────────────────── */}
+        {/* ── En-tête ──────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ fontFamily: 'serif', fontStyle: 'italic' }}>
             <span style={{ color: '#1A1410', fontSize: 24, fontWeight: 'bold' }}>lot</span>
@@ -250,15 +268,15 @@ if (statsPays) {
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
         </div>
 
-        {/* ── Stats ───────────────────────────────────────────────────── */}
+        {/* ── Stats — counts exacts ─────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'Total',      valeur: nbTotal,     couleur: '#1A1410' },
-            { label: 'En attente', valeur: nbEnAttente, couleur: '#D4A820' },
-            { label: 'Approuvés',  valeur: nbApprouves, couleur: '#2D9E6B' },
-            { label: 'Rejetés',    valeur: nbRejetes,   couleur: '#e57373' },
-            { label: 'Villes',     valeur: nbVilles,    couleur: '#C8431A' },
-            { label: 'Régions',    valeur: nbRegions,   couleur: '#8C5A40' },
+            { label: 'Total',      valeur: countTotal,     couleur: '#1A1410' },
+            { label: 'En attente', valeur: countEnAttente, couleur: '#D4A820' },
+            { label: 'Approuvés',  valeur: countApprouves, couleur: '#2D9E6B' },
+            { label: 'Rejetés',    valeur: countRejetes,   couleur: '#e57373' },
+            { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A' },
+            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40' },
           ].map((c, i) => (
             <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center' }}>
               <p style={{ fontSize: 28, fontWeight: 'bold', color: c.couleur, marginBottom: 4 }}>{c.valeur}</p>
@@ -267,49 +285,37 @@ if (statsPays) {
           ))}
         </div>
 
-        {/* ── Utilisateur connecté ────────────────────────────────────── */}
+        {/* ── Utilisateur connecté ──────────────────────────────────────── */}
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 12, padding: '10px 16px', marginBottom: 24 }}>
           <p style={{ color: '#8C5A40', fontSize: 13 }}>
             Connecté en tant que <span style={{ color: '#C8431A' }}>{userEmail}</span>
           </p>
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════
-            ADMIN2 — Navigation onglets
-        ══════════════════════════════════════════════════════════════ */}
+        {/* ── ADMIN2 — Navigation onglets ───────────────────────────────── */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid #E8E0D0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {[
-            { key: 'evenements',   label: `Événements`,                         count: nbTotal            },
-            { key: 'signalements', label: `Signalements`,                       count: signalements.length },
-            { key: 'import', label: `📥 Import`, count: statsImport.length },
+            { key: 'evenements',   label: 'Événements',  count: countTotal           },
+            { key: 'signalements', label: 'Signalements', count: signalements.length  },
+            { key: 'import',       label: '📥 Import',   count: statsImport.length   },
           ].map(tab => (
             <button
               key={tab.key}
               onClick={() => setOnglet(tab.key as Onglet)}
               style={{
-                padding: '10px 20px',
-                fontSize: 13,
-                fontWeight: 'bold',
-                border: 'none',
-                cursor: 'pointer',
-                background: 'transparent',
+                padding: '10px 20px', fontSize: 13, fontWeight: 'bold',
+                border: 'none', cursor: 'pointer', background: 'transparent',
                 color: onglet === tab.key ? '#C8431A' : '#8C5A40',
                 borderBottom: onglet === tab.key ? '2px solid #C8431A' : '2px solid transparent',
-                marginBottom: -1,
-                transition: 'color 0.15s, border-color 0.15s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
+                marginBottom: -1, transition: 'color 0.15s, border-color 0.15s',
+                display: 'flex', alignItems: 'center', gap: 8,
               }}
             >
               {tab.label}
               <span style={{
                 background: onglet === tab.key ? '#C8431A' : 'rgba(26,20,16,0.06)',
-               color: onglet === tab.key ? 'white' : '#8C5A40',
-                borderRadius: 999,
-                padding: '1px 7px',
-                fontSize: 11,
-                fontWeight: 'bold',
+                color: onglet === tab.key ? 'white' : '#8C5A40',
+                borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 'bold',
               }}>
                 {tab.count}
               </span>
@@ -322,24 +328,20 @@ if (statsPays) {
         ══════════════════════════════════════════════════════════════ */}
         {onglet === 'evenements' && (
           <>
-            {/* ── Filtres statut ──────────────────────────────────────── */}
+            {/* Filtres statut */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               {([
-                { key: 'en_attente', label: `⏳ En attente`, count: nbEnAttente },
-                { key: 'approuve',   label: `✓ Approuvés`,   count: nbApprouves },
-                { key: 'rejete',     label: `✗ Rejetés`,     count: nbRejetes   },
-                { key: 'tous',       label: `Tous`,           count: nbTotal     },
+                { key: 'en_attente', label: '⏳ En attente', count: countEnAttente },
+                { key: 'approuve',   label: '✓ Approuvés',   count: countApprouves },
+                { key: 'rejete',     label: '✗ Rejetés',     count: countRejetes   },
+                { key: 'tous',       label: 'Tous',           count: countTotal     },
               ] as { key: FiltreStatut; label: string; count: number }[]).map(f => (
                 <button
                   key={f.key}
                   onClick={() => setFiltreStatut(f.key)}
                   style={{
-                    padding: '7px 14px',
-                    borderRadius: 999,
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                    border: 'none',
-                    cursor: 'pointer',
+                    padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
+                    border: 'none', cursor: 'pointer',
                     background: filtreStatut === f.key ? '#C8431A' : 'rgba(255,255,255,0.06)',
                     color:      filtreStatut === f.key ? 'white'   : '#8C5A40',
                     transition: 'background 0.15s, color 0.15s',
@@ -350,13 +352,9 @@ if (statsPays) {
               ))}
             </div>
 
-            {/* ══════════════════════════════════════════════════════════
-                ADMIN1 — Filtres temporels
-            ══════════════════════════════════════════════════════════ */}
+            {/* ADMIN1 — Filtres temporels */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ color: '#555', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>
-                Période :
-              </span>
+              <span style={{ color: '#555', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>Période :</span>
               {([
                 { key: 'aujourd_hui',   label: "Aujourd'hui"   },
                 { key: 'cette_semaine', label: 'Cette semaine' },
@@ -367,10 +365,7 @@ if (statsPays) {
                   key={f.key}
                   onClick={() => setFiltreTemporel(f.key)}
                   style={{
-                    padding: '5px 12px',
-                    borderRadius: 999,
-                    fontSize: 11,
-                    fontWeight: 'bold',
+                    padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 'bold',
                     border: filtreTemporel === f.key ? '1px solid #C8431A' : '1px solid #2a2a2a',
                     cursor: 'pointer',
                     background: filtreTemporel === f.key ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
@@ -379,14 +374,12 @@ if (statsPays) {
                   }}
                 >
                   {f.label}
-                  <span style={{ marginLeft: 5, opacity: 0.7 }}>
-                    {nbParTemps(f.key)}
-                  </span>
+                  <span style={{ marginLeft: 5, opacity: 0.7 }}>{nbParTemps(f.key)}</span>
                 </button>
               ))}
             </div>
 
-            {/* ── Recherche ───────────────────────────────────────────── */}
+            {/* Recherche */}
             <div style={{ marginBottom: 16 }}>
               <input
                 type="text"
@@ -394,28 +387,22 @@ if (statsPays) {
                 value={recherche}
                 onChange={e => setRecherche(e.target.value)}
                 style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid #333',
-                  borderRadius: 999,
-                  padding: '8px 16px',
-                  fontSize: 12,
-                  color: '#1A1410',
-                  outline: 'none',
+                  width: '100%', boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid #333',
+                  borderRadius: 999, padding: '8px 16px', fontSize: 12,
+                  color: '#1A1410', outline: 'none',
                 }}
               />
             </div>
 
-            {/* ── Résultat filtres ────────────────────────────────────── */}
-            {recherche || filtreTemporel !== 'tous' ? (
+            {/* Résultat filtres */}
+            {(recherche || filtreTemporel !== 'tous') && (
               <p style={{ color: '#555', fontSize: 11, marginBottom: 12 }}>
                 {evenementsFiltres.length} résultat{evenementsFiltres.length !== 1 ? 's' : ''}
-                {filtreTemporel !== 'tous' && ` · ${['aujourd_hui','cette_semaine','ce_mois'].includes(filtreTemporel) ? { aujourd_hui: "aujourd'hui", cette_semaine: 'cette semaine', ce_mois: 'ce mois', tous: '' }[filtreTemporel] : ''}`}
               </p>
-            ) : null}
+            )}
 
-            {/* ── Liste événements ────────────────────────────────────── */}
+            {/* Liste événements */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
               {evenementsFiltres.length === 0 && (
                 <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>
@@ -428,19 +415,12 @@ if (statsPays) {
                   style={{
                     background: 'rgba(255,255,255,0.04)',
                     border: ev.statut === 'en_attente' ? '1px solid rgba(212,168,32,0.3)' : '1px solid #2a2a2a',
-                    borderRadius: 12,
-                    padding: 16,
-                    display: 'flex',
-                    gap: 12,
-                    alignItems: 'flex-start',
+                    borderRadius: 12, padding: 16,
+                    display: 'flex', gap: 12, alignItems: 'flex-start',
                   }}
                 >
                   {ev.image_url && (
-                    <img
-                      src={ev.image_url}
-                      alt={ev.titre}
-                      style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
-                    />
+                    <img src={ev.image_url} alt={ev.titre} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h2 style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 2 }}>{ev.titre}</h2>
@@ -448,9 +428,7 @@ if (statsPays) {
                       <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 4 }}>👤 {ev.organisateur}</p>
                     )}
                     <p style={{ color: '#8C5A40', fontSize: 12 }}>📍 {ev.lieu}</p>
-                    <p style={{ color: '#8C5A40', fontSize: 12 }}>
-                      📅 {ev.date}{ev.heure_debut ? ` · ${ev.heure_debut}` : ''}
-                    </p>
+                    <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date}{ev.heure_debut ? ` · ${ev.heure_debut}` : ''}</p>
                     {ev.source && (
                       <p style={{ color: '#555', fontSize: 11, marginTop: 2 }}>Source : {ev.source}</p>
                     )}
@@ -466,11 +444,7 @@ if (statsPays) {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                    <a
-                      href={'/evenement/' + ev.id}
-                      target="_blank"
-                      style={{ background: 'rgba(255,255,255,0.06)', color: '#1A1410', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}
-                    >
+                    <a href={'/evenement/' + ev.id} target="_blank" style={{ background: 'rgba(255,255,255,0.06)', color: '#1A1410', padding: '6px 12px', borderRadius: 8, fontSize: 12, textAlign: 'center', textDecoration: 'none' }}>
                       Voir
                     </a>
                     {ev.statut !== 'approuve' && (
@@ -503,10 +477,7 @@ if (statsPays) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {signalements.map(sig => (
-                  <div
-                    key={sig.id}
-                    style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}
-                  >
+                  <div key={sig.id} style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}>
                     <p style={{ color: '#555', fontSize: 11 }}>Événement ID : {sig.evenement_id}</p>
                     <p style={{ color: '#e57373', fontSize: 13, marginTop: 4 }}>{sig.raison}</p>
                     <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
@@ -518,17 +489,20 @@ if (statsPays) {
             )}
           </div>
         )}
-        {/* ══ SC7 — ONGLET IMPORT ══ */}
+
+        {/* ══════════════════════════════════════════════════════════════
+            ONGLET IMPORT — SC7
+        ══════════════════════════════════════════════════════════════ */}
         {onglet === 'import' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
             {/* Stats globales */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
               {[
-                { label: 'Sources actives', valeur: statsImport.length, couleur: '#1A1410' },
-                { label: 'Total approuvés', valeur: nbApprouves,        couleur: '#2D9E6B' },
-                { label: 'En attente',      valeur: nbEnAttente,        couleur: '#D4A820' },
-                { label: 'Pays couverts',   valeur: repartitionPays.length, couleur: '#C8431A' },
+                { label: 'Sources actives', valeur: statsImport.length,      couleur: '#1A1410' },
+                { label: 'Total approuvés', valeur: countApprouves,          couleur: '#2D9E6B' },
+                { label: 'En attente',      valeur: countEnAttente,           couleur: '#D4A820' },
+                { label: 'Pays couverts',   valeur: repartitionPays.length,  couleur: '#C8431A' },
               ].map((c, i) => (
                 <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center' }}>
                   <p style={{ fontSize: 28, fontWeight: 'bold', color: c.couleur, marginBottom: 4 }}>{c.valeur}</p>
@@ -609,11 +583,11 @@ if (statsPays) {
               <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>⚡ Relancer un scraper</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {[
-                  { label: 'PredictHQ',       route: '/api/scrape-predicthq'       },
-                  { label: 'Ticketmaster',     route: '/api/scrape-ticketmaster'    },
-                  { label: 'World Cup',        route: '/api/scrape-worldcup'        },
-                  { label: 'Ligue Haïtienne',  route: '/api/scrape-liguehaitienne'  },
-                  { label: 'Eventbrite',       route: '/api/scrape-eventbrite'      },
+                  { label: 'PredictHQ',      route: '/api/scrape-predicthq'      },
+                  { label: 'Ticketmaster',    route: '/api/scrape-ticketmaster'   },
+                  { label: 'World Cup',       route: '/api/scrape-worldcup'       },
+                  { label: 'Ligue Haïtienne', route: '/api/scrape-liguehaitienne' },
+                  { label: 'Eventbrite',      route: '/api/scrape-eventbrite'     },
                 ].map(s => (
                   <button
                     key={s.route}
