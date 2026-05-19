@@ -7,16 +7,10 @@ self.addEventListener('activate', function(e) {
 })
 
 self.addEventListener('fetch', function(e) {
-  // Ne jamais intercepter les appels API
-  if (e.request.url.includes('/api/')) return
-
-self.addEventListener('fetch', function(e) {
   // Ne jamais intercepter les appels API ni Supabase
   if (e.request.url.includes('/api/') || 
       e.request.url.includes('supabase.co')) return
-
   e.respondWith(fetch(e.request))
-})
 })
 
 self.addEventListener('push', function(e) {
