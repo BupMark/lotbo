@@ -59,7 +59,7 @@ export default function Login() {
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}`,
         queryParams: { access_type: 'offline', prompt: 'consent' },
-        flowType: 'pkce',
+
       },
     })
     if (error) { setMessage('Erreur Google : ' + error.message); setMessageType('erreur'); setLoadingGoogle(false) }
@@ -72,7 +72,7 @@ export default function Login() {
       provider: 'facebook',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}`,
-        flowType: 'pkce',
+
       },
     })
     if (error) { setMessage('Erreur Facebook : ' + error.message); setMessageType('erreur'); setLoadingFacebook(false) }
