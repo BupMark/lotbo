@@ -14,8 +14,11 @@ export default function Login() {
   const [newsletter, setNewsletter]     = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading]           = useState(false)
+  const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [message, setMessage]           = useState('')
   const [messageType, setMessageType]   = useState<'erreur' | 'succes'>('erreur')
+  const [emailEnvoye, setEmailEnvoye]   = useState(false)
+  const [emailInscription, setEmailInscription] = useState('')
 
   const resetForm = () => {
     setMessage('')
@@ -24,8 +27,31 @@ export default function Login() {
     setPrenom('')
     setAccepteCGU(false)
     setNewsletter(false)
+    setEmailEnvoye(false)
   }
 
+  // ── Connexion Google OAuth ────────────────────────────────────────────────
+  const handleGoogle = async () => {
+    setLoadingGoogle(true)
+    const params = new URLSearchParams(window.location.search)
+    const redirect = params.get('redirect') || '/ajouter'
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
+      },
+    })
+
+    if (error) {
+      setMessage('Erreur Google : ' + error.message)
+      setMessageType('erreur')
+      setLoadingGoogle(false)
+    }
+    // Pas de setLoadingGoogle(false) ici — la page se redirige vers Google
+  }
+
+  // ── Connexion email/mot de passe ──────────────────────────────────────────
   const handleLogin = async (e: React.MouseEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -40,19 +66,20 @@ export default function Login() {
         es: { anonymous: 'Por favor ingresa tu email y contraseña.', invalid: 'Email o contraseña incorrectos.', default: 'Error de inicio de sesión.' },
         pt: { anonymous: 'Por favor insira seu email e senha.', invalid: 'Email ou senha incorretos.', default: 'Erro de login. Tente novamente.' },
       }
-      const t = msgs[lang] || msgs['fr']
+      const t   = msgs[lang] || msgs['fr']
       const msg = error.message.includes('Anonymous') ? t.anonymous : error.message.includes('Invalid') ? t.invalid : t.default
       setMessage(msg)
       setMessageType('erreur')
       return
     }
-    const role = data.session?.user?.user_metadata?.role
-const params = new URLSearchParams(window.location.search)
-const redirect = params.get('redirect')
-if (role === 'admin') router.push('/admin')
-else router.push(redirect || '/ajouter')
+    const role   = data.session?.user?.user_metadata?.role
+    const params = new URLSearchParams(window.location.search)
+    const redirect = params.get('redirect')
+    if (role === 'admin') router.push('/admin')
+    else router.push(redirect || '/ajouter')
   }
 
+  // ── Inscription email/mot de passe ────────────────────────────────────────
   const handleSignup = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (!prenom.trim()) { setMessage('Entre ton prénom pour continuer.'); setMessageType('erreur'); return }
@@ -78,20 +105,28 @@ else router.push(redirect || '/ajouter')
     // Créer le profil
     if (data.user) {
       await supabase.from('profiles').upsert({
-        id: data.user.id,
-        nom: prenom.trim(),
-        role: 'membre',
+        id:         data.user.id,
+        nom:        prenom.trim(),
+        role:       'membre',
         created_at: new Date().toISOString(),
       })
 
-      // Newsletter si coché
       if (newsletter) {
-       try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {}
+        try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {}
       }
     }
 
     setLoading(false)
-    setMessage('✓ Vérifie ton email pour confirmer ton compte LOTBO !')
+    setEmailInscription(email)
+    setEmailEnvoye(true)
+  }
+
+  // ── Renvoi email vérification ─────────────────────────────────────────────
+  const handleRenvoyerEmail = async () => {
+    setLoading(true)
+    await supabase.auth.resend({ type: 'signup', email: emailInscription })
+    setLoading(false)
+    setMessage('Email renvoyé !')
     setMessageType('succes')
   }
 
@@ -106,6 +141,75 @@ else router.push(redirect || '/ajouter')
     width: '100%',
   }
 
+  // ── Écran post-inscription ────────────────────────────────────────────────
+  if (emailEnvoye) {
+    return (
+      <main style={{ minHeight: '100dvh', background: '#F7F2E8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+        <div style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
+
+          {/* Logo */}
+          <a href="/" style={{ textDecoration: 'none' }}>
+            <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 36, fontWeight: 'bold', marginBottom: 32 }}>
+              <span style={{ color: '#1A1410' }}>lot</span>
+              <span style={{ color: '#C8431A' }}>bo</span>
+            </div>
+          </a>
+
+          {/* Icône */}
+          <div style={{ fontSize: 64, marginBottom: 20 }}>📬</div>
+
+          <h1 style={{ color: '#1A1410', fontSize: 22, fontWeight: 'bold', marginBottom: 12 }}>
+            Vérifie ta boîte mail
+          </h1>
+
+          <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: '24px 20px', marginBottom: 20, textAlign: 'left' }}>
+            <p style={{ color: '#1A1410', fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
+              On a envoyé un lien de confirmation à :
+            </p>
+            <p style={{ color: '#C8431A', fontSize: 15, fontWeight: 'bold', marginBottom: 16, wordBreak: 'break-all' }}>
+              {emailInscription}
+            </p>
+            <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>
+              Clique sur le lien dans l'email pour activer ton compte. Tu seras automatiquement redirigé vers LOTBO.
+            </p>
+          </div>
+
+          {/* Conseil spam */}
+          <div style={{ background: 'rgba(212,168,32,0.08)', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 12, padding: '12px 16px', marginBottom: 24, textAlign: 'left' }}>
+            <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.6 }}>
+              💡 <strong>Tu ne vois pas l'email ?</strong> Vérifie ton dossier spam ou courrier indésirable. L'expéditeur est <strong>hello@lotbo.app</strong>.
+            </p>
+          </div>
+
+          {/* Message feedback renvoi */}
+          {message && (
+            <p style={{ color: messageType === 'succes' ? '#2D9E6B' : '#C8431A', fontSize: 13, marginBottom: 16, background: messageType === 'succes' ? 'rgba(45,158,107,0.08)' : 'rgba(200,67,26,0.08)', padding: '10px 14px', borderRadius: 8 }}>
+              {message}
+            </p>
+          )}
+
+          {/* Bouton renvoi */}
+          <button
+            onClick={handleRenvoyerEmail}
+            disabled={loading}
+            style={{ background: 'white', border: '1px solid #E8E0D0', color: '#1A1410', fontWeight: 'bold', padding: '12px', borderRadius: 10, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', width: '100%', marginBottom: 12 }}
+          >
+            {loading ? 'Envoi...' : '🔄 Renvoyer l\'email de confirmation'}
+          </button>
+
+          <button
+            onClick={() => { setEmailEnvoye(false); setMode('connexion'); resetForm() }}
+            style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            ← Retour à la connexion
+          </button>
+
+        </div>
+      </main>
+    )
+  }
+
+  // ── Formulaire principal ──────────────────────────────────────────────────
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
@@ -143,10 +247,56 @@ else router.push(redirect || '/ajouter')
           </p>
         </div>
 
-        {/* Formulaire */}
+        {/* ── Bouton Google ── */}
+        <button
+          type="button"
+          onClick={handleGoogle}
+          disabled={loadingGoogle}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            width: '100%',
+            padding: '12px 16px',
+            background: 'white',
+            border: '1px solid #E8E0D0',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: '#1A1410',
+            cursor: loadingGoogle ? 'not-allowed' : 'pointer',
+            marginBottom: 16,
+            opacity: loadingGoogle ? 0.7 : 1,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          }}
+        >
+          {loadingGoogle ? (
+            <span style={{ color: '#8C5A40' }}>Redirection vers Google...</span>
+          ) : (
+            <>
+              {/* Logo Google SVG */}
+              <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              </svg>
+              {mode === 'connexion' ? 'Continuer avec Google' : 'S\'inscrire avec Google'}
+            </>
+          )}
+        </button>
+
+        {/* Séparateur */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{ flex: 1, height: 1, background: '#E8E0D0' }} />
+          <span style={{ color: '#8C5A40', fontSize: 12 }}>ou</span>
+          <div style={{ flex: 1, height: 1, background: '#E8E0D0' }} />
+        </div>
+
+        {/* Formulaire email */}
         <form style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-          {/* Prénom — uniquement inscription */}
           {mode === 'inscription' && (
             <input
               type="text"
@@ -181,11 +331,8 @@ else router.push(redirect || '/ajouter')
             </button>
           </div>
 
-          {/* Checkboxes inscription */}
           {mode === 'inscription' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '16px' }}>
-
-              {/* CGU — obligatoire */}
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                 <input
                   type="checkbox"
@@ -201,10 +348,7 @@ else router.push(redirect || '/ajouter')
                   {' '}<span style={{ color: '#C8431A' }}>*</span>
                 </span>
               </label>
-
               <div style={{ height: 1, background: '#E8E0D0' }} />
-
-              {/* Newsletter — optionnelle */}
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                 <input
                   type="checkbox"
@@ -217,18 +361,16 @@ else router.push(redirect || '/ajouter')
                   <span style={{ opacity: 0.6 }}>(optionnel)</span>
                 </span>
               </label>
-
             </div>
           )}
 
-          {/* Message */}
-          {message && (
+          {/* Message erreur */}
+          {message && !emailEnvoye && (
             <p style={{ color: messageType === 'succes' ? '#2D9E6B' : '#C8431A', fontSize: 13, textAlign: 'center', background: messageType === 'succes' ? 'rgba(45,158,107,0.08)' : 'rgba(200,67,26,0.08)', padding: '10px 14px', borderRadius: 8, lineHeight: 1.5 }}>
               {message}
             </p>
           )}
 
-          {/* Bouton principal */}
           {mode === 'connexion' ? (
             <button onClick={handleLogin} disabled={loading} style={{ background: loading ? '#8C5A40' : '#C8431A', color: 'white', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 4 }}>
               {loading ? 'Connexion...' : 'Se connecter →'}
@@ -239,7 +381,6 @@ else router.push(redirect || '/ajouter')
             </button>
           )}
 
-          {/* Switcher bas */}
           <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', marginTop: 4 }}>
             {mode === 'connexion' ? (
               <>Pas encore de compte ?{' '}
