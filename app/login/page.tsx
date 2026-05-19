@@ -28,7 +28,7 @@ export default function Login() {
 
   const getRedirect = () => {
     const params = new URLSearchParams(window.location.search)
-    return params.get('redirect') || '/ajouter'
+    return params.get('redirect') || '/'
   }
 
   // ── Intercepter le token OAuth dans le hash (flux implicite Supabase) ──────
