@@ -57,9 +57,9 @@ export async function GET() {
         const sourceId = `pamevent-${eventId}`
 
         // Anti-doublon même source
-        const { data: existing } = await supabase
+        const { data: existing, error: existingError } = await supabase
           .from('evenements').select('id').eq('source_id', sourceId).single()
-        if (existing) { skipped++; continue }
+        if (existing && !existingError) { skipped++; continue }
 
         // Scraper la page détail
         try {
