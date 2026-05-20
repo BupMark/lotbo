@@ -460,8 +460,9 @@ function CarteInteractive({ coords, onCoordsChange }: {
   useEffect(() => {
     if (!mapContainerRef.current) return
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mapboxgl = require('mapbox-gl')
-    require('mapbox-gl/dist/mapbox-gl.css')
+    import('mapbox-gl').then((mapboxglModule) => {
+    const mapboxgl = mapboxglModule.default
+    import('mapbox-gl/dist/mapbox-gl.css').catch(() => {})
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
@@ -481,7 +482,8 @@ function CarteInteractive({ coords, onCoordsChange }: {
       onCoordsChange({ longitude: e.lngLat.lng, latitude: e.lngLat.lat, adresse: coords.adresse })
     })
     mapRef.current = map; markerRef.current = marker
-    return () => { map.remove() }
+    })
+    return () => { if(mapRef.current) mapRef.current.remove() }
   }, [])
 
   useEffect(() => {
