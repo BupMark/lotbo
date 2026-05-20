@@ -465,7 +465,7 @@ function CarteInteractive({ coords, onCoordsChange }: {
     import('mapbox-gl/dist/mapbox-gl.css').catch(() => {})
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
     const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
+      container: mapContainerRef.current!,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [coords.longitude, coords.latitude],
       zoom: 14,
