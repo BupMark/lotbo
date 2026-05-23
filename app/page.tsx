@@ -71,6 +71,8 @@ export default function Home() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<mapboxgl.Map | null>(null)
   const markersRef   = useRef<mapboxgl.Marker[]>([])
+  const headerRef    = useRef<HTMLDivElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(116)
 
   const [categorie, setCategorie]           = useState('Toutes')
   const [acces, setAcces]                   = useState('tous')
@@ -100,6 +102,15 @@ export default function Home() {
     supabase.auth.getSession().then(({ data }) => {
       setUser((data.session?.user ?? null) as UserMeta | null)
     })
+  }, [])
+
+  useEffect(() => {
+    if (!headerRef.current) return
+    const update = () => setHeaderHeight(headerRef.current!.offsetHeight)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(headerRef.current)
+    return () => ro.disconnect()
   }, [])
 
   useEffect(() => {
@@ -378,8 +389,8 @@ export default function Home() {
       {/* ══════════════════════════════════════
           HEADER
       ══════════════════════════════════════ */}
-      <div style={{ position: 'relative', zIndex: 20, display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px', flexShrink: 0, background: '#F7F2E8', borderBottom: '1px solid #E8E0D0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div ref={headerRef} style={{ position: 'relative', zIndex: 20, display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px', flexShrink: 0, background: '#F7F2E8', borderBottom: '1px solid #E8E0D0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button className="lotbo-hamburger" onClick={() => setDrawerOuvert(true)} style={{ background: '#1A1410', border: 'none', color: '#F7F2E8', borderRadius: 999, padding: '6px 10px', fontSize: 16, cursor: 'pointer', flexShrink: 0 }}>☰</button>
 
           <div className="lotbo-mode-header" style={{ gap: 2, background: '#E8E0D0', borderRadius: 999, padding: 3, flexShrink: 0 }}>
@@ -387,10 +398,8 @@ export default function Home() {
             <button onClick={() => setMode('liste')} style={{ padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'liste' ? '#C8431A' : 'transparent', color: mode === 'liste' ? 'white' : '#8C5A40' }}>📋 {t.carte.liste}</button>
           </div>
 
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <div style={{ padding: '5px 16px', fontSize: 18, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic' }}>
-              <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
-            </div>
+          <div style={{ padding: '5px 0', fontSize: 18, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', flexShrink: 0 }}>
+            <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
           </div>
 
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
@@ -447,7 +456,7 @@ export default function Home() {
           PANNEAU FILTRES
       ══════════════════════════════════════ */}
       {filtresOuverts && (
-        <div style={{ position: 'absolute', top: 116, left: 12, right: 12, zIndex: 30, background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: 'calc(100dvh - 220px)', overflowY: 'auto', boxShadow: '0 4px 24px rgba(26,20,16,0.12)' }}>
+        <div style={{ position: 'absolute', top: headerHeight, left: 12, right: 12, zIndex: 30, background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: 'calc(100dvh - 220px)', overflowY: 'auto', boxShadow: '0 4px 24px rgba(26,20,16,0.12)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <p style={{ color: '#8C5A40', fontSize: 12, fontWeight: 'bold' }}>Filtres</p>
             <button onClick={() => setFiltresOuverts(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 20, lineHeight: 1, padding: '2px 6px', borderRadius: 6 }} aria-label="Fermer les filtres">✕</button>
