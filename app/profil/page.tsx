@@ -45,7 +45,8 @@ export default function Profil() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [badgeSelectionne, setBadgeSelectionne] = useState<{ emoji: string; label: string; desc: string; id: string } | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  const [onglet, setOnglet] = useState<'evenements' | 'badges'>('evenements')
+  const [onglet, setOnglet]         = useState<'evenements' | 'badges' | 'favoris'>('evenements')
+  const [favorisEvs, setFavorisEvs] = useState<any[]>([])
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -67,6 +68,14 @@ export default function Profil() {
         .eq('user_id', data.session.user.id)
         .order('created_at', { ascending: false })
       setEvenements(evs || [])
+
+      const { data: favs } = await supabase
+        .from('favoris')
+        .select('evenements(*)')
+        .eq('user_id', data.session.user.id)
+        .order('created_at', { ascending: false })
+      setFavorisEvs(favs?.map((f: any) => f.evenements).filter(Boolean) || [])
+
       setLoading(false)
     })
   }, [])
@@ -222,8 +231,9 @@ export default function Profil() {
         {/* Onglets */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
           {[
-            { id: 'evenements', label: '📅 Mes événements' },
-            { id: 'badges', label: '🏅 Badges & Stats' },
+            { id: 'evenements', label: '📅 Événements' },
+            { id: 'badges', label: '🏅 Badges' },
+            { id: 'favoris', label: '🔖 Favoris' },
           ].map(o => (
             <button key={o.id} onClick={() => setOnglet(o.id as any)} style={{
               flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
@@ -414,6 +424,35 @@ export default function Profil() {
 
           </div>
         )}
+        {/* ── Onglet Favoris ── */}
+        {onglet === 'favoris' && (
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>Mes favoris</h2>
+            {favorisEvs.length === 0 ? (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 48, textAlign: 'center' }}>
+                <p style={{ fontSize: 32, marginBottom: 12 }}>🔖</p>
+                <p style={{ color: '#8C5A40', fontSize: 14 }}>Aucun événement sauvegardé pour l'instant.</p>
+                <a href="/" style={{ display: 'inline-block', marginTop: 20, background: '#C8431A', color: 'white', borderRadius: 999, padding: '10px 24px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Explorer les événements</a>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {favorisEvs.map((ev: any) => (
+                  <div key={ev.id} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = getEventImage(null, ev.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>📅 {ev.date}</p>
+                      <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>{ev.categorie}</span>
+                    </div>
+                    <a href={'/evenement/' + ev.id} style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', flexShrink: 0, padding: '4px 8px' }}>Voir →</a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
       {badgeSelectionne && (
   <CarteBadge

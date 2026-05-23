@@ -32,6 +32,7 @@ interface Evenement {
 }
 
 interface UserMeta {
+  id?: string
   user_metadata?: { role?: string }
   email?: string
 }
@@ -86,6 +87,8 @@ export default function Home() {
   const [dateFin, setDateFin]               = useState('')
   const [filtresOuverts, setFiltresOuverts] = useState(false)
   const [drawerOuvert, setDrawerOuvert]     = useState(false)
+  const [favoris, setFavoris]               = useState<Set<string>>(new Set())
+  const [togglingFavori, setTogglingFavori] = useState<string | null>(null)
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
@@ -103,6 +106,13 @@ export default function Home() {
       setUser((data.session?.user ?? null) as UserMeta | null)
     })
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) { setFavoris(new Set()); return }
+    supabase.from('favoris').select('evenement_id').eq('user_id', user.id).then(({ data }) => {
+      if (data) setFavoris(new Set(data.map((f: { evenement_id: string }) => f.evenement_id)))
+    })
+  }, [user])
 
   useEffect(() => {
     if (!headerRef.current) return
@@ -201,6 +211,21 @@ export default function Home() {
     })
   }
 
+  const toggleFavori = async (e: React.MouseEvent, evenementId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user?.id) { window.location.href = '/login'; return }
+    setTogglingFavori(evenementId)
+    if (favoris.has(evenementId)) {
+      await supabase.from('favoris').delete().eq('user_id', user.id).eq('evenement_id', evenementId)
+      setFavoris(prev => { const next = new Set(prev); next.delete(evenementId); return next })
+    } else {
+      await supabase.from('favoris').insert({ user_id: user.id, evenement_id: evenementId })
+      setFavoris(prev => new Set([...prev, evenementId]))
+    }
+    setTogglingFavori(null)
+  }
+
   const evenementsFiltres = evenements.filter(filtreActif)
 
   return (
@@ -215,6 +240,7 @@ export default function Home() {
           margin-bottom: 24px;
         }
         .lotbo-event-card {
+          position: relative;
           display: flex;
           flex-direction: row;
           gap: 12px;
@@ -559,6 +585,26 @@ export default function Home() {
                     <span style={{ background: '#E8E0D0', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.prix}</span>
                   </div>
                 </div>
+                <button
+                  onClick={(e) => toggleFavori(e, ev.id)}
+                  disabled={togglingFavori === ev.id}
+                  aria-label={favoris.has(ev.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  style={{
+                    position: 'absolute', top: 8, right: 8,
+                    background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%',
+                    width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', padding: 0, flexShrink: 0,
+                    boxShadow: '0 1px 4px rgba(26,20,16,0.12)',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"
+                      stroke={favoris.has(ev.id) ? '#C8431A' : '#8C5A40'}
+                      strokeWidth="1.8"
+                      fill={favoris.has(ev.id) ? '#C8431A' : 'none'}
+                    />
+                  </svg>
+                </button>
               </a>
             ))}
           </div>
