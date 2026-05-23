@@ -658,12 +658,14 @@ export default function Home() {
           <span style={{ fontSize: 10, fontWeight: 'bold', color: '#C8431A' }}>Carte</span>
         </button>
 
-        <a href="/classement" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', textDecoration: 'none' }}>
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="#8C5A40" strokeWidth="1.8" fill="none" strokeLinejoin="round"/>
-  </svg>
-  <span style={{ fontSize: 10, fontWeight: 'bold', color: '#8C5A40' }}>Classement</span>
-</a>
+        <a href={user ? '/profil?tab=favoris' : '/login'} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', textDecoration: 'none' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"
+              stroke="#8C5A40" strokeWidth="1.8" fill="none"
+            />
+          </svg>
+          <span style={{ fontSize: 10, fontWeight: 'bold', color: '#8C5A40' }}>Favoris</span>
+        </a>
 
         <a href={user ? '/profil' : '/login'} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', textDecoration: 'none' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

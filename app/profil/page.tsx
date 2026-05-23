@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import CarteBadge from '../../components/CarteBadge'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
@@ -35,6 +35,8 @@ function getProchainBadge(nb: number, badges: typeof BADGES_CONTRIBUTEUR) {
 
 export default function Profil() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab') as 'evenements' | 'badges' | 'favoris' | null
   const [user, setUser] = useState<any>(null)
   const [evenements, setEvenements] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
@@ -45,7 +47,7 @@ export default function Profil() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [badgeSelectionne, setBadgeSelectionne] = useState<{ emoji: string; label: string; desc: string; id: string } | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  const [onglet, setOnglet]         = useState<'evenements' | 'badges' | 'favoris'>('evenements')
+  const [onglet, setOnglet]         = useState<'evenements' | 'badges' | 'favoris'>(tabParam === 'favoris' || tabParam === 'badges' ? tabParam : 'evenements')
   const [favorisEvs, setFavorisEvs] = useState<any[]>([])
 
   useEffect(() => {
