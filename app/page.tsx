@@ -161,6 +161,18 @@ export default function Home() {
     return () => ro.disconnect()
   }, [])
 
+  // Chargement des événements indépendant de Mapbox
+  useEffect(() => {
+    const aujourd_hui = new Date().toISOString().split('T')[0]
+    supabase
+      .from('evenements')
+      .select('*')
+      .eq('statut', 'approuve')
+      .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
+      .neq('statut', 'hors_ligne')
+      .then(({ data }) => setEvenements((data as Evenement[]) || []))
+  }, [])
+
   useEffect(() => {
     if (!mapContainer.current) return
     const map = new mapboxgl.Map({
@@ -169,20 +181,12 @@ export default function Home() {
       center: [-72.3388, 18.5444],
       zoom: 8,
     })
-    map.on('load', async () => {
+    map.on('load', () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
           map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 12 })
         })
       }
-      const aujourd_hui = new Date().toISOString().split('T')[0]
-      const { data } = await supabase
-        .from('evenements')
-        .select('*')
-        .eq('statut', 'approuve')
-        .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
-        .neq('statut', 'hors_ligne')
-      setEvenements((data as Evenement[]) || [])
     })
     mapRef.current = map
     return () => map.remove()
