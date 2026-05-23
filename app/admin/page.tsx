@@ -24,6 +24,9 @@ interface Evenement {
   longitude: number | null
   source: string | null
   created_at: string
+  mis_en_avant?: boolean
+  mis_en_avant_ville?: string | null
+  mis_en_avant_jusqu_au?: string | null
 }
 
 interface Signalement {
@@ -267,6 +270,8 @@ export default function Admin() {
   const [repartitionVilles, setRepartitionVilles] = useState<{ ville: string; nb: number }[]>([])
   const [modalGeo,       setModalGeo]       = useState<'villes' | 'pays' | 'regions' | null>(null)
 
+  const [misEnAvantConfigs, setMisEnAvantConfigs] = useState<Record<string, { ville: string; jusqu_au: string }>>({})
+
   // SC7 — Dashboard import
   const [statsImport,      setStatsImport]      = useState<{ source: string; nb: number; dernierImport: string | null }[]>([])
   const [repartitionPays,  setRepartitionPays]  = useState<{ pays: string; nb: number }[]>([])
@@ -331,9 +336,16 @@ export default function Admin() {
     ])
     const { data: rejetesData } = await supabase
       .from('evenements').select('*').eq('statut', 'rejete').order('created_at', { ascending: false })
-    const baseEvs = (evs as Evenement[]) || []
-    const seenIds = new Set(baseEvs.map(e => e.id))
-    setEvenements([...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))])
+    const baseEvs   = (evs as Evenement[]) || []
+    const seenIds   = new Set(baseEvs.map(e => e.id))
+    const allEvs    = [...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))]
+    setEvenements(allEvs)
+    // Pré-remplir les configs pour les événements déjà mis en avant
+    const cfgs: Record<string, { ville: string; jusqu_au: string }> = {}
+    for (const ev of allEvs) {
+      if (ev.mis_en_avant) cfgs[ev.id] = { ville: ev.mis_en_avant_ville || '', jusqu_au: ev.mis_en_avant_jusqu_au || '' }
+    }
+    setMisEnAvantConfigs(cfgs)
     setSignalements((sigs as Signalement[]) || [])
 
     // ── 4. SC7 — Stats import par source ─────────────────────────────────────
@@ -406,6 +418,27 @@ export default function Admin() {
     await supabase.from('evenements').delete().eq('id', id)
     setEvenements(prev => prev.filter(ev => ev.id !== id))
     setCountTotal(c => Math.max(0, c - 1))
+  }
+
+  const toggleMisEnAvant = async (id: string, actuel: boolean) => {
+    const val = !actuel
+    await supabase.from('evenements').update({ mis_en_avant: val }).eq('id', id)
+    setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, mis_en_avant: val } : ev))
+    if (val) {
+      setMisEnAvantConfigs(prev => ({ ...prev, [id]: prev[id] ?? { ville: '', jusqu_au: '' } }))
+    } else {
+      await supabase.from('evenements').update({ mis_en_avant_ville: null, mis_en_avant_jusqu_au: null }).eq('id', id)
+      setMisEnAvantConfigs(prev => { const next = { ...prev }; delete next[id]; return next })
+    }
+  }
+
+  const saveMisEnAvantConfig = async (id: string) => {
+    const cfg = misEnAvantConfigs[id]
+    if (!cfg) return
+    await supabase.from('evenements').update({
+      mis_en_avant_ville:     cfg.ville || null,
+      mis_en_avant_jusqu_au:  cfg.jusqu_au || null,
+    }).eq('id', id)
   }
 
   // ─── Stats affichées — counts exacts + dérivés de la liste ───────────────
@@ -622,10 +655,10 @@ export default function Admin() {
                 <div
                   key={ev.id}
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: ev.statut === 'en_attente' ? '1px solid rgba(212,168,32,0.3)' : '1px solid #2a2a2a',
+                    background: ev.mis_en_avant ? 'rgba(200,67,26,0.06)' : 'rgba(255,255,255,0.04)',
+                    border: ev.mis_en_avant ? '1px solid rgba(200,67,26,0.4)' : ev.statut === 'en_attente' ? '1px solid rgba(212,168,32,0.3)' : '1px solid #2a2a2a',
                     borderRadius: 12, padding: 16,
-                    display: 'flex', gap: 12, alignItems: 'flex-start',
+                    display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start',
                   }}
                 >
                   <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = getEventImage(null, ev.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
@@ -646,6 +679,9 @@ export default function Admin() {
                       <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, background: couleurStatut(ev.statut).bg, color: couleurStatut(ev.statut).color }}>
                         {labelStatut(ev.statut)}
                       </span>
+                      {ev.mis_en_avant && (
+                        <span style={{ background: 'rgba(200,67,26,0.2)', color: '#C8431A', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 'bold' }}>📌 À la une</span>
+                      )}
                     </div>
                   </div>
 
@@ -667,7 +703,44 @@ export default function Admin() {
                     <button onClick={() => supprimer(ev.id)} style={{ background: 'rgba(180,40,40,0.2)', color: '#e57373', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
                       Supprimer
                     </button>
+                    <button
+                      onClick={() => toggleMisEnAvant(ev.id, !!ev.mis_en_avant)}
+                      style={{ background: ev.mis_en_avant ? 'rgba(200,67,26,0.25)' : 'rgba(255,255,255,0.06)', color: ev.mis_en_avant ? '#C8431A' : '#8C5A40', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: ev.mis_en_avant ? '1px solid rgba(200,67,26,0.4)' : 'none', cursor: 'pointer', fontWeight: ev.mis_en_avant ? 'bold' : 'normal' }}
+                    >
+                      {ev.mis_en_avant ? '📌 Retirer' : '📌 Une'}
+                    </button>
                   </div>
+
+                  {/* Formulaire config mis_en_avant — pleine largeur */}
+                  {ev.mis_en_avant && misEnAvantConfigs[ev.id] !== undefined && (
+                    <div style={{ flexBasis: '100%', borderTop: '1px solid rgba(200,67,26,0.2)', paddingTop: 12, display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 140 }}>
+                        <label style={{ color: '#8C5A40', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ville ciblée</label>
+                        <input
+                          type="text"
+                          value={misEnAvantConfigs[ev.id].ville}
+                          onChange={e => setMisEnAvantConfigs(prev => ({ ...prev, [ev.id]: { ...prev[ev.id], ville: e.target.value } }))}
+                          placeholder="ex: Port-au-Prince"
+                          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 8, padding: '6px 10px', color: '#1A1410', fontSize: 12, outline: 'none' }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 140 }}>
+                        <label style={{ color: '#8C5A40', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Jusqu'au</label>
+                        <input
+                          type="date"
+                          value={misEnAvantConfigs[ev.id].jusqu_au}
+                          onChange={e => setMisEnAvantConfigs(prev => ({ ...prev, [ev.id]: { ...prev[ev.id], jusqu_au: e.target.value } }))}
+                          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 8, padding: '6px 10px', color: '#1A1410', fontSize: 12, outline: 'none', colorScheme: 'light' }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => saveMisEnAvantConfig(ev.id)}
+                        style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}
+                      >
+                        Sauvegarder
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

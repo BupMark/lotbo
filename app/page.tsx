@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './popup.css'
@@ -29,6 +29,9 @@ interface Evenement {
   longitude: number
   description: string | null
   lien: string | null
+  mis_en_avant?: boolean
+  mis_en_avant_ville?: string | null
+  mis_en_avant_jusqu_au?: string | null
 }
 
 interface UserMeta {
@@ -89,6 +92,11 @@ export default function Home() {
   const [drawerOuvert, setDrawerOuvert]     = useState(false)
   const [favoris, setFavoris]               = useState<Set<string>>(new Set())
   const [togglingFavori, setTogglingFavori] = useState<string | null>(null)
+  const [userVille, setUserVille]           = useState<string>('')
+  const [favorisCounts, setFavorisCounts]   = useState<Record<string, number>>({})
+  const [commCounts, setCommCounts]         = useState<Record<string, number>>({})
+  const [carouselIdx, setCarouselIdx]       = useState(0)
+  const touchStartX                         = useRef(0)
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
@@ -113,6 +121,36 @@ export default function Home() {
       if (data) setFavoris(new Set(data.map((f: { evenement_id: string }) => f.evenement_id)))
     })
   }, [user])
+
+  // Géolocalisation → ville de l'utilisateur pour le scoring "À la une"
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+      const url   = `https://api.mapbox.com/geocoding/v5/mapbox.places/${pos.coords.longitude},${pos.coords.latitude}.json?types=place&language=fr&access_token=${token}`
+      const res   = await fetch(url)
+      const json  = await res.json()
+      const city  = json.features?.[0]?.text
+      if (city) setUserVille(city)
+    }, () => {
+      fetch('https://ipapi.co/json/').then(r => r.json()).then(d => { if (d.city) setUserVille(d.city) }).catch(() => {})
+    })
+  }, [])
+
+  // Counts favoris + commentaires pour le scoring
+  useEffect(() => {
+    if (evenements.length === 0) return
+    supabase.from('favoris').select('evenement_id').then(({ data }) => {
+      const map: Record<string, number> = {}
+      for (const f of data || []) map[f.evenement_id] = (map[f.evenement_id] || 0) + 1
+      setFavorisCounts(map)
+    })
+    supabase.from('commentaires').select('evenement_id').then(({ data }) => {
+      const map: Record<string, number> = {}
+      for (const f of data || []) map[f.evenement_id] = (map[f.evenement_id] || 0) + 1
+      setCommCounts(map)
+    }).catch(() => {})
+  }, [evenements.length])
 
   useEffect(() => {
     if (!headerRef.current) return
@@ -225,6 +263,44 @@ export default function Home() {
     }
     setTogglingFavori(null)
   }
+
+  // Score "À la une" — indépendant des filtres actifs
+  const aLaUne = useMemo(() => {
+    const now = new Date()
+    return evenements
+      .filter(ev => ev.statut === 'approuve')
+      .map(ev => {
+        const expiry  = ev.mis_en_avant_jusqu_au ? new Date(ev.mis_en_avant_jusqu_au) : null
+        const actif   = ev.mis_en_avant && (!expiry || expiry >= now)
+        let score     = actif ? 10000 : 0
+        if (actif && ev.mis_en_avant_ville && userVille) {
+          const villes = ev.mis_en_avant_ville.toLowerCase().split(',').map((v: string) => v.trim())
+          if (!villes.some((v: string) => userVille.toLowerCase().includes(v) || v.includes(userVille.toLowerCase()))) score -= 5000
+        }
+        if (userVille && ev.lieu?.toLowerCase().includes(userVille.toLowerCase())) score += 5
+        const dateEv = new Date(ev.date_debut || ev.date)
+        const diffJ  = (dateEv.getTime() - now.getTime()) / 86400000
+        if (diffJ >= 0 && diffJ <= 7) score += 3
+        score += (favorisCounts[ev.id] || 0) * 2
+        score += (commCounts[ev.id] || 0)
+        if (ev.image_url) score += 1
+        return { ev, score }
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map(s => s.ev)
+  }, [evenements, userVille, favorisCounts, commCounts])
+
+  // Carousel — démarrage aléatoire + auto-avance 5s
+  useEffect(() => {
+    if (aLaUne.length > 0) setCarouselIdx(Math.floor(Math.random() * aLaUne.length))
+  }, [aLaUne.length])
+
+  useEffect(() => {
+    if (mode !== 'liste' || aLaUne.length <= 1) return
+    const t = setInterval(() => setCarouselIdx(prev => (prev + 1) % aLaUne.length), 5000)
+    return () => clearInterval(t)
+  }, [mode, aLaUne.length])
 
   const evenementsFiltres = evenements.filter(filtreActif)
 
@@ -356,6 +432,17 @@ export default function Home() {
             padding-left: 48px !important;
             padding-right: 48px !important;
           }
+        }
+
+        /* ── À la une : carrousel mobile / grille tablette-desktop ── */
+        .aune-carousel { display: block; }
+        .aune-grid     { display: none;  }
+        @media (min-width: 768px) {
+          .aune-carousel { display: none; }
+          .aune-grid     { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        }
+        @media (min-width: 1024px) {
+          .aune-grid { grid-template-columns: repeat(3, 1fr); }
         }
       `}</style>
 
@@ -541,6 +628,84 @@ export default function Home() {
       ══════════════════════════════════════ */}
       {mode === 'liste' && (
         <div className="lotbo-vue-liste" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: '#F7F2E8', zIndex: 5, overflowY: 'auto', paddingTop: 100, paddingLeft: 16, paddingRight: 16, paddingBottom: 80 }}>
+
+          {/* ══ Section "À la une" ══ */}
+          {aLaUne.length > 0 && (
+            <div style={{ marginBottom: 32 }}>
+              <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>🔥 À la une</p>
+
+              {/* Mobile — carrousel */}
+              <div className="aune-carousel">
+                <div
+                  style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', background: '#1A1410' }}
+                  onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+                  onTouchEnd={e => {
+                    const dx = e.changedTouches[0].clientX - touchStartX.current
+                    if (Math.abs(dx) > 40) setCarouselIdx(prev =>
+                      dx < 0 ? (prev + 1) % aLaUne.length : (prev - 1 + aLaUne.length) % aLaUne.length
+                    )
+                  }}
+                >
+                  {aLaUne.map((ev, i) => (
+                    <a key={ev.id} href={'/evenement/' + ev.id} style={{ display: i === carouselIdx ? 'block' : 'none', position: 'relative', textDecoration: 'none' }}>
+                      <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,20,16,0.93) 0%, rgba(26,20,16,0.25) 55%, transparent 100%)' }} />
+                      <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                        <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
+                          {ev.mis_en_avant ? '📌 À la une' : '🔥 À la une'}
+                        </span>
+                      </div>
+                      <button onClick={(e) => toggleFavori(e, ev.id)} disabled={togglingFavori === ev.id} aria-label={favoris.has(ev.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                        style={{ position: 'absolute', top: 10, right: 12, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z" stroke={favoris.has(ev.id) ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" fill={favoris.has(ev.id) ? '#C8431A' : 'none'} />
+                        </svg>
+                      </button>
+                      <div style={{ position: 'absolute', bottom: 36, left: 14, right: 14 }}>
+                        <p style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 17, marginBottom: 4, lineHeight: 1.3 }}>{ev.titre}</p>
+                        <p style={{ color: 'rgba(247,242,232,0.8)', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                        <p style={{ color: 'rgba(247,242,232,0.8)', fontSize: 12 }}>📅 {afficherPeriode(ev)}</p>
+                      </div>
+                    </a>
+                  ))}
+                  {aLaUne.length > 1 && (
+                    <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 2 }}>
+                      {aLaUne.map((_, i) => (
+                        <button key={i} onClick={e => { e.preventDefault(); setCarouselIdx(i) }}
+                          style={{ width: i === carouselIdx ? 18 : 6, height: 6, borderRadius: 999, background: i === carouselIdx ? 'white' : 'rgba(255,255,255,0.45)', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s' }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tablette / Desktop — grille statique */}
+              <div className="aune-grid">
+                {aLaUne.map(ev => (
+                  <a key={ev.id} href={'/evenement/' + ev.id} style={{ display: 'block', position: 'relative', borderRadius: 16, overflow: 'hidden', background: '#1A1410', textDecoration: 'none' }}>
+                    <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,20,16,0.93) 0%, rgba(26,20,16,0.2) 55%, transparent 100%)' }} />
+                    <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                      <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
+                        {ev.mis_en_avant ? '📌 À la une' : '🔥 À la une'}
+                      </span>
+                    </div>
+                    <button onClick={(e) => toggleFavori(e, ev.id)} disabled={togglingFavori === ev.id} aria-label={favoris.has(ev.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                      style={{ position: 'absolute', top: 10, right: 12, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z" stroke={favoris.has(ev.id) ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" fill={favoris.has(ev.id) ? '#C8431A' : 'none'} />
+                      </svg>
+                    </button>
+                    <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
+                      <p style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 15, marginBottom: 4, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>{ev.titre}</p>
+                      <p style={{ color: 'rgba(247,242,232,0.75)', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                      <p style={{ color: 'rgba(247,242,232,0.75)', fontSize: 12 }}>📅 {afficherPeriode(ev)}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {evenementsFiltres.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 16px 24px' }}>
