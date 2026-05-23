@@ -136,14 +136,15 @@ export default function Admin() {
     setCountVilles(new Set(villesData?.map(e => e.ville?.trim()).filter(Boolean)).size)
 
     // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
-    const [{ data: evs }, { data: sigs }, { data: rejetes }] = await Promise.all([
+    const [{ data: evs }, { data: sigs }] = await Promise.all([
       supabase.from('evenements').select('*').order('created_at', { ascending: false }).limit(2000),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
-      supabase.from('evenements').select('*').eq('statut', 'rejete').order('created_at', { ascending: false }),
     ])
+    const { data: rejetesData } = await supabase
+      .from('evenements').select('*').eq('statut', 'rejete').order('created_at', { ascending: false })
     const baseEvs = (evs as Evenement[]) || []
     const seenIds = new Set(baseEvs.map(e => e.id))
-    setEvenements([...baseEvs, ...((rejetes as Evenement[]) || []).filter(e => !seenIds.has(e.id))])
+    setEvenements([...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))])
     setSignalements((sigs as Signalement[]) || [])
 
     // ── 4. SC7 — Stats import par source ─────────────────────────────────────
