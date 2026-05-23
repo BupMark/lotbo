@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -33,7 +33,7 @@ function getProchainBadge(nb: number, badges: typeof BADGES_CONTRIBUTEUR) {
   return badges.find(b => nb < b.seuil) || null
 }
 
-export default function Profil() {
+function ProfilInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab') as 'evenements' | 'badges' | 'favoris' | null
@@ -467,4 +467,7 @@ export default function Profil() {
 )}
     </main>
   )
+}
+export default function Profil() {
+  return <Suspense fallback={null}><ProfilInner /></Suspense>
 }
