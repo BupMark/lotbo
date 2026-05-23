@@ -70,6 +70,12 @@ const matchTemporel = (dateStr: string, filtre: FiltreTemporel): boolean => {
   return true
 }
 
+function normaliserPays(p: string): string {
+  const s = p.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  if (s === 'haiti' || s === 'ht') return 'Haiti'
+  return p.trim()
+}
+
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function Admin() {
@@ -183,7 +189,8 @@ export default function Admin() {
       const map: Record<string, number> = {}
       for (const ev of statsPays) {
         if (!ev.pays) continue
-        map[ev.pays] = (map[ev.pays] || 0) + 1
+        const paysNorm = normaliserPays(ev.pays)
+        map[paysNorm] = (map[paysNorm] || 0) + 1
       }
       setRepartitionPays(
         Object.entries(map)
@@ -276,17 +283,24 @@ export default function Admin() {
         {/* ── Stats — counts exacts ─────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'Total',      valeur: countTotal,     couleur: '#1A1410' },
-            { label: 'En attente', valeur: countEnAttente, couleur: '#D4A820' },
-            { label: 'Approuvés',  valeur: countApprouves, couleur: '#2D9E6B' },
-            { label: 'Rejetés',    valeur: countRejetes,   couleur: '#e57373' },
-            { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A' },
-            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40' },
+            { label: 'Total',      valeur: countTotal,     couleur: '#1A1410', onClick: () => { setFiltreStatut('tous');       setOnglet('evenements') } },
+            { label: 'En attente', valeur: countEnAttente, couleur: '#D4A820', onClick: () => { setFiltreStatut('en_attente'); setOnglet('evenements') } },
+            { label: 'Approuvés',  valeur: countApprouves, couleur: '#2D9E6B', onClick: () => { setFiltreStatut('approuve');   setOnglet('evenements') } },
+            { label: 'Rejetés',    valeur: countRejetes,   couleur: '#e57373', onClick: () => { setFiltreStatut('rejete');     setOnglet('evenements') } },
+            { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A', onClick: () => setOnglet('import') },
+            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40', onClick: () => setOnglet('import') },
           ].map((c, i) => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center' }}>
+            <button
+              key={i}
+              type="button"
+              onClick={c.onClick}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center', cursor: 'pointer', width: '100%', transition: 'background 0.15s, transform 0.1s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)' }}
+            >
               <p style={{ fontSize: 28, fontWeight: 'bold', color: c.couleur, marginBottom: 4 }}>{c.valeur}</p>
               <p style={{ fontSize: 11, color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</p>
-            </div>
+            </button>
           ))}
         </div>
 

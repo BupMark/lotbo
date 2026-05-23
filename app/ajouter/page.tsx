@@ -903,6 +903,35 @@ export default function AjouterEvenement() {
             <input name="titre" placeholder="Ex: Livres en Folie 2026" onChange={handleChange} style={inputStyle} required />
           </div>
 
+          {aDoubleRole && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setSoumisEnTantQue('organisateur')}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: soumisEnTantQue === 'organisateur' ? 'rgba(200,67,26,0.10)' : 'white', border: soumisEnTantQue === 'organisateur' ? '2px solid #C8431A' : '1px solid #E8E0D0', width: '100%' }}
+              >
+                <span style={{ fontSize: 28, flexShrink: 0 }}>🎪</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>C'est mon événement</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12 }}>Je suis l'organisateur</p>
+                </div>
+                {soumisEnTantQue === 'organisateur' && <span style={{ color: '#C8431A', fontSize: 18, flexShrink: 0 }}>✓</span>}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSoumisEnTantQue('contributeur')}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: soumisEnTantQue === 'contributeur' ? 'rgba(212,168,32,0.10)' : 'white', border: soumisEnTantQue === 'contributeur' ? '2px solid #D4A820' : '1px solid #E8E0D0', width: '100%' }}
+              >
+                <span style={{ fontSize: 28, flexShrink: 0 }}>⭐</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>Je l'ai repéré</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12 }}>J'ai vu cette info et je la partage</p>
+                </div>
+                {soumisEnTantQue === 'contributeur' && <span style={{ color: '#D4A820', fontSize: 18, flexShrink: 0 }}>✓</span>}
+              </button>
+            </div>
+          )}
+
           <div>
             <label style={labelStyle}>Organisateur</label>
             <input name="organisateur" value={form.organisateur} onChange={handleChange} placeholder="Ex: Barreau de Petit-Goâve..." style={inputStyle} />
@@ -1209,18 +1238,6 @@ export default function AjouterEvenement() {
               </div>
             )}
           </div>
-
-          {aDoubleRole && (
-            <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '16px 20px' }}>
-              <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 12 }}>Cet événement est le vôtre ou vous l'avez repéré ?</p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button type="button" onClick={() => setSoumisEnTantQue('organisateur')} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', background: soumisEnTantQue === 'organisateur' ? 'rgba(200,67,26,0.15)' : 'white', border: soumisEnTantQue === 'organisateur' ? '2px solid #C8431A' : '1px solid #E8E0D0', color: soumisEnTantQue === 'organisateur' ? '#C8431A' : '#8C5A40' }}>🎪 Mon événement</button>
-                <button type="button" onClick={() => setSoumisEnTantQue('contributeur')} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', background: soumisEnTantQue === 'contributeur' ? 'rgba(212,168,32,0.15)' : 'white', border: soumisEnTantQue === 'contributeur' ? '2px solid #D4A820' : '1px solid #E8E0D0', color: soumisEnTantQue === 'contributeur' ? '#D4A820' : '#8C5A40' }}>⭐ Je l'ai repéré</button>
-              </div>
-              {soumisEnTantQue === 'contributeur' && <p style={{ color: '#D4A820', fontSize: 11, marginTop: 8 }}>✓ Publié directement — points contributeur</p>}
-              {soumisEnTantQue === 'organisateur' && <p style={{ color: '#C8431A', fontSize: 11, marginTop: 8 }}>✓ En attente de validation — points organisateur</p>}
-            </div>
-          )}
 
           <button type="submit" disabled={loading} style={{ background: loading ? '#8C5A40' : '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8 }}>
             {loading ? 'Publication en cours...' : "Soumettre l'événement"}

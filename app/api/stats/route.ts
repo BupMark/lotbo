@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+function normaliserPays(p: string): string {
+  const s = p.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  if (s === 'haiti' || s === 'ht') return 'Haiti'
+  return p.trim()
+}
+
 export async function GET() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,7 +38,7 @@ export async function GET() {
     .not('pays', 'is', null)
 
   const pays = new Set(
-    paysData?.map(e => e.pays?.trim()).filter(Boolean)
+    paysData?.map(e => e.pays?.trim()).filter(Boolean).map(p => normaliserPays(p))
   ).size
 
   return NextResponse.json(
