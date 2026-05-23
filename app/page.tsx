@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import './popup.css'
 import { supabase } from '../lib/supabase'
 import { langues, type Langue, getTraductions } from '../lib/i18n'
+import { getEventImage, FALLBACK_IMAGES } from '../lib/fallbackImages'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -147,7 +148,7 @@ export default function Home() {
       const periodePopup = afficherPeriode(ev)
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
         '<div style="font-family:sans-serif;padding:12px;background:#1A1410;color:#F7F2E8;border-radius:8px;min-width:200px">' +
-        (ev.image_url ? '<img src="' + ev.image_url + '" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />' : '') +
+        '<img src="' + getEventImage(ev.image_url, ev.categorie) + '" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />' +
         '<strong style="font-size:16px;color:#F7F2E8">' + ev.titre + '</strong>' +
         '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
         '<span style="background:#C8431A;color:#F7F2E8;padding:2px 8px;border-radius:20px;font-size:11px">' + ev.categorie + '</span>' +
@@ -519,10 +520,7 @@ export default function Home() {
                   <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>Tu pourrais aimer</p>
                   {evenements.slice(0, 3).map(ev => (
                     <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" style={{ marginBottom: 10 }}>
-                      {ev.image_url
-                        ? <img src={ev.image_url} alt={ev.titre} className="card-image" />
-                        : <div className="card-image-placeholder">{emojiCategorie(ev.categorie)}</div>
-                      }
+                      <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                       <div className="card-body">
                         <p className="card-titre">{ev.titre}</p>
                         <p style={{ color: '#8C5A40', fontSize: 11 }}>📍 {ev.lieu}</p>
@@ -539,10 +537,7 @@ export default function Home() {
           <div className="lotbo-grid-evenements">
             {evenementsFiltres.map(ev => (
               <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card">
-                {ev.image_url
-                  ? <img src={ev.image_url} alt={ev.titre} className="card-image" />
-                  : <div className="card-image-placeholder">{emojiCategorie(ev.categorie)}</div>
-                }
+                <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                 <div className="card-body">
                   <p className="card-titre">{ev.titre}</p>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>

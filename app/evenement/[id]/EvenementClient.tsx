@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 import CarteVisuelle from '../../../components/CarteVisuelle'
 import { attributerPoints } from '../../../lib/points'
+import { getEventImage } from '../../../lib/fallbackImages'
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -682,16 +683,14 @@ supabase.auth.getSession().then(({ data: { session } }) => {
         </>
       )}
 
-      {(ev.image_url || imageAuto) && (
-        <div style={{ width: '100%', height: 280, overflow: 'hidden', position: 'relative' }}>
-          <img src={ev.image_url || imageAuto || ''} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          {!ev.image_url && imageAuteur && (
-            <p style={{ position: 'absolute', bottom: 6, right: 10, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-              Photo: {imageAuteur} / Unsplash
-            </p>
-          )}
-        </div>
-      )}
+      <div style={{ width: '100%', height: 280, overflow: 'hidden', position: 'relative' }}>
+        <img src={ev.image_url || imageAuto || getEventImage(null, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {!ev.image_url && imageAuteur && (
+          <p style={{ position: 'absolute', bottom: 6, right: 10, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+            Photo: {imageAuteur} / Unsplash
+          </p>
+        )}
+      </div>
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px 64px' }}>
 
@@ -925,7 +924,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {similaires.map(sim => (
                 <a href={'/evenement/' + sim.id} key={sim.id} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 12, textDecoration: 'none', color: '#1A1410' }}>
-                  {sim.image_url && <img src={sim.image_url} alt={sim.titre} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />}
+                  <img src={getEventImage(sim.image_url, sim.categorie)} alt={sim.titre} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = getEventImage(null, sim.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sim.titre}</p>
                     <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>{estEnLigne(sim.lieu || '') ? '🌐' : '📍'} {sim.lieu}</p>
