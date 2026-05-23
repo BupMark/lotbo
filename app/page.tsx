@@ -96,11 +96,31 @@ export default function Home() {
   const [favorisCounts, setFavorisCounts]   = useState<Record<string, number>>({})
   const [commCounts, setCommCounts]         = useState<Record<string, number>>({})
   const [carouselIdx, setCarouselIdx]       = useState(0)
+  const [clicsEvenements, setClicsEvenements] = useState(0)
+  const [inviteVisible, setInviteVisible]   = useState(false)
+  const [favoriTooltipId, setFavoriTooltipId] = useState<string | null>(null)
   const touchStartX                         = useRef(0)
   const aLaUneMarkerRef                     = useRef<mapboxgl.Marker | null>(null)
+  const tooltipTimer                        = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
+
+  // F3 — Afficher l'invitation après 3 clics si non connecté
+  useEffect(() => {
+    if (user || clicsEvenements < 3) return
+    if (typeof window !== 'undefined' && localStorage.getItem('lotbo_invite_shown')) return
+    setInviteVisible(true)
+  }, [clicsEvenements, user])
+
+  const trackEventClick = () => {
+    if (!user) setClicsEvenements(prev => prev + 1)
+  }
+
+  const dismissInvite = () => {
+    setInviteVisible(false)
+    if (typeof window !== 'undefined') localStorage.setItem('lotbo_invite_shown', '1')
+  }
 
   const nbFiltres = [
     categorie !== 'Toutes',
@@ -260,7 +280,12 @@ export default function Home() {
   const toggleFavori = async (e: React.MouseEvent, evenementId: string) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!user?.id) { window.location.href = '/login'; return }
+    if (!user?.id) {
+      if (tooltipTimer.current) clearTimeout(tooltipTimer.current)
+      setFavoriTooltipId(evenementId)
+      tooltipTimer.current = setTimeout(() => setFavoriTooltipId(null), 3000)
+      return
+    }
     setTogglingFavori(evenementId)
     if (favoris.has(evenementId)) {
       await supabase.from('favoris').delete().eq('user_id', user.id).eq('evenement_id', evenementId)
@@ -781,7 +806,7 @@ export default function Home() {
           {/* ── Grille UX4 ── */}
           <div className="lotbo-grid-evenements">
             {evenementsFiltres.map(ev => (
-              <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card">
+              <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" onClick={trackEventClick}>
                 <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                 <div className="card-body">
                   <p className="card-titre">{ev.titre}</p>
@@ -837,6 +862,47 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* ══════════════════════════════════════
+          F3 — TOOLTIP FAVORI (non connecté)
+      ══════════════════════════════════════ */}
+      {favoriTooltipId && (
+        <>
+          <div onClick={() => setFavoriTooltipId(null)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
+          <div style={{ position: 'fixed', bottom: 72, left: 16, right: 16, zIndex: 45, background: '#1A1410', borderRadius: 14, padding: '16px', boxShadow: '0 4px 24px rgba(26,20,16,0.3)' }}>
+            <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>Connectez-vous pour sauvegarder</p>
+            <p style={{ color: 'rgba(247,242,232,0.65)', fontSize: 12, marginBottom: 14 }}>Retrouvez vos événements favoris dans votre profil.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <a href="/login" onClick={() => setFavoriTooltipId(null)}
+                style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: '#F7F2E8', border: 'none', borderRadius: 999, padding: '9px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
+                Se connecter
+              </a>
+              <a href="/login?mode=inscription" onClick={() => setFavoriTooltipId(null)}
+                style={{ flex: 1, background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 999, padding: '9px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
+                Créer un compte
+              </a>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════
+          F3 — BANNIÈRE INVITATION (vue liste)
+      ══════════════════════════════════════ */}
+      {mode === 'liste' && inviteVisible && !user && (
+        <div style={{ position: 'fixed', bottom: 64, left: 0, right: 0, zIndex: 18, background: '#1A1410', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 -2px 16px rgba(26,20,16,0.2)' }}>
+          <p style={{ color: '#F7F2E8', fontSize: 13, flex: 1, lineHeight: 1.4 }}>
+            Sauvegardez vos événements favoris 🎉
+          </p>
+          <a href="/login?mode=inscription"
+            style={{ background: '#C8431A', color: '#F7F2E8', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Créer un compte
+          </a>
+          <button onClick={dismissInvite}
+            style={{ background: 'none', border: 'none', color: 'rgba(247,242,232,0.5)', fontSize: 18, cursor: 'pointer', padding: '0 4px', flexShrink: 0, lineHeight: 1 }}
+            aria-label="Fermer">✕</button>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════
           BOTTOM SHEET "À la une" (mode carte)

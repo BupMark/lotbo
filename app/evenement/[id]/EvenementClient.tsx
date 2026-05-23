@@ -451,6 +451,7 @@ export default function EvenementPage() {
   const [loadingParticipation, setLoadingParticipation] = useState(false)
   const [carteVisuelleouverte, setCarteVisuelleouverte] = useState(false)
   const [expressionChoisie, setExpressionChoisie]       = useState('🙋 Je serai là')
+  const [isConnected, setIsConnected]                   = useState(false)
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -547,6 +548,7 @@ if (data?.parent_id) {
     setSeraiLa(!!participations[id as string])
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.user_metadata?.role === 'admin') setIsAdmin(true)
+      setIsConnected(!!session?.user)
     })
     const expressions = JSON.parse(localStorage.getItem('lotbo_expressions') || '{}')
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
@@ -918,6 +920,26 @@ supabase.auth.getSession().then(({ data: { session } }) => {
     </div>
   </div>
 )}
+        {/* F3 — Invitation connexion (non connecté) */}
+        {!isConnected && (
+          <div style={{ background: '#1A1410', borderRadius: 16, padding: '20px 16px', marginBottom: 24 }}>
+            <p style={{ color: '#F7F2E8', fontSize: 15, fontWeight: 'bold', marginBottom: 6 }}>Vous aimez cet événement ?</p>
+            <p style={{ color: 'rgba(247,242,232,0.65)', fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
+              Connectez-vous pour dire <strong style={{ color: '#F7F2E8' }}>Je serai là</strong> et partager cet événement avec vos amis.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <a href="/login"
+                style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: '#F7F2E8', borderRadius: 999, padding: '10px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
+                Se connecter
+              </a>
+              <a href="/login?mode=inscription"
+                style={{ flex: 1, background: '#C8431A', color: '#F7F2E8', borderRadius: 999, padding: '10px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
+                Créer un compte
+              </a>
+            </div>
+          </div>
+        )}
+
         {similaires.length > 0 && (
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1A1410' }}>Événements similaires</h2>
