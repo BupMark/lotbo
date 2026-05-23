@@ -7,6 +7,7 @@ import './popup.css'
 import { supabase } from '../lib/supabase'
 import { langues, type Langue, getTraductions } from '../lib/i18n'
 import { getEventImage, FALLBACK_IMAGES } from '../lib/fallbackImages'
+import NotifCloche from '../components/NotifCloche'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -604,6 +605,7 @@ export default function Home() {
                 <a href="/login" style={{ background: '#1A1410', color: '#F7F2E8', border: 'none', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>Connexion</a>
               )}
             </div>
+            <NotifCloche userId={user?.id} />
             <a href="/ajouter" style={{ background: '#C8431A', color: 'white', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>+ Ajouter</a>
           </div>
         </div>
