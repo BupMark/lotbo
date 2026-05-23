@@ -95,6 +95,9 @@ export default function Admin() {
   const [countEnAttente, setCountEnAttente] = useState(0)
   const [countRejetes,   setCountRejetes]   = useState(0)
   const [countVilles,    setCountVilles]    = useState(0)
+  const [countPays,      setCountPays]      = useState(0)
+  const [repartitionVilles, setRepartitionVilles] = useState<{ ville: string; nb: number }[]>([])
+  const [modalGeo,       setModalGeo]       = useState<'villes' | 'pays' | 'regions' | null>(null)
 
   // SC7 — Dashboard import
   const [statsImport,      setStatsImport]      = useState<{ source: string; nb: number; dernierImport: string | null }[]>([])
@@ -141,6 +144,13 @@ export default function Admin() {
       .eq('statut', 'approuve')
       .not('ville', 'is', null)
     setCountVilles(new Set(villesData?.map(e => e.ville?.trim()).filter(Boolean)).size)
+    const mapVilles: Record<string, number> = {}
+    for (const ev of villesData || []) {
+      const v = ev.ville?.trim()
+      if (!v) continue
+      mapVilles[v] = (mapVilles[v] || 0) + 1
+    }
+    setRepartitionVilles(Object.entries(mapVilles).map(([ville, nb]) => ({ ville, nb })).sort((a, b) => b.nb - a.nb))
 
     // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
     const [{ data: evs }, { data: sigs }] = await Promise.all([
@@ -192,12 +202,9 @@ export default function Admin() {
         const paysNorm = normaliserPays(ev.pays)
         map[paysNorm] = (map[paysNorm] || 0) + 1
       }
-      setRepartitionPays(
-        Object.entries(map)
-          .map(([pays, nb]) => ({ pays, nb }))
-          .sort((a, b) => b.nb - a.nb)
-          .slice(0, 10)
-      )
+      const allPays = Object.entries(map).map(([pays, nb]) => ({ pays, nb })).sort((a, b) => b.nb - a.nb)
+      setCountPays(allPays.length)
+      setRepartitionPays(allPays)
     }
 
     setLoading(false)
@@ -236,6 +243,16 @@ export default function Admin() {
       .filter(e => e.statut === 'approuve' && e.longitude !== null)
       .map(e => (e.longitude! < -30 ? 'Amériques' : e.longitude! < 60 ? 'Europe/Afrique' : 'Asie/Pacifique'))
   ).size
+
+  const repartitionRegions = (() => {
+    const map: Record<string, number> = {}
+    for (const ev of evenements) {
+      if (ev.statut !== 'approuve' || ev.longitude === null) continue
+      const r = ev.longitude < -30 ? 'Amériques' : ev.longitude < 60 ? 'Europe/Afrique' : 'Asie/Pacifique'
+      map[r] = (map[r] || 0) + 1
+    }
+    return Object.entries(map).map(([region, nb]) => ({ region, nb })).sort((a, b) => b.nb - a.nb)
+  })()
 
   // ─── Filtre combiné ───────────────────────────────────────────────────────
 
@@ -287,8 +304,9 @@ export default function Admin() {
             { label: 'En attente', valeur: countEnAttente, couleur: '#D4A820', onClick: () => { setFiltreStatut('en_attente'); setOnglet('evenements') } },
             { label: 'Approuvés',  valeur: countApprouves, couleur: '#2D9E6B', onClick: () => { setFiltreStatut('approuve');   setOnglet('evenements') } },
             { label: 'Rejetés',    valeur: countRejetes,   couleur: '#e57373', onClick: () => { setFiltreStatut('rejete');     setOnglet('evenements') } },
-            { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A', onClick: () => setOnglet('import') },
-            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40', onClick: () => setOnglet('import') },
+            { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A', onClick: () => setModalGeo('villes') },
+            { label: 'Pays',       valeur: countPays,      couleur: '#8C5A40', onClick: () => setModalGeo('pays') },
+            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40', onClick: () => setModalGeo('regions') },
           ].map((c, i) => (
             <button
               key={i}
@@ -639,7 +657,63 @@ export default function Admin() {
           </div>
         )}
 
+      {/* ── Modal géo — Villes / Pays / Régions ─────────────────────── */}
+      {modalGeo && (
+        <div
+          onClick={() => setModalGeo(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#F7F2E8', borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 600, maxHeight: '72vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #E8E0D0', flexShrink: 0 }}>
+              <div>
+                <h3 style={{ color: '#1A1410', fontSize: 15, fontWeight: 'bold', marginBottom: 2 }}>
+                  {modalGeo === 'villes' ? '🏙️ Villes' : modalGeo === 'pays' ? '🌍 Pays' : '🗺️ Régions'}
+                </h3>
+                <p style={{ color: '#8C5A40', fontSize: 11 }}>
+                  {modalGeo === 'villes'   ? `${repartitionVilles.length} villes · événements approuvés`
+                   : modalGeo === 'pays'   ? `${repartitionPays.length} pays · événements approuvés`
+                   : `${repartitionRegions.length} région${repartitionRegions.length > 1 ? 's' : ''} · par longitude`}
+                </p>
+              </div>
+              <button onClick={() => setModalGeo(null)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>✕</button>
+            </div>
+
+            {/* Liste */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '8px 20px 24px' }}>
+              {(modalGeo === 'villes' ? repartitionVilles.map((v, i) => ({ nom: v.ville, nb: v.nb, i }))
+                : modalGeo === 'pays' ? repartitionPays.map((p, i) => ({ nom: p.pays, nb: p.nb, i }))
+                : repartitionRegions.map((r, i) => ({ nom: r.region, nb: r.nb, i }))
+              ).map(({ nom, nb, i }) => {
+                const liste = modalGeo === 'villes' ? repartitionVilles : modalGeo === 'pays' ? repartitionPays : repartitionRegions
+                const maxNb = (liste[0] as { nb: number })?.nb || 1
+                const pct   = Math.round((nb / maxNb) * 100)
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid #E8E0D0' }}>
+                    <span style={{ color: '#8C5A40', fontSize: 11, width: 22, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
+                    <span style={{ color: '#1A1410', fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nom}</span>
+                    <div style={{ width: 80, background: '#E8E0D0', borderRadius: 999, height: 5, overflow: 'hidden', flexShrink: 0 }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: '#C8431A', borderRadius: 999 }} />
+                    </div>
+                    <span style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', width: 32, textAlign: 'right', flexShrink: 0 }}>{nb}</span>
+                  </div>
+                )
+              })}
+              {((modalGeo === 'villes' && repartitionVilles.length === 0)
+                || (modalGeo === 'pays' && repartitionPays.length === 0)
+                || (modalGeo === 'regions' && repartitionRegions.length === 0)) && (
+                <p style={{ color: '#8C5A40', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>Aucune donnée disponible</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
+
     </main>
   )
 }
