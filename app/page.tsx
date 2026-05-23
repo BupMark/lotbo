@@ -145,11 +145,14 @@ export default function Home() {
       for (const f of data || []) map[f.evenement_id] = (map[f.evenement_id] || 0) + 1
       setFavorisCounts(map)
     })
-    supabase.from('commentaires').select('evenement_id').then(({ data }) => {
-      const map: Record<string, number> = {}
-      for (const f of data || []) map[f.evenement_id] = (map[f.evenement_id] || 0) + 1
-      setCommCounts(map)
-    }).catch(() => {})
+    ;(async () => {
+      try {
+        const { data } = await supabase.from('commentaires').select('evenement_id')
+        const map: Record<string, number> = {}
+        for (const f of data || []) map[f.evenement_id] = (map[f.evenement_id] || 0) + 1
+        setCommCounts(map)
+      } catch {}
+    })()
   }, [evenements.length])
 
   useEffect(() => {
