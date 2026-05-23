@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
-import { normaliserVille, normaliserPays } from '../../lib/normalisation'
+import { normaliserVille, normaliserPays, codeVersNomPays } from '../../lib/normalisation'
 import { useRouter } from 'next/navigation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -70,6 +70,13 @@ const matchTemporel = (dateStr: string, filtre: FiltreTemporel): boolean => {
   }
   return true
 }
+
+// ─── Valeurs à exclure du champ "ville" (ce sont des pays ou codes ISO) ───────
+const EXCLU_VILLES = new Set([
+  'haiti', 'ht', 'caribbean', 'martinique', 'guadeloupe',
+  'us', 'fr', 'ca', 'ng', 'do', 'jm', 'ci', 'sn', 'mq', 'gp', 'ph', 'ch', 'bs',
+  'republique dominicaine', 'dominican republic', 'bahamas', 'the bahamas',
+])
 
 // ─── Coordonnées villes (carte bubbles) ──────────────────────────────────────
 
@@ -275,6 +282,8 @@ export default function Admin() {
     for (const ev of villesData || []) {
       const v = ev.ville?.trim()
       if (!v) continue
+      const vStripped = v.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      if (EXCLU_VILLES.has(vStripped)) continue
       const vNorm = normaliserVille(v)
       mapVilles[vNorm] = (mapVilles[vNorm] || 0) + 1
     }
@@ -329,7 +338,7 @@ export default function Admin() {
       const map: Record<string, number> = {}
       for (const ev of statsPays) {
         if (!ev.pays) continue
-        const paysNorm = normaliserPays(ev.pays)
+        const paysNorm = codeVersNomPays(normaliserPays(ev.pays))
         map[paysNorm] = (map[paysNorm] || 0) + 1
       }
       const allPays = Object.entries(map).map(([pays, nb]) => ({ pays, nb })).sort((a, b) => b.nb - a.nb)

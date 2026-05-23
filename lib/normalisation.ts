@@ -40,3 +40,36 @@ export function normaliserPays(p: string): string {
   if (s === 'bahamas' || s === 'the bahamas') return 'Bahamas'
   return p.trim()
 }
+
+// Convertit codes ISO 2 lettres → noms complets affichables.
+// Appliqué après normaliserPays pour couvrir les codes laissés tels quels.
+const CODE_PAYS: Record<string, string> = {
+  'US':                     'États-Unis',
+  'FR':                     'France',
+  'France':                 'France',
+  'CA':                     'Canada',
+  'NG':                     'Nigeria',
+  'MQ':                     'Martinique',
+  'Martinique':             'Martinique',
+  'GP':                     'Guadeloupe',
+  'Guadeloupe':             'Guadeloupe',
+  'DO':                     'République Dominicaine',
+  'République Dominicaine': 'République Dominicaine',
+  'Dominican Republic':     'République Dominicaine',
+  'JM':                     'Jamaïque',
+  'CI':                     "Côte d'Ivoire",
+  "Côte d'Ivoire":          "Côte d'Ivoire",
+  'SN':                     'Sénégal',
+  'HT':                     'Haiti',
+  'Haiti':                  'Haiti',
+  'Haïti':                  'Haiti',
+  'PH':                     'Philippines',
+  'CH':                     'Suisse',
+  'BS':                     'Bahamas',
+  'Bahamas':                'Bahamas',
+  'The Bahamas':            'Bahamas',
+}
+
+export function codeVersNomPays(v: string): string {
+  return CODE_PAYS[v] ?? v
+}
