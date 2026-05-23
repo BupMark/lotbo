@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-function normaliserPays(p: string): string {
-  const s = p.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-  if (s === 'haiti' || s === 'ht') return 'Haiti'
-  return p.trim()
-}
+import { normaliserPays } from '../../../lib/normalisation'
 
 export async function GET() {
   const supabase = createClient(

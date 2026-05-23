@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
+import { normaliserVille, normaliserPays } from '../../lib/normalisation'
 import { useRouter } from 'next/navigation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -68,12 +69,6 @@ const matchTemporel = (dateStr: string, filtre: FiltreTemporel): boolean => {
     return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
   }
   return true
-}
-
-function normaliserPays(p: string): string {
-  const s = p.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-  if (s === 'haiti' || s === 'ht') return 'Haiti'
-  return p.trim()
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
@@ -143,14 +138,16 @@ export default function Admin() {
       .select('ville')
       .eq('statut', 'approuve')
       .not('ville', 'is', null)
-    setCountVilles(new Set(villesData?.map(e => e.ville?.trim()).filter(Boolean)).size)
     const mapVilles: Record<string, number> = {}
     for (const ev of villesData || []) {
       const v = ev.ville?.trim()
       if (!v) continue
-      mapVilles[v] = (mapVilles[v] || 0) + 1
+      const vNorm = normaliserVille(v)
+      mapVilles[vNorm] = (mapVilles[vNorm] || 0) + 1
     }
-    setRepartitionVilles(Object.entries(mapVilles).map(([ville, nb]) => ({ ville, nb })).sort((a, b) => b.nb - a.nb))
+    const villesArr = Object.entries(mapVilles).map(([ville, nb]) => ({ ville, nb })).sort((a, b) => b.nb - a.nb)
+    setCountVilles(villesArr.length)
+    setRepartitionVilles(villesArr)
 
     // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
     const [{ data: evs }, { data: sigs }] = await Promise.all([

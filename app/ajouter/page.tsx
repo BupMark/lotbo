@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
+import { normaliserVille, normaliserPays } from '../../lib/normalisation'
 
 import dynamicImport from 'next/dynamic'
 const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
@@ -635,8 +636,8 @@ export default function AjouterEvenement() {
           const comps     = data.result?.address_components || []
           const villeComp = comps.find((c: { types: string[]; long_name: string }) => c.types.includes('locality') || c.types.includes('administrative_area_level_1'))
           const paysComp  = comps.find((c: { types: string[]; long_name: string }) => c.types.includes('country'))
-          if (villeComp && !form.ville) setForm(f => ({ ...f, ville: villeComp.long_name }))
-          if (paysComp && !form.pays)   setForm(f => ({ ...f, pays: paysComp.long_name }))
+          if (villeComp && !form.ville) setForm(f => ({ ...f, ville: normaliserVille(villeComp.long_name) }))
+          if (paysComp && !form.pays)   setForm(f => ({ ...f, pays: normaliserPays(paysComp.long_name) }))
           setCoordsPin({ longitude: loc.lng, latitude: loc.lat, adresse: suggestion.place_name })
           return
         }
