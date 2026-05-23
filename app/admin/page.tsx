@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
 import { normaliserVille, normaliserPays } from '../../lib/normalisation'
@@ -69,6 +69,139 @@ const matchTemporel = (dateStr: string, filtre: FiltreTemporel): boolean => {
     return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
   }
   return true
+}
+
+// ─── Coordonnées villes (carte bubbles) ──────────────────────────────────────
+
+const COORDS_VILLES: Record<string, [number, number]> = {
+  'Port-au-Prince':      [-72.3388, 18.5425],
+  'Pétionville':         [-72.2894, 18.5116],
+  'Delmas':              [-72.3000, 18.5454],
+  'Tabarre':             [-72.2788, 18.5845],
+  'Croix-des-Bouquets':  [-72.2138, 18.5783],
+  'Kenscoff':            [-72.2875, 18.4478],
+  'Léogâne':             [-72.6333, 18.5122],
+  'Cap-Haïtien':         [-72.2014, 19.7578],
+  'Gonaïves':            [-72.6877, 19.4489],
+  'Saint-Marc':          [-72.7014, 19.1189],
+  'Les Cayes':           [-73.7473, 18.1936],
+  'Jacmel':              [-72.5353, 18.2342],
+  'Jérémie':             [-74.1201, 18.6480],
+  'Port-de-Paix':        [-72.8341, 19.9319],
+  'Hinche':              [-71.9874, 19.1492],
+  'Fort-Liberté':        [-71.8400, 19.6626],
+  'Miragoâne':           [-73.0877, 18.4444],
+  'Trou-du-Nord':        [-71.9983, 19.6302],
+  'Ouanaminthe':         [-71.7333, 19.5500],
+  'Aquin':               [-73.0823, 18.2774],
+  'Saint-Louis-du-Sud':  [-73.5167, 18.2667],
+}
+
+// ─── Carte choroplèthe bubbles ────────────────────────────────────────────────
+
+function CarteVillesMap({ villes }: { villes: { ville: string; nb: number }[] }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const mapRef       = useRef<any>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const points = villes
+      .filter(v => COORDS_VILLES[v.ville])
+      .map(v => ({
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: COORDS_VILLES[v.ville] },
+        properties: { nom: v.ville, nb: v.nb },
+      }))
+
+    let destroyed = false
+    const maxNb = points.length > 0 ? Math.max(...points.map(p => p.properties.nb)) : 1
+
+    import('mapbox-gl').then(({ default: mapboxgl }) => {
+      if (destroyed || !containerRef.current) return
+      import('mapbox-gl/dist/mapbox-gl.css').catch(() => {})
+      mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
+
+      const map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [-72.8, 18.9],
+        zoom: 6.2,
+        interactive: true,
+        attributionControl: false,
+      })
+      mapRef.current = map
+
+      map.on('load', () => {
+        if (destroyed) return
+        map.addSource('villes-src', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: points },
+        })
+        map.addLayer({
+          id: 'villes-bubbles',
+          type: 'circle',
+          source: 'villes-src',
+          paint: {
+            'circle-radius':       ['interpolate', ['linear'], ['get', 'nb'], 1, 8, maxNb, 36],
+            'circle-color':        ['interpolate', ['linear'], ['get', 'nb'], 1, '#F7C4A0', maxNb, '#C8431A'],
+            'circle-opacity':       0.82,
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': '#fff',
+          },
+        })
+        map.addLayer({
+          id: 'villes-labels',
+          type: 'symbol',
+          source: 'villes-src',
+          layout: {
+            'text-field':          ['get', 'nom'],
+            'text-size':           10,
+            'text-offset':         [0, 2.4],
+            'text-anchor':         'top',
+            'text-allow-overlap':  false,
+          },
+          paint: {
+            'text-color':       '#1A1410',
+            'text-halo-color':  'rgba(247,242,232,0.9)',
+            'text-halo-width':  1.5,
+          },
+        })
+
+        const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
+        map.on('mouseenter', 'villes-bubbles', e => {
+          map.getCanvas().style.cursor = 'pointer'
+          const feat = e.features?.[0]
+          if (!feat) return
+          const { nom, nb } = feat.properties as { nom: string; nb: number }
+          popup.setLngLat(e.lngLat)
+            .setHTML(`<div style="font-family:sans-serif;padding:6px 10px"><strong style="font-size:13px;color:#1A1410">${nom}</strong><br/><span style="color:#C8431A;font-weight:bold;font-size:12px">${nb} événement${nb > 1 ? 's' : ''}</span></div>`)
+            .addTo(map)
+        })
+        map.on('mouseleave', 'villes-bubbles', () => {
+          map.getCanvas().style.cursor = ''
+          popup.remove()
+        })
+      })
+    })
+
+    return () => {
+      destroyed = true
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const nbSurCarte = villes.filter(v => COORDS_VILLES[v.ville]).length
+
+  return (
+    <div style={{ flexShrink: 0 }}>
+      <div ref={containerRef} style={{ height: 210, background: '#E8E0D0' }} />
+      {nbSurCarte < villes.length && (
+        <p style={{ color: '#8C5A40', fontSize: 10, padding: '4px 12px', background: 'rgba(200,67,26,0.05)', textAlign: 'center', margin: 0 }}>
+          {nbSurCarte} / {villes.length} villes avec coordonnées · les autres apparaissent dans la liste
+        </p>
+      )}
+    </div>
+  )
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
@@ -662,7 +795,7 @@ export default function Admin() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: '#F7F2E8', borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 600, maxHeight: '72vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+            style={{ background: '#F7F2E8', borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
           >
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #E8E0D0', flexShrink: 0 }}>
@@ -678,6 +811,9 @@ export default function Admin() {
               </div>
               <button onClick={() => setModalGeo(null)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>✕</button>
             </div>
+
+            {/* Carte bubbles — villes uniquement */}
+            {modalGeo === 'villes' && <CarteVillesMap villes={repartitionVilles} />}
 
             {/* Liste */}
             <div style={{ overflowY: 'auto', flex: 1, padding: '8px 20px 24px' }}>
