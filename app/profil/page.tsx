@@ -177,9 +177,9 @@ export default function Profil() {
               {editNom ? (
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
                   <input value={nomInput} onChange={e => setNomInput(e.target.value)} maxLength={40} placeholder="Ton prénom ou pseudo" autoFocus
-                    style={{ background: 'rgba(26,20,16,0.08)', border: '1px solid #C8431A', borderRadius: 8, padding: '6px 12px', color: '#F7F2E8', fontSize: 15, outline: 'none', flex: 1 }}
+                    style={{ background: 'white', border: '1px solid #C8431A', borderRadius: 8, padding: '6px 12px', color: '#1A1410', fontSize: 15, outline: 'none', flex: 1 }}
                     onKeyDown={e => { if (e.key === 'Enter') handleSaveNom() }} />
-                  <button onClick={handleSaveNom} disabled={savingNom} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}>{savingNom ? '...' : '✓'}</button>
+                  <button onClick={handleSaveNom} disabled={savingNom} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>{savingNom ? '...' : 'Enregistrer'}</button>
                   <button onClick={() => { setEditNom(false); setNomInput(profile?.nom || '') }} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 18, cursor: 'pointer' }}>✕</button>
                 </div>
               ) : (
@@ -254,7 +254,7 @@ export default function Profil() {
                   const s = statutLabel(ev.statut)
                   return (
                     <div key={ev.id} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      {ev.image_url && <img src={ev.image_url} alt={ev.titre} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />}
+                      {ev.image_url && <img src={ev.image_url} alt={ev.titre} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
                         <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
