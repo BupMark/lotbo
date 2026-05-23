@@ -827,7 +827,7 @@ export default function Admin() {
             {/* Liste */}
             <div style={{ overflowY: 'auto', flex: 1, padding: '8px 20px 24px' }}>
               {(modalGeo === 'villes' ? repartitionVilles.map((v, i) => ({ nom: v.ville, nb: v.nb, i }))
-                : modalGeo === 'pays' ? repartitionPays.map((p, i) => ({ nom: p.pays, nb: p.nb, i }))
+                : modalGeo === 'pays' ? repartitionPays.map((p, i) => ({ nom: p.pays === 'Haiti' ? '🇭🇹 Haiti' : p.pays, nb: p.nb, i }))
                 : repartitionRegions.map((r, i) => ({ nom: r.region, nb: r.nb, i }))
               ).map(({ nom, nb, i }) => {
                 const liste = modalGeo === 'villes' ? repartitionVilles : modalGeo === 'pays' ? repartitionPays : repartitionRegions
