@@ -71,6 +71,39 @@ const matchTemporel = (dateStr: string, filtre: FiltreTemporel): boolean => {
   return true
 }
 
+// ─── Drapeaux pays (affichage modal) ─────────────────────────────────────────
+const DRAPEAUX_PAYS: Record<string, string> = {
+  'Haiti':                  '🇭🇹',
+  'États-Unis':             '🇺🇸',
+  'France':                 '🇫🇷',
+  'Canada':                 '🇨🇦',
+  'Nigeria':                '🇳🇬',
+  'Martinique':             '🇲🇶',
+  'Guadeloupe':             '🇬🇵',
+  'République Dominicaine': '🇩🇴',
+  'Jamaïque':               '🇯🇲',
+  "Côte d'Ivoire":          '🇨🇮',
+  'Sénégal':                '🇸🇳',
+  'Philippines':            '🇵🇭',
+  'Suisse':                 '🇨🇭',
+  'Bahamas':                '🇧🇸',
+  'Belgique':               '🇧🇪',
+  'Royaume-Uni':            '🇬🇧',
+  'Espagne':                '🇪🇸',
+  'Italie':                 '🇮🇹',
+  'Allemagne':              '🇩🇪',
+  'Brésil':                 '🇧🇷',
+  'Mexique':                '🇲🇽',
+  'Colombie':               '🇨🇴',
+  'Cuba':                   '🇨🇺',
+  'Porto Rico':             '🇵🇷',
+  'Trinité-et-Tobago':      '🇹🇹',
+  'Barbade':                '🇧🇧',
+  'Sainte-Lucie':           '🇱🇨',
+  'Suriname':               '🇸🇷',
+  'Haïti':                  '🇭🇹',
+}
+
 // ─── Valeurs à exclure du champ "ville" (ce sont des pays ou codes ISO) ───────
 const EXCLU_VILLES = new Set([
   'haiti', 'ht', 'caribbean', 'martinique', 'guadeloupe',
@@ -827,7 +860,7 @@ export default function Admin() {
             {/* Liste */}
             <div style={{ overflowY: 'auto', flex: 1, padding: '8px 20px 24px' }}>
               {(modalGeo === 'villes' ? repartitionVilles.map((v, i) => ({ nom: v.ville, nb: v.nb, i }))
-                : modalGeo === 'pays' ? repartitionPays.map((p, i) => ({ nom: p.pays === 'Haiti' ? '🇭🇹 Haiti' : p.pays, nb: p.nb, i }))
+                : modalGeo === 'pays' ? repartitionPays.map((p, i) => ({ nom: (DRAPEAUX_PAYS[p.pays] ? DRAPEAUX_PAYS[p.pays] + ' ' : '') + p.pays, nb: p.nb, i }))
                 : repartitionRegions.map((r, i) => ({ nom: r.region, nb: r.nb, i }))
               ).map(({ nom, nb, i }) => {
                 const liste = modalGeo === 'villes' ? repartitionVilles : modalGeo === 'pays' ? repartitionPays : repartitionRegions
