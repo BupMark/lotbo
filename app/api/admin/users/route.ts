@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { calculerNiveau } from '../../../lib/points'
+import { calculerNiveau } from '../../../../lib/points'
 
 function verifierSecret(request: Request): boolean {
   const secret = request.headers.get('x-internal-secret')

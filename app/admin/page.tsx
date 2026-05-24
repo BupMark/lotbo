@@ -27,6 +27,8 @@ interface Evenement {
   mis_en_avant?: boolean
   mis_en_avant_ville?: string | null
   mis_en_avant_jusqu_au?: string | null
+  user_id?: string | null
+  soumis_en_tant_que?: string | null
 }
 
 interface Signalement {
