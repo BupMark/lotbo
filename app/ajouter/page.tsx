@@ -579,7 +579,7 @@ export default function AjouterEvenement() {
       }
       const role = session.user.user_metadata?.role
       const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session.user.id).single()
-      const estContrib = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
+      const estContrib = ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
       if (estContrib && profile?.charte_acceptee) setADoubleRole(true)
     })
   }, [])
@@ -686,10 +686,11 @@ export default function AjouterEvenement() {
     const role         = session?.user?.user_metadata?.role
     const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
     if (profile?.nom) setNomUtilisateur(profile.nom)
-    const estContributeur = ['contributeur', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
+    const estContributeur       = ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
+    const peutPublierDirectement = ['contributeur_terrain', 'admin'].includes(profile?.role || role || '')
     if (estContributeur && profile?.charte_acceptee) setADoubleRole(true)
     const choix           = soumisEnTantQue || (estContributeur && profile?.charte_acceptee ? 'contributeur' : 'organisateur')
-    const statutInsertion = choix === 'contributeur' && estContributeur && profile?.charte_acceptee ? 'approuve' : 'en_attente'
+    const statutInsertion = peutPublierDirectement ? 'approuve' : 'en_attente'
     const lieuAffiche     = form.nom_lieu
       ? `${form.nom_lieu}${form.ville ? ', ' + form.ville : ''}`
       : `${form.adresse || form.ville}${form.ville ? ', ' + form.ville : ''}`

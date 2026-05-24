@@ -6,6 +6,15 @@ function verifierSecret(request: Request): boolean {
   return secret === process.env.INTERNAL_API_SECRET
 }
 
+function calculerNiveau(points: number): string {
+  if (points >= 500) return 'legende'
+  if (points >= 251) return 'elite'
+  if (points >= 101) return 'top_contributeur'
+  if (points >= 51)  return 'contributeur'
+  if (points >= 21)  return 'actif'
+  return 'decouvreur'
+}
+
 function makeAdminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -130,7 +139,7 @@ export async function PATCH(request: Request) {
     const admin = makeAdminClient()
 
     if (role !== undefined) {
-      const ROLES_VALIDES = ['visiteur', 'membre', 'contributeur', 'organisateur', 'ambassadeur', 'admin']
+      const ROLES_VALIDES = ['visiteur', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin']
       if (!ROLES_VALIDES.includes(role)) {
         return NextResponse.json({ error: 'Rôle invalide' }, { status: 400 })
       }
@@ -139,6 +148,17 @@ export async function PATCH(request: Request) {
         .update({ role, updated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
+
+      // Recalcul points réels depuis transactions_points
+      const { data: txs } = await admin
+        .from('transactions_points')
+        .select('points')
+        .eq('user_id', id)
+      const pointsTotal = Math.max(0, (txs || []).reduce((s, t) => s + (t.points || 0), 0))
+      const niveau      = calculerNiveau(pointsTotal)
+      await admin.from('profiles').update({ points_total: pointsTotal, niveau }).eq('id', id)
+
+      return NextResponse.json({ success: true, points_total: pointsTotal, niveau })
     }
 
     if (suspendu !== undefined) {

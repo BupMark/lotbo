@@ -129,7 +129,7 @@ function ProfilInner() {
     </main>
   )
 
-  const isAdmin = user?.user_metadata?.role === 'admin'
+  const isAdmin = profile?.role === 'admin'
   const nbApprouves = evenements.filter(ev => ev.statut === 'approuve').length
   const nbEnAttente = evenements.filter(ev => ev.statut === 'en_attente').length
   const nbRejetes = evenements.filter(ev => ev.statut === 'rejete').length

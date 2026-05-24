@@ -432,12 +432,13 @@ export default function Admin() {
   const changerRole = async (id: string, role: string) => {
     setChangingRole(id)
     try {
-      await fetch('/api/admin/users', {
-        method: 'PATCH',
-        headers: hi,
-        body: JSON.stringify({ id, role }),
-      })
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
+      const res  = await fetch('/api/admin/users', { method: 'PATCH', headers: hi, body: JSON.stringify({ id, role }) })
+      const data = await res.json()
+      setUsers(prev => prev.map(u => u.id === id ? {
+        ...u,
+        role,
+        ...(data.points_total !== undefined ? { points_total: data.points_total } : {}),
+      } : u))
     } catch { /* ignore */ }
     setChangingRole(null)
   }

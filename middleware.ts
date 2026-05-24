@@ -41,7 +41,13 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    const role = user.user_metadata?.role
+    // user_metadata.role est vide pour les comptes Google OAuth — lire profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    const role = profile?.role ?? user.user_metadata?.role
     if (role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url))
     }
