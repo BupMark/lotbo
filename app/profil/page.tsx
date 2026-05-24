@@ -201,12 +201,21 @@ function ProfilInner() {
                 </div>
               )}
               <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 4 }}>{user?.email?.replace(/(.{2}).*(@.*)/, '$1***$2')}</p>
-              <p style={{ color: '#8C5A40', fontSize: 13 }}>{isAdmin ? '⚙️ Administrateur' : 'Organisateur Lotbo'}</p>
+              <p style={{ color: '#8C5A40', fontSize: 13 }}>
+                {profile?.role === 'admin' ? '⚙️ Administrateur'
+                  : profile?.role === 'ambassadeur' ? '🤝 Ambassadeur'
+                  : profile?.role === 'organisateur' ? '🎪 Organisateur'
+                  : profile?.role === 'contributeur_terrain' ? '⭐ Contributeur Terrain'
+                  : profile?.role === 'contributeur' ? '⭐ Contributeur'
+                  : profile?.role === 'membre' ? '👤 Membre'
+                  : '👤 Membre LOTBO'}
+              </p>
 
               {/* Badges rôles */}
               <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                 {isAdmin && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⚙️ Admin</span>}
                 {profile?.role === 'contributeur' && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur</span>}
+                {profile?.role === 'contributeur_terrain' && <span style={{ background: 'rgba(200,160,32,0.15)', color: '#C8A020', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur Terrain</span>}
                 {profile?.role === 'ambassadeur' && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🤝 Ambassadeur</span>}
                 {nbApprouves > 0 && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🎪 Organisateur</span>}
                 {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {badgeContribActuel.label}</span>}

@@ -1037,9 +1037,9 @@ export default function Admin() {
               {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
-                  { label: 'Total',          valeur: users.length,                                                                  couleur: '#1A1410' },
-                  { label: 'Membres',         valeur: statsRoles['membre']              || 0,                                       couleur: '#4A90D9' },
-                  { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0), couleur: '#D4A820' },
+                  { label: 'Membres',         valeur: users.length,                                                                                                                                                                    couleur: '#1A1410' },
+                  { label: 'Sans action',     valeur: statsRoles['membre']              || 0,                                                                                                                                   couleur: '#4A90D9' },
+                  { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0), couleur: '#D4A820' },
                   { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
                   { label: 'Ambassadeurs',    valeur: statsRoles['ambassadeur']  || 0,                                              couleur: '#2D9E6B' },
@@ -1145,12 +1145,9 @@ export default function Admin() {
                                     }}>
                                       {initiales(u)}
                                     </div>
-                                    <div style={{ minWidth: 0 }}>
+                                    <div style={{ minWidth: 0 }} title={u.email}>
                                       <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>
-                                        {u.nom || '—'}
-                                      </p>
-                                      <p style={{ color: '#8C5A40', fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>
-                                        {u.email}
+                                        {u.nom || u.email.split('@')[0]}
                                       </p>
                                     </div>
                                   </div>
