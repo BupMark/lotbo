@@ -484,6 +484,13 @@ export default function Admin() {
     if (ev) {
       fetch('/api/notify-abonnes', { method: 'POST', headers: hi, body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
       fetch('/api/push-notify',    { method: 'POST', headers: hi, body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
+      if (ev.user_id) {
+        const typeRole = ev.soumis_en_tant_que === 'contributeur' ? 'utilisateur' : 'organisateur'
+        fetch('/api/attributer-points', {
+          method: 'POST', headers: hi,
+          body: JSON.stringify({ user_id: ev.user_id, action: 'evenement_approuve', evenement_id: ev.id, type_role: typeRole }),
+        }).catch(() => {})
+      }
     }
   }
 
