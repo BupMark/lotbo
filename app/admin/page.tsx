@@ -439,11 +439,7 @@ export default function Admin() {
     try {
       const res  = await fetch('/api/admin/users', { method: 'PATCH', headers: hi, body: JSON.stringify({ id, role }) })
       const data = await res.json()
-      setUsers(prev => prev.map(u => u.id === id ? {
-        ...u,
-        role,
-        ...(data.points_total !== undefined ? { points_total: data.points_total } : {}),
-      } : u))
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
     } catch { /* ignore */ }
     setChangingRole(null)
   }
@@ -1038,7 +1034,7 @@ export default function Admin() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
                   { label: 'Membres',         valeur: users.length,                                                                                                                                                                    couleur: '#1A1410' },
-                  { label: 'Sans action',     valeur: statsRoles['membre']              || 0,                                                                                                                                   couleur: '#4A90D9' },
+                  { label: 'Sans action',     valeur: users.length - ((statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0)), couleur: '#4A90D9' },
                   { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0), couleur: '#D4A820' },
                   { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
