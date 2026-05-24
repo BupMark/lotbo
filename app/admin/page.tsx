@@ -308,9 +308,14 @@ export default function Admin() {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) { router.push('/login'); return }
-      const role = data.session.user.user_metadata?.role
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.session.user.id)
+        .single()
+      const role = prof?.role ?? data.session.user.user_metadata?.role
       if (role !== 'admin') { router.push('/'); return }
       setUserEmail(data.session.user.email ?? '')
       chargerDonnees()
