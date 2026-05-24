@@ -577,9 +577,9 @@ export default function AjouterEvenement() {
         window.location.href = '/login?redirect=/ajouter'
         return
       }
-      const role = session.user.user_metadata?.role
-      const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session.user.id).single()
-      const estContrib = ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
+      const { data: profile } = await supabase.from('profiles').select('role, roles_actifs, charte_acceptee').eq('id', session.user.id).single()
+      const rolesActifs: string[] = profile?.roles_actifs?.length ? profile.roles_actifs : (profile?.role ? [profile.role] : [])
+      const estContrib = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
       if (estContrib && profile?.charte_acceptee) setADoubleRole(true)
     })
   }, [])
@@ -683,11 +683,11 @@ export default function AjouterEvenement() {
 
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
-    const role         = session?.user?.user_metadata?.role
-    const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
+    const { data: profile } = await supabase.from('profiles').select('role, roles_actifs, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
     if (profile?.nom) setNomUtilisateur(profile.nom)
-    const estContributeur       = ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(profile?.role || role || '')
-    const peutPublierDirectement = ['contributeur_terrain', 'admin'].includes(profile?.role || role || '')
+    const rolesActifs: string[] = profile?.roles_actifs?.length ? profile.roles_actifs : (profile?.role ? [profile.role] : [])
+    const estContributeur        = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
+    const peutPublierDirectement = rolesActifs.some(r => ['contributeur_terrain', 'admin'].includes(r))
     if (estContributeur && profile?.charte_acceptee) setADoubleRole(true)
     const choix           = soumisEnTantQue || (estContributeur && profile?.charte_acceptee ? 'contributeur' : 'organisateur')
     const statutInsertion = peutPublierDirectement ? 'approuve' : 'en_attente'
@@ -757,6 +757,14 @@ export default function AjouterEvenement() {
         evenement_id: inserted.id,
         type_role: choix === 'contributeur' ? 'utilisateur' : 'organisateur',
       })
+    }
+
+    // Ajouter 'organisateur' à roles_actifs si soumis en tant qu'organisateur
+    if (choix === 'organisateur' && userId && !rolesActifs.includes('organisateur')) {
+      supabase.from('profiles').update({
+        roles_actifs: [...rolesActifs, 'organisateur'],
+        updated_at: new Date().toISOString(),
+      }).eq('id', userId).then(() => {})
     }
 
     // ── ENG3 — Badge débloqué ─────────────────────────────────────────────────

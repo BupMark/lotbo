@@ -57,7 +57,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points, badge, nom, photo_url')
+        .select('role, roles_actifs, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url')
         .eq('id', data.session.user.id)
         .single()
       setProfile(prof)
@@ -129,7 +129,11 @@ function ProfilInner() {
     </main>
   )
 
-  const isAdmin = profile?.role === 'admin'
+  const rolesActifs: string[] = profile?.roles_actifs?.length
+    ? profile.roles_actifs
+    : profile?.role ? [profile.role] : []
+
+  const isAdmin = rolesActifs.includes('admin')
   const nbApprouves = evenements.filter(ev => ev.statut === 'approuve').length
   const nbEnAttente = evenements.filter(ev => ev.statut === 'en_attente').length
   const nbRejetes = evenements.filter(ev => ev.statut === 'rejete').length
@@ -138,9 +142,9 @@ function ProfilInner() {
   // Pays couverts
   const paysCouverts = new Set(evenements.filter(e => e.pays).map(e => e.pays)).size
 
-  // Badges
+  // Badges — calculés séparément par rôle de soumission
   const nbContrib = evenements.filter(e => e.soumis_en_tant_que === 'contributeur').length
-  const nbOrga = evenements.filter(e => e.soumis_en_tant_que !== 'contributeur').length
+  const nbOrga    = evenements.filter(e => e.soumis_en_tant_que === 'organisateur').length
   const badgeContribActuel = getBadgeActuel(nbContrib, BADGES_CONTRIBUTEUR)
   const prochainBadgeContrib = getProchainBadge(nbContrib, BADGES_CONTRIBUTEUR)
   const badgeOrgaActuel = getBadgeActuel(nbApprouves, BADGES_ORGANISATEUR)
@@ -214,10 +218,10 @@ function ProfilInner() {
               {/* Badges rôles */}
               <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                 {isAdmin && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⚙️ Admin</span>}
-                {profile?.role === 'contributeur' && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur</span>}
-                {profile?.role === 'contributeur_terrain' && <span style={{ background: 'rgba(200,160,32,0.15)', color: '#C8A020', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur Terrain</span>}
-                {profile?.role === 'ambassadeur' && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🤝 Ambassadeur</span>}
-                {nbApprouves > 0 && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🎪 Organisateur</span>}
+                {(rolesActifs.includes('contributeur_terrain')) && <span style={{ background: 'rgba(200,160,32,0.15)', color: '#C8A020', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur Terrain</span>}
+                {(rolesActifs.includes('contributeur') && !rolesActifs.includes('contributeur_terrain')) && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur</span>}
+                {rolesActifs.includes('ambassadeur') && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🤝 Ambassadeur</span>}
+                {(rolesActifs.includes('organisateur') || nbOrga > 0) && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🎪 Organisateur</span>}
                 {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {badgeContribActuel.label}</span>}
               </div>
             </div>

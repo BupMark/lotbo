@@ -141,6 +141,13 @@ export async function PATCH(request: Request) {
         .eq('id', id)
       if (error) throw error
 
+      // Appendre le nouveau rôle à roles_actifs sans écraser les existants
+      const { data: prof } = await admin.from('profiles').select('roles_actifs').eq('id', id).single()
+      const current = (prof?.roles_actifs as string[] | null) || []
+      if (!current.includes(role)) {
+        await admin.from('profiles').update({ roles_actifs: [...current, role] }).eq('id', id)
+      }
+
       return NextResponse.json({ success: true })
     }
 
