@@ -72,8 +72,8 @@ export default function Preloader() {
           }}>
             L
           </span>
-          {/* Point orange */}
-          <div style={{ position: 'absolute', bottom: 10, left: 50, width: 17, height: 17 }}>
+          {/* Point orange — angle supérieur droit du jambage vertical du L */}
+          <div style={{ position: 'absolute', top: 4, left: 44, width: 17, height: 17 }}>
             <div style={{
               position:   'absolute',
               inset:      0,

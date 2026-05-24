@@ -55,17 +55,24 @@ export async function POST(request: Request) {
     evenement_id: evenement_id || null,
   }])
 
+  // Somme réelle depuis toutes les transactions — évite la dérive par delta
+  const { data: txs } = await supabase
+    .from('transactions_points')
+    .select('points')
+    .eq('user_id', user_id)
+
+  const total = Math.max(0, (txs || []).reduce((s: number, t: { points: number }) => s + (t.points || 0), 0))
+
   const { data: profile } = await supabase
     .from('profiles')
-    .select('points_utilisateur, points_organisateur, points_total')
+    .select('points_utilisateur, points_organisateur')
     .eq('id', user_id)
     .single()
 
   const isOrga = type_role === 'organisateur'
-  const nouveauTotal = Math.max(0, (profile?.points_total || 0) + pts)
   const update: Record<string, number | string> = {
-    points_total: nouveauTotal,
-    niveau:       calculerNiveau(nouveauTotal),
+    points_total: total,
+    niveau:       calculerNiveau(total),
     updated_at:   new Date().toISOString(),
   }
   if (isOrga) {
@@ -76,5 +83,5 @@ export async function POST(request: Request) {
 
   await supabase.from('profiles').update(update).eq('id', user_id)
 
-  return NextResponse.json({ success: true, points_ajoutes: pts, nouveau_total: nouveauTotal })
+  return NextResponse.json({ success: true, points_ajoutes: pts, nouveau_total: total })
 }

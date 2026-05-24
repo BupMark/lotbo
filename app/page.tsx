@@ -59,6 +59,20 @@ function afficherPeriode(ev: Pick<Evenement, 'date' | 'date_fin'>): string {
   return formatDate(ev.date) || ev.date || ''
 }
 
+function estEnCours(ev: Evenement, now: Date): boolean {
+  if (!ev.heure_debut || !ev.heure_fin) return false
+  const todayStr  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const dateDebut = ev.date_debut || ev.date
+  const dateFin   = ev.date_fin   || dateDebut
+  if (todayStr < dateDebut || todayStr > dateFin) return false
+  const [dh, dm] = ev.heure_debut.split(':').map(Number)
+  const [fh, fm] = ev.heure_fin.split(':').map(Number)
+  const nowMin   = now.getHours() * 60 + now.getMinutes()
+  const result   = nowMin >= dh * 60 + dm && nowMin <= fh * 60 + fm
+  console.log('[F8 estEnCours]', ev.titre, { dateDebut, dateFin, todayStr, nowMin, debutMin: dh * 60 + dm, finMin: fh * 60 + fm, result })
+  return result
+}
+
 function emojiCategorie(categorie: string): string {
   switch (categorie) {
     case 'Festival':              return '🎉'
@@ -103,9 +117,22 @@ export default function Home() {
   const touchStartX                         = useRef(0)
   const aLaUneMarkerRef                     = useRef<mapboxgl.Marker | null>(null)
   const tooltipTimer                        = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [enCoursIds, setEnCoursIds]         = useState<Set<string>>(new Set())
+  const enCoursIntervalRef                  = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
+
+  // F8 — Recalcul des événements en cours toutes les minutes
+  useEffect(() => {
+    const calc = () => {
+      const now = new Date()
+      setEnCoursIds(new Set(evenements.filter(ev => estEnCours(ev, now)).map(ev => ev.id)))
+    }
+    calc()
+    enCoursIntervalRef.current = setInterval(calc, 60000)
+    return () => { if (enCoursIntervalRef.current) clearInterval(enCoursIntervalRef.current) }
+  }, [evenements])
 
   // F3 — Afficher l'invitation après 3 clics si non connecté
   useEffect(() => {
@@ -233,9 +260,11 @@ export default function Home() {
     markersRef.current = []
 
     evenements.filter(filtreActif).forEach(ev => {
+      const enCours     = enCoursIds.has(ev.id)
       const periodePopup = afficherPeriode(ev)
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
         '<div style="font-family:sans-serif;padding:12px;background:#1A1410;color:#F7F2E8;border-radius:8px;min-width:200px">' +
+        (enCours ? '<span style="display:inline-block;background:#D4A820;color:white;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:bold;margin-bottom:8px">🔴 En cours</span><br/>' : '') +
         '<img src="' + getEventImage(ev.image_url, ev.categorie) + '" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />' +
         '<strong style="font-size:16px;color:#F7F2E8">' + ev.titre + '</strong>' +
         '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
@@ -255,14 +284,25 @@ export default function Home() {
         '<a href="https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude + '" target="_blank" style="flex:1;display:block;background:rgba(255,255,255,0.08);color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">🧭 S\'y rendre</a>' +
         '</div></div></div>'
       )
-      const markerColor = ev.statut === 'à compléter' ? '#E87C2A' : '#C8431A'
-      const marker = new mapboxgl.Marker({ color: markerColor })
-        .setLngLat([ev.longitude, ev.latitude])
-        .setPopup(popup)
-        .addTo(mapRef.current!)
+      let marker: mapboxgl.Marker
+      if (enCours) {
+        const el = document.createElement('div')
+        el.className = 'pin-en-cours'
+        el.innerHTML = '<div class="pin-pulse"></div><div class="pin-dot"></div>'
+        marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([ev.longitude, ev.latitude])
+          .setPopup(popup)
+          .addTo(mapRef.current!)
+      } else {
+        const markerColor = ev.statut === 'à compléter' ? '#E87C2A' : '#C8431A'
+        marker = new mapboxgl.Marker({ color: markerColor })
+          .setLngLat([ev.longitude, ev.latitude])
+          .setPopup(popup)
+          .addTo(mapRef.current!)
+      }
       markersRef.current.push(marker)
     })
-  }, [evenements, categorie, acces, prix, recherche, dateDebut, dateFin])
+  }, [evenements, categorie, acces, prix, recherche, dateDebut, dateFin, enCoursIds])
 
   const btnStyle = (actif: boolean) => ({
     padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold' as const,
