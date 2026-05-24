@@ -33,15 +33,15 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Rafraîchit la session — écrit les cookies dans la réponse
-  const { data: { session } } = await supabase.auth.getSession()
+  // getUser() revalide le token côté serveur — obligatoire dans le middleware
+  const { data: { user } } = await supabase.auth.getUser()
 
   // ── Protection /admin uniquement ──────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    if (!session) {
+    if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    const role = session.user.user_metadata?.role
+    const role = user.user_metadata?.role
     if (role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url))
     }
