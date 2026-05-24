@@ -7,25 +7,13 @@ export default function Preloader() {
   const [fading, setFading]   = useState(false)
 
   useEffect(() => {
-    let done = false
-    const hide = () => {
-      if (done) return
-      done = true
+    // Toujours afficher au moins 1.5s — sinon readyState=complete masque
+    // le preloader immédiatement avant que le pulse soit visible
+    const timer = setTimeout(() => {
       setFading(true)
       setTimeout(() => setVisible(false), 500)
-    }
-
-    if (document.readyState === 'complete') {
-      hide()
-    } else {
-      window.addEventListener('load', hide, { once: true })
-    }
-    const timer = setTimeout(hide, 1500)
-
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('load', hide)
-    }
+    }, 1500)
+    return () => clearTimeout(timer)
   }, [])
 
   if (!visible) return null
@@ -73,7 +61,7 @@ export default function Preloader() {
             L
           </span>
           {/* Point orange — angle supérieur droit du jambage vertical du L */}
-          <div style={{ position: 'absolute', top: 4, left: 44, width: 17, height: 17 }}>
+          <div style={{ position: 'absolute', top: 4, left: 48, width: 17, height: 17 }}>
             <div style={{
               position:   'absolute',
               inset:      0,
