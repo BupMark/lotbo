@@ -1,8 +1,8 @@
 import { chromium } from 'playwright'
 
-const API_SECRET  = 'b9bd5121232bb668c3e6226dd2be1c5ee1550111a5c7346c9f1cba884730eb88'
-const BASE_URL    = 'https://app.lotbo.app'
-const ADMIN_EMAIL = 'agencebupmark@gmail.com'
+const API_SECRET  = process.env.INTERNAL_API_SECRET  || ''
+const BASE_URL    = process.env.LOTBO_BASE_URL        || 'https://app.lotbo.app'
+const ADMIN_EMAIL = process.env.LOTBO_ADMIN_EMAIL     || 'agencebupmark@gmail.com'
 
 async function run() {
   const results = []
