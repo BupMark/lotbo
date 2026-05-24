@@ -38,7 +38,23 @@ interface Signalement {
 
 type FiltreStatut  = 'en_attente' | 'approuve' | 'rejete' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
-type Onglet        = 'evenements' | 'signalements' | 'import'
+type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs'
+type FiltreRole    = 'tous' | 'visiteur' | 'membre' | 'contributeur' | 'organisateur' | 'ambassadeur' | 'admin'
+type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
+
+interface UserAdmin {
+  id: string
+  email: string
+  nom: string | null
+  role: string
+  photo_url: string | null
+  points_total: number
+  created_at: string
+  last_sign_in_at: string | null
+  banned_until: string | null
+  nb_soumis: number
+  nb_approuves: number
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -277,6 +293,14 @@ export default function Admin() {
   const [repartitionPays,  setRepartitionPays]  = useState<{ pays: string; nb: number }[]>([])
   const [loadingImport,    setLoadingImport]     = useState(false)
 
+  // F2 — Onglet Utilisateurs
+  const [users,            setUsers]            = useState<UserAdmin[]>([])
+  const [loadingUsers,     setLoadingUsers]     = useState(false)
+  const [filtreRole,       setFiltreRole]       = useState<FiltreRole>('tous')
+  const [filtreStatutUser, setFiltreStatutUser] = useState<FiltreStatutUser>('tous')
+  const [rechercheUser,    setRechercheUser]    = useState('')
+  const [changingRole,     setChangingRole]     = useState<string | null>(null)
+
   const hi: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
@@ -392,6 +416,45 @@ export default function Admin() {
     }
 
     setLoading(false)
+  }
+
+  const chargerUtilisateurs = async () => {
+    setLoadingUsers(true)
+    try {
+      const res = await fetch('/api/admin/users', { headers: hi })
+      const data = await res.json()
+      if (data.users) setUsers(data.users)
+    } catch { /* ignore */ }
+    setLoadingUsers(false)
+  }
+
+  const changerRole = async (id: string, role: string) => {
+    setChangingRole(id)
+    try {
+      await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: hi,
+        body: JSON.stringify({ id, role }),
+      })
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
+    } catch { /* ignore */ }
+    setChangingRole(null)
+  }
+
+  const toggleSuspendre = async (user: UserAdmin) => {
+    const suspendre = !user.banned_until
+    if (!confirm(suspendre ? `Suspendre ${user.email} ?` : `Réactiver ${user.email} ?`)) return
+    setChangingRole(user.id)
+    try {
+      await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: hi,
+        body: JSON.stringify({ id: user.id, suspendu: suspendre }),
+      })
+      const newBannedUntil = suspendre ? new Date(Date.now() + 876600 * 3600000).toISOString() : null
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, banned_until: newBannedUntil } : u))
+    } catch { /* ignore */ }
+    setChangingRole(null)
   }
 
   const approuver = async (id: string) => {
@@ -537,30 +600,36 @@ export default function Admin() {
         {/* ── ADMIN2 — Navigation onglets ───────────────────────────────── */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid #E8E0D0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {[
-            { key: 'evenements',   label: 'Événements',  count: countTotal           },
-            { key: 'signalements', label: 'Signalements', count: signalements.length  },
-            { key: 'import',       label: '📥 Import',   count: statsImport.length   },
+            { key: 'evenements',   label: 'Événements',   count: countTotal,          badge: true },
+            { key: 'signalements', label: 'Signalements', count: signalements.length, badge: true },
+            { key: 'import',       label: '📥 Import',    count: statsImport.length,  badge: true },
+            { key: 'utilisateurs', label: '👥 Utilisateurs', count: users.length,     badge: true },
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setOnglet(tab.key as Onglet)}
+              onClick={() => {
+                setOnglet(tab.key as Onglet)
+                if (tab.key === 'utilisateurs' && users.length === 0) chargerUtilisateurs()
+              }}
               style={{
-                padding: '10px 20px', fontSize: 13, fontWeight: 'bold',
+                padding: '10px 16px', fontSize: 13, fontWeight: 'bold',
                 border: 'none', cursor: 'pointer', background: 'transparent',
                 color: onglet === tab.key ? '#C8431A' : '#8C5A40',
                 borderBottom: onglet === tab.key ? '2px solid #C8431A' : '2px solid transparent',
                 marginBottom: -1, transition: 'color 0.15s, border-color 0.15s',
-                display: 'flex', alignItems: 'center', gap: 8,
+                display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
               }}
             >
               {tab.label}
-              <span style={{
-                background: onglet === tab.key ? '#C8431A' : 'rgba(26,20,16,0.06)',
-                color: onglet === tab.key ? 'white' : '#8C5A40',
-                borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 'bold',
-              }}>
-                {tab.count}
-              </span>
+              {tab.count > 0 && (
+                <span style={{
+                  background: onglet === tab.key ? '#C8431A' : 'rgba(26,20,16,0.06)',
+                  color: onglet === tab.key ? 'white' : '#8C5A40',
+                  borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 'bold',
+                }}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -901,6 +970,252 @@ export default function Admin() {
 
           </div>
         )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            ONGLET UTILISATEURS — F2
+        ══════════════════════════════════════════════════════════════ */}
+        {onglet === 'utilisateurs' && (() => {
+          const ROLES: FiltreRole[] = ['tous', 'visiteur', 'membre', 'contributeur', 'organisateur', 'ambassadeur', 'admin']
+
+          const couleurRole = (r: string): { bg: string; color: string } => {
+            if (r === 'admin')        return { bg: 'rgba(229,115,115,0.15)', color: '#e57373' }
+            if (r === 'ambassadeur')  return { bg: 'rgba(45,158,107,0.15)',  color: '#2D9E6B' }
+            if (r === 'organisateur') return { bg: 'rgba(200,67,26,0.15)',   color: '#C8431A' }
+            if (r === 'contributeur') return { bg: 'rgba(212,168,32,0.15)',  color: '#D4A820' }
+            if (r === 'membre')       return { bg: 'rgba(74,144,217,0.15)',  color: '#4A90D9' }
+            return                           { bg: 'rgba(140,90,64,0.12)',   color: '#8C5A40' }
+          }
+
+          const initiales = (u: UserAdmin) => {
+            const src = u.nom || u.email
+            return src.split(/[\s@]/)[0].slice(0, 2).toUpperCase()
+          }
+
+          const isSuspendu = (u: UserAdmin) => !!u.banned_until && new Date(u.banned_until) > new Date()
+
+          const usersFiltres = users.filter(u => {
+            if (filtreRole !== 'tous' && u.role !== filtreRole) return false
+            if (filtreStatutUser === 'actif'     &&  isSuspendu(u)) return false
+            if (filtreStatutUser === 'suspendu'  && !isSuspendu(u)) return false
+            if (rechercheUser) {
+              const q = rechercheUser.toLowerCase()
+              if (!u.email.toLowerCase().includes(q) && !(u.nom || '').toLowerCase().includes(q)) return false
+            }
+            return true
+          })
+
+          // Stats
+          const statsRoles: Record<string, number> = {}
+          for (const u of users) statsRoles[u.role] = (statsRoles[u.role] || 0) + 1
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 48 }}>
+
+              {/* Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
+                {[
+                  { label: 'Total',         valeur: users.length,                     couleur: '#1A1410' },
+                  { label: 'Membres',        valeur: statsRoles['membre']       || 0,  couleur: '#4A90D9' },
+                  { label: 'Contributeurs',  valeur: statsRoles['contributeur'] || 0,  couleur: '#D4A820' },
+                  { label: 'Organisateurs',  valeur: statsRoles['organisateur'] || 0,  couleur: '#C8431A' },
+                  { label: 'Admins',         valeur: statsRoles['admin']        || 0,  couleur: '#e57373' },
+                ].map((c, i) => (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
+                    <p style={{ fontSize: 24, fontWeight: 'bold', color: c.couleur, marginBottom: 3 }}>{c.valeur}</p>
+                    <p style={{ fontSize: 10, color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {loadingUsers ? (
+                <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40, fontStyle: 'italic' }}>Chargement des utilisateurs…</p>
+              ) : (
+                <>
+                  {/* Filtres */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {/* Filtre rôle */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ color: '#555', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Rôle :</span>
+                      {ROLES.map(r => (
+                        <button
+                          key={r}
+                          onClick={() => setFiltreRole(r)}
+                          style={{
+                            padding: '4px 12px', borderRadius: 999, fontSize: 11, fontWeight: 'bold',
+                            border: 'none', cursor: 'pointer',
+                            background: filtreRole === r ? '#C8431A' : 'rgba(255,255,255,0.06)',
+                            color:      filtreRole === r ? 'white'   : '#8C5A40',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {r === 'tous' ? 'Tous' : r}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Filtre statut + recherche */}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ color: '#555', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Statut :</span>
+                      {(['tous', 'actif', 'suspendu'] as FiltreStatutUser[]).map(s => (
+                        <button
+                          key={s}
+                          onClick={() => setFiltreStatutUser(s)}
+                          style={{
+                            padding: '4px 12px', borderRadius: 999, fontSize: 11, fontWeight: 'bold',
+                            border: 'none', cursor: 'pointer',
+                            background: filtreStatutUser === s ? '#C8431A' : 'rgba(255,255,255,0.06)',
+                            color:      filtreStatutUser === s ? 'white'   : '#8C5A40',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {s === 'tous' ? 'Tous' : s === 'actif' ? '✓ Actif' : '⛔ Suspendu'}
+                        </button>
+                      ))}
+                      <input
+                        type="text"
+                        placeholder="Rechercher nom ou email…"
+                        value={rechercheUser}
+                        onChange={e => setRechercheUser(e.target.value)}
+                        style={{
+                          flex: 1, minWidth: 180,
+                          background: 'rgba(255,255,255,0.06)', border: '1px solid #333',
+                          borderRadius: 999, padding: '5px 14px', fontSize: 12,
+                          color: '#1A1410', outline: 'none',
+                        }}
+                      />
+                    </div>
+                    <p style={{ color: '#555', fontSize: 11 }}>{usersFiltres.length} utilisateur{usersFiltres.length !== 1 ? 's' : ''}</p>
+                  </div>
+
+                  {/* Tableau */}
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, overflow: 'hidden' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 680 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
+                            {['Utilisateur', 'Rôle', 'Inscription', 'Événements', 'Dernière co.', 'Statut', 'Actions'].map(h => (
+                              <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: 10, color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {usersFiltres.length === 0 && (
+                            <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: '#8C5A40', fontSize: 13 }}>Aucun utilisateur trouvé</td></tr>
+                          )}
+                          {usersFiltres.map(u => {
+                            const rc    = couleurRole(u.role)
+                            const susp  = isSuspendu(u)
+                            const busy  = changingRole === u.id
+                            return (
+                              <tr key={u.id} style={{ borderBottom: '1px solid rgba(42,42,42,0.5)', opacity: susp ? 0.65 : 1 }}>
+
+                                {/* Avatar + nom + email */}
+                                <td style={{ padding: '10px 12px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{
+                                      width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                                      background: rc.bg, color: rc.color,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontSize: 12, fontWeight: 'bold',
+                                    }}>
+                                      {initiales(u)}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
+                                      <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>
+                                        {u.nom || '—'}
+                                      </p>
+                                      <p style={{ color: '#8C5A40', fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>
+                                        {u.email}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Rôle (select) */}
+                                <td style={{ padding: '10px 12px' }}>
+                                  <select
+                                    value={u.role}
+                                    disabled={busy}
+                                    onChange={e => changerRole(u.id, e.target.value)}
+                                    style={{
+                                      background: rc.bg, color: rc.color,
+                                      border: 'none', borderRadius: 6, padding: '3px 8px',
+                                      fontSize: 11, fontWeight: 'bold', cursor: 'pointer',
+                                      textTransform: 'capitalize', outline: 'none',
+                                    }}
+                                  >
+                                    {['visiteur', 'membre', 'contributeur', 'organisateur', 'ambassadeur', 'admin'].map(r => (
+                                      <option key={r} value={r}>{r}</option>
+                                    ))}
+                                  </select>
+                                </td>
+
+                                {/* Date inscription */}
+                                <td style={{ padding: '10px 12px', color: '#8C5A40', fontSize: 11, whiteSpace: 'nowrap' }}>
+                                  {u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}
+                                </td>
+
+                                {/* Événements soumis / approuvés */}
+                                <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                                  <span style={{ color: '#1A1410', fontSize: 12, fontWeight: 'bold' }}>{u.nb_soumis}</span>
+                                  <span style={{ color: '#8C5A40', fontSize: 11 }}> / </span>
+                                  <span style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold' }}>{u.nb_approuves}</span>
+                                </td>
+
+                                {/* Dernière connexion */}
+                                <td style={{ padding: '10px 12px', color: '#8C5A40', fontSize: 11, whiteSpace: 'nowrap' }}>
+                                  {u.last_sign_in_at
+                                    ? new Date(u.last_sign_in_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                                    : '—'}
+                                </td>
+
+                                {/* Statut */}
+                                <td style={{ padding: '10px 12px' }}>
+                                  <span style={{
+                                    background: susp ? 'rgba(229,115,115,0.15)' : 'rgba(45,158,107,0.12)',
+                                    color:      susp ? '#e57373'                : '#2D9E6B',
+                                    padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 'bold', whiteSpace: 'nowrap',
+                                  }}>
+                                    {susp ? '⛔ Suspendu' : '✓ Actif'}
+                                  </span>
+                                </td>
+
+                                {/* Actions */}
+                                <td style={{ padding: '10px 12px' }}>
+                                  <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap' }}>
+                                    <a
+                                      href={`/profil?id=${u.id}`}
+                                      target="_blank"
+                                      style={{ background: 'rgba(255,255,255,0.06)', color: '#1A1410', padding: '4px 10px', borderRadius: 6, fontSize: 11, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                                    >
+                                      Voir
+                                    </a>
+                                    <button
+                                      onClick={() => toggleSuspendre(u)}
+                                      disabled={busy}
+                                      style={{
+                                        background: susp ? 'rgba(45,158,107,0.12)' : 'rgba(229,115,115,0.15)',
+                                        color:      susp ? '#2D9E6B'               : '#e57373',
+                                        border: 'none', borderRadius: 6, padding: '4px 10px',
+                                        fontSize: 11, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {busy ? '…' : susp ? 'Réactiver' : 'Suspendre'}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })()}
 
       {/* ── Modal géo — Villes / Pays / Régions ─────────────────────── */}
       {modalGeo && (
