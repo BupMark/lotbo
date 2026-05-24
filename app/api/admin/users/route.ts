@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { calculerNiveau } from '../../../lib/points'
 
 function verifierSecret(request: Request): boolean {
   const secret = request.headers.get('x-internal-secret')
@@ -149,6 +150,12 @@ export async function PATCH(request: Request) {
           await admin.from('profiles').update({ roles_actifs: [...current, role] }).eq('id', id)
         }
       }
+
+      // Sync points depuis transactions_points
+      const { data: txs } = await admin.from('transactions_points').select('points').eq('user_id', id)
+      const total  = Math.max(0, (txs || []).reduce((s: number, t: any) => s + (t.points || 0), 0))
+      const niveau = calculerNiveau(total)
+      await admin.from('profiles').update({ points_total: total, niveau }).eq('id', id)
 
       return NextResponse.json({ success: true })
     }

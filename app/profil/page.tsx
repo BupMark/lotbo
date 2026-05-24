@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
 import { useRouter, useSearchParams } from 'next/navigation'
 import CarteBadge from '../../components/CarteBadge'
+import { syncUserPoints, calculerNiveau } from '../../lib/points'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -63,7 +64,24 @@ function ProfilInner() {
       // roles_actifs optionnel — requiert migration DB
       const { data: raRow, error: raErr } = await supabase
         .from('profiles').select('roles_actifs').eq('id', data.session.user.id).single()
-      setProfile({ ...prof, roles_actifs: raErr ? null : (raRow?.roles_actifs ?? null) })
+
+      // Sync points depuis transactions_points — recalcule si désynchronisé
+      const { data: txs } = await supabase
+        .from('transactions_points').select('points').eq('user_id', data.session.user.id)
+      const pointsReel = Math.max(0, (txs || []).reduce((s: number, t: any) => s + (t.points || 0), 0))
+      const niveauReel = calculerNiveau(pointsReel)
+      if (prof && pointsReel !== (prof.points_total || 0)) {
+        supabase.from('profiles').update({
+          points_total: pointsReel, niveau: niveauReel, updated_at: new Date().toISOString(),
+        }).eq('id', data.session.user.id).then(() => {})
+      }
+
+      setProfile({
+        ...prof,
+        roles_actifs:  raErr ? null : (raRow?.roles_actifs ?? null),
+        points_total:  pointsReel,
+        niveau:        niveauReel,
+      })
       if (prof?.nom) setNomInput(prof.nom)
       if (prof?.photo_url) setPhotoUrl(prof.photo_url)
 
