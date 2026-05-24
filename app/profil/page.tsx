@@ -50,6 +50,7 @@ function ProfilInner() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [onglet, setOnglet]         = useState<'evenements' | 'badges' | 'favoris'>(tabParam === 'favoris' || tabParam === 'badges' ? tabParam : 'evenements')
   const [favorisEvs, setFavorisEvs] = useState<any[]>([])
+  const [rangGlobal, setRangGlobal] = useState<number | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -75,6 +76,13 @@ function ProfilInner() {
           points_total: pointsReel, niveau: niveauReel, updated_at: new Date().toISOString(),
         }).eq('id', data.session.user.id).then(() => {})
       }
+
+      // Rang global : combien de profils ont plus de points_total ?
+      const { count: rangCount } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .gt('points_total', pointsReel)
+      setRangGlobal((rangCount || 0) + 1)
 
       setProfile({
         ...prof,
@@ -433,25 +441,20 @@ function ProfilInner() {
 
           </div>
 
-            {/* ── GM12 — Mon classement ── */}
+            {/* ── GM12 — Mon classement global ── */}
             <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
               <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>🏆 Mon classement</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { emoji: '⭐', label: 'Contributeurs', points: nbContrib, colonne: 'points_utilisateur' },
-                  { emoji: '🎪', label: 'Organisateurs', points: nbApprouves, colonne: 'points_organisateur' },
-                  { emoji: '🌍', label: 'Global LOTBO',  points: nbTotal,    colonne: 'points_total' },
-                ].map(cat => (
-                  <div key={cat.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(26,20,16,0.03)', borderRadius: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>{cat.emoji}</span>
-                      <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold' }}>{cat.label}</p>
-                    </div>
-                    <a href="/classement" style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                      Voir →
-                    </a>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', background: 'rgba(200,67,26,0.06)', borderRadius: 12, border: '1px solid rgba(200,67,26,0.15)' }}>
+                <span style={{ fontSize: 32, fontWeight: 'bold', color: '#C8431A', minWidth: 56, textAlign: 'center' }}>
+                  {rangGlobal !== null ? `#${rangGlobal}` : '—'}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410' }}>Classement global LOTBO</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12, marginTop: 2 }}>
+                    {profile?.points_total ?? 0} pts · contributeur + organisateur cumulés
+                  </p>
+                </div>
+                <span style={{ fontSize: 22 }}>🌍</span>
               </div>
               <a href="/classement" style={{ display: 'block', textAlign: 'center', marginTop: 16, background: '#C8431A', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
                 Voir le classement complet →

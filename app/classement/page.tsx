@@ -136,7 +136,7 @@ export default function Classement() {
         </div>
 
         {/* Filtres */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
           {([
             { key: 'global',        label: '🌍 Global'        },
             { key: 'contributeur',  label: '⭐ Contributeurs' },
@@ -155,6 +155,11 @@ export default function Classement() {
             >{f.label}</button>
           ))}
         </div>
+        {filtre === 'global' && (
+          <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 20 }}>
+            Score = points contributeur + organisateur cumulés
+          </p>
+        )}
 
         {/* Ma position — si connecté */}
         {moi && (
