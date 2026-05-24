@@ -300,6 +300,7 @@ export default function Admin() {
   const [filtreStatutUser, setFiltreStatutUser] = useState<FiltreStatutUser>('tous')
   const [rechercheUser,    setRechercheUser]    = useState('')
   const [changingRole,     setChangingRole]     = useState<string | null>(null)
+  const [inviteStates,     setInviteStates]     = useState<Record<string, 'idle' | 'loading' | 'copied' | 'error'>>({})
 
   const hi: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -455,6 +456,21 @@ export default function Admin() {
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, banned_until: newBannedUntil } : u))
     } catch { /* ignore */ }
     setChangingRole(null)
+  }
+
+  const genererInvitation = async (userId: string, email: string) => {
+    setInviteStates(prev => ({ ...prev, [userId]: 'loading' }))
+    try {
+      const res  = await fetch('/api/admin/users', { method: 'POST', headers: hi, body: JSON.stringify({ email }) })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      await navigator.clipboard.writeText(data.link)
+      setInviteStates(prev => ({ ...prev, [userId]: 'copied' }))
+      setTimeout(() => setInviteStates(prev => ({ ...prev, [userId]: 'idle' })), 2500)
+    } catch {
+      setInviteStates(prev => ({ ...prev, [userId]: 'error' }))
+      setTimeout(() => setInviteStates(prev => ({ ...prev, [userId]: 'idle' })), 2500)
+    }
   }
 
   const approuver = async (id: string) => {
@@ -1190,6 +1206,25 @@ export default function Admin() {
                                     >
                                       Voir
                                     </a>
+                                    {(() => {
+                                      const inv = inviteStates[u.id] || 'idle'
+                                      const invLabel = inv === 'loading' ? '…' : inv === 'copied' ? '✓ Copié' : inv === 'error' ? '✗ Erreur' : '✉️ Inviter'
+                                      return (
+                                        <button
+                                          onClick={() => genererInvitation(u.id, u.email)}
+                                          disabled={inv === 'loading' || busy}
+                                          style={{
+                                            background: inv === 'copied' ? 'rgba(45,158,107,0.15)' : inv === 'error' ? 'rgba(229,115,115,0.15)' : 'rgba(200,67,26,0.12)',
+                                            color:      inv === 'copied' ? '#2D9E6B'                : inv === 'error' ? '#e57373'                : '#C8431A',
+                                            border: 'none', borderRadius: 6, padding: '4px 10px',
+                                            fontSize: 11, cursor: (inv === 'loading' || busy) ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
+                                            transition: 'background 0.2s, color 0.2s',
+                                          }}
+                                        >
+                                          {invLabel}
+                                        </button>
+                                      )
+                                    })()}
                                     <button
                                       onClick={() => toggleSuspendre(u)}
                                       disabled={busy}

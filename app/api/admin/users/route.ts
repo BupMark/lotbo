@@ -91,6 +91,30 @@ export async function GET(request: Request) {
   }
 }
 
+// POST — générer un magic link d'invitation pour un utilisateur
+export async function POST(request: Request) {
+  if (!verifierSecret(request)) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+
+  try {
+    const { email } = await request.json() as { email: string }
+    if (!email) return NextResponse.json({ error: 'email manquant' }, { status: 400 })
+
+    const admin = makeAdminClient()
+    const { data, error } = await admin.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+    })
+    if (error) throw error
+
+    return NextResponse.json({ link: data.properties.action_link })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
 // PATCH — changer le rôle ou suspendre/réactiver un utilisateur
 export async function PATCH(request: Request) {
   if (!verifierSecret(request)) {
