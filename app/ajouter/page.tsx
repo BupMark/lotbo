@@ -577,8 +577,9 @@ export default function AjouterEvenement() {
         window.location.href = '/login?redirect=/ajouter'
         return
       }
-      const { data: profile } = await supabase.from('profiles').select('role, roles_actifs, charte_acceptee').eq('id', session.user.id).single()
-      const rolesActifs: string[] = profile?.roles_actifs?.length ? profile.roles_actifs : (profile?.role ? [profile.role] : [])
+      const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee').eq('id', session.user.id).single()
+      const { data: raRow1 } = await supabase.from('profiles').select('roles_actifs').eq('id', session.user.id).single()
+      const rolesActifs: string[] = (raRow1 as any)?.roles_actifs?.length ? (raRow1 as any).roles_actifs : (profile?.role ? [profile.role] : [])
       const estContrib = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
       if (estContrib && profile?.charte_acceptee) setADoubleRole(true)
     })
@@ -683,9 +684,10 @@ export default function AjouterEvenement() {
 
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
-    const { data: profile } = await supabase.from('profiles').select('role, roles_actifs, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
+    const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
     if (profile?.nom) setNomUtilisateur(profile.nom)
-    const rolesActifs: string[] = profile?.roles_actifs?.length ? profile.roles_actifs : (profile?.role ? [profile.role] : [])
+    const { data: raRow2 } = await supabase.from('profiles').select('roles_actifs').eq('id', session?.user?.id || '').single()
+    const rolesActifs: string[] = (raRow2 as any)?.roles_actifs?.length ? (raRow2 as any).roles_actifs : (profile?.role ? [profile.role] : [])
     const estContributeur        = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
     const peutPublierDirectement = rolesActifs.some(r => ['contributeur_terrain', 'admin'].includes(r))
     if (estContributeur && profile?.charte_acceptee) setADoubleRole(true)

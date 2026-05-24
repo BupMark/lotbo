@@ -57,10 +57,13 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, roles_actifs, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url')
         .eq('id', data.session.user.id)
         .single()
-      setProfile(prof)
+      // roles_actifs optionnel — requiert migration DB
+      const { data: raRow, error: raErr } = await supabase
+        .from('profiles').select('roles_actifs').eq('id', data.session.user.id).single()
+      setProfile({ ...prof, roles_actifs: raErr ? null : (raRow?.roles_actifs ?? null) })
       if (prof?.nom) setNomInput(prof.nom)
       if (prof?.photo_url) setPhotoUrl(prof.photo_url)
 
