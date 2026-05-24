@@ -39,7 +39,7 @@ interface Signalement {
 type FiltreStatut  = 'en_attente' | 'approuve' | 'rejete' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
 type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs'
-type FiltreRole    = 'tous' | 'visiteur' | 'membre' | 'contributeur' | 'organisateur' | 'ambassadeur' | 'admin'
+type FiltreRole    = 'tous' | 'visiteur' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
 type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
 
 interface UserAdmin {
@@ -997,15 +997,16 @@ export default function Admin() {
             ONGLET UTILISATEURS — F2
         ══════════════════════════════════════════════════════════════ */}
         {onglet === 'utilisateurs' && (() => {
-          const ROLES: FiltreRole[] = ['tous', 'visiteur', 'membre', 'contributeur', 'organisateur', 'ambassadeur', 'admin']
+          const ROLES: FiltreRole[] = ['tous', 'visiteur', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin']
 
           const couleurRole = (r: string): { bg: string; color: string } => {
-            if (r === 'admin')        return { bg: 'rgba(229,115,115,0.15)', color: '#e57373' }
-            if (r === 'ambassadeur')  return { bg: 'rgba(45,158,107,0.15)',  color: '#2D9E6B' }
-            if (r === 'organisateur') return { bg: 'rgba(200,67,26,0.15)',   color: '#C8431A' }
-            if (r === 'contributeur') return { bg: 'rgba(212,168,32,0.15)',  color: '#D4A820' }
-            if (r === 'membre')       return { bg: 'rgba(74,144,217,0.15)',  color: '#4A90D9' }
-            return                           { bg: 'rgba(140,90,64,0.12)',   color: '#8C5A40' }
+            if (r === 'admin')                return { bg: 'rgba(229,115,115,0.15)', color: '#e57373' }
+            if (r === 'ambassadeur')          return { bg: 'rgba(45,158,107,0.15)',  color: '#2D9E6B' }
+            if (r === 'organisateur')         return { bg: 'rgba(200,67,26,0.15)',   color: '#C8431A' }
+            if (r === 'contributeur_terrain') return { bg: 'rgba(200,160,32,0.18)',  color: '#C8A020' }
+            if (r === 'contributeur')         return { bg: 'rgba(212,168,32,0.15)',  color: '#D4A820' }
+            if (r === 'membre')               return { bg: 'rgba(74,144,217,0.15)',  color: '#4A90D9' }
+            return                                   { bg: 'rgba(140,90,64,0.12)',   color: '#8C5A40' }
           }
 
           const initiales = (u: UserAdmin) => {
@@ -1036,11 +1037,13 @@ export default function Admin() {
               {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
-                  { label: 'Total',         valeur: users.length,                     couleur: '#1A1410' },
-                  { label: 'Membres',        valeur: statsRoles['membre']       || 0,  couleur: '#4A90D9' },
-                  { label: 'Contributeurs',  valeur: statsRoles['contributeur'] || 0,  couleur: '#D4A820' },
-                  { label: 'Organisateurs',  valeur: statsRoles['organisateur'] || 0,  couleur: '#C8431A' },
-                  { label: 'Admins',         valeur: statsRoles['admin']        || 0,  couleur: '#e57373' },
+                  { label: 'Total',          valeur: users.length,                                                                  couleur: '#1A1410' },
+                  { label: 'Membres',         valeur: statsRoles['membre']              || 0,                                       couleur: '#4A90D9' },
+                  { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0), couleur: '#D4A820' },
+                  { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
+                  { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
+                  { label: 'Ambassadeurs',    valeur: statsRoles['ambassadeur']  || 0,                                              couleur: '#2D9E6B' },
+                  { label: 'Admins',          valeur: statsRoles['admin']        || 0,                                              couleur: '#e57373' },
                 ].map((c, i) => (
                   <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
                     <p style={{ fontSize: 24, fontWeight: 'bold', color: c.couleur, marginBottom: 3 }}>{c.valeur}</p>
@@ -1070,7 +1073,7 @@ export default function Admin() {
                             textTransform: 'capitalize',
                           }}
                         >
-                          {r === 'tous' ? 'Tous' : r}
+                          {r === 'tous' ? 'Tous' : r === 'contributeur_terrain' ? 'terrain' : r}
                         </button>
                       ))}
                     </div>
@@ -1166,7 +1169,7 @@ export default function Admin() {
                                       textTransform: 'capitalize', outline: 'none',
                                     }}
                                   >
-                                    {['visiteur', 'membre', 'contributeur', 'organisateur', 'ambassadeur', 'admin'].map(r => (
+                                    {['visiteur', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin'].map(r => (
                                       <option key={r} value={r}>{r}</option>
                                     ))}
                                   </select>
