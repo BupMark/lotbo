@@ -440,6 +440,8 @@ export default function EvenementPage() {
   const [signalementModal, setSignalementModal] = useState(false)
   const [raisonSignalement, setRaisonSignalement] = useState('')
   const [signalementEnvoye, setSignalementEnvoye] = useState(false)
+  const [signalementConfirmation, setSignalementConfirmation] = useState(false)
+  const [erreurSignalement, setErreurSignalement] = useState('')
   const [liked, setLiked]                   = useState(false)
   const [nbLikes, setNbLikes]               = useState(0)
   const [commentaires, setCommentaires]     = useState<Commentaire[]>([])
@@ -603,8 +605,19 @@ supabase.auth.getSession().then(({ data: { session } }) => {
 
   const handleSignalement = async () => {
     if (!raisonSignalement || !ev) return
-    await supabase.from('signalements').insert([{ evenement_id: ev.id, raison: raisonSignalement }])
-    setSignalementEnvoye(true); setSignalementModal(false)
+    setErreurSignalement('')
+    const { data: { session } } = await supabase.auth.getSession()
+    const { error } = await supabase.from('signalements').insert([{
+      evenement_id: ev.id,
+      raison: raisonSignalement,
+      user_id: session?.user?.id ?? null,
+    }])
+    if (error) {
+      setErreurSignalement('Une erreur est survenue. Réessaie plus tard.')
+      return
+    }
+    setSignalementEnvoye(true)
+    setSignalementModal(false)
   }
 
   // E11 — Ajouter une réponse à l'arbre local
@@ -655,15 +668,19 @@ supabase.auth.getSession().then(({ data: { session } }) => {
 
       {signalementModal && (
         <>
-          <div onClick={() => setSignalementModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+          <div onClick={() => { setSignalementModal(false); setSignalementConfirmation(false); setRaisonSignalement(''); setErreurSignalement('') }} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
           <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#F7F2E8', borderTop: '1px solid #E8E0D0', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
             <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Signaler cet événement</h3>
-            {signalementEnvoye ? (
-              <p style={{ color: '#D4A820', fontSize: 14 }}>✓ Signalement envoyé, merci !</p>
-            ) : (
+
+            {!signalementConfirmation ? (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {['Fausse information', 'Contenu inapproprié', 'Événement annulé', 'Spam', 'Autre'].map(raison => (
+                  {[
+                    'Information incorrecte ou fausse date',
+                    'Événement annulé non mis à jour',
+                    'Contenu dangereux ou illégal',
+                    'Spam ou doublon',
+                  ].map(raison => (
                     <button key={raison} onClick={() => setRaisonSignalement(raison)} style={{
                       padding: '12px 16px', borderRadius: 10, fontSize: 14, textAlign: 'left', cursor: 'pointer',
                       background: raisonSignalement === raison ? 'rgba(200,67,26,0.15)' : 'white',
@@ -672,13 +689,39 @@ supabase.auth.getSession().then(({ data: { session } }) => {
                     }}>{raison}</button>
                   ))}
                 </div>
-                <button onClick={handleSignalement} disabled={!raisonSignalement} style={{
-                  width: '100%', padding: '13px',
-                  background: raisonSignalement ? '#C8431A' : 'rgba(255,255,255,0.04)',
-                  color: raisonSignalement ? '#F7F2E8' : '#555',
-                  border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold',
-                  cursor: raisonSignalement ? 'pointer' : 'not-allowed',
-                }}>Envoyer le signalement</button>
+                <button
+                  onClick={() => setSignalementConfirmation(true)}
+                  disabled={!raisonSignalement}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: raisonSignalement ? '#C8431A' : 'rgba(255,255,255,0.04)',
+                    color: raisonSignalement ? '#F7F2E8' : '#555',
+                    border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold',
+                    cursor: raisonSignalement ? 'pointer' : 'not-allowed',
+                  }}
+                >Envoyer le signalement</button>
+              </>
+            ) : (
+              <>
+                <p style={{ color: '#1A1410', fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+                  Confirmer le signalement pour :{' '}
+                  <strong style={{ color: '#C8431A' }}>{raisonSignalement}</strong> ?
+                </p>
+                {erreurSignalement && (
+                  <p style={{ color: '#C8431A', fontSize: 13, background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+                    {erreurSignalement}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    onClick={() => { setSignalementConfirmation(false); setErreurSignalement('') }}
+                    style={{ flex: 1, background: 'white', border: '1px solid #E8E0D0', color: '#8C5A40', borderRadius: 10, padding: '12px', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
+                  >Annuler</button>
+                  <button
+                    onClick={handleSignalement}
+                    style={{ flex: 2, background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
+                  >Confirmer le signalement</button>
+                </div>
               </>
             )}
           </div>
