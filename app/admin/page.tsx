@@ -39,6 +39,11 @@ interface Signalement {
   id: string
   evenement_id: string
   raison: string
+  user_id: string | null
+  statut: string
+  traite_par: string | null
+  traite_le: string | null
+  decision: string | null
   created_at: string
 }
 
@@ -603,6 +608,51 @@ export default function Admin() {
     }).eq('id', id)
   }
 
+  const traiterSignalement = async (sig: Signalement, decision: 'maintenu' | 'retire') => {
+    const { data: { session } } = await supabase.auth.getSession()
+
+    await supabase.from('signalements').update({
+      statut:     decision,
+      traite_par: session?.user?.id ?? null,
+      traite_le:  new Date().toISOString(),
+      decision,
+    }).eq('id', sig.id)
+
+    if (decision === 'retire') {
+      await supabase.from('evenements').update({ statut: 'hors_ligne' }).eq('id', sig.evenement_id)
+    }
+
+    if (sig.user_id) {
+      const msg = decision === 'maintenu'
+        ? "Votre signalement a été examiné — l'événement a été maintenu."
+        : "Votre signalement a été examiné — l'événement a été retiré."
+      await supabase.from('notifications').insert([{
+        user_id: sig.user_id,
+        type:    'classement',
+        titre:   'Signalement traité',
+        message: msg,
+        lien:    null,
+        lu:      false,
+      }])
+    }
+
+    if (decision === 'retire') {
+      const ev = evenements.find(e => e.id === sig.evenement_id)
+      if (ev?.user_id) {
+        await supabase.from('notifications').insert([{
+          user_id: ev.user_id,
+          type:    'evenement_rejete',
+          titre:   'Événement retiré suite à un signalement',
+          message: `Votre événement "${ev.titre}" a été retiré suite à un signalement.`,
+          lien:    null,
+          lu:      false,
+        }])
+      }
+    }
+
+    chargerDonnees()
+  }
+
   // ─── Stats affichées — counts exacts + dérivés de la liste ───────────────
 
   const nbRegions = new Set(
@@ -984,15 +1034,54 @@ export default function Admin() {
               <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucun signalement pour l'instant.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {signalements.map(sig => (
-                  <div key={sig.id} style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}>
-                    <p style={{ color: '#555', fontSize: 11 }}>Événement ID : {sig.evenement_id}</p>
-                    <p style={{ color: '#e57373', fontSize: 13, marginTop: 4 }}>{sig.raison}</p>
-                    <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
-                      {new Date(sig.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
-                  </div>
-                ))}
+                {signalements.map(sig => {
+                  const evSig    = evenements.find(e => e.id === sig.evenement_id)
+                  const statut   = sig.statut || 'nouveau'
+                  const badgeCfg =
+                    statut === 'maintenu' ? { label: '✅ Maintenu', bg: '#2D9E6B' } :
+                    statut === 'retire'   ? { label: '⬇ Retiré',   bg: '#8C5A40' } :
+                                           { label: '🔴 Nouveau',  bg: '#C8431A' }
+                  return (
+                    <div key={sig.id} style={{ background: 'rgba(180,40,40,0.1)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 12, padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <a
+                            href={`/evenement/${sig.evenement_id}`}
+                            target="_blank"
+                            style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', marginBottom: 4 }}
+                          >
+                            {evSig?.titre ?? 'Événement inconnu'} ↗
+                          </a>
+                          <p style={{ color: '#e57373', fontSize: 13 }}>{sig.raison}</p>
+                          <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
+                            {new Date(sig.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                            {' '}
+                            {new Date(sig.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: badgeCfg.bg, color: 'white', flexShrink: 0, fontWeight: 'bold' }}>
+                          {badgeCfg.label}
+                        </span>
+                      </div>
+                      {statut === 'nouveau' && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <button
+                            onClick={() => traiterSignalement(sig, 'maintenu')}
+                            style={{ background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
+                          >
+                            ✅ Maintenir l'événement
+                          </button>
+                          <button
+                            onClick={() => traiterSignalement(sig, 'retire')}
+                            style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
+                          >
+                            ⬇ Retirer l'événement
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
