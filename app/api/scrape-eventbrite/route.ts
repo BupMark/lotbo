@@ -1,3 +1,5 @@
+// ⚠️ CE FICHIER = SCRAPER WIKIMEDIA (mauvais nommage historique)
+// Ne pas renommer sans mettre à jour le bouton admin correspondant
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 

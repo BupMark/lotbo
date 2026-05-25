@@ -668,6 +668,7 @@ export default function AjouterEvenement() {
     if (!coordsPin) { alert("Recherche et place le pin sur la carte pour localiser l'événement."); return }
     if (!pinConfirme) { alert("Confirme l'emplacement du pin sur la carte."); return }
     if (visibilite === 'discret' && (!codeAcces || codeAcces.length < 4)) { alert("Le code d'accès doit contenir au moins 4 chiffres."); return }
+    if (!form.heure_debut) { alert("L'heure de début est obligatoire."); return }
     setLoading(true)
 
     let image_url = ''
@@ -706,7 +707,7 @@ export default function AjouterEvenement() {
       nom_lieu: form.nom_lieu || null, adresse: form.adresse || null, lieu: lieuAffiche,
       ville: form.ville, pays: form.pays, date: form.date, date_debut: form.date,
       date_fin: multiJours && form.date_fin ? form.date_fin : null,
-      heure_debut: form.heure_debut, heure_fin: form.heure_fin || null,
+      heure_debut: form.heure_debut || null, heure_fin: form.heure_fin || null,
       fuseau_organisateur: form.fuseau_organisateur, categorie: categorieNom,
       event_type_id: selectedType, description: form.description, lien: form.lien,
       longitude: coordsPin.longitude, latitude: coordsPin.latitude,
@@ -923,7 +924,7 @@ export default function AjouterEvenement() {
 
           <div>
             <label style={labelStyle}>Titre de l'événement *</label>
-            <input name="titre" placeholder="Ex: Livres en Folie 2026" onChange={handleChange} style={inputStyle} required />
+            <input name="titre" value={form.titre} placeholder="Ex: Livres en Folie 2026" onChange={handleChange} style={inputStyle} required />
           </div>
 
           {aDoubleRole && (
@@ -1033,12 +1034,12 @@ export default function AjouterEvenement() {
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{multiJours ? 'Date de début *' : 'Date *'}</label>
-              <input type="date" name="date" onChange={handleChange} style={inputStyle} required />
+              <input type="date" name="date" value={form.date} onChange={handleChange} style={inputStyle} required />
             </div>
             {multiJours && (
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Date de fin *</label>
-                <input type="date" name="date_fin" min={form.date || undefined} onChange={handleChange} style={inputStyle} required={multiJours} />
+                <input type="date" name="date_fin" value={form.date_fin} min={form.date || undefined} onChange={handleChange} style={inputStyle} required={multiJours} />
               </div>
             )}
           </div>
@@ -1046,11 +1047,69 @@ export default function AjouterEvenement() {
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Heure de début *</label>
-              <input type="time" name="heure_debut" onChange={handleChange} style={inputStyle} required />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select
+                  value={form.heure_debut.split(':')[0] || ''}
+                  onChange={e => setForm(prev => ({
+                    ...prev,
+                    heure_debut: e.target.value + ':' + (prev.heure_debut.split(':')[1] || '00'),
+                  }))}
+                  style={inputStyle}
+                >
+                  <option value="">HH</option>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
+                  ))}
+                </select>
+                <span style={{ alignSelf: 'center', color: '#8C5A40' }}>:</span>
+                <select
+                  value={form.heure_debut.split(':')[1] || ''}
+                  onChange={e => setForm(prev => ({
+                    ...prev,
+                    heure_debut: (prev.heure_debut.split(':')[0] || '00') + ':' + e.target.value,
+                  }))}
+                  style={{ ...inputStyle, width: 80 }}
+                >
+                  <option value="">MM</option>
+                  <option value="00">00</option>
+                  <option value="15">15</option>
+                  <option value="30">30</option>
+                  <option value="45">45</option>
+                </select>
+              </div>
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Heure de fin <span style={{ color: '#8C5A40' }}>(optionnel)</span></label>
-              <input type="time" name="heure_fin" onChange={handleChange} style={inputStyle} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select
+                  value={form.heure_fin.split(':')[0] || ''}
+                  onChange={e => setForm(prev => ({
+                    ...prev,
+                    heure_fin: e.target.value + ':' + (prev.heure_fin.split(':')[1] || '00'),
+                  }))}
+                  style={inputStyle}
+                >
+                  <option value="">HH</option>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
+                  ))}
+                </select>
+                <span style={{ alignSelf: 'center', color: '#8C5A40' }}>:</span>
+                <select
+                  value={form.heure_fin.split(':')[1] || ''}
+                  onChange={e => setForm(prev => ({
+                    ...prev,
+                    heure_fin: (prev.heure_fin.split(':')[0] || '00') + ':' + e.target.value,
+                  }))}
+                  style={{ ...inputStyle, width: 80 }}
+                >
+                  <option value="">MM</option>
+                  <option value="00">00</option>
+                  <option value="15">15</option>
+                  <option value="30">30</option>
+                  <option value="45">45</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -1148,14 +1207,14 @@ export default function AjouterEvenement() {
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Accès</label>
-              <select name="acces" onChange={handleChange} style={inputStyle}>
+              <select name="acces" value={form.acces} onChange={handleChange} style={inputStyle}>
                 <option value="public">Public</option>
                 <option value="prive">Privé</option>
               </select>
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Prix</label>
-              <select name="prix" onChange={handleChange} style={inputStyle}>
+              <select name="prix" value={form.prix} onChange={handleChange} style={inputStyle}>
                 <option value="gratuit">Gratuit</option>
                 <option value="payant">Payant</option>
               </select>
@@ -1164,12 +1223,12 @@ export default function AjouterEvenement() {
 
           <div>
             <label style={labelStyle}>Description</label>
-            <textarea name="description" placeholder="Décris l'événement..." onChange={handleChange} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
+            <textarea name="description" value={form.description} placeholder="Décris l'événement..." onChange={handleChange} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
           <div>
             <label style={labelStyle}>Lien pour plus de détails (optionnel)</label>
-            <input name="lien" placeholder="https://" onChange={handleChange} style={inputStyle} />
+            <input name="lien" value={form.lien} placeholder="https://" onChange={handleChange} style={inputStyle} />
           </div>
 
           {/* ── F10 — Section image avec bloc incitatif ── */}

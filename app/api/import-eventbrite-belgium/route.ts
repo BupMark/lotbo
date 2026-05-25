@@ -158,10 +158,7 @@ function parseEvents(html: string): EventData[] {
   return events
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const debug = searchParams.get('debug') === '1'
-
+export async function GET() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -178,20 +175,6 @@ export async function GET(request: Request) {
     try {
       const pageUrl = page === 1 ? BASE_URL : `${BASE_URL}?page=${page}`
       const res     = await fetch(pageUrl, { headers: HEADERS, redirect: 'follow', cache: 'no-store' } as RequestInit)
-
-      if (debug) {
-        const html = await res.text()
-        return NextResponse.json({
-          debug: true,
-          status: res.status,
-          url: res.url,
-          html_length: html.length,
-          has_jsonld: html.includes('"jsonld":'),
-          has_destination_event: html.includes('destination_event'),
-          html_start: html.slice(0, 500),
-          events_found: parseEvents(html).length,
-        })
-      }
 
       if (!res.ok) break
 
