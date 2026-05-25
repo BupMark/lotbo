@@ -384,7 +384,6 @@ export default function Admin() {
     const baseEvs   = (evs as Evenement[]) || []
     const seenIds   = new Set(baseEvs.map(e => e.id))
     const allEvs    = [...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))]
-    console.log('[admin] allEvs[0]:', allEvs[0])
     setEvenements(allEvs)
 
     // ── Profils soumetteurs — requête séparée pour éviter jointure inline ─────
