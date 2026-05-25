@@ -50,15 +50,15 @@ export async function POST(request: Request) {
         <h1 style="color:#F7F2E8;font-size:18px;margin-bottom:8px">
           Votre événement n'a pas été approuvé
         </h1>
-        <p style="color:#8C5A40;font-size:14px;margin-bottom:24px">
+        <p style="color:#E8E0D0;font-size:14px;margin-bottom:24px">
           Bonjour ${destinataire.name}, nous avons examiné votre événement et il ne peut pas être publié pour le moment.
         </p>
         <div style="background:rgba(255,255,255,0.06);border:1px solid #2a2a2a;border-radius:10px;padding:20px;margin-bottom:24px">
           <p style="color:#F7F2E8;font-size:15px;font-weight:bold;margin-bottom:12px">📅 ${titre}</p>
-          <p style="color:#8C5A40;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Raison du rejet</p>
-          <p style="color:#F7F2E8;font-size:14px;line-height:1.6;border-left:3px solid #C8431A;padding-left:12px;margin:0">${raison}</p>
+          <p style="color:#C8B89A;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Raison du rejet</p>
+          <p style="color:#F7F2E8;font-size:14px;font-weight:bold;line-height:1.6;border-left:3px solid #C8431A;padding-left:12px;margin:0">${raison}</p>
         </div>
-        <p style="color:#8C5A40;font-size:13px;line-height:1.7;margin-bottom:24px">
+        <p style="color:#C8B89A;font-size:13px;line-height:1.7;margin-bottom:24px">
           Vous pouvez corriger votre événement et le soumettre à nouveau en tenant compte de cette raison.
           Si vous pensez qu'il s'agit d'une erreur, n'hésitez pas à nous contacter.
         </p>
