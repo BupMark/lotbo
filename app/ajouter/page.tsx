@@ -785,6 +785,15 @@ export default function AjouterEvenement() {
         }),
       }).catch(() => {})
 
+      await supabase.from('notifications').insert([{
+        user_id: userId,
+        type: 'badge_debloque',
+        titre: 'Nouveau badge débloqué 🏅',
+        message: `Tu as débloqué un nouveau badge sur LOTBO !`,
+        lien: '/profil?onglet=badges',
+        lu: false,
+      }])
+
       // ENG3-D — Email Brevo
       fetch('/api/notify-badge', {
         method: 'POST',
