@@ -307,6 +307,9 @@ export default function Admin() {
   const [changingRole,     setChangingRole]     = useState<string | null>(null)
   const [inviteStates,     setInviteStates]     = useState<Record<string, 'idle' | 'loading' | 'copied' | 'error'>>({})
 
+  // Soumetteur — map profiles indexée par user_id
+  const [profilesMap, setProfilesMap] = useState<Map<string, { nom: string | null; role: string | null }>>(new Map())
+
   // F5 — Modal rejet
   const [modalRejet,    setModalRejet]    = useState<{ id: string; titre: string; userId: string | null } | null>(null)
   const [raisonRejet,   setRaisonRejet]   = useState('')
@@ -382,6 +385,17 @@ export default function Admin() {
     const allEvs    = [...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))]
     console.log('[admin] allEvs[0]:', allEvs[0])
     setEvenements(allEvs)
+
+    // ── Profils soumetteurs — requête séparée pour éviter jointure inline ─────
+    const userIds = [...new Set(allEvs.map(e => e.user_id).filter(Boolean))] as string[]
+    if (userIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, nom, role')
+        .in('id', userIds)
+      setProfilesMap(new Map((profilesData || []).map(p => [p.id, p])))
+    }
+
     // Pré-remplir les configs pour les événements déjà mis en avant
     const cfgs: Record<string, { ville: string; jusqu_au: string }> = {}
     for (const ev of allEvs) {
@@ -831,23 +845,27 @@ export default function Admin() {
                     {ev.source && (
                       <p style={{ color: '#555', fontSize: 11, marginTop: 2 }}>Source : {ev.source}</p>
                     )}
-                    {ev.profiles?.nom && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-                        <span style={{ color: '#555', fontSize: 11 }}>Soumis par</span>
-                        <button
-                          onClick={() => setOnglet('utilisateurs')}
-                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#C8431A', fontSize: 11, fontWeight: 'bold', textDecoration: 'underline' }}
-                        >
-                          {ev.profiles.nom}
-                        </button>
-                        {ev.profiles.role && (
-                          <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(200,67,26,0.12)', color: '#C8431A' }}>{ev.profiles.role}</span>
-                        )}
-                        <span style={{ color: '#555', fontSize: 11 }}>
-                          · {new Date(ev.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(ev.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    )}
+                    {(() => {
+                      const soumetteur = ev.user_id ? profilesMap.get(ev.user_id) : null
+                      if (!soumetteur?.nom) return null
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                          <span style={{ color: '#555', fontSize: 11 }}>Soumis par</span>
+                          <button
+                            onClick={() => setOnglet('utilisateurs')}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#C8431A', fontSize: 11, fontWeight: 'bold', textDecoration: 'underline' }}
+                          >
+                            {soumetteur.nom}
+                          </button>
+                          {soumetteur.role && (
+                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(200,67,26,0.12)', color: '#C8431A' }}>{soumetteur.role}</span>
+                          )}
+                          <span style={{ color: '#555', fontSize: 11 }}>
+                            · {new Date(ev.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(ev.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      )
+                    })()}
                     <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                       <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.categorie}</span>
                       <span style={{ background: 'rgba(255,255,255,0.06)', color: '#8C5A40', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.acces}</span>
