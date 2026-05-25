@@ -19,6 +19,7 @@ interface Evenement {
   acces: string
   prix: string
   statut: 'en_attente' | 'approuve' | 'rejete' | string
+  visibilite?: string | null
   image_url: string | null
   latitude: number | null
   longitude: number | null
@@ -38,7 +39,7 @@ interface Signalement {
   created_at: string
 }
 
-type FiltreStatut  = 'en_attente' | 'approuve' | 'rejete' | 'tous'
+type FiltreStatut  = 'en_attente' | 'approuve' | 'rejete' | 'hors_ligne' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
 type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs'
 type FiltreRole    = 'tous' | 'visiteur' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
@@ -704,10 +705,11 @@ export default function Admin() {
             {/* Filtres statut */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               {([
-                { key: 'en_attente', label: '⏳ En attente', count: countEnAttente },
-                { key: 'approuve',   label: '✓ Approuvés',   count: countApprouves },
-                { key: 'rejete',     label: '✗ Rejetés',     count: countRejetes   },
-                { key: 'tous',       label: 'Tous',           count: countTotal     },
+                { key: 'en_attente',  label: '⏳ En attente', count: countEnAttente },
+                { key: 'approuve',    label: '✓ Approuvés',   count: countApprouves },
+                { key: 'rejete',      label: '✗ Rejetés',     count: countRejetes   },
+                { key: 'hors_ligne',  label: '⬇ Hors ligne',  count: evenements.filter(e => e.statut === 'hors_ligne').length },
+                { key: 'tous',        label: 'Tous',           count: countTotal     },
               ] as { key: FiltreStatut; label: string; count: number }[]).map(f => (
                 <button
                   key={f.key}
@@ -794,7 +796,11 @@ export default function Admin() {
                 >
                   <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = getEventImage(null, ev.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h2 style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 2 }}>{ev.titre}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
+                      <h2 style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, margin: 0 }}>{ev.titre}</h2>
+                      {ev.visibilite === 'prive'   && <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#1A1410', color: 'white', flexShrink: 0 }}>🔒 Privé</span>}
+                      {ev.visibilite === 'discret' && <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#8C5A40', color: 'white', flexShrink: 0 }}>👁 Discret</span>}
+                    </div>
                     {ev.organisateur && (
                       <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 4 }}>👤 {ev.organisateur}</p>
                     )}
