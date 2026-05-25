@@ -372,11 +372,11 @@ export default function Admin() {
 
     // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
     const [{ data: evs }, { data: sigs }] = await Promise.all([
-      supabase.from('evenements').select('*, profiles(nom, role)').order('created_at', { ascending: false }).limit(2000),
+      supabase.from('evenements').select('*').order('created_at', { ascending: false }).limit(2000),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
     ])
     const { data: rejetesData } = await supabase
-      .from('evenements').select('*, profiles(nom, role)').eq('statut', 'rejete').order('created_at', { ascending: false })
+      .from('evenements').select('*').eq('statut', 'rejete').order('created_at', { ascending: false })
     const baseEvs   = (evs as Evenement[]) || []
     const seenIds   = new Set(baseEvs.map(e => e.id))
     const allEvs    = [...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))]
