@@ -3,36 +3,41 @@ import { createClient } from '@supabase/supabase-js'
 import { verifierDoublon } from '../../../lib/deduplication'
 
 const CATEGORIE_MAP: Record<string, string> = {
-  'Music':              'Concert / Spectacle',
-  'Nightlife':          'Concert / Spectacle',
-  'Performing Arts':    'Concert / Spectacle',
-  'Comedy':             'Concert / Spectacle',
-  'Film & Media':       'Concert / Spectacle',
-  'Arts':               'Foire / Exposition',
-  'Visual Arts':        'Foire / Exposition',
-  'Food & Drink':       'Foire / Exposition',
-  'Fashion':            'Foire / Exposition',
-  'Sports & Fitness':   'Tournoi / Compétition',
-  'Science & Tech':     'Conférence / Sommet',
-  'Business':           'Conférence / Sommet',
-  'Community':          'Célébration communautaire',
-  'Social':             'Célébration communautaire',
-  'Holiday':            'Célébration communautaire',
-  'Education':          'Formation / Séminaire',
-  'Health':             'Formation / Séminaire',
-  'Family & Education': 'Formation / Séminaire',
-  'Charity':            'Célébration communautaire',
-  'Travel & Outdoor':   'Festival',
-  'Hobbies':            'Festival',
+  'music':              'Concert / Spectacle',
+  'nightlife':          'Concert / Spectacle',
+  'performing-arts':    'Concert / Spectacle',
+  'comedy':             'Concert / Spectacle',
+  'film-media-entertainment': 'Concert / Spectacle',
+  'arts':               'Foire / Exposition',
+  'visual-arts':        'Foire / Exposition',
+  'food-drink':         'Foire / Exposition',
+  'fashion':            'Foire / Exposition',
+  'sports-fitness':     'Tournoi / Compétition',
+  'science-tech':       'Conférence / Sommet',
+  'business':           'Conférence / Sommet',
+  'community':          'Célébration communautaire',
+  'social':             'Célébration communautaire',
+  'holiday':            'Célébration communautaire',
+  'education':          'Formation / Séminaire',
+  'health-wellness':    'Formation / Séminaire',
+  'family-education':   'Formation / Séminaire',
+  'charity-causes':     'Célébration communautaire',
+  'travel-outdoor':     'Festival',
+  'hobbies':            'Festival',
 }
 
-const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+const HEADERS = {
+  'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'fr-BE,fr;q=0.9,en;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Cache-Control':   'no-cache',
+  'Pragma':          'no-cache',
+}
+
+// URL définitive après redirect /belgium--brussels → /belgium--brussels-capital-region
+const BASE_URL   = 'https://www.eventbrite.com/d/belgium--brussels-capital-region/events/'
 const MAX_PAGES  = 5
-const BASE_URL   = 'https://www.eventbrite.com/d/belgium--brussels/events/'
-
-function decodeJsonString(s: string): string {
-  try { return JSON.parse('"' + s + '"') } catch { return s }
-}
 
 interface EventData {
   name:       string
@@ -41,7 +46,6 @@ interface EventData {
   start_date: string
   start_time: string | null
   end_date:   string | null
-  end_time:   string | null
   summary:    string | null
   image_url:  string | null
   venue_name: string | null
@@ -51,86 +55,102 @@ interface EventData {
   category:   string | null
 }
 
+// Extraction robuste du bloc "jsonld":[...] avec comptage des brackets
+function extractJsonLd(html: string): any[] {
+  const marker = '"jsonld":['
+  const idx    = html.indexOf(marker)
+  if (idx === -1) return []
+
+  let pos          = idx + marker.length
+  let bracketDepth = 1
+  let inStr        = false
+  let escape       = false
+
+  for (let i = pos; i < html.length; i++) {
+    const c = html[i]
+    if (escape)                    { escape = false; continue }
+    if (c === '\\' && inStr)       { escape = true;  continue }
+    if (c === '"' && !escape)      { inStr = !inStr; continue }
+    if (inStr)                      continue
+    if      (c === '[') bracketDepth++
+    else if (c === ']') {
+      bracketDepth--
+      if (bracketDepth === 0) {
+        try {
+          const arr  = JSON.parse('[' + html.slice(pos, i) + ']')
+          const list = arr[0]?.itemListElement
+          if (Array.isArray(list)) return list.map((el: any) => el.item ?? el)
+        } catch { return [] }
+      }
+    }
+  }
+  return []
+}
+
+// Carte eid → data-event-category depuis les attributs HTML des cartes
+function extractCategoryMap(html: string): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const m of html.matchAll(/data-event-id="(\d+)"[^>]*data-event-category="([^"]+)"/g)) {
+    map[m[1]] = m[2]
+  }
+  return map
+}
+
 function parseEvents(html: string): EventData[] {
-  const events: EventData[]   = []
-  const seenEids = new Set<string>()
+  const items      = extractJsonLd(html)
+  const catMap     = extractCategoryMap(html)
+  const events: EventData[] = []
+  const seenEids   = new Set<string>()
 
-  // Each destination_event ends with: "name":"...","url":"https://www.eventbrite.com/e/...","hide_start_date"
-  const matches = [
-    ...html.matchAll(/"name":"([^"]+)","url":"(https:\/\/www\.eventbrite\.com\/e\/[^"]+)","hide_start_date"/g),
-  ]
+  for (const item of items) {
+    const rawUrl = item.url as string | undefined
+    if (!rawUrl?.includes('eventbrite.com/e/')) continue
 
-  for (let i = 0; i < matches.length; i++) {
-    const match     = matches[i]
-    const prevMatch = matches[i - 1]
-
-    const name = decodeJsonString(match[1])
-    const url  = match[2]
-
+    const url      = rawUrl.split('?')[0]         // retire ?aff=...
     const eidMatch = url.match(/(\d+)$/)
     if (!eidMatch) continue
     const eid = eidMatch[1]
     if (seenEids.has(eid)) continue
     seenEids.add(eid)
 
-    // Window: bounded left by previous event's end to avoid cross-event leakage
-    const windowStart = prevMatch
-      ? Math.max(prevMatch.index! + prevMatch[0].length, match.index! - 5000)
-      : Math.max(0, match.index! - 5000)
-    const segment    = html.slice(windowStart, match.index! + 300)
-    const fwdSegment = html.slice(match.index!, match.index! + 400)
+    // Filtrer les événements en ligne
+    if ((item.eventAttendanceMode as string)?.includes('OnlineEvent')) continue
 
-    // Dates
-    const startDateM = segment.match(/"start_date":"(\d{4}-\d{2}-\d{2})"/)
-    if (!startDateM) continue
-    const startDate  = startDateM[1]
+    const startRaw  = (item.startDate as string) ?? ''
+    const endRaw    = (item.endDate   as string) ?? ''
+    const start_date = startRaw.slice(0, 10)      // "2026-05-28T20:00" → "2026-05-28"
+    if (!start_date) continue
 
-    const startTimeM = segment.match(/"start_time":"(\d{2}:\d{2})"/)
-    const endDateM   = segment.match(/"end_date":"(\d{4}-\d{2}-\d{2})"/)
-    const endTimeM   = segment.match(/"end_time":"(\d{2}:\d{2})"/)
-    const endDate    = endDateM?.[1] && endDateM[1] !== startDate ? endDateM[1] : null
+    const start_time = startRaw.includes('T') ? startRaw.slice(11, 16) : null
+    const endDate    = endRaw.slice(0, 10)
+    const end_date   = endDate && endDate !== start_date ? endDate : null
 
-    // Summary (appears right after url in the event object)
-    const summaryM = fwdSegment.match(/"summary":"([^"]*)"/)
-    const summary  = summaryM?.[1] ? decodeJsonString(summaryM[1]) : null
+    const lat = item.location?.geo?.latitude  ? parseFloat(item.location.geo.latitude)  : null
+    const lon = item.location?.geo?.longitude ? parseFloat(item.location.geo.longitude) : null
 
-    // Venue name (right after "_type":"destination_venue")
-    const venueM = segment.match(/"_type":"destination_venue","name":"([^"]+)"/)
-
-    // GPS coords and city (inside primary_venue.address)
-    const latM     = segment.match(/"latitude":"([^"]+)"/)
-    const lonM     = segment.match(/"longitude":"([^"]+)"/)
-    const cityM    = segment.match(/"city":"([^"]+)"/)
-
-    // Image: decode imgix proxy → raw cdn.evbuc.com URL
-    const imgM = segment.match(/"url":"(https:\/\/img\.evbuc\.com\/https%3A%2F%2Fcdn\.evbuc\.com[^"]+)"/)
-    let image_url: string | null = null
-    if (imgM) {
+    // Décoder l'image : proxy img.evbuc.com → CDN propre cdn.evbuc.com
+    let image_url: string | null = (item.image as string) || null
+    if (image_url?.startsWith('https://img.evbuc.com/https')) {
       try {
-        const proxyUrl      = imgM[1].replace(/\\u0026/g, '&')
-        const innerEncoded  = proxyUrl.replace('https://img.evbuc.com/', '').split('?')[0]
-        image_url           = decodeURIComponent(innerEncoded)
-      } catch { image_url = null }
+        const inner = image_url.replace(/^https:\/\/img\.evbuc\.com\//, '').split('?')[0]
+        image_url   = decodeURIComponent(inner)
+      } catch { /* garder l'URL proxy */ }
     }
 
-    // Category (first EventbriteCategory tag)
-    const catM = segment.match(/"prefix":"EventbriteCategory","tag":"[^"]+","display_name":"([^"]+)"/)
-
     events.push({
-      name,
+      name:       (item.name as string) || '',
       url,
       eid,
-      start_date: startDate,
-      start_time: startTimeM?.[1]  || null,
-      end_date:   endDate,
-      end_time:   endTimeM?.[1]    || null,
-      summary,
+      start_date,
+      start_time,
+      end_date,
+      summary:    (item.description as string) || null,
       image_url,
-      venue_name: venueM?.[1] ? decodeJsonString(venueM[1]) : null,
-      city:       cityM?.[1]  ? decodeJsonString(cityM[1])  : null,
-      latitude:   latM  ? parseFloat(latM[1])  : null,
-      longitude:  lonM  ? parseFloat(lonM[1])  : null,
-      category:   catM?.[1] || null,
+      venue_name: (item.location?.name as string) || null,
+      city:       (item.location?.address?.addressLocality as string) || null,
+      latitude:   lat,
+      longitude:  lon,
+      category:   catMap[eid] || null,
     })
   }
 
@@ -153,7 +173,7 @@ export async function GET() {
   for (let page = 1; page <= MAX_PAGES; page++) {
     try {
       const pageUrl = page === 1 ? BASE_URL : `${BASE_URL}?page=${page}`
-      const res     = await fetch(pageUrl, { headers: { 'User-Agent': USER_AGENT } })
+      const res     = await fetch(pageUrl, { headers: HEADERS, redirect: 'follow', cache: 'no-store' } as RequestInit)
       if (!res.ok) break
 
       const html   = await res.text()
@@ -163,11 +183,10 @@ export async function GET() {
       pages_scraped++
 
       for (const ev of events) {
-        // Dédupliquer les doublons intra-page (event apparaît dans plusieurs sections)
         if (seenEids.has(ev.eid)) { skipped++; continue }
         seenEids.add(ev.eid)
 
-        // Ignorer les événements sans coordonnées GPS (en ligne, lieu inconnu)
+        // Ignorer sans coordonnées GPS
         if (!ev.latitude || !ev.longitude) { skipped++; continue }
 
         const sourceId = `eventbrite-${ev.eid}`
@@ -200,7 +219,6 @@ export async function GET() {
           date_debut:  ev.start_date,
           date_fin:    ev.end_date,
           heure_debut: ev.start_time,
-          heure_fin:   ev.end_time,
           description: ev.summary,
           latitude:    ev.latitude,
           longitude:   ev.longitude,
