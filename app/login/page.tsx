@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
+import { track } from '../../lib/amplitude'
 
 export default function Login() {
   const router = useRouter()
@@ -96,6 +97,7 @@ export default function Login() {
       setMessage(error.message.includes('Anonymous') ? t.anonymous : error.message.includes('Invalid') ? t.invalid : t.default)
       setMessageType('erreur'); return
     }
+    track('user_logged_in', { user_id: data.session?.user?.id })
     const role = data.session?.user?.user_metadata?.role
     if (role === 'admin') window.location.href = '/admin'
     else window.location.href = getRedirect()
@@ -114,6 +116,7 @@ export default function Login() {
       await supabase.from('profiles').upsert({ id: data.user.id, nom: prenom.trim(), role: 'membre', created_at: new Date().toISOString() })
       if (newsletter) { try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {} }
     }
+    track('user_signed_up', { user_id: data.user?.id })
     setLoading(false); setEmailInscription(email); setEmailEnvoye(true)
   }
 

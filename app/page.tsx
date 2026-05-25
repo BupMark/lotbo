@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase'
 import { langues, type Langue, getTraductions } from '../lib/i18n'
 import { getEventImage, FALLBACK_IMAGES } from '../lib/fallbackImages'
 import NotifCloche from '../components/NotifCloche'
+import { track } from '../lib/amplitude'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -141,14 +142,39 @@ export default function Home() {
     setInviteVisible(true)
   }, [clicsEvenements, user])
 
-  const trackEventClick = () => {
+  const trackEventClick = (ev?: Evenement) => {
     if (!user) setClicsEvenements(prev => prev + 1)
+    track('event_clicked', { event_id: ev?.id, event_title: ev?.titre, categorie: ev?.categorie })
   }
 
   const dismissInvite = () => {
     setInviteVisible(false)
     if (typeof window !== 'undefined') localStorage.setItem('lotbo_invite_shown', '1')
   }
+
+  // Amplitude — search_performed (debounce 600ms)
+  useEffect(() => {
+    if (!recherche) return
+    const t = setTimeout(() => track('search_performed', { query: recherche }), 600)
+    return () => clearTimeout(t)
+  }, [recherche])
+
+  // Amplitude — filter_applied
+  useEffect(() => {
+    if (categorie !== 'Toutes') track('filter_applied', { filter: 'categorie', value: categorie })
+  }, [categorie])
+  useEffect(() => {
+    if (acces !== 'tous') track('filter_applied', { filter: 'acces', value: acces })
+  }, [acces])
+  useEffect(() => {
+    if (prix !== 'tous') track('filter_applied', { filter: 'prix', value: prix })
+  }, [prix])
+  useEffect(() => {
+    if (dateDebut) track('filter_applied', { filter: 'date_debut', value: dateDebut })
+  }, [dateDebut])
+  useEffect(() => {
+    if (dateFin) track('filter_applied', { filter: 'date_fin', value: dateFin })
+  }, [dateFin])
 
   const nbFiltres = [
     categorie !== 'Toutes',
@@ -331,9 +357,11 @@ export default function Home() {
     if (favoris.has(evenementId)) {
       await supabase.from('favoris').delete().eq('user_id', user.id).eq('evenement_id', evenementId)
       setFavoris(prev => { const next = new Set(prev); next.delete(evenementId); return next })
+      track('event_favorited', { event_id: evenementId, action: 'remove' })
     } else {
       await supabase.from('favoris').insert({ user_id: user.id, evenement_id: evenementId })
       setFavoris(prev => new Set([...prev, evenementId]))
+      track('event_favorited', { event_id: evenementId, action: 'add' })
     }
     setTogglingFavori(null)
   }
@@ -848,7 +876,7 @@ export default function Home() {
           {/* ── Grille UX4 ── */}
           <div className="lotbo-grid-evenements">
             {evenementsFiltres.map(ev => (
-              <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" onClick={trackEventClick}>
+              <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" onClick={() => trackEventClick(ev)}>
                 <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                 <div className="card-body">
                   <p className="card-titre">{ev.titre}</p>

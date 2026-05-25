@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { normaliserVille, normaliserPays } from '../../lib/normalisation'
+import { track } from '../../lib/amplitude'
 
 import dynamicImport from 'next/dynamic'
 const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
@@ -725,6 +726,7 @@ export default function AjouterEvenement() {
 
     setLoading(false)
     if (error) { alert('Erreur: ' + error.message); return }
+    track('event_submitted', { event_id: inserted?.id, titre: form.titre, categorie: categorieNom })
 
     const { count: nbApres } = await supabase.from('evenements').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('soumis_en_tant_que', choix)
     const avant        = nbAvant || 0

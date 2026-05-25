@@ -4,6 +4,7 @@ import "./globals.css";
 import CookieBanner from "../components/CookieBanner";
 import Preloader from "../components/Preloader";
 import { Analytics } from "@vercel/analytics/react";
+import AmplitudeInit from "../components/AmplitudeInit";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({
         {children}
         <CookieBanner />
         <Analytics />
+        <AmplitudeInit />
         {/* ── Enregistrement Service Worker PWA ─────────────────────────── */}
         <script
           dangerouslySetInnerHTML={{

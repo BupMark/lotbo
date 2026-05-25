@@ -6,6 +6,7 @@ import { getEventImage } from '../../lib/fallbackImages'
 import { useRouter, useSearchParams } from 'next/navigation'
 import CarteBadge from '../../components/CarteBadge'
 import { syncUserPoints, calculerNiveau } from '../../lib/points'
+import { identifyUser } from '../../lib/amplitude'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -89,6 +90,11 @@ function ProfilInner() {
         roles_actifs:  raErr ? null : (raRow?.roles_actifs ?? null),
         points_total:  pointsReel,
         niveau:        niveauReel,
+      })
+      identifyUser(data.session.user.id, {
+        role:         prof?.role,
+        niveau:       niveauReel,
+        points_total: pointsReel,
       })
       if (prof?.nom) setNomInput(prof.nom)
       if (prof?.photo_url) setPhotoUrl(prof.photo_url)
