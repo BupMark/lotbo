@@ -304,6 +304,12 @@ export default function Admin() {
   const [changingRole,     setChangingRole]     = useState<string | null>(null)
   const [inviteStates,     setInviteStates]     = useState<Record<string, 'idle' | 'loading' | 'copied' | 'error'>>({})
 
+  // F5 — Modal rejet
+  const [modalRejet,    setModalRejet]    = useState<{ id: string; titre: string; userId: string | null } | null>(null)
+  const [raisonRejet,   setRaisonRejet]   = useState('')
+  const [raisonAutre,   setRaisonAutre]   = useState('')
+  const [loadingRejet,  setLoadingRejet]  = useState(false)
+
   const hi: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
@@ -496,11 +502,40 @@ export default function Admin() {
     }
   }
 
-  const rejeter = async (id: string) => {
-    await supabase.from('evenements').update({ statut: 'rejete' }).eq('id', id)
-    setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, statut: 'rejete' } : ev))
+  const ouvrirModalRejet = (ev: Evenement) => {
+    setModalRejet({ id: ev.id, titre: ev.titre, userId: ev.user_id ?? null })
+    setRaisonRejet('')
+    setRaisonAutre('')
+  }
+
+  const confirmerRejet = async () => {
+    if (!modalRejet) return
+    const raison = raisonRejet === 'Autre' ? raisonAutre.trim() : raisonRejet
+    if (!raison) return
+    setLoadingRejet(true)
+
+    const { error } = await supabase.from('evenements')
+      .update({ statut: 'rejete', raison_rejet: raison })
+      .eq('id', modalRejet.id)
+
+    if (error?.code === '42703') {
+      // colonne raison_rejet absente — fallback sans raison_rejet
+      // Migration à exécuter : ALTER TABLE evenements ADD COLUMN IF NOT EXISTS raison_rejet TEXT
+      await supabase.from('evenements').update({ statut: 'rejete' }).eq('id', modalRejet.id)
+    }
+
+    setEvenements(prev => prev.map(ev => ev.id === modalRejet.id ? { ...ev, statut: 'rejete' } : ev))
     setCountRejetes(c => c + 1)
     setCountEnAttente(c => Math.max(0, c - 1))
+
+    fetch('/api/notify-rejet', {
+      method: 'POST',
+      headers: hi,
+      body: JSON.stringify({ evenementId: modalRejet.id, titre: modalRejet.titre, raison, userId: modalRejet.userId }),
+    }).catch(() => {})
+
+    setLoadingRejet(false)
+    setModalRejet(null)
   }
 
   const supprimer = async (id: string) => {
@@ -792,7 +827,7 @@ export default function Admin() {
                       </button>
                     )}
                     {ev.statut !== 'rejete' && (
-                      <button onClick={() => rejeter(ev.id)} style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+                      <button onClick={() => ouvrirModalRejet(ev)} style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
                         Rejeter
                       </button>
                     )}
@@ -1322,6 +1357,77 @@ export default function Admin() {
       )}
 
       </div>
+
+      {/* ── F5 — Modal raison de rejet ───────────────────────────────── */}
+      {modalRejet && (
+        <div
+          onClick={() => setModalRejet(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 2000 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#1A1410', borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 560, padding: '24px 20px 32px' }}
+          >
+            {/* En-tête */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h3 style={{ color: '#F7F2E8', fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Rejeter l'événement</h3>
+                <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.4, maxWidth: 360 }}>{modalRejet.titre}</p>
+              </div>
+              <button
+                onClick={() => setModalRejet(null)}
+                style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#8C5A40', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >✕</button>
+            </div>
+
+            {/* Raison — liste déroulante */}
+            <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Raison du rejet <span style={{ color: '#C8431A' }}>*</span></p>
+            <select
+              value={raisonRejet}
+              onChange={e => setRaisonRejet(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.06)', color: raisonRejet ? '#F7F2E8' : '#8C5A40', border: '1px solid #2a2a2a', borderRadius: 10, padding: '11px 14px', fontSize: 14, cursor: 'pointer', outline: 'none', marginBottom: 12, appearance: 'none' as const }}
+            >
+              <option value="" disabled>Sélectionner une raison…</option>
+              <option value="Informations incorrectes ou incomplètes">Informations incorrectes ou incomplètes</option>
+              <option value="Contenu inapproprié ou non conforme aux CGU">Contenu inapproprié ou non conforme aux CGU</option>
+              <option value="Événement déjà passé">Événement déjà passé</option>
+              <option value="Doublon d'un événement existant">Doublon d'un événement existant</option>
+              <option value="Image non conforme">Image non conforme</option>
+              <option value="Événement annulé">Événement annulé</option>
+              <option value="Lieu introuvable ou invalide">Lieu introuvable ou invalide</option>
+              <option value="Autre">Autre (préciser)</option>
+            </select>
+
+            {/* Champ libre si "Autre" */}
+            {raisonRejet === 'Autre' && (
+              <textarea
+                value={raisonAutre}
+                onChange={e => setRaisonAutre(e.target.value)}
+                placeholder="Précise la raison…"
+                rows={3}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', border: '1px solid #2a2a2a', borderRadius: 10, padding: '11px 14px', fontSize: 14, outline: 'none', resize: 'none', marginBottom: 12, boxSizing: 'border-box' as const }}
+              />
+            )}
+
+            {/* Boutons */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button
+                onClick={() => setModalRejet(null)}
+                style={{ flex: 1, background: 'rgba(255,255,255,0.06)', color: '#8C5A40', border: '1px solid #2a2a2a', borderRadius: 10, padding: '12px', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmerRejet}
+                disabled={loadingRejet || !raisonRejet || (raisonRejet === 'Autre' && !raisonAutre.trim())}
+                style={{ flex: 2, background: (!raisonRejet || (raisonRejet === 'Autre' && !raisonAutre.trim())) ? '#2a2a2a' : '#C8431A', color: (!raisonRejet || (raisonRejet === 'Autre' && !raisonAutre.trim())) ? '#8C5A40' : 'white', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, cursor: loadingRejet || !raisonRejet ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+              >
+                {loadingRejet ? 'Rejet en cours…' : 'Confirmer le rejet'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   )
