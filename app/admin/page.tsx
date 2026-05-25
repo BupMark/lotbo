@@ -30,6 +30,7 @@ interface Evenement {
   mis_en_avant_jusqu_au?: string | null
   user_id?: string | null
   soumis_en_tant_que?: string | null
+  profiles?: { nom: string | null; role: string | null } | null
 }
 
 interface Signalement {
@@ -370,11 +371,11 @@ export default function Admin() {
 
     // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
     const [{ data: evs }, { data: sigs }] = await Promise.all([
-      supabase.from('evenements').select('*').order('created_at', { ascending: false }).limit(2000),
+      supabase.from('evenements').select('*, profiles!evenements_user_id_fkey(nom, role)').order('created_at', { ascending: false }).limit(2000),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
     ])
     const { data: rejetesData } = await supabase
-      .from('evenements').select('*').eq('statut', 'rejete').order('created_at', { ascending: false })
+      .from('evenements').select('*, profiles!evenements_user_id_fkey(nom, role)').eq('statut', 'rejete').order('created_at', { ascending: false })
     const baseEvs   = (evs as Evenement[]) || []
     const seenIds   = new Set(baseEvs.map(e => e.id))
     const allEvs    = [...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))]
@@ -494,6 +495,14 @@ export default function Admin() {
       fetch('/api/notify-abonnes', { method: 'POST', headers: hi, body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
       fetch('/api/push-notify',    { method: 'POST', headers: hi, body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
       if (ev.user_id) {
+        await supabase.from('notifications').insert([{
+          user_id: ev.user_id,
+          type: 'evenement_approuve',
+          titre: 'Événement approuvé ✅',
+          message: `Votre événement "${ev.titre}" est maintenant en ligne.`,
+          lien: `/evenement/${ev.id}`,
+          lu: false,
+        }])
         const typeRole = ev.soumis_en_tant_que === 'contributeur' ? 'utilisateur' : 'organisateur'
         fetch('/api/attributer-points', {
           method: 'POST', headers: hi,
@@ -534,6 +543,17 @@ export default function Admin() {
       headers: hi,
       body: JSON.stringify({ evenementId: modalRejet.id, titre: modalRejet.titre, raison, userId: modalRejet.userId }),
     }).catch(() => {})
+
+    if (modalRejet.userId) {
+      await supabase.from('notifications').insert([{
+        user_id: modalRejet.userId,
+        type: 'evenement_rejete',
+        titre: 'Événement non publié',
+        message: `Votre événement "${modalRejet.titre}" n'a pas été approuvé.`,
+        lien: null,
+        lu: false,
+      }])
+    }
 
     setLoadingRejet(false)
     setModalRejet(null)
@@ -808,6 +828,23 @@ export default function Admin() {
                     <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date}{ev.heure_debut ? ` · ${ev.heure_debut}` : ''}</p>
                     {ev.source && (
                       <p style={{ color: '#555', fontSize: 11, marginTop: 2 }}>Source : {ev.source}</p>
+                    )}
+                    {ev.profiles?.nom && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                        <span style={{ color: '#555', fontSize: 11 }}>Soumis par</span>
+                        <button
+                          onClick={() => setOnglet('utilisateurs')}
+                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#C8431A', fontSize: 11, fontWeight: 'bold', textDecoration: 'underline' }}
+                        >
+                          {ev.profiles.nom}
+                        </button>
+                        {ev.profiles.role && (
+                          <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(200,67,26,0.12)', color: '#C8431A' }}>{ev.profiles.role}</span>
+                        )}
+                        <span style={{ color: '#555', fontSize: 11 }}>
+                          · {new Date(ev.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(ev.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
                     )}
                     <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                       <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{ev.categorie}</span>
