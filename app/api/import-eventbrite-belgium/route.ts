@@ -104,10 +104,11 @@ function parseEvents(html: string): EventData[] {
 
   for (const item of items) {
     const rawUrl = item.url as string | undefined
-    if (!rawUrl?.includes('eventbrite.com/e/')) continue
+    // Accepter tous les domaines Eventbrite (.com, .be, .fr, .co.uk, etc.)
+    if (!rawUrl?.match(/eventbrite\.[a-z.]+\/e\//)) continue
 
     const url      = rawUrl.split('?')[0]         // retire ?aff=...
-    const eidMatch = url.match(/(\d+)$/)
+    const eidMatch = url.match(/(\d+)[^/]*$/)
     if (!eidMatch) continue
     const eid = eidMatch[1]
     if (seenEids.has(eid)) continue
