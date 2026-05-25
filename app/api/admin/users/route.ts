@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { calculerNiveau } from '../../../../lib/points'
 
 function verifierSecret(request: Request): boolean {
@@ -125,9 +127,17 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json()
-    const { id, role, suspendu } = body as { id: string; role?: string; suspendu?: boolean }
+    const { id, role, suspendu, raison } = body as { id: string; role?: string; suspendu?: boolean; raison?: string }
 
     if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 })
+
+    const cookieStore = await cookies()
+    const supabaseUser = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+    )
+    const { data: { session } } = await supabaseUser.auth.getSession()
 
     const admin = makeAdminClient()
 
@@ -136,11 +146,27 @@ export async function PATCH(request: Request) {
       if (!ROLES_VALIDES.includes(role)) {
         return NextResponse.json({ error: 'Rôle invalide' }, { status: 400 })
       }
+
+      const { data: profil } = await admin
+        .from('profiles')
+        .select('role')
+        .eq('id', id)
+        .single()
+      const ancien_role = profil?.role ?? 'inconnu'
+
       const { error } = await admin
         .from('profiles')
         .update({ role, updated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
+
+      await admin.from('admin_logs').insert([{
+        admin_id:    session?.user?.id ?? null,
+        user_id:     id,
+        ancien_role,
+        nouveau_role: role,
+        raison:      raison ?? null,
+      }])
 
       // Appendre le nouveau rôle à roles_actifs (optionnel — colonne peut ne pas exister)
       const { data: prof, error: raErr } = await admin.from('profiles').select('roles_actifs').eq('id', id).single()
