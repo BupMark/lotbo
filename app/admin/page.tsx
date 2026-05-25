@@ -28,6 +28,7 @@ interface Evenement {
   mis_en_avant?: boolean
   mis_en_avant_ville?: string | null
   mis_en_avant_jusqu_au?: string | null
+  date_debut?: string | null
   user_id?: string | null
   soumis_en_tant_que?: string | null
   profiles?: { nom: string | null; role: string | null } | null
@@ -371,14 +372,15 @@ export default function Admin() {
 
     // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
     const [{ data: evs }, { data: sigs }] = await Promise.all([
-      supabase.from('evenements').select('*, profiles!evenements_user_id_fkey(nom, role)').order('created_at', { ascending: false }).limit(2000),
+      supabase.from('evenements').select('*, profiles(nom, role)').order('created_at', { ascending: false }).limit(2000),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
     ])
     const { data: rejetesData } = await supabase
-      .from('evenements').select('*, profiles!evenements_user_id_fkey(nom, role)').eq('statut', 'rejete').order('created_at', { ascending: false })
+      .from('evenements').select('*, profiles(nom, role)').eq('statut', 'rejete').order('created_at', { ascending: false })
     const baseEvs   = (evs as Evenement[]) || []
     const seenIds   = new Set(baseEvs.map(e => e.id))
     const allEvs    = [...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))]
+    console.log('[admin] allEvs[0]:', allEvs[0])
     setEvenements(allEvs)
     // Pré-remplir les configs pour les événements déjà mis en avant
     const cfgs: Record<string, { ville: string; jusqu_au: string }> = {}
@@ -609,7 +611,7 @@ export default function Admin() {
 
   const evenementsFiltres = evenements.filter(ev => {
     const matchStatut    = filtreStatut === 'tous' || ev.statut === filtreStatut
-    const matchTemps     = matchTemporel(ev.date, filtreTemporel)
+    const matchTemps     = matchTemporel(ev.date || ev.date_debut || '', filtreTemporel)
     const q              = recherche.toLowerCase()
     const matchRecherche = q === '' ||
       ev.titre?.toLowerCase().includes(q) ||
