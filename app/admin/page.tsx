@@ -1048,7 +1048,7 @@ export default function Admin() {
                           <a
                             href={`/evenement/${sig.evenement_id}`}
                             target="_blank"
-                            style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', marginBottom: 4 }}
+                            style={{ color: '#C8431A', fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', marginBottom: 4 }}
                           >
                             {evSig?.titre ?? 'Événement inconnu'} ↗
                           </a>
