@@ -1184,7 +1184,8 @@ export default function Admin() {
                   { label: 'Ticketmaster',    route: '/api/scrape-ticketmaster'   },
                   { label: 'World Cup',       route: '/api/scrape-worldcup'       },
                   { label: 'Ligue Haïtienne', route: '/api/scrape-liguehaitienne' },
-                  { label: 'Eventbrite',      route: '/api/scrape-eventbrite'     },
+                  { label: 'Eventbrite',          route: '/api/scrape-eventbrite'           },
+                  { label: 'Eventbrite Belgique', route: '/api/import-eventbrite-belgium' },
                 ].map(s => (
                   <button
                     key={s.route}
