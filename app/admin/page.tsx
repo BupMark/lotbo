@@ -28,6 +28,7 @@ interface Evenement {
   mis_en_avant?: boolean
   mis_en_avant_ville?: string | null
   mis_en_avant_jusqu_au?: string | null
+  date_fin?: string | null
   date_debut?: string | null
   user_id?: string | null
   soumis_en_tant_que?: string | null
@@ -41,7 +42,7 @@ interface Signalement {
   created_at: string
 }
 
-type FiltreStatut  = 'en_attente' | 'approuve' | 'rejete' | 'hors_ligne' | 'tous'
+type FiltreStatut  = 'en_attente' | 'approuve' | 'rejete' | 'hors_ligne' | 'archive' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
 type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs'
 type FiltreRole    = 'tous' | 'visiteur' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
@@ -621,24 +622,35 @@ export default function Admin() {
     return Object.entries(map).map(([region, nb]) => ({ region, nb })).sort((a, b) => b.nb - a.nb)
   })()
 
+  // ─── Archives ─────────────────────────────────────────────────────────────
+
+  const maintenant = new Date()
+  const isArchive  = (ev: Evenement) =>
+    ev.statut === 'approuve' && new Date(ev.date_fin || ev.date || '') < maintenant
+  const nbArchives = evenements.filter(isArchive).length
+  const nbEnLigne  = evenements.filter(ev => ev.statut === 'approuve' && !isArchive(ev)).length
+
   // ─── Filtre combiné ───────────────────────────────────────────────────────
 
+  const matchStatutFn = (ev: Evenement): boolean => {
+    if (filtreStatut === 'archive')  return isArchive(ev)
+    if (filtreStatut === 'approuve') return ev.statut === 'approuve' && !isArchive(ev)
+    if (filtreStatut === 'tous')     return true
+    return ev.statut === filtreStatut
+  }
+
   const evenementsFiltres = evenements.filter(ev => {
-    const matchStatut    = filtreStatut === 'tous' || ev.statut === filtreStatut
     const matchTemps     = matchTemporel(ev.date || ev.date_debut || '', filtreTemporel)
     const q              = recherche.toLowerCase()
     const matchRecherche = q === '' ||
       ev.titre?.toLowerCase().includes(q) ||
       ev.lieu?.toLowerCase().includes(q) ||
       ev.organisateur?.toLowerCase().includes(q)
-    return matchStatut && matchTemps && matchRecherche
+    return matchStatutFn(ev) && matchTemps && matchRecherche
   })
 
   const nbParTemps = (f: FiltreTemporel) =>
-    evenements.filter(ev =>
-      (filtreStatut === 'tous' || ev.statut === filtreStatut) &&
-      matchTemporel(ev.date, f)
-    ).length
+    evenements.filter(ev => matchStatutFn(ev) && matchTemporel(ev.date || ev.date_debut || '', f)).length
 
   // ─── Loading ──────────────────────────────────────────────────────────────
 
@@ -742,7 +754,8 @@ export default function Admin() {
             <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               {([
                 { key: 'en_attente',  label: '⏳ En attente', count: countEnAttente },
-                { key: 'approuve',    label: '✓ Approuvés',   count: countApprouves },
+                { key: 'approuve',    label: '✓ En ligne',    count: nbEnLigne },
+                { key: 'archive',     label: '📅 Archivés',   count: nbArchives },
                 { key: 'rejete',      label: '✗ Rejetés',     count: countRejetes   },
                 { key: 'hors_ligne',  label: '⬇ Hors ligne',  count: evenements.filter(e => e.statut === 'hors_ligne').length },
                 { key: 'tous',        label: 'Tous',           count: countTotal     },
@@ -761,6 +774,11 @@ export default function Admin() {
                   {f.label} ({f.count})
                 </button>
               ))}
+            </div>
+
+            {/* Stats approuvés */}
+            <div style={{ fontSize: 12, color: '#8C5A40', marginBottom: 8 }}>
+              {nbEnLigne} en ligne · {nbArchives} archivés · {nbEnLigne + nbArchives} total approuvés
             </div>
 
             {/* ADMIN1 — Filtres temporels */}
@@ -836,6 +854,7 @@ export default function Admin() {
                       <h2 style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, margin: 0 }}>{ev.titre}</h2>
                       {ev.visibilite === 'prive'   && <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#1A1410', color: 'white', flexShrink: 0 }}>🔒 Privé</span>}
                       {ev.visibilite === 'discret' && <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#8C5A40', color: 'white', flexShrink: 0 }}>👁 Discret</span>}
+                      {isArchive(ev) && <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#8C5A40', color: 'white', flexShrink: 0 }}>📅 Archivé</span>}
                     </div>
                     {ev.organisateur && (
                       <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 4 }}>👤 {ev.organisateur}</p>
