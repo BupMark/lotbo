@@ -103,19 +103,58 @@ export default function Login() {
     else window.location.href = getRedirect()
   }
 
-  // ── Inscription email ──────────────────────────────────────────────────────
+  /// ── Inscription email ──────────────────────────────────────────────────────
   const handleSignup = async (e: React.MouseEvent) => {
     e.preventDefault()
-    if (!prenom.trim())    { setMessage('Entre ton prénom pour continuer.'); setMessageType('erreur'); return }
+    if (!prenom.trim())      { setMessage('Entre ton prénom pour continuer.'); setMessageType('erreur'); return }
     if (password.length < 6) { setMessage('Le mot de passe doit contenir au moins 6 caractères.'); setMessageType('erreur'); return }
-    if (!accepteCGU)       { setMessage("Tu dois accepter les conditions d'utilisation pour continuer."); setMessageType('erreur'); return }
+    if (!accepteCGU)         { setMessage("Tu dois accepter les conditions d'utilisation pour continuer."); setMessageType('erreur'); return }
     setLoading(true); setMessage('')
+
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nom: prenom.trim() } } })
     if (error) { setLoading(false); setMessage('Erreur : ' + error.message); setMessageType('erreur'); return }
+
     if (data.user) {
-      await supabase.from('profiles').upsert({ id: data.user.id, nom: prenom.trim(), role: 'membre', created_at: new Date().toISOString() })
-      if (newsletter) { try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {} }
+      // Créer le profil
+      await supabase.from('profiles').upsert({
+        id:         data.user.id,
+        nom:        prenom.trim(),
+        role:       'membre',
+        created_at: new Date().toISOString(),
+      })
+
+      // Vérifier si c'est un supporter fondateur
+      try {
+        const { data: supporter } = await supabase
+          .from('supporters')
+          .select('id, palier, badge_attribue')
+          .eq('email', email.toLowerCase().trim())
+          .eq('badge_attribue', false)
+          .single()
+
+        if (supporter) {
+          // Attribuer le badge sur le profil
+          await supabase
+            .from('profiles')
+            .update({ badge: supporter.palier })
+            .eq('id', data.user.id)
+
+          // Marquer badge attribué + lier user_id
+          await supabase
+            .from('supporters')
+            .update({ badge_attribue: true, user_id: data.user.id })
+            .eq('id', supporter.id)
+        }
+      } catch {
+        // Pas de supporter trouvé — normal pour la plupart des inscriptions
+      }
+
+      // Newsletter optionnelle
+      if (newsletter) {
+        try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {}
+      }
     }
+
     track('user_signed_up', { user_id: data.user?.id })
     setLoading(false); setEmailInscription(email); setEmailEnvoye(true)
   }
