@@ -172,6 +172,8 @@ function ReactionBar({ commentaireId, reactionsInitiales }: {
 }
 
 // ── Formulaire commentaire / réponse ─────────────────────────────────────────
+const ADMIN_UUID = 'ff21f2e0-135d-4996-9713-4a0e20c38fe1'
+
 function CommentaireForm({
   evenementId,
   parentId,
@@ -180,6 +182,8 @@ function CommentaireForm({
   placeholder,
   compact,
   userProfile,
+  parentAuthorUserId,
+  evenementTitre,
 }: {
   evenementId: string
   parentId?: string
@@ -188,6 +192,8 @@ function CommentaireForm({
   placeholder?: string
   compact?: boolean
   userProfile: UserProfile | null
+  parentAuthorUserId?: string | null
+  evenementTitre?: string
 }) {
   const [contenu, setContenu] = useState('')
   const [loading, setLoading] = useState(false)
@@ -229,13 +235,42 @@ function CommentaireForm({
       .select().single()
     setLoading(false)
     if (!error && data) {
-      onNouveau({ ...data as Commentaire, photo_url: userProfile.photo_url })
+      const nouveau = { ...data as Commentaire, photo_url: userProfile.photo_url }
+      onNouveau(nouveau)
       attributerPoints({
         user_id: userProfile.id,
         action: parentId ? 'repondre' : 'commenter',
         evenement_id: evenementId,
         type_role: 'utilisateur',
       })
+
+      // Notification à l'auteur du commentaire parent (si réponse + pas soi-même)
+      if (parentId && parentAuthorUserId && parentAuthorUserId !== userProfile.id) {
+        const extrait = contenu.trim().slice(0, 80) + (contenu.trim().length > 80 ? '…' : '')
+        supabase.from('notifications').insert([{
+          user_id: parentAuthorUserId,
+          type: 'nouveau_commentaire',
+          titre: `${userProfile.nom} a répondu à votre commentaire`,
+          message: extrait,
+          lien: `/evenement/${evenementId}`,
+          lu: false,
+        }]).then(() => {})
+      }
+
+      // Notification admin pour tout nouveau commentaire racine (modération)
+      if (!parentId && userProfile.id !== ADMIN_UUID) {
+        const extrait = contenu.trim().slice(0, 80) + (contenu.trim().length > 80 ? '…' : '')
+        const titreEv = evenementTitre ? ` sur "${evenementTitre}"` : ''
+        supabase.from('notifications').insert([{
+          user_id: ADMIN_UUID,
+          type: 'nouveau_commentaire',
+          titre: `Nouveau commentaire${titreEv}`,
+          message: `${userProfile.nom} : ${extrait}`,
+          lien: `/evenement/${evenementId}`,
+          lu: false,
+        }]).then(() => {})
+      }
+
       setContenu('')
       setEnvoye(true)
       setTimeout(() => { setEnvoye(false); if (onCancel) onCancel() }, 2000)
@@ -298,12 +333,14 @@ function CarteCommentaire({
   onNouvelleReponse,
   estReponse,
   userProfile,
+  evenementTitre,
 }: {
   commentaire: Commentaire
   evenementId: string
   onNouvelleReponse: (parentId: string, reponse: Commentaire) => void
   estReponse?: boolean
   userProfile: UserProfile | null
+  evenementTitre?: string
 }) {
   const [showRepondre, setShowRepondre] = useState(false)
 
@@ -362,6 +399,8 @@ function CarteCommentaire({
                 evenementId={evenementId}
                 parentId={commentaire.id}
                 userProfile={userProfile}
+                parentAuthorUserId={commentaire.user_id}
+                evenementTitre={evenementTitre}
                 onNouveau={(reponse) => {
                   onNouvelleReponse(commentaire.id, reponse)
                   setShowRepondre(false)
@@ -385,6 +424,7 @@ function CarteCommentaire({
               evenementId={evenementId}
               onNouvelleReponse={onNouvelleReponse}
               userProfile={userProfile}
+              evenementTitre={evenementTitre}
               estReponse
             />
           ))}
@@ -400,11 +440,13 @@ function CommentairesList({
   evenementId,
   onNouvelleReponse,
   userProfile,
+  evenementTitre,
 }: {
   commentaires: Commentaire[]
   evenementId: string
   onNouvelleReponse: (parentId: string, reponse: Commentaire) => void
   userProfile: UserProfile | null
+  evenementTitre?: string
 }) {
   const [tri, setTri]         = useState<'recent' | 'likes'>('recent')
   const [nbVisible, setNbVisible] = useState(COMMENTS_PER_PAGE)
@@ -447,6 +489,7 @@ function CommentairesList({
             evenementId={evenementId}
             onNouvelleReponse={onNouvelleReponse}
             userProfile={userProfile}
+            evenementTitre={evenementTitre}
           />
         ))}
       </div>
@@ -974,6 +1017,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
           <CommentaireForm
             evenementId={ev.id}
             userProfile={userProfile}
+            evenementTitre={ev.titre}
             onNouveau={(c) => setCommentaires(prev => [{ ...c, reponses: [], reactions: {} }, ...prev])}
           />
           <CommentairesList
@@ -981,6 +1025,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
             evenementId={ev.id}
             onNouvelleReponse={handleNouvelleReponse}
             userProfile={userProfile}
+            evenementTitre={ev.titre}
           />
         </div>
 {/* ── F8 — Lien vers série si occurrence ── */}
