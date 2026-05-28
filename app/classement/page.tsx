@@ -71,7 +71,7 @@ export default function Classement() {
     const { data } = await supabase
       .from('profiles')
       .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
-      .gt(colonne, 0)
+      .or(`${colonne}.gt.0,role.in.(admin,ambassadeur,contributeur_terrain)`)
       .order(colonne, { ascending: false })
       .limit(100)
 
