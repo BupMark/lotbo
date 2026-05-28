@@ -45,6 +45,7 @@ export async function GET(request: Request) {
       .from('profiles')
       .select('id, nom, role, photo_url, created_at, points_total')
       .order('created_at', { ascending: false })
+      .limit(2000)
     if (profErr) throw profErr
 
     // 3. comptes événements par user_id
@@ -52,6 +53,7 @@ export async function GET(request: Request) {
       .from('evenements')
       .select('user_id, statut')
       .not('user_id', 'is', null)
+      .limit(2000)
 
     const evMap: Record<string, { soumis: number; approuves: number }> = {}
     for (const ev of evStats || []) {

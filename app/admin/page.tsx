@@ -393,14 +393,14 @@ export default function Admin() {
     const allEvs    = [...baseEvs, ...((rejetesData as Evenement[]) || []).filter(e => !seenIds.has(e.id))]
     setEvenements(allEvs)
 
-    // ── Profils soumetteurs — requête séparée pour éviter jointure inline ─────
+    // ── Profils soumetteurs — via API service role (contourne RLS anon) ────────
     const userIds = [...new Set(allEvs.map(e => e.user_id).filter(Boolean))] as string[]
     if (userIds.length > 0) {
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, nom, role')
-        .in('id', userIds)
-      setProfilesMap(new Map((profilesData || []).map(p => [p.id, p])))
+      try {
+        const res = await fetch(`/api/admin/profiles?ids=${userIds.join(',')}`, { headers: hi })
+        const json = await res.json()
+        setProfilesMap(new Map((json.profiles || []).map((p: { id: string; nom: string | null; role: string | null }) => [p.id, p])))
+      } catch { /* si fetch échoue, la map reste vide — non bloquant */ }
     }
 
     // Pré-remplir les configs pour les événements déjà mis en avant
@@ -948,18 +948,19 @@ export default function Admin() {
                       <p style={{ color: '#555', fontSize: 11, marginTop: 2 }}>Source : {ev.source}</p>
                     )}
                     {(() => {
-                      const soumetteur = ev.user_id ? profilesMap.get(ev.user_id) : null
-                      if (!soumetteur?.nom) return null
+                      if (!ev.user_id) return null
+                      const soumetteur = profilesMap.get(ev.user_id)
+                      const nomAffiche = soumetteur?.nom || '(compte sans nom)'
                       return (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
                           <span style={{ color: '#555', fontSize: 11 }}>Soumis par</span>
                           <button
-                            onClick={() => setOnglet('utilisateurs')}
+                            onClick={() => { setOnglet('utilisateurs'); setRechercheUser(soumetteur?.nom || '') }}
                             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#C8431A', fontSize: 11, fontWeight: 'bold', textDecoration: 'underline' }}
                           >
-                            {soumetteur.nom}
+                            {nomAffiche}
                           </button>
-                          {soumetteur.role && (
+                          {soumetteur?.role && (
                             <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(200,67,26,0.12)', color: '#C8431A' }}>{soumetteur.role}</span>
                           )}
                           <span style={{ color: '#555', fontSize: 11 }}>
