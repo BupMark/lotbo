@@ -135,9 +135,9 @@
 }
 
 /* ══════════════════════════════════════
-   MOBILE (max 640px)
+   MOBILE (max 768px)
 ══════════════════════════════════════ */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
 
   /* Recherche pleine largeur */
   .lotbo-recherche {
@@ -203,9 +203,9 @@
 }
 
 /* ══════════════════════════════════════
-   DESKTOP (min 641px)
+   DESKTOP (min 769px)
 ══════════════════════════════════════ */
-@media (min-width: 641px) {
+@media (min-width: 769px) {
 
   /* Panneau filtres mobile caché */
   .lotbo-panneau-filtres {
