@@ -508,6 +508,8 @@ export default function Admin() {
     }
   }
 
+  const ROLES_INFERIEURS = ['visiteur', 'membre']
+
   const approuver = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'approuve' }).eq('id', id)
     setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, statut: 'approuve' } : ev))
@@ -531,6 +533,40 @@ export default function Admin() {
           method: 'POST', headers: hi,
           body: JSON.stringify({ user_id: ev.user_id, action: 'evenement_approuve', evenement_id: ev.id, type_role: typeRole }),
         }).catch(() => {})
+
+        // Promotion automatique du rôle au premier événement approuvé
+        const profilActuel = profilesMap.get(ev.user_id)
+        const roleActuel   = profilActuel?.role ?? 'visiteur'
+        if (ROLES_INFERIEURS.includes(roleActuel)) {
+          const nouveauRole = ev.soumis_en_tant_que === 'organisateur' ? 'organisateur' : 'contributeur'
+          fetch('/api/admin/users', {
+            method: 'PATCH', headers: hi,
+            body: JSON.stringify({ id: ev.user_id, role: nouveauRole, raison: 'Promotion automatique — premier événement approuvé' }),
+          }).then(async (res) => {
+            if (res.ok) {
+              // Mettre à jour profilesMap local
+              setProfilesMap(prev => {
+                const next = new Map(prev)
+                const existing = next.get(ev.user_id!) ?? { nom: null, role: null }
+                next.set(ev.user_id!, { ...existing, role: nouveauRole })
+                return next
+              })
+              // Mettre à jour la liste utilisateurs si elle est chargée
+              setUsers(prev => prev.map(u => u.id === ev.user_id && ROLES_INFERIEURS.includes(u.role) ? { ...u, role: nouveauRole } : u))
+              // Notifier l'utilisateur de sa promotion
+              await supabase.from('notifications').insert([{
+                user_id: ev.user_id,
+                type: 'badge_debloque',
+                titre: nouveauRole === 'organisateur' ? '🎪 Tu es Organisateur !' : '⭐ Tu es Contributeur !',
+                message: nouveauRole === 'organisateur'
+                  ? 'Ton premier événement a été approuvé. Bienvenue parmi les organisateurs LOTBO !'
+                  : 'Ton premier événement a été approuvé. Tu rejoins les contributeurs LOTBO !',
+                lien: '/profil',
+                lu: false,
+              }])
+            }
+          }).catch(() => {})
+        }
       }
     }
   }
