@@ -307,6 +307,7 @@ export default function Admin() {
   const [loadingImport,    setLoadingImport]     = useState(false)
 
   // F2 — Onglet Utilisateurs
+  const [countMembres,     setCountMembres]     = useState(0)
   const [users,            setUsers]            = useState<UserAdmin[]>([])
   const [loadingUsers,     setLoadingUsers]     = useState(false)
   const [filtreRole,       setFiltreRole]       = useState<FiltreRole>('tous')
@@ -453,6 +454,13 @@ export default function Admin() {
       setCountPays(allPays.length)
       setRepartitionPays(allPays)
     }
+
+    // ── 6. Count membres (auth.users) via endpoint léger ─────────────────────
+    try {
+      const resMembres = await fetch('/api/admin/users?count=true', { headers: hi })
+      const jsonMembres = await resMembres.json()
+      setCountMembres(jsonMembres.total || 0)
+    } catch { /* non bloquant */ }
 
     setLoading(false)
   }
@@ -797,6 +805,7 @@ export default function Admin() {
             { label: 'En attente', valeur: countEnAttente, couleur: '#D4A820', onClick: () => { setFiltreStatut('en_attente'); setOnglet('evenements') } },
             { label: 'Approuvés',  valeur: countApprouves, couleur: '#2D9E6B', onClick: () => { setFiltreStatut('approuve');   setOnglet('evenements') } },
             { label: 'Rejetés',    valeur: countRejetes,   couleur: '#e57373', onClick: () => { setFiltreStatut('rejete');     setOnglet('evenements') } },
+            { label: 'Membres',    valeur: countMembres,   couleur: '#4A90D9', onClick: () => { setOnglet('utilisateurs'); if (users.length === 0) chargerUtilisateurs() } },
             { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A', onClick: () => setModalGeo('villes') },
             { label: 'Pays',       valeur: countPays,      couleur: '#8C5A40', onClick: () => setModalGeo('pays') },
             { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40', onClick: () => setModalGeo('regions') },
@@ -828,7 +837,7 @@ export default function Admin() {
             { key: 'evenements',   label: 'Événements',   count: countTotal,          badge: true },
             { key: 'signalements', label: 'Signalements', count: signalements.length, badge: true },
             { key: 'import',       label: '📥 Import',    count: statsImport.length,  badge: true },
-            { key: 'utilisateurs', label: '👥 Utilisateurs', count: users.length,     badge: true },
+            { key: 'utilisateurs', label: '👥 Utilisateurs', count: countMembres,     badge: true },
           ].map(tab => (
             <button
               key={tab.key}
@@ -1331,8 +1340,8 @@ export default function Admin() {
               {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
-                  { label: 'Membres',         valeur: users.length,                                                                                                                                                                    couleur: '#1A1410' },
-                  { label: 'Sans action',     valeur: users.length - ((statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0)), couleur: '#4A90D9' },
+                  { label: 'Membres',         valeur: countMembres,                                                                                                                                                                    couleur: '#1A1410' },
+                  { label: 'Sans action',     valeur: (statsRoles['visiteur'] || 0) + (statsRoles['membre'] || 0),                                                                                                                    couleur: '#4A90D9' },
                   { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0), couleur: '#D4A820' },
                   { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },

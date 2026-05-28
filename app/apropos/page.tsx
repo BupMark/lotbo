@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const VALEURS = [
@@ -33,15 +34,25 @@ const VALEURS = [
   },
 ]
 
-const STATS = [
-  { valeur: '185+', label: 'Événements approuvés' },
-  { valeur: '55+', label: 'Villes couvertes' },
-  { valeur: '12+', label: 'Pays' },
-  { valeur: '5', label: 'Langues supportées' },
-]
-
 export default function Apropos() {
   const router = useRouter()
+  const [stats, setStats] = useState<{ total: number; villes: number; pays: number } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(d => setStats(d))
+      .catch(() => {})
+  }, [])
+
+  const fmt = (n: number) => n > 0 ? `${n}+` : '…'
+
+  const STATS = [
+    { valeur: stats ? fmt(stats.total)  : '…', label: 'Événements soumis'  },
+    { valeur: stats ? fmt(stats.villes) : '…', label: 'Villes couvertes'   },
+    { valeur: stats ? fmt(stats.pays)   : '…', label: 'Pays'               },
+    { valeur: '5',                              label: 'Langues supportées' },
+  ]
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -111,7 +122,7 @@ export default function Apropos() {
               </div>
             </div>
 
-            {/* Stats */}
+            {/* Stats dynamiques */}
             <div style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16
             }}>

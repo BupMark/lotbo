@@ -935,7 +935,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
         {ev.description && (
           <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#1A1410' }}>À propos</h2>
-            <p style={{ color: '#3D2B1F', lineHeight: 1.7, fontSize: 14 }}>{ev.description}</p>
+            <p style={{ color: '#3D2B1F', lineHeight: 1.7, fontSize: 14, whiteSpace: 'pre-wrap' }}>{ev.description}</p>
           </div>
         )}
 

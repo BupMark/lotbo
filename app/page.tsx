@@ -303,7 +303,7 @@ export default function Home() {
         '📍 ' + ev.lieu + '<br/>' +
         '📅 ' + periodePopup + '<br/>' +
         (ev.heure_debut ? '🕐 ' + ev.heure_debut + (ev.heure_fin ? ' → ' + ev.heure_fin : '') + '<br/>' : '') +
-        (ev.description ? '<br/>' + ev.description : '') +
+        (ev.description ? '<br/>' + ev.description.replace(/\n/g, '<br/>') : '') +
         (ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#C8431A">🔗 Plus de détails</a>' : '') +
         '<div style="display:flex;gap:8px;margin-top:12px">' +
         '<a href="/evenement/' + ev.id + '" style="flex:1;display:block;background:#C8431A;color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">Voir →</a>' +
