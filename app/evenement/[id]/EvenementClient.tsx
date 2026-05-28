@@ -55,8 +55,16 @@ interface Commentaire {
   created_at: string
   nb_likes: number
   parent_id: string | null
+  user_id?: string | null
+  photo_url?: string | null
   reponses?: Commentaire[]
   reactions?: Record<string, number>
+}
+
+interface UserProfile {
+  id: string
+  nom: string
+  photo_url: string | null
 }
 
 interface Evenement {
@@ -171,6 +179,7 @@ function CommentaireForm({
   onCancel,
   placeholder,
   compact,
+  userProfile,
 }: {
   evenementId: string
   parentId?: string
@@ -178,39 +187,55 @@ function CommentaireForm({
   onCancel?: () => void
   placeholder?: string
   compact?: boolean
+  userProfile: UserProfile | null
 }) {
-  const [auteur, setAuteur]   = useState('')
   const [contenu, setContenu] = useState('')
   const [loading, setLoading] = useState(false)
   const [envoye, setEnvoye]   = useState(false)
 
+  if (!userProfile) {
+    return (
+      <div style={{
+        background: 'rgba(200,67,26,0.04)', border: '1px solid rgba(200,67,26,0.15)',
+        borderRadius: 12, padding: compact ? '12px 16px' : '16px 20px',
+        marginBottom: compact ? 0 : 24, display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
+      }}>
+        <span style={{ color: '#8C5A40', fontSize: 13 }}>
+          {parentId ? 'Connecte-toi pour répondre.' : 'Connecte-toi pour laisser un commentaire.'}
+        </span>
+        <a href="/login" style={{
+          background: '#C8431A', color: 'white', padding: '8px 16px',
+          borderRadius: 8, fontSize: 13, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap',
+        }}>
+          Se connecter
+        </a>
+      </div>
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!auteur.trim() || !contenu.trim()) return
+    if (!contenu.trim()) return
     setLoading(true)
     const { data, error } = await supabase.from('commentaires')
       .insert([{
         evenement_id: evenementId,
-        auteur: auteur.trim(),
+        auteur: userProfile.nom,
         contenu: contenu.trim(),
         parent_id: parentId || null,
+        user_id: userProfile.id,
       }])
       .select().single()
     setLoading(false)
     if (!error && data) {
-      onNouveau(data as Commentaire)
-      // GM1 — Points commentaire ou réponse
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session?.user?.id) {
-    attributerPoints({
-      user_id: session.user.id,
-      action: parentId ? 'repondre' : 'commenter',
-      evenement_id: evenementId,
-      type_role: 'utilisateur'
-    })
-  }
-})
-      setAuteur('')
+      onNouveau({ ...data as Commentaire, photo_url: userProfile.photo_url })
+      attributerPoints({
+        user_id: userProfile.id,
+        action: parentId ? 'repondre' : 'commenter',
+        evenement_id: evenementId,
+        type_role: 'utilisateur',
+      })
       setContenu('')
       setEnvoye(true)
       setTimeout(() => { setEnvoye(false); if (onCancel) onCancel() }, 2000)
@@ -220,14 +245,16 @@ supabase.auth.getSession().then(({ data: { session } }) => {
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: compact ? 0 : 24 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <input
-          value={auteur}
-          onChange={e => setAuteur(e.target.value)}
-          placeholder="Ton prénom ou pseudo"
-          maxLength={50}
-          required
-          style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: compact ? '8px 12px' : '10px 14px', fontSize: 13, color: '#1A1410', outline: 'none' }}
-        />
+        {/* Identité connectée — lecture seule */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {userProfile.photo_url
+            ? <img src={userProfile.photo_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold', color: 'white', flexShrink: 0 }}>
+                {userProfile.nom[0]?.toUpperCase()}
+              </div>
+          }
+          <span style={{ fontSize: 13, fontWeight: 'bold', color: '#1A1410' }}>{userProfile.nom}</span>
+        </div>
         <textarea
           value={contenu}
           onChange={e => setContenu(e.target.value)}
@@ -270,11 +297,13 @@ function CarteCommentaire({
   evenementId,
   onNouvelleReponse,
   estReponse,
+  userProfile,
 }: {
   commentaire: Commentaire
   evenementId: string
   onNouvelleReponse: (parentId: string, reponse: Commentaire) => void
   estReponse?: boolean
+  userProfile: UserProfile | null
 }) {
   const [showRepondre, setShowRepondre] = useState(false)
 
@@ -290,9 +319,12 @@ function CarteCommentaire({
       {/* En-tête */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold', color: 'white', flexShrink: 0 }}>
-            {commentaire.auteur[0]?.toUpperCase()}
-          </div>
+          {commentaire.photo_url
+            ? <img src={commentaire.photo_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold', color: 'white', flexShrink: 0 }}>
+                {commentaire.auteur[0]?.toUpperCase()}
+              </div>
+          }
           <span style={{ fontWeight: 'bold', fontSize: 13, color: '#1A1410' }}>{commentaire.auteur}</span>
         </div>
         <span style={{ fontSize: 11, color: '#8C5A40' }}>
@@ -329,6 +361,7 @@ function CarteCommentaire({
               <CommentaireForm
                 evenementId={evenementId}
                 parentId={commentaire.id}
+                userProfile={userProfile}
                 onNouveau={(reponse) => {
                   onNouvelleReponse(commentaire.id, reponse)
                   setShowRepondre(false)
@@ -351,6 +384,7 @@ function CarteCommentaire({
               commentaire={rep}
               evenementId={evenementId}
               onNouvelleReponse={onNouvelleReponse}
+              userProfile={userProfile}
               estReponse
             />
           ))}
@@ -365,10 +399,12 @@ function CommentairesList({
   commentaires,
   evenementId,
   onNouvelleReponse,
+  userProfile,
 }: {
   commentaires: Commentaire[]
   evenementId: string
   onNouvelleReponse: (parentId: string, reponse: Commentaire) => void
+  userProfile: UserProfile | null
 }) {
   const [tri, setTri]         = useState<'recent' | 'likes'>('recent')
   const [nbVisible, setNbVisible] = useState(COMMENTS_PER_PAGE)
@@ -410,6 +446,7 @@ function CommentairesList({
             commentaire={c}
             evenementId={evenementId}
             onNouvelleReponse={onNouvelleReponse}
+            userProfile={userProfile}
           />
         ))}
       </div>
@@ -454,6 +491,7 @@ export default function EvenementPage() {
   const [carteVisuelleouverte, setCarteVisuelleouverte] = useState(false)
   const [expressionChoisie, setExpressionChoisie]       = useState('🙋 Je serai là')
   const [isConnected, setIsConnected]                   = useState(false)
+  const [userProfile, setUserProfile]                   = useState<UserProfile | null>(null)
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -514,10 +552,24 @@ if (data?.parent_id) {
             }
           }
 
+          // Charger les photos de profil des auteurs
+          const userIds = [...new Set(
+            comms.map((c: Commentaire) => c.user_id).filter(Boolean) as string[]
+          )]
+          const photosMap: Record<string, string | null> = {}
+          if (userIds.length > 0) {
+            const { data: profils } = await supabase
+              .from('profiles').select('id, photo_url').in('id', userIds)
+            for (const p of (profils || []) as { id: string; photo_url: string | null }[]) {
+              photosMap[p.id] = p.photo_url
+            }
+          }
+
           // Construire arbre parent/enfants
           const tousLesCommentaires: Commentaire[] = comms.map((c: Commentaire) => ({
             ...c,
             reactions: reactionsMap[c.id] || {},
+            photo_url: c.user_id ? (photosMap[c.user_id] ?? null) : null,
             reponses: [],
           }))
 
@@ -548,9 +600,20 @@ if (data?.parent_id) {
     setNbLikes(count[id as string] || 0)
     const participations = JSON.parse(localStorage.getItem('lotbo_participations') || '{}')
     setSeraiLa(!!participations[id as string])
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user?.user_metadata?.role === 'admin') setIsAdmin(true)
       setIsConnected(!!session?.user)
+      if (session?.user?.id) {
+        const { data: profil } = await supabase
+          .from('profiles').select('id, nom, photo_url').eq('id', session.user.id).single()
+        if (profil) {
+          setUserProfile({
+            id: profil.id,
+            nom: profil.nom || session.user.user_metadata?.full_name || session.user.email || 'Anonyme',
+            photo_url: profil.photo_url ?? null,
+          })
+        }
+      }
     })
     const expressions = JSON.parse(localStorage.getItem('lotbo_expressions') || '{}')
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
@@ -910,12 +973,14 @@ supabase.auth.getSession().then(({ data: { session } }) => {
           </h2>
           <CommentaireForm
             evenementId={ev.id}
+            userProfile={userProfile}
             onNouveau={(c) => setCommentaires(prev => [{ ...c, reponses: [], reactions: {} }, ...prev])}
           />
           <CommentairesList
             commentaires={commentaires}
             evenementId={ev.id}
             onNouvelleReponse={handleNouvelleReponse}
+            userProfile={userProfile}
           />
         </div>
 {/* ── F8 — Lien vers série si occurrence ── */}
