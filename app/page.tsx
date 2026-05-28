@@ -565,13 +565,16 @@ export default function Home() {
         /* ── À la une bottom sheet (carte mode) ── */
         .aune-sheet {
           position: fixed;
-          bottom: 64px;
+          bottom: 0;
           left: 0; right: 0;
-          z-index: 15;
+          z-index: 50;
           background: #F7F2E8;
           border-radius: 16px 16px 0 0;
           box-shadow: 0 -4px 24px rgba(26,20,16,0.16);
           pointer-events: auto;
+          max-height: 50vh;
+          overflow-y: auto;
+          padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
         }
         @media (min-width: 641px) {
           .aune-sheet {
@@ -1009,7 +1012,7 @@ export default function Home() {
                 dx < 0 ? (prev + 1) % aLaUne.length : (prev - 1 + aLaUne.length) % aLaUne.length
               )
             }}
-            style={{ padding: '0 16px 16px' }}
+            style={{ padding: '8px 16px 16px' }}
           >
             {aLaUne.map((ev, i) => i === carouselIdx && (
               <a key={ev.id} href={'/evenement/' + ev.id}
@@ -1020,9 +1023,9 @@ export default function Home() {
                   onError={e2 => { const img = e2.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 14, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.titre}</p>
+                  <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 14, marginBottom: 3 }}>{ev.titre}</p>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {afficherPeriode(ev)}</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12, paddingBottom: 24 }}>📅 {afficherPeriode(ev)}</p>
                 </div>
                 <button
                   onClick={e2 => toggleFavori(e2, ev.id)} disabled={togglingFavori === ev.id}

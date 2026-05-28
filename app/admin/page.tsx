@@ -298,6 +298,8 @@ export default function Admin() {
   const [modalGeo,       setModalGeo]       = useState<'villes' | 'pays' | 'regions' | null>(null)
 
   const [misEnAvantConfigs, setMisEnAvantConfigs] = useState<Record<string, { ville: string; jusqu_au: string }>>({})
+  const [misEnAvantSaveStatus, setMisEnAvantSaveStatus] = useState<Record<string, 'saving' | 'ok' | 'error'>>({})
+  const [misEnAvantToggling, setMisEnAvantToggling] = useState<Record<string, boolean>>({})
 
   // SC7 — Dashboard import
   const [statsImport,      setStatsImport]      = useState<{ source: string; nb: number; dernierImport: string | null }[]>([])
@@ -588,24 +590,40 @@ export default function Admin() {
   }
 
   const toggleMisEnAvant = async (id: string, actuel: boolean) => {
+    if (misEnAvantToggling[id]) return
     const val = !actuel
-    await supabase.from('evenements').update({ mis_en_avant: val }).eq('id', id)
+    setMisEnAvantToggling(prev => ({ ...prev, [id]: true }))
+    const { error } = await supabase.from('evenements').update({ mis_en_avant: val }).eq('id', id)
+    if (error) {
+      setMisEnAvantToggling(prev => ({ ...prev, [id]: false }))
+      alert('Erreur épinglage : ' + error.message)
+      return
+    }
     setEvenements(prev => prev.map(ev => ev.id === id ? { ...ev, mis_en_avant: val } : ev))
     if (val) {
       setMisEnAvantConfigs(prev => ({ ...prev, [id]: prev[id] ?? { ville: '', jusqu_au: '' } }))
     } else {
       await supabase.from('evenements').update({ mis_en_avant_ville: null, mis_en_avant_jusqu_au: null }).eq('id', id)
       setMisEnAvantConfigs(prev => { const next = { ...prev }; delete next[id]; return next })
+      setMisEnAvantSaveStatus(prev => { const next = { ...prev }; delete next[id]; return next })
     }
+    setMisEnAvantToggling(prev => ({ ...prev, [id]: false }))
   }
 
   const saveMisEnAvantConfig = async (id: string) => {
     const cfg = misEnAvantConfigs[id]
     if (!cfg) return
-    await supabase.from('evenements').update({
-      mis_en_avant_ville:     cfg.ville || null,
-      mis_en_avant_jusqu_au:  cfg.jusqu_au || null,
+    setMisEnAvantSaveStatus(prev => ({ ...prev, [id]: 'saving' }))
+    const { error } = await supabase.from('evenements').update({
+      mis_en_avant_ville:    cfg.ville || null,
+      mis_en_avant_jusqu_au: cfg.jusqu_au || null,
     }).eq('id', id)
+    if (error) {
+      setMisEnAvantSaveStatus(prev => ({ ...prev, [id]: 'error' }))
+      return
+    }
+    setMisEnAvantSaveStatus(prev => ({ ...prev, [id]: 'ok' }))
+    setTimeout(() => setMisEnAvantSaveStatus(prev => { const next = { ...prev }; delete next[id]; return next }), 2000)
   }
 
   const traiterSignalement = async (sig: Signalement, decision: 'maintenu' | 'retire') => {
@@ -983,9 +1001,10 @@ export default function Admin() {
                     </button>
                     <button
                       onClick={() => toggleMisEnAvant(ev.id, !!ev.mis_en_avant)}
-                      style={{ background: ev.mis_en_avant ? 'rgba(200,67,26,0.25)' : 'rgba(255,255,255,0.06)', color: ev.mis_en_avant ? '#C8431A' : '#8C5A40', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: ev.mis_en_avant ? '1px solid rgba(200,67,26,0.4)' : 'none', cursor: 'pointer', fontWeight: ev.mis_en_avant ? 'bold' : 'normal' }}
+                      disabled={!!misEnAvantToggling[ev.id]}
+                      style={{ background: ev.mis_en_avant ? 'rgba(200,67,26,0.25)' : 'rgba(255,255,255,0.06)', color: ev.mis_en_avant ? '#C8431A' : '#8C5A40', padding: '6px 12px', borderRadius: 8, fontSize: 12, border: ev.mis_en_avant ? '1px solid rgba(200,67,26,0.4)' : 'none', cursor: misEnAvantToggling[ev.id] ? 'wait' : 'pointer', fontWeight: ev.mis_en_avant ? 'bold' : 'normal', opacity: misEnAvantToggling[ev.id] ? 0.6 : 1 }}
                     >
-                      {ev.mis_en_avant ? '📌 Retirer' : '📌 Une'}
+                      {misEnAvantToggling[ev.id] ? '...' : ev.mis_en_avant ? '📌 Retirer' : '📌 Une'}
                     </button>
                   </div>
 
@@ -1011,12 +1030,23 @@ export default function Admin() {
                           style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 8, padding: '6px 10px', color: '#1A1410', fontSize: 12, outline: 'none', colorScheme: 'light' }}
                         />
                       </div>
-                      <button
-                        onClick={() => saveMisEnAvantConfig(ev.id)}
-                        style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}
-                      >
-                        Sauvegarder
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+                        <button
+                          onClick={() => saveMisEnAvantConfig(ev.id)}
+                          disabled={misEnAvantSaveStatus[ev.id] === 'saving'}
+                          style={{
+                            background: misEnAvantSaveStatus[ev.id] === 'ok' ? '#2D9E6B' : misEnAvantSaveStatus[ev.id] === 'error' ? '#c0392b' : '#C8431A',
+                            color: 'white', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 'bold',
+                            cursor: misEnAvantSaveStatus[ev.id] === 'saving' ? 'wait' : 'pointer', flexShrink: 0,
+                            transition: 'background 0.2s',
+                          }}
+                        >
+                          {misEnAvantSaveStatus[ev.id] === 'saving' ? '...' : misEnAvantSaveStatus[ev.id] === 'ok' ? '✓ Sauvegardé' : misEnAvantSaveStatus[ev.id] === 'error' ? '✗ Erreur' : 'Sauvegarder'}
+                        </button>
+                        {misEnAvantSaveStatus[ev.id] === 'error' && (
+                          <span style={{ color: '#e57373', fontSize: 10 }}>Colonnes manquantes ? Voir SQL ci-dessous.</span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
