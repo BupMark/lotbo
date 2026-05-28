@@ -565,16 +565,16 @@ export default function Home() {
         /* ── À la une bottom sheet (carte mode) ── */
         .aune-sheet {
           position: fixed;
-          bottom: 0;
+          bottom: 64px;
           left: 0; right: 0;
-          z-index: 50;
+          z-index: 40;
           background: #F7F2E8;
           border-radius: 16px 16px 0 0;
           box-shadow: 0 -4px 24px rgba(26,20,16,0.16);
           pointer-events: auto;
-          max-height: 50vh;
+          max-height: calc(50vh - 64px);
           overflow-y: auto;
-          padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+          padding-bottom: 8px;
         }
         @media (min-width: 641px) {
           .aune-sheet {
