@@ -120,6 +120,7 @@ export default function Home() {
   const tooltipTimer                        = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [enCoursIds, setEnCoursIds]         = useState<Set<string>>(new Set())
   const enCoursIntervalRef                  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const searchRef                           = useRef<HTMLInputElement>(null)
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
@@ -175,6 +176,14 @@ export default function Home() {
   useEffect(() => {
     if (dateFin) track('filter_applied', { filter: 'date_fin', value: dateFin })
   }, [dateFin])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('s') === '1') {
+      setMode('liste')
+      setTimeout(() => searchRef.current?.focus(), 100)
+    }
+  }, [])
 
   const nbFiltres = [
     categorie !== 'Toutes',
@@ -648,7 +657,7 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button className="lotbo-hamburger" onClick={() => setDrawerOuvert(true)} style={{ background: '#1A1410', border: 'none', color: '#F7F2E8', borderRadius: 999, padding: '6px 10px', fontSize: 16, cursor: 'pointer', flexShrink: 0 }}>☰</button>
 
-          <div className="lotbo-mode-header" style={{ gap: 2, background: '#E8E0D0', borderRadius: 999, padding: 3, flexShrink: 0 }}>
+          <div className="lotbo-mode-header lotbo-mode-switcher" style={{ gap: 2, background: '#E8E0D0', borderRadius: 999, padding: 3, flexShrink: 0 }}>
             <button onClick={() => setMode('carte')} style={{ padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'carte' ? '#C8431A' : 'transparent', color: mode === 'carte' ? 'white' : '#8C5A40' }}>🗺️ {t.carte.carte}</button>
             <button onClick={() => setMode('liste')} style={{ padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'liste' ? '#C8431A' : 'transparent', color: mode === 'liste' ? 'white' : '#8C5A40' }}>📋 {t.carte.liste}</button>
           </div>
@@ -677,12 +686,13 @@ export default function Home() {
               )}
             </div>
             <NotifCloche userId={user?.id} />
-            <a href="/ajouter" style={{ background: '#C8431A', color: 'white', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>+ Ajouter</a>
+            <a href="/ajouter" className="lotbo-ajouter-header" style={{ background: '#C8431A', color: 'white', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>+ Ajouter</a>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
+            ref={searchRef}
             type="text"
             placeholder={t.carte.recherche}
             value={recherche}
@@ -1043,53 +1053,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* ══════════════════════════════════════
-          TAB BAR mobile
-      ══════════════════════════════════════ */}
-      <div className="lotbo-tabbar">
-        <button onClick={() => { setMode('carte'); setFiltresOuverts(false) }} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke={mode === 'carte' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" fill="none"/>
-            <path d="M9 21V12h6v9" stroke={mode === 'carte' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'carte' ? '#C8431A' : '#8C5A40' }}>Home</span>
-        </button>
-
-        <button onClick={() => setMode('liste')} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="4" width="18" height="17" rx="2" stroke={mode === 'liste' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
-            <path d="M8 2v3M16 2v3M3 9h18" stroke={mode === 'liste' ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" strokeLinecap="round"/>
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 'bold', color: mode === 'liste' ? '#C8431A' : '#8C5A40' }}>Événements</span>
-        </button>
-
-        <button onClick={centrerSurPosition} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: -4, boxShadow: '0 2px 8px rgba(200,67,26,0.4)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" fill="white"/>
-              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <span style={{ fontSize: 10, fontWeight: 'bold', color: '#C8431A' }}>Carte</span>
-        </button>
-
-        <a href={user ? '/profil?tab=favoris' : '/login'} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', textDecoration: 'none' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"
-              stroke="#8C5A40" strokeWidth="1.8" fill="none"
-            />
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 'bold', color: '#8C5A40' }}>Favoris</span>
-        </a>
-
-        <a href={user ? '/profil' : '/login'} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 0', textDecoration: 'none' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="8" r="4" stroke={user ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"/>
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={user ? '#C8431A' : '#8C5A40'} strokeWidth="1.8" strokeLinecap="round"/>
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 'bold', color: user ? '#C8431A' : '#8C5A40' }}>{user ? 'Profil' : 'Connexion'}</span>
-        </a>
-      </div>
 
     </main>
   )

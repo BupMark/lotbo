@@ -3,6 +3,7 @@ import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import CookieBanner from "../components/CookieBanner";
 import Preloader from "../components/Preloader";
+import TabBarGlobal from "../components/TabBarGlobal";
 import { Analytics } from "@vercel/analytics/react";
 import AmplitudeInit from "../components/AmplitudeInit";
 
@@ -52,6 +53,7 @@ export default function RootLayout({
       <body className={`${dmSans.variable} ${playfairDisplay.variable} antialiased`}>
         <Preloader />
         {children}
+        <TabBarGlobal />
         <CookieBanner />
         <Analytics />
         <AmplitudeInit />

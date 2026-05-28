@@ -41,5 +41,12 @@
       "lien": "Lyen pou plis detay",
       "photo": "Foto evènman an",
       "publier": "Pibliye evènman an"
+    },
+    "tabbar": {
+      "carte": "Kat",
+      "recherche": "Rechèch",
+      "ajouter": "Ajoute",
+      "notifications": "Notif",
+      "profil": "Pwofil"
     }
   }

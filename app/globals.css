@@ -51,10 +51,10 @@
 }
 
 /* ══════════════════════════════════════
-   TAB BAR — mobile uniquement
+   TAB BAR GLOBALE — mobile uniquement
 ══════════════════════════════════════ */
-.lotbo-tabbar {
-  display: flex;
+.lotbo-tabbar-global {
+  display: none;
   position: fixed;
   bottom: 0;
   left: 0;
@@ -65,6 +65,35 @@
   padding: 4px 0 max(8px, env(safe-area-inset-bottom));
   justify-content: space-around;
   align-items: center;
+}
+
+.lotbo-tabbar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 0;
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: bold;
+  color: #8C5A40;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.lotbo-tabbar-fab {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #C8431A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(200, 67, 26, 0.45);
+  margin-bottom: 2px;
 }
 
 /* ══════════════════════════════════════
@@ -115,26 +144,29 @@
     max-width: 100%;
   }
 
-  /* Tab bar visible en bas */
-  .lotbo-tabbar {
+  /* Tab bar globale visible en bas */
+  .lotbo-tabbar-global {
     display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 50;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 10px 0 max(10px, env(safe-area-inset-bottom));
-    justify-content: center;
-    align-items: center;
   }
 
-  /* Switcher carte/liste caché dans header sur mobile */
+  /* Padding bas du body pour laisser de la place à la tab bar */
+  body {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+
+  /* Switcher carte/liste caché dans header sur mobile (sauf .lotbo-mode-switcher) */
   .lotbo-mode-header {
     display: none;
+  }
+
+  /* Switcher Carte/Liste reste visible sur mobile */
+  .lotbo-mode-switcher {
+    display: flex !important;
+  }
+
+  /* Bouton Ajouter du header caché sur mobile (présent dans la tab bar) */
+  .lotbo-ajouter-header {
+    display: none !important;
   }
 
   /* Langue cachée dans header sur mobile */

@@ -41,5 +41,12 @@
       "lien": "Enlace para más detalles",
       "photo": "Foto del evento",
       "publier": "Publicar evento"
+    },
+    "tabbar": {
+      "carte": "Mapa",
+      "recherche": "Buscar",
+      "ajouter": "Agregar",
+      "notifications": "Notifs",
+      "profil": "Perfil"
     }
   }
