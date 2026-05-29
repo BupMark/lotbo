@@ -181,34 +181,41 @@ export async function PATCH(request: Request) {
         .single()
       const ancien_role = profil?.role ?? 'inconnu'
 
+      // Upsert au lieu de update — crée le profil s'il n'existe pas encore
       const { error } = await admin
         .from('profiles')
-        .update({ role, updated_at: new Date().toISOString() })
-        .eq('id', id)
+        .upsert({ id, role, updated_at: new Date().toISOString() }, { onConflict: 'id' })
       if (error) throw error
 
-      await admin.from('admin_logs').insert([{
-        admin_id:    session?.user?.id ?? null,
-        user_id:     id,
-        ancien_role,
-        nouveau_role: role,
-        raison:      raison ?? null,
-      }])
+      // Non-bloquant : admin_logs peut ne pas exister
+      try {
+        await admin.from('admin_logs').insert([{
+          admin_id:    session?.user?.id ?? null,
+          user_id:     id,
+          ancien_role,
+          nouveau_role: role,
+          raison:      raison ?? null,
+        }])
+      } catch { /* table optionnelle */ }
 
-      // Appendre le nouveau rôle à roles_actifs (optionnel — colonne peut ne pas exister)
-      const { data: prof, error: raErr } = await admin.from('profiles').select('roles_actifs').eq('id', id).single()
-      if (!raErr) {
-        const current = (prof?.roles_actifs as string[] | null) || []
-        if (!current.includes(role)) {
-          await admin.from('profiles').update({ roles_actifs: [...current, role] }).eq('id', id)
+      // Non-bloquant : roles_actifs (colonne peut ne pas exister)
+      try {
+        const { data: prof, error: raErr } = await admin.from('profiles').select('roles_actifs').eq('id', id).single()
+        if (!raErr) {
+          const current = (prof?.roles_actifs as string[] | null) || []
+          if (!current.includes(role)) {
+            await admin.from('profiles').update({ roles_actifs: [...current, role] }).eq('id', id)
+          }
         }
-      }
+      } catch { /* non-bloquant */ }
 
-      // Sync points depuis transactions_points
-      const { data: txs } = await admin.from('transactions_points').select('points').eq('user_id', id)
-      const total  = Math.max(0, (txs || []).reduce((s: number, t: any) => s + (t.points || 0), 0))
-      const niveau = calculerNiveau(total)
-      await admin.from('profiles').update({ points_total: total, niveau }).eq('id', id)
+      // Non-bloquant : sync points
+      try {
+        const { data: txs } = await admin.from('transactions_points').select('points').eq('user_id', id)
+        const total  = Math.max(0, (txs || []).reduce((s: number, t: any) => s + (t.points || 0), 0))
+        const niveau = calculerNiveau(total)
+        await admin.from('profiles').update({ points_total: total, niveau }).eq('id', id)
+      } catch { /* non-bloquant */ }
 
       return NextResponse.json({ success: true })
     }
