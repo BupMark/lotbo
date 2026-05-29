@@ -51,7 +51,7 @@ export default function Preloader() {
         <div style={{ position: 'relative', display: 'inline-block' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/L.jpg"
+            src="/L.png"
             alt=""
             style={{ width: 48, height: 'auto', display: 'block' }}
           />
