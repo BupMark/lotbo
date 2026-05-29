@@ -51,10 +51,10 @@
 }
 
 /* ══════════════════════════════════════
-   TAB BAR GLOBALE — mobile uniquement
+   TAB BAR GLOBALE — tous les écrans
 ══════════════════════════════════════ */
 .lotbo-tabbar-global {
-  display: none;
+  display: flex;
   position: fixed;
   bottom: 0;
   left: 0;
@@ -65,6 +65,11 @@
   padding: 4px 0 max(8px, env(safe-area-inset-bottom));
   justify-content: space-around;
   align-items: center;
+}
+
+/* Padding bas body pour laisser place à la tab bar */
+body {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 
 .lotbo-tabbar-item {
@@ -144,16 +149,6 @@
     max-width: 100%;
   }
 
-  /* Tab bar globale visible en bas */
-  .lotbo-tabbar-global {
-    display: flex;
-  }
-
-  /* Padding bas du body pour laisser de la place à la tab bar */
-  body {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom));
-  }
-
   /* Switcher carte/liste caché dans header sur mobile (sauf .lotbo-mode-switcher) */
   .lotbo-mode-header {
     display: none;
@@ -206,16 +201,6 @@
    DESKTOP (min 769px)
 ══════════════════════════════════════ */
 @media (min-width: 768px) {
-
-  /* Tab bar globale jamais visible sur ≥768px */
-  .lotbo-tabbar-global {
-    display: none !important;
-  }
-
-  /* Supprime le padding-bas mobile sur desktop */
-  body {
-    padding-bottom: 0 !important;
-  }
 
   /* Panneau filtres mobile caché */
   .lotbo-panneau-filtres {
