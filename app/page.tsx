@@ -17,6 +17,8 @@ interface Evenement {
   id: string
   titre: string
   lieu: string
+  ville?: string | null
+  pays?: string | null
   date: string
   date_debut: string | null
   date_fin: string | null
@@ -284,7 +286,14 @@ export default function Home() {
     if (categorie !== 'Toutes' && ev.categorie !== categorie) return false
     if (acces !== 'tous' && ev.acces !== acces) return false
     if (prix !== 'tous' && ev.prix !== prix) return false
-    if (recherche && !ev.titre?.toLowerCase().includes(recherche.toLowerCase()) && !ev.lieu?.toLowerCase().includes(recherche.toLowerCase())) return false
+    if (recherche) {
+      const q = recherche.toLowerCase()
+      const matchTitre = ev.titre?.toLowerCase().includes(q)
+      const matchLieu  = ev.lieu?.toLowerCase().includes(q)
+      const matchVille = ev.ville?.toLowerCase().includes(q)
+      const matchPays  = ev.pays?.toLowerCase().includes(q)
+      if (!matchTitre && !matchLieu && !matchVille && !matchPays) return false
+    }
     if (dateDebut && ev.date_debut && ev.date_debut < dateDebut) return false
     if (dateFin && ev.date_debut && ev.date_debut > dateFin) return false
     return true
