@@ -115,6 +115,7 @@ export default function Home() {
   const [clicsEvenements, setClicsEvenements] = useState(0)
   const [inviteVisible, setInviteVisible]   = useState(false)
   const [favoriTooltipId, setFavoriTooltipId] = useState<string | null>(null)
+  const [sheetReduit, setSheetReduit]       = useState(false)
   const touchStartX                         = useRef(0)
   const aLaUneMarkerRef                     = useRef<mapboxgl.Marker | null>(null)
   const tooltipTimer                        = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -991,65 +992,99 @@ export default function Home() {
           BOTTOM SHEET "À la une" (mode carte)
       ══════════════════════════════════════ */}
       {mode === 'carte' && aLaUne.length > 0 && (
-        <div className="aune-sheet">
-          {/* Drag handle */}
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8, paddingBottom: 2 }}>
-            <div style={{ width: 36, height: 4, background: '#D4C8B8', borderRadius: 999 }} />
-          </div>
+        <div
+          className="aune-sheet"
+          style={sheetReduit ? { maxHeight: 80, overflow: 'hidden', cursor: 'pointer' } : undefined}
+          onClick={sheetReduit ? () => setSheetReduit(false) : undefined}
+        >
+          {sheetReduit ? (
+            /* ── État réduit ──────────────────────────────── */
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', height: 80 }}>
+              {aLaUne[carouselIdx] && (
+                <>
+                  <img
+                    src={getEventImage(aLaUne[carouselIdx].image_url, aLaUne[carouselIdx].categorie)}
+                    alt={aLaUne[carouselIdx].titre}
+                    style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                    onError={e => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[aLaUne[carouselIdx].categorie]; if (fb && img.src !== fb) img.src = fb }}
+                  />
+                  <p style={{ flex: 1, color: '#1A1410', fontWeight: 'bold', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+                    {aLaUne[carouselIdx].titre}
+                  </p>
+                  <button
+                    onClick={e => { e.stopPropagation(); setSheetReduit(false) }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 18, padding: '4px', flexShrink: 0, lineHeight: 1 }}
+                    aria-label="Agrandir le panneau">▲</button>
+                </>
+              )}
+            </div>
+          ) : (
+            /* ── État ouvert (comportement actuel) ────────── */
+            <>
+              {/* Drag handle + bouton réduire */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: 8, paddingBottom: 2, position: 'relative' }}>
+                <div style={{ width: 36, height: 4, background: '#D4C8B8', borderRadius: 999 }} />
+                <button
+                  onClick={() => setSheetReduit(true)}
+                  style={{ position: 'absolute', right: 12, background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 16, padding: '4px', lineHeight: 1 }}
+                  aria-label="Réduire le panneau">▼</button>
+              </div>
 
-          {/* Badge + indicateurs */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 10px' }}>
-            <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
-              🔥 À la une
-            </span>
-            {aLaUne.length > 1 && (
-              <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                {aLaUne.map((_, i) => (
-                  <button key={i} onClick={() => setCarouselIdx(i)}
-                    style={{ width: i === carouselIdx ? 16 : 6, height: 6, borderRadius: 999, background: i === carouselIdx ? '#C8431A' : '#D4C8B8', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s' }}
-                    aria-label={`Événement ${i + 1}`} />
+              {/* Badge + indicateurs */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 10px' }}>
+                <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
+                  🔥 À la une
+                </span>
+                {aLaUne.length > 1 && (
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                    {aLaUne.map((_, i) => (
+                      <button key={i} onClick={() => setCarouselIdx(i)}
+                        style={{ width: i === carouselIdx ? 16 : 6, height: 6, borderRadius: 999, background: i === carouselIdx ? '#C8431A' : '#D4C8B8', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s' }}
+                        aria-label={`Événement ${i + 1}`} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Card horizontale avec swipe */}
+              <div
+                onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+                onTouchEnd={e => {
+                  const dx = e.changedTouches[0].clientX - touchStartX.current
+                  if (Math.abs(dx) > 40) setCarouselIdx(prev =>
+                    dx < 0 ? (prev + 1) % aLaUne.length : (prev - 1 + aLaUne.length) % aLaUne.length
+                  )
+                }}
+                style={{ padding: '8px 16px 16px' }}
+              >
+                {aLaUne.map((ev, i) => i === carouselIdx && (
+                  <a key={ev.id} href={'/evenement/' + ev.id}
+                    style={{ display: 'flex', gap: 12, alignItems: 'center', textDecoration: 'none' }}>
+                    <img
+                      src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre}
+                      style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }}
+                      onError={e2 => { const img = e2.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 14, marginBottom: 3 }}>{ev.titre}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12, paddingBottom: 24 }}>📅 {afficherPeriode(ev)}</p>
+                    </div>
+                    <button
+                      onClick={e2 => toggleFavori(e2, ev.id)} disabled={togglingFavori === ev.id}
+                      aria-label={favoris.has(ev.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                      style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, flexShrink: 0, boxShadow: '0 1px 4px rgba(26,20,16,0.1)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"
+                          stroke={favoris.has(ev.id) ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"
+                          fill={favoris.has(ev.id) ? '#C8431A' : 'none'} />
+                      </svg>
+                    </button>
+                  </a>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Card horizontale avec swipe */}
-          <div
-            onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
-            onTouchEnd={e => {
-              const dx = e.changedTouches[0].clientX - touchStartX.current
-              if (Math.abs(dx) > 40) setCarouselIdx(prev =>
-                dx < 0 ? (prev + 1) % aLaUne.length : (prev - 1 + aLaUne.length) % aLaUne.length
-              )
-            }}
-            style={{ padding: '8px 16px 16px' }}
-          >
-            {aLaUne.map((ev, i) => i === carouselIdx && (
-              <a key={ev.id} href={'/evenement/' + ev.id}
-                style={{ display: 'flex', gap: 12, alignItems: 'center', textDecoration: 'none' }}>
-                <img
-                  src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre}
-                  style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }}
-                  onError={e2 => { const img = e2.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 14, marginBottom: 3 }}>{ev.titre}</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12, paddingBottom: 24 }}>📅 {afficherPeriode(ev)}</p>
-                </div>
-                <button
-                  onClick={e2 => toggleFavori(e2, ev.id)} disabled={togglingFavori === ev.id}
-                  aria-label={favoris.has(ev.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                  style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, flexShrink: 0, boxShadow: '0 1px 4px rgba(26,20,16,0.1)' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"
-                      stroke={favoris.has(ev.id) ? '#C8431A' : '#8C5A40'} strokeWidth="1.8"
-                      fill={favoris.has(ev.id) ? '#C8431A' : 'none'} />
-                  </svg>
-                </button>
-              </a>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       )}
 

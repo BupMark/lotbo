@@ -207,6 +207,11 @@
 ══════════════════════════════════════ */
 @media (min-width: 769px) {
 
+  /* Tab bar globale jamais visible sur desktop */
+  .lotbo-tabbar-global {
+    display: none !important;
+  }
+
   /* Panneau filtres mobile caché */
   .lotbo-panneau-filtres {
     display: none !important;
