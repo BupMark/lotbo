@@ -76,19 +76,17 @@ export default function Classement() {
       .order(colonne, { ascending: false })
       .limit(100)
 
-    // Requête 2 : rôles spéciaux toujours présents (admin, ambassadeur, contributeur_terrain)
-    const { data: rolesSpeciaux } = await supabase
-      .from('profiles')
-      .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
-      .in('role', ['admin', 'ambassadeur', 'contributeur_terrain'])
-      .limit(200)
+    // Requête 2 : rôles spéciaux via API server-side (service role, contourne RLS sur colonne 'role')
+    const resSpeciaux = await fetch('/api/classement-speciaux').catch(() => null)
+    const jsonSpeciaux = resSpeciaux?.ok ? await resSpeciaux.json().catch(() => ({ profiles: [] })) : { profiles: [] }
+    const rolesSpeciaux: Membre[] = jsonSpeciaux.profiles || []
 
     // Fusion sans doublon, triée par points décroissants
     const seenIds = new Set((topPoints || []).map((m: Membre) => m.id))
-    const merged  = [
+    const merged: Membre[] = [
       ...(topPoints || []),
-      ...(rolesSpeciaux || []).filter((m: Membre) => !seenIds.has(m.id)),
-    ] as Membre[]
+      ...rolesSpeciaux.filter(m => !seenIds.has(m.id)),
+    ]
     merged.sort((a, b) => ((b[colonne as keyof Membre] as number) || 0) - ((a[colonne as keyof Membre] as number) || 0))
 
     setMembres(merged)
