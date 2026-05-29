@@ -472,7 +472,10 @@ export default function Admin() {
     try {
       const res = await fetch('/api/admin/users', { headers: hi })
       const data = await res.json()
-      if (data.users) setUsers(data.users)
+      if (data.users) {
+        setUsers(data.users)
+        setCountMembres(data.users.length)  // auth.users = total réel, pas seulement profiles
+      }
     } catch { /* ignore */ }
     setLoadingUsers(false)
   }
@@ -1356,7 +1359,7 @@ export default function Admin() {
               {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
-                  { label: 'Membres',         valeur: countMembres,                                                                                                                                                                    couleur: '#1A1410' },
+                  { label: 'Membres',         valeur: users.length > 0 ? users.length : countMembres,                                                                                                                              couleur: '#1A1410' },
                   { label: 'Contributeurs',   valeur: statsRoles['contributeur'] || 0,                                                                                                                                                          couleur: '#D4A820' },
                   { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
