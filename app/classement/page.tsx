@@ -62,35 +62,13 @@ export default function Classement() {
 
   const charger = async () => {
     setLoading(true)
-
-    const colonne = filtre === 'contributeur'
-      ? 'points_utilisateur'
-      : filtre === 'organisateur'
-        ? 'points_organisateur'
-        : 'points_total'
-
-    // Requête 1 : top 100 par points
-    const { data: topPoints } = await supabase
-      .from('profiles')
-      .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
-      .gt(colonne, 0)
-      .order(colonne, { ascending: false })
-      .limit(100)
-
-    // Requête 2 : rôles spéciaux via API server-side (service role, contourne RLS sur colonne 'role')
-    const resSpeciaux = await fetch('/api/classement-speciaux').catch(() => null)
-    const jsonSpeciaux = resSpeciaux?.ok ? await resSpeciaux.json().catch(() => ({ profiles: [] })) : { profiles: [] }
-    const rolesSpeciaux: Membre[] = jsonSpeciaux.profiles || []
-
-    // Fusion sans doublon, triée par points décroissants
-    const seenIds = new Set((topPoints || []).map((m: Membre) => m.id))
-    const merged: Membre[] = [
-      ...(topPoints || []),
-      ...rolesSpeciaux.filter(m => !seenIds.has(m.id)),
-    ]
-    merged.sort((a, b) => ((b[colonne as keyof Membre] as number) || 0) - ((a[colonne as keyof Membre] as number) || 0))
-
-    setMembres(merged)
+    try {
+      const res  = await fetch(`/api/classement?filtre=${filtre}`)
+      const json = res.ok ? await res.json() : { membres: [] }
+      setMembres((json.membres || []) as Membre[])
+    } catch {
+      setMembres([])
+    }
     setLoading(false)
   }
 
