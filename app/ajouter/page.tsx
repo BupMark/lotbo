@@ -538,7 +538,7 @@ export default function AjouterEvenement() {
   const [multiJours, setMultiJours]           = useState(false)
   const [visibilite, setVisibilite]           = useState<'public' | 'discret' | 'prive'>('public')
   const [codeAcces, setCodeAcces]             = useState('')
-  const [soumisEnTantQue, setSoumisEnTantQue] = useState<'organisateur' | 'contributeur' | null>(null)
+  const [soumisEnTantQue, setSoumisEnTantQue] = useState<'organisateur' | 'contributeur'>('contributeur')
   const [aDoubleRole, setADoubleRole]         = useState(false)
 
   // F8 — Récurrence
@@ -693,7 +693,7 @@ export default function AjouterEvenement() {
     const estContributeur        = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
     const peutPublierDirectement = rolesActifs.some(r => ['contributeur_terrain', 'admin'].includes(r))
     if (estContributeur && profile?.charte_acceptee) setADoubleRole(true)
-    const choix           = soumisEnTantQue || (estContributeur && profile?.charte_acceptee ? 'contributeur' : 'organisateur')
+    const choix           = soumisEnTantQue
     const statutInsertion = peutPublierDirectement ? 'approuve' : 'en_attente'
     const lieuAffiche     = form.nom_lieu
       ? `${form.nom_lieu}${form.ville ? ', ' + form.ville : ''}`
@@ -713,7 +713,7 @@ export default function AjouterEvenement() {
       longitude: coordsPin.longitude, latitude: coordsPin.latitude,
       acces: form.acces, prix: form.prix, image_url,
       statut: statutInsertion,
-      soumis_en_tant_que: soumisEnTantQue || (statutInsertion === 'approuve' ? 'contributeur' : 'organisateur'),
+      soumis_en_tant_que: soumisEnTantQue,
       visibilite, code_acces: visibilite === 'discret' ? codeAcces : null,
       est_recurrent: estRecurrent,
       recurrence_regle: estRecurrent ? {
@@ -814,7 +814,7 @@ export default function AjouterEvenement() {
     setSuccesData({
       lienSecret: inserted?.lien_secret,
       codeAcces: visibilite === 'discret' ? codeAcces : undefined,
-      visibilite, role: soumisEnTantQue || (statutInsertion === 'approuve' ? 'contributeur' : 'organisateur'),
+      visibilite, role: soumisEnTantQue,
       nbContributions: apres, evenementId: inserted?.id,
       nouveauBadge: nouveauBadge || undefined,
     })
@@ -927,8 +927,7 @@ export default function AjouterEvenement() {
             <input name="titre" value={form.titre} placeholder="Ex: Livres en Folie 2026" onChange={handleChange} style={inputStyle} required />
           </div>
 
-          {aDoubleRole && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
                 type="button"
                 onClick={() => setSoumisEnTantQue('organisateur')}
@@ -954,7 +953,6 @@ export default function AjouterEvenement() {
                 {soumisEnTantQue === 'contributeur' && <span style={{ color: '#D4A820', fontSize: 18, flexShrink: 0 }}>✓</span>}
               </button>
             </div>
-          )}
 
           <div>
             <label style={labelStyle}>Organisateur</label>

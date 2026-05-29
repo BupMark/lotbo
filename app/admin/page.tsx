@@ -521,7 +521,7 @@ export default function Admin() {
     }
   }
 
-  const ROLES_INFERIEURS = ['visiteur', 'membre']
+  const ROLES_INFERIEURS = ['visiteur', 'membre', 'contributeur']
 
   const approuver = async (id: string) => {
     await supabase.from('evenements').update({ statut: 'approuve' }).eq('id', id)
@@ -552,7 +552,8 @@ export default function Admin() {
         const roleActuel   = profilActuel?.role ?? 'visiteur'
         if (ROLES_INFERIEURS.includes(roleActuel)) {
           const nouveauRole = ev.soumis_en_tant_que === 'organisateur' ? 'organisateur' : 'contributeur'
-          fetch('/api/admin/users', {
+          // Anti-rétrogradation : ne jamais promouvoir vers un rôle identique ou inférieur
+          if (nouveauRole !== roleActuel) fetch('/api/admin/users', {
             method: 'PATCH', headers: hi,
             body: JSON.stringify({ id: ev.user_id, role: nouveauRole, raison: 'Promotion automatique — premier événement approuvé' }),
           }).then(async (res) => {
