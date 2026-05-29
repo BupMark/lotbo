@@ -1330,7 +1330,9 @@ export default function Admin() {
           const isSuspendu = (u: UserAdmin) => !!u.banned_until && new Date(u.banned_until) > new Date()
 
           const usersFiltres = users.filter(u => {
-            if (filtreRole !== 'tous' && filtreRole !== 'membre' && normaliserRole(u.role) !== filtreRole) return false
+            const ROLES_CONTRIB = ['contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin']
+            if (filtreRole === 'contributeur' && !ROLES_CONTRIB.includes(normaliserRole(u.role))) return false
+            if (filtreRole !== 'tous' && filtreRole !== 'membre' && filtreRole !== 'contributeur' && normaliserRole(u.role) !== filtreRole) return false
             if (filtreStatutUser === 'actif'     &&  isSuspendu(u)) return false
             if (filtreStatutUser === 'suspendu'  && !isSuspendu(u)) return false
             if (rechercheUser) {
@@ -1360,7 +1362,7 @@ export default function Admin() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
                   { label: 'Membres',         valeur: users.length > 0 ? users.length : countMembres,                                                                                                                              couleur: '#1A1410' },
-                  { label: 'Contributeurs',   valeur: statsRoles['contributeur'] || 0,                                                                                                                                                          couleur: '#D4A820' },
+                  { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0), couleur: '#D4A820' },
                   { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
                   { label: 'Ambassadeurs',    valeur: statsRoles['ambassadeur']  || 0,                                              couleur: '#2D9E6B' },

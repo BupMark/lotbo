@@ -9,6 +9,7 @@ const POINTS: Record<string, number> = {
   'reaction_recue':      1,
   'partager':            3,
   'liker':               1,
+  'favoris':             1,
   'serai_la':            5,
   'referral':           10,
   // GM2 — Organisateur
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
     // 2. Récupérer le profil actuel
     const { data: profile } = await supabase
       .from('profiles')
-      .select('points_utilisateur, points_organisateur, points_total, niveau')
+      .select('points_utilisateur, points_organisateur, points_total, niveau, role')
       .eq('id', userId)
       .single()
 
@@ -121,6 +122,12 @@ export async function POST(request: Request) {
     // 4. Calculer le nouveau niveau
     const nouveauNiveau = calculerNiveau(update.points_total as number)
     update.niveau = nouveauNiveau
+
+    // 4b. Promotion automatique membre → contributeur à la première action
+    const roleActuel = (profile as any)?.role ?? 'membre'
+    if (roleActuel === 'membre' || roleActuel === 'visiteur') {
+      update.role = 'contributeur'
+    }
 
     await supabase.from('profiles').upsert({
       id: userId,

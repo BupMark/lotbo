@@ -9,6 +9,7 @@ import { langues, type Langue, getTraductions } from '../lib/i18n'
 import { getEventImage, FALLBACK_IMAGES } from '../lib/fallbackImages'
 import NotifCloche from '../components/NotifCloche'
 import { track } from '../lib/amplitude'
+import { attributerPoints } from '../lib/points'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -381,6 +382,7 @@ export default function Home() {
       await supabase.from('favoris').insert({ user_id: user.id, evenement_id: evenementId })
       setFavoris(prev => new Set([...prev, evenementId]))
       track('event_favorited', { event_id: evenementId, action: 'add' })
+      attributerPoints({ user_id: user.id, action: 'favoris', evenement_id: evenementId, type_role: 'utilisateur' })
     }
     setTogglingFavori(null)
   }
