@@ -50,7 +50,7 @@ interface Signalement {
 type FiltreStatut  = 'en_attente' | 'approuve' | 'en_cours' | 'rejete' | 'hors_ligne' | 'archive' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
 type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs'
-type FiltreRole    = 'tous' | 'visiteur' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
+type FiltreRole    = 'tous' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
 type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
 
 interface UserAdmin {
@@ -1008,7 +1008,9 @@ export default function Admin() {
                             {nomAffiche}
                           </button>
                           {soumetteur?.role && (
-                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(200,67,26,0.12)', color: '#C8431A' }}>{soumetteur.role}</span>
+                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(200,67,26,0.12)', color: '#C8431A' }}>
+                              {soumetteur.role === 'visiteur' ? 'membre' : soumetteur.role}
+                            </span>
                           )}
                           <span style={{ color: '#555', fontSize: 11 }}>
                             · {new Date(ev.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(ev.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -1302,7 +1304,7 @@ export default function Admin() {
             ONGLET UTILISATEURS — F2
         ══════════════════════════════════════════════════════════════ */}
         {onglet === 'utilisateurs' && (() => {
-          const ROLES: FiltreRole[] = ['tous', 'visiteur', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin']
+          const ROLES: FiltreRole[] = ['tous', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin']
 
           const couleurRole = (r: string): { bg: string; color: string } => {
             if (r === 'admin')                return { bg: 'rgba(229,115,115,0.15)', color: '#e57373' }
@@ -1310,9 +1312,12 @@ export default function Admin() {
             if (r === 'organisateur')         return { bg: 'rgba(200,67,26,0.15)',   color: '#C8431A' }
             if (r === 'contributeur_terrain') return { bg: 'rgba(200,160,32,0.18)',  color: '#C8A020' }
             if (r === 'contributeur')         return { bg: 'rgba(212,168,32,0.15)',  color: '#D4A820' }
-            if (r === 'membre')               return { bg: 'rgba(74,144,217,0.15)',  color: '#4A90D9' }
-            return                                   { bg: 'rgba(140,90,64,0.12)',   color: '#8C5A40' }
+            // 'visiteur' traité comme 'membre' (migration en attente)
+            return                                   { bg: 'rgba(74,144,217,0.15)',  color: '#4A90D9' }
           }
+
+          // Normalise 'visiteur' → 'membre' pour l'affichage tant que la migration SQL n'est pas exécutée
+          const normaliserRole = (r: string) => r === 'visiteur' ? 'membre' : r
 
           const initiales = (u: UserAdmin) => {
             const src = u.nom || u.email
@@ -1322,7 +1327,7 @@ export default function Admin() {
           const isSuspendu = (u: UserAdmin) => !!u.banned_until && new Date(u.banned_until) > new Date()
 
           const usersFiltres = users.filter(u => {
-            if (filtreRole !== 'tous' && u.role !== filtreRole) return false
+            if (filtreRole !== 'tous' && normaliserRole(u.role) !== filtreRole) return false
             if (filtreStatutUser === 'actif'     &&  isSuspendu(u)) return false
             if (filtreStatutUser === 'suspendu'  && !isSuspendu(u)) return false
             if (rechercheUser) {
@@ -1332,10 +1337,18 @@ export default function Admin() {
             return true
           })
 
-          // Stats — utilise parRole (count endpoint) si users pas encore chargé
+          // Stats — normalise visiteur→membre, fallback sur parRole si users pas encore chargé
           const statsRoles: Record<string, number> = users.length > 0
-            ? users.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc }, {} as Record<string, number>)
-            : parRole
+            ? users.reduce((acc, u) => {
+                const r = normaliserRole(u.role)
+                acc[r] = (acc[r] || 0) + 1
+                return acc
+              }, {} as Record<string, number>)
+            : Object.entries(parRole).reduce((acc, [r, n]) => {
+                const rn = normaliserRole(r)
+                acc[rn] = (acc[rn] || 0) + n
+                return acc
+              }, {} as Record<string, number>)
 
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 48 }}>
@@ -1344,7 +1357,6 @@ export default function Admin() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
                   { label: 'Membres',         valeur: countMembres,                                                                                                                                                                    couleur: '#1A1410' },
-                  { label: 'Sans action',     valeur: (statsRoles['visiteur'] || 0) + (statsRoles['membre'] || 0),                                                                                                                    couleur: '#4A90D9' },
                   { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0), couleur: '#D4A820' },
                   { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
@@ -1462,7 +1474,7 @@ export default function Admin() {
                                 {/* Rôle (select) */}
                                 <td style={{ padding: '10px 12px' }}>
                                   <select
-                                    value={u.role}
+                                    value={normaliserRole(u.role)}
                                     disabled={busy}
                                     onChange={e => changerRole(u.id, e.target.value)}
                                     style={{
@@ -1472,8 +1484,8 @@ export default function Admin() {
                                       textTransform: 'capitalize', outline: 'none',
                                     }}
                                   >
-                                    {['visiteur', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin'].map(r => (
-                                      <option key={r} value={r}>{r}</option>
+                                    {['membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin'].map(r => (
+                                      <option key={r} value={r}>{r === 'contributeur_terrain' ? 'terrain' : r}</option>
                                     ))}
                                   </select>
                                 </td>
