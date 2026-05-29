@@ -68,14 +68,30 @@ export default function Classement() {
         ? 'points_organisateur'
         : 'points_total'
 
-    const { data } = await supabase
+    // Requête 1 : top 100 par points
+    const { data: topPoints } = await supabase
       .from('profiles')
       .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
-      .or(`${colonne}.gt.0,role.in.(admin,ambassadeur,contributeur_terrain)`)
+      .gt(colonne, 0)
       .order(colonne, { ascending: false })
       .limit(100)
 
-    setMembres((data as Membre[]) || [])
+    // Requête 2 : rôles spéciaux toujours présents (admin, ambassadeur, contributeur_terrain)
+    const { data: rolesSpeciaux } = await supabase
+      .from('profiles')
+      .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
+      .in('role', ['admin', 'ambassadeur', 'contributeur_terrain'])
+      .limit(200)
+
+    // Fusion sans doublon, triée par points décroissants
+    const seenIds = new Set((topPoints || []).map((m: Membre) => m.id))
+    const merged  = [
+      ...(topPoints || []),
+      ...(rolesSpeciaux || []).filter((m: Membre) => !seenIds.has(m.id)),
+    ] as Membre[]
+    merged.sort((a, b) => ((b[colonne as keyof Membre] as number) || 0) - ((a[colonne as keyof Membre] as number) || 0))
+
+    setMembres(merged)
     setLoading(false)
   }
 
