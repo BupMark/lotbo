@@ -135,9 +135,9 @@
 }
 
 /* ══════════════════════════════════════
-   MOBILE (max 768px)
+   MOBILE (max 767px)
 ══════════════════════════════════════ */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
 
   /* Recherche pleine largeur */
   .lotbo-recherche {
@@ -205,11 +205,16 @@
 /* ══════════════════════════════════════
    DESKTOP (min 769px)
 ══════════════════════════════════════ */
-@media (min-width: 769px) {
+@media (min-width: 768px) {
 
-  /* Tab bar globale jamais visible sur desktop */
+  /* Tab bar globale jamais visible sur ≥768px */
   .lotbo-tabbar-global {
     display: none !important;
+  }
+
+  /* Supprime le padding-bas mobile sur desktop */
+  body {
+    padding-bottom: 0 !important;
   }
 
   /* Panneau filtres mobile caché */
