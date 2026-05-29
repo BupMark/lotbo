@@ -972,7 +972,7 @@ export default function Admin() {
                     display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start',
                   }}
                 >
-                  <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = getEventImage(null, ev.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
+                  <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = getEventImage(null, ev.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
                       <h2 style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, margin: 0 }}>{ev.titre}</h2>

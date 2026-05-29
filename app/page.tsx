@@ -802,7 +802,7 @@ export default function Home() {
                 >
                   {aLaUne.map((ev, i) => (
                     <a key={ev.id} href={'/evenement/' + ev.id} style={{ display: i === carouselIdx ? 'block' : 'none', position: 'relative', textDecoration: 'none' }}>
-                      <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
+                      <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }} onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,20,16,0.93) 0%, rgba(26,20,16,0.25) 55%, transparent 100%)' }} />
                       <div style={{ position: 'absolute', top: 12, left: 12 }}>
                         <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
@@ -837,7 +837,7 @@ export default function Home() {
               <div className="aune-grid">
                 {aLaUne.map(ev => (
                   <a key={ev.id} href={'/evenement/' + ev.id} style={{ display: 'block', position: 'relative', borderRadius: 16, overflow: 'hidden', background: '#1A1410', textDecoration: 'none' }}>
-                    <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
+                    <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,20,16,0.93) 0%, rgba(26,20,16,0.2) 55%, transparent 100%)' }} />
                     <div style={{ position: 'absolute', top: 12, left: 12 }}>
                       <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
@@ -874,7 +874,7 @@ export default function Home() {
                   <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>Tu pourrais aimer</p>
                   {evenements.slice(0, 3).map(ev => (
                     <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" style={{ marginBottom: 10 }}>
-                      <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
+                      <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                       <div className="card-body">
                         <p className="card-titre">{ev.titre}</p>
                         <p style={{ color: '#8C5A40', fontSize: 11 }}>📍 {ev.lieu}</p>
@@ -891,7 +891,7 @@ export default function Home() {
           <div className="lotbo-grid-evenements">
             {evenementsFiltres.map(ev => (
               <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" onClick={() => trackEventClick(ev)}>
-                <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
+                <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                 <div className="card-body">
                   <p className="card-titre">{ev.titre}</p>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
@@ -1006,7 +1006,7 @@ export default function Home() {
                     src={getEventImage(aLaUne[carouselIdx].image_url, aLaUne[carouselIdx].categorie)}
                     alt={aLaUne[carouselIdx].titre}
                     style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
-                    onError={e => { const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[aLaUne[carouselIdx].categorie]; if (fb && img.src !== fb) img.src = fb }}
+                    onError={e => { if (aLaUne[carouselIdx]?.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[aLaUne[carouselIdx].categorie]; if (fb && img.src !== fb) img.src = fb }}
                   />
                   <p style={{ flex: 1, color: '#1A1410', fontWeight: 'bold', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
                     {aLaUne[carouselIdx].titre}
@@ -1063,7 +1063,7 @@ export default function Home() {
                     <img
                       src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre}
                       style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }}
-                      onError={e2 => { const img = e2.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }}
+                      onError={e2 => { if (ev.image_url) { (e2.target as HTMLImageElement).style.display = 'none'; return; } const img = e2.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 14, marginBottom: 3 }}>{ev.titre}</p>

@@ -1099,7 +1099,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {similaires.map(sim => (
                 <a href={'/evenement/' + sim.id} key={sim.id} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 12, textDecoration: 'none', color: '#1A1410' }}>
-                  <img src={getEventImage(sim.image_url, sim.categorie)} alt={sim.titre} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { const img = e.target as HTMLImageElement; const fb = getEventImage(null, sim.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
+                  <img src={getEventImage(sim.image_url, sim.categorie)} alt={sim.titre} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { if (sim.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = getEventImage(null, sim.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sim.titre}</p>
                     <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>{estEnLigne(sim.lieu || '') ? '🌐' : '📍'} {sim.lieu}</p>
