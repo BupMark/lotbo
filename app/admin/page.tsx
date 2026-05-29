@@ -308,6 +308,7 @@ export default function Admin() {
 
   // F2 — Onglet Utilisateurs
   const [countMembres,     setCountMembres]     = useState(0)
+  const [parRole,          setParRole]          = useState<Record<string, number>>({})
   const [users,            setUsers]            = useState<UserAdmin[]>([])
   const [loadingUsers,     setLoadingUsers]     = useState(false)
   const [filtreRole,       setFiltreRole]       = useState<FiltreRole>('tous')
@@ -460,6 +461,7 @@ export default function Admin() {
       const resMembres = await fetch('/api/admin/users?count=true', { headers: hi })
       const jsonMembres = await resMembres.json()
       setCountMembres(jsonMembres.total || 0)
+      setParRole(jsonMembres.parRole || {})
     } catch { /* non bloquant */ }
 
     setLoading(false)
@@ -1330,9 +1332,10 @@ export default function Admin() {
             return true
           })
 
-          // Stats
-          const statsRoles: Record<string, number> = {}
-          for (const u of users) statsRoles[u.role] = (statsRoles[u.role] || 0) + 1
+          // Stats — utilise parRole (count endpoint) si users pas encore chargé
+          const statsRoles: Record<string, number> = users.length > 0
+            ? users.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc }, {} as Record<string, number>)
+            : parRole
 
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 48 }}>
