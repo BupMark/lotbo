@@ -22,11 +22,11 @@ export default function Preloader() {
         @keyframes lotbo-dot-glow {
           0%, 100% {
             opacity: 1;
-            box-shadow: 0 0 6px 3px rgba(200,67,26,0.55), 0 0 12px 5px rgba(200,67,26,0.25);
+            box-shadow: 0 0 8px 4px rgba(200,67,26,0.6), 0 0 16px 6px rgba(200,67,26,0.25);
           }
           50% {
-            opacity: 0.3;
-            box-shadow: 0 0 2px 1px rgba(200,67,26,0.15);
+            opacity: 0.4;
+            box-shadow: 0 0 3px 1px rgba(200,67,26,0.2);
           }
         }
       `}</style>
@@ -47,35 +47,21 @@ export default function Preloader() {
           pointerEvents:  fading ? 'none' : 'auto',
         }}
       >
-        {/* ── L en CSS pur ── */}
-        <div style={{ position: 'relative', width: 26, height: 36 }}>
-          {/* Barre verticale */}
+        {/* ── L.jpg + point orange ── */}
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/L.jpg"
+            alt=""
+            style={{ width: 48, height: 'auto', display: 'block' }}
+          />
+          {/* Point orange — haut à droite du L */}
           <div style={{
             position:     'absolute',
-            top:          0,
-            left:         0,
-            width:        4,
-            height:       28,
-            borderRadius: 4,
-            background:   '#1A1410',
-          }} />
-          {/* Barre horizontale */}
-          <div style={{
-            position:     'absolute',
-            top:          24,
-            left:         0,
-            width:        18,
-            height:       4,
-            borderRadius: 4,
-            background:   '#1A1410',
-          }} />
-          {/* Point orange — bas à droite de la barre verticale */}
-          <div style={{
-            position:     'absolute',
-            top:          18,
-            left:         4,
-            width:        8,
-            height:       8,
+            top:          2,
+            right:        -4,
+            width:        14,
+            height:       14,
             borderRadius: '50%',
             background:   '#C8431A',
             animation:    'lotbo-dot-glow 1.5s ease-in-out infinite',
