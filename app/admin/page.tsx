@@ -1330,7 +1330,7 @@ export default function Admin() {
           const isSuspendu = (u: UserAdmin) => !!u.banned_until && new Date(u.banned_until) > new Date()
 
           const usersFiltres = users.filter(u => {
-            if (filtreRole !== 'tous' && normaliserRole(u.role) !== filtreRole) return false
+            if (filtreRole !== 'tous' && filtreRole !== 'membre' && normaliserRole(u.role) !== filtreRole) return false
             if (filtreStatutUser === 'actif'     &&  isSuspendu(u)) return false
             if (filtreStatutUser === 'suspendu'  && !isSuspendu(u)) return false
             if (rechercheUser) {
