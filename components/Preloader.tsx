@@ -7,8 +7,6 @@ export default function Preloader() {
   const [fading, setFading]   = useState(false)
 
   useEffect(() => {
-    // Toujours afficher au moins 1.5s — sinon readyState=complete masque
-    // le preloader immédiatement avant que le pulse soit visible
     const timer = setTimeout(() => {
       setFading(true)
       setTimeout(() => setVisible(false), 500)
@@ -21,9 +19,15 @@ export default function Preloader() {
   return (
     <>
       <style>{`
-        @keyframes lotbo-pulse {
-          0%   { transform: scale(1); opacity: 0.75; }
-          100% { transform: scale(3); opacity: 0;    }
+        @keyframes lotbo-dot-glow {
+          0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 6px 3px rgba(200,67,26,0.55), 0 0 12px 5px rgba(200,67,26,0.25);
+          }
+          50% {
+            opacity: 0.3;
+            box-shadow: 0 0 2px 1px rgba(200,67,26,0.15);
+          }
         }
       `}</style>
       <div
@@ -31,64 +35,64 @@ export default function Preloader() {
         style={{
           position:       'fixed',
           inset:          0,
-          background:     '#1A1410',
+          background:     '#F7F2E8',
           zIndex:         9999,
           display:        'flex',
           flexDirection:  'column',
           alignItems:     'center',
           justifyContent: 'center',
+          gap:            20,
           opacity:        fading ? 0 : 1,
           transition:     'opacity 0.5s ease',
           pointerEvents:  fading ? 'none' : 'auto',
         }}
       >
-        {/* Logomark — L blanc + point orange pulsé */}
-        <div style={{ position: 'relative', width: 80, height: 84, marginBottom: 18 }}>
-          <span style={{
-            position:       'absolute',
-            inset:          0,
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'center',
-            fontSize:       78,
-            fontWeight:     700,
-            color:          'white',
-            fontFamily:     'var(--font-playfair), Georgia, serif',
-            fontStyle:      'italic',
-            lineHeight:     1,
-            userSelect:     'none',
-          }}>
-            L
-          </span>
-          {/* Point orange — angle supérieur droit du jambage vertical du L */}
-          <div style={{ position: 'absolute', top: 22, left: 73, width: 17, height: 17 }}>
-            <div style={{
-              position:   'absolute',
-              inset:      0,
-              borderRadius: '50%',
-              background: '#E8620A',
-              animation:  'lotbo-pulse 1.5s ease-out infinite',
-            }} />
-            <div style={{
-              position:   'absolute',
-              inset:      0,
-              borderRadius: '50%',
-              background: '#E8620A',
-            }} />
-          </div>
+        {/* ── L en CSS pur ── */}
+        <div style={{ position: 'relative', width: 26, height: 36 }}>
+          {/* Barre verticale */}
+          <div style={{
+            position:     'absolute',
+            top:          0,
+            left:         0,
+            width:        4,
+            height:       28,
+            borderRadius: 4,
+            background:   '#1A1410',
+          }} />
+          {/* Barre horizontale */}
+          <div style={{
+            position:     'absolute',
+            top:          24,
+            left:         0,
+            width:        18,
+            height:       4,
+            borderRadius: 4,
+            background:   '#1A1410',
+          }} />
+          {/* Point orange — bas à droite de la barre verticale */}
+          <div style={{
+            position:     'absolute',
+            top:          18,
+            left:         4,
+            width:        8,
+            height:       8,
+            borderRadius: '50%',
+            background:   '#C8431A',
+            animation:    'lotbo-dot-glow 1.5s ease-in-out infinite',
+          }} />
         </div>
 
         {/* Texte "lotbo" */}
         <p style={{
-          margin:     0,
-          fontFamily: 'var(--font-playfair), Georgia, serif',
-          fontStyle:  'italic',
-          fontWeight: 700,
-          fontSize:   30,
+          margin:        0,
+          fontFamily:    'var(--font-playfair), Georgia, serif',
+          fontStyle:     'italic',
+          fontWeight:    700,
+          fontSize:      26,
           letterSpacing: '0.03em',
-          userSelect: 'none',
+          userSelect:    'none',
         }}>
-          <span style={{ color: '#F7F2E8' }}>lot</span>
+          <span style={{ color: '#1A1410' }}>lot</span>
           <span style={{ color: '#C8431A' }}>bo</span>
         </p>
       </div>
