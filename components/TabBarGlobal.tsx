@@ -7,9 +7,9 @@ import { supabase } from '../lib/supabase'
 const EXCLUSIONS = ['/admin', '/login']
 
 export default function TabBarGlobal() {
-  const pathname                = usePathname()
-  const [userId, setUserId]     = useState<string | null>(null)
-  const [nonLues, setNonLues]   = useState(0)
+  const pathname              = usePathname()
+  const [userId, setUserId]   = useState<string | null>(null)
+  const [nonLues, setNonLues] = useState(0)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,10 +37,10 @@ export default function TabBarGlobal() {
 
   const isHome   = pathname === '/'
   const isAjout  = pathname.startsWith('/ajouter')
-  const isNotifs = pathname.startsWith('/notifications')
+  const isAnsanm = pathname.startsWith('/ansanm')
   const isProfil = pathname.startsWith('/profil')
 
-  const c = (active: boolean) => active ? '#C8431A' : '#8C5A40'
+  const c = (active: boolean) => active ? '#C8431A' : 'rgba(255,255,255,0.5)'
 
   return (
     <nav className="lotbo-tabbar-global" role="navigation" aria-label="Navigation principale">
@@ -58,13 +58,13 @@ export default function TabBarGlobal() {
       {/* Recherche */}
       <a href="/?s=1" className="lotbo-tabbar-item" aria-label="Recherche">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <circle cx="11" cy="11" r="7" stroke="#8C5A40" strokeWidth="1.8"/>
-          <path d="M16.5 16.5L21 21" stroke="#8C5A40" strokeWidth="1.8" strokeLinecap="round"/>
+          <circle cx="11" cy="11" r="7" stroke={c(false)} strokeWidth="1.8"/>
+          <path d="M16.5 16.5L21 21" stroke={c(false)} strokeWidth="1.8" strokeLinecap="round"/>
         </svg>
-        <span style={{ color: '#8C5A40' }}>Recherche</span>
+        <span style={{ color: c(false) }}>Recherche</span>
       </a>
 
-      {/* Ajouter — FAB */}
+      {/* Ajouter — FAB central */}
       <a href="/ajouter" className="lotbo-tabbar-item" aria-label="Ajouter un événement">
         <div className="lotbo-tabbar-fab">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -74,12 +74,23 @@ export default function TabBarGlobal() {
         <span style={{ color: c(isAjout) }}>Ajouter</span>
       </a>
 
-      {/* Notifications */}
-      <a href="/notifications" className="lotbo-tabbar-item" aria-label="Notifications">
+      {/* Ansanm — Communauté */}
+      <a href="/ansanm" className="lotbo-tabbar-item" aria-label="Ansanm — Communauté">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="9" cy="8" r="3" stroke={c(isAnsanm)} strokeWidth="1.8"/>
+          <path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
+          <path d="M16 3.5a3.5 3.5 0 0 1 0 6.9" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
+          <path d="M21 20c0-3-2.2-5-5-5.3" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
+        </svg>
+        <span style={{ color: c(isAnsanm) }}>Ansanm</span>
+      </a>
+
+      {/* Profil — badge notif migré ici */}
+      <a href={userId ? '/profil' : '/login'} className="lotbo-tabbar-item" aria-label="Profil">
         <div style={{ position: 'relative', display: 'inline-flex' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M18 16V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill={c(isNotifs)}/>
-            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z" fill={c(isNotifs)}/>
+            <circle cx="12" cy="8" r="4" stroke={c(isProfil)} strokeWidth="1.8"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={c(isProfil)} strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
           {nonLues > 0 && (
             <span style={{
@@ -94,15 +105,6 @@ export default function TabBarGlobal() {
             </span>
           )}
         </div>
-        <span style={{ color: c(isNotifs) }}>Notifs</span>
-      </a>
-
-      {/* Profil */}
-      <a href={userId ? '/profil' : '/login'} className="lotbo-tabbar-item" aria-label="Profil">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="8" r="4" stroke={c(isProfil)} strokeWidth="1.8"/>
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={c(isProfil)} strokeWidth="1.8" strokeLinecap="round"/>
-        </svg>
         <span style={{ color: c(isProfil) }}>Profil</span>
       </a>
 

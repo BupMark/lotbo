@@ -2,7 +2,8 @@
     "nav": {
       "ajouter": "+ Adicionar",
       "profil": "Meu perfil",
-      "deconnexion": "Sair"
+      "deconnexion": "Sair",
+      "community": "Juntos"
     },
     "carte": {
       "recherche": "Cidade, país ou evento...",
@@ -46,7 +47,7 @@
       "carte": "Mapa",
       "recherche": "Pesquisa",
       "ajouter": "Adicionar",
-      "notifications": "Notifs",
+      "community": "Juntos",
       "profil": "Perfil"
     }
   }

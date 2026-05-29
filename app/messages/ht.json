@@ -2,7 +2,8 @@
     "nav": {
       "ajouter": "+ Ajoute",
       "profil": "Pwofil mwen",
-      "deconnexion": "Dekonekte"
+      "deconnexion": "Dekonekte",
+      "community": "Ansanm"
     },
     "carte": {
       "recherche": "Vil, peyi oswa evènman...",
@@ -46,7 +47,7 @@
       "carte": "Kat",
       "recherche": "Rechèch",
       "ajouter": "Ajoute",
-      "notifications": "Notif",
+      "community": "Ansanm",
       "profil": "Pwofil"
     }
   }

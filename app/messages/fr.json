@@ -2,7 +2,8 @@
     "nav": {
       "ajouter": "+ Ajouter",
       "profil": "Mon profil",
-      "deconnexion": "Déconnexion"
+      "deconnexion": "Déconnexion",
+      "community": "Ensemble"
     },
     "carte": {
       "recherche": "Ville, pays ou événement...",
@@ -46,7 +47,7 @@
       "carte": "Carte",
       "recherche": "Recherche",
       "ajouter": "Ajouter",
-      "notifications": "Notifs",
+      "community": "Ansanm",
       "profil": "Profil"
     }
   }

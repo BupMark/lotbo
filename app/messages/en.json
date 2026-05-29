@@ -2,7 +2,8 @@
     "nav": {
       "ajouter": "+ Add",
       "profil": "My profile",
-      "deconnexion": "Sign out"
+      "deconnexion": "Sign out",
+      "community": "Together"
     },
     "carte": {
       "recherche": "City, country or event...",
@@ -46,7 +47,7 @@
       "carte": "Map",
       "recherche": "Search",
       "ajouter": "Add",
-      "notifications": "Notifs",
+      "community": "Together",
       "profil": "Profile"
     }
   }
