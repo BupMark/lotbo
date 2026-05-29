@@ -26,23 +26,23 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
 
-  // Mode léger — count uniquement (pour le dashboard principal)
+  // Mode léger — count + répartition par rôle (dashboard principal)
   if (searchParams.get('count') === 'true') {
     try {
       const admin = makeAdminClient()
-      const { count: total } = await admin
+      // Une seule requête : count exact + données rôles (évite head:true qui peut renvoyer null)
+      const { data: roles, count: total } = await admin
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
-      const { data: roles } = await admin
-        .from('profiles')
-        .select('role')
+        .select('role', { count: 'exact' })
         .limit(2000)
       const parRole: Record<string, number> = {}
       for (const r of roles || []) {
         const role = (r as { role: string }).role || 'visiteur'
         parRole[role] = (parRole[role] || 0) + 1
       }
-      return NextResponse.json({ total: total || 0, parRole })
+      // total exact depuis le count Supabase, fallback sur la longueur des données
+      const totalFinal = total ?? (roles || []).length
+      return NextResponse.json({ total: totalFinal, parRole })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erreur inconnue'
       return NextResponse.json({ error: message }, { status: 500 })
