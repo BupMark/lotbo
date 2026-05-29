@@ -654,7 +654,24 @@ export default function AjouterEvenement() {
         const [lng, lat] = data.features[0].center
         setCoordsPin({ longitude: lng, latitude: lat, adresse: suggestion.place_name })
       }
-    } catch {}
+    } catch {
+      // Fallback 3 : OSM Nominatim (gratuit, open source, max 1 req/seconde)
+      try {
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(suggestion.place_name)}&format=json&limit=1`,
+          { headers: { 'User-Agent': 'Lotbo/1.0 (https://lotbo.app; contact@lotbo.app)' } }
+        )
+        const nomData = await nomRes.json()
+        if (nomData.length > 0) {
+          const { lon, lat, display_name } = nomData[0]
+          setCoordsPin({
+            longitude: parseFloat(lon),
+            latitude: parseFloat(lat),
+            adresse: display_name || suggestion.place_name,
+          })
+        }
+      } catch {}
+    }
   }
 
   const toggleTheme = (id: number) => {
