@@ -238,6 +238,7 @@ export async function GET() {
         statut: 'publié',
         source: 'paris_2026',
         source_id: evt.source_id,
+        date: evt.date_debut,
         acces: evt.acces,
         prix: evt.prix,
         lien: evt.lien,
