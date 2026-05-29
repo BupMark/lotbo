@@ -43,12 +43,13 @@ export async function GET(request: Request) {
       .order(colonne, { ascending: false })
       .limit(100)
 
-    // 2. Rôles spéciaux avec points > 0
+    // 2. Rôles spéciaux — même filtre colonne que requête 1
+    // (ex: onglet organisateurs → .gt('points_organisateur', 0))
     const { data: rolesSpeciaux } = await admin
       .from('profiles')
       .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
       .in('role', ['admin', 'ambassadeur', 'contributeur_terrain'])
-      .gt('points_total', 0)
+      .gt(colonne, 0)
       .limit(200)
 
     // 3. Fusion sans doublon
