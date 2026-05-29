@@ -55,8 +55,8 @@ interface Commentaire {
   created_at: string
   nb_likes: number
   parent_id: string | null
-  user_id?: string | null
-  photo_url?: string | null
+  user_id: string | null
+  photo_url: string | null
   reponses?: Commentaire[]
   reactions?: Record<string, number>
 }
