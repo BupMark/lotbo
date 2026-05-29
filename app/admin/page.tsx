@@ -1357,7 +1357,7 @@ export default function Admin() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                 {[
                   { label: 'Membres',         valeur: countMembres,                                                                                                                                                                    couleur: '#1A1410' },
-                  { label: 'Contributeurs',   valeur: (statsRoles['contributeur'] || 0) + (statsRoles['contributeur_terrain'] || 0) + (statsRoles['organisateur'] || 0) + (statsRoles['ambassadeur'] || 0) + (statsRoles['admin'] || 0), couleur: '#D4A820' },
+                  { label: 'Contributeurs',   valeur: statsRoles['contributeur'] || 0,                                                                                                                                                          couleur: '#D4A820' },
                   { label: '· dont terrain',  valeur: statsRoles['contributeur_terrain'] || 0,                                      couleur: '#C8A020' },
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
                   { label: 'Ambassadeurs',    valeur: statsRoles['ambassadeur']  || 0,                                              couleur: '#2D9E6B' },
