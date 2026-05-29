@@ -258,7 +258,7 @@ export default function Classement() {
 
                         {/* Nom */}
                         <p style={{ fontWeight: 'bold', fontSize: pos === 1 ? 14 : 12, color: '#1A1410', textAlign: 'center', marginBottom: 2, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {membre.nom || 'Anonyme'}
+                          {membre.nom || 'Membre LOTBO'}
                         </p>
                         <p style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>{colonne} pts</p>
 
@@ -313,7 +313,7 @@ export default function Classement() {
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {membre.nom || 'Anonyme'} {estMoi && <span style={{ color: '#C8431A', fontSize: 12 }}>← Toi</span>}
+                          {membre.nom || 'Membre LOTBO'} {estMoi && <span style={{ color: '#C8431A', fontSize: 12 }}>← Toi</span>}
                         </p>
                         <p style={{ color: '#8C5A40', fontSize: 12 }}>
                           {niveau.emoji} {niveau.label}
