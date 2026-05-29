@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { calculerNiveau } from '../../lib/points'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Membre {
@@ -199,7 +200,7 @@ export default function Classement() {
                 {moi.position}e sur {moi.total}+ membres · {moi.membre.points_total} pts
               </p>
             </div>
-            <span style={{ fontSize: 20 }}>{NIVEAUX[moi.membre.niveau]?.emoji || '🌱'}</span>
+            <span style={{ fontSize: 20 }}>{NIVEAUX[calculerNiveau(moi.membre.points_total)]?.emoji || '🌱'}</span>
           </div>
         )}
 
@@ -271,7 +272,7 @@ export default function Classement() {
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                           <span style={{ fontSize: 28, opacity: 0.6 }}>
-                            {NIVEAUX[membre.niveau]?.emoji || '🌱'}
+                            {NIVEAUX[calculerNiveau(membre.points_total)]?.emoji || '🌱'}
                           </span>
                         </div>
                       </div>
@@ -292,7 +293,7 @@ export default function Classement() {
                       ? membre.points_organisateur
                       : membre.points_total
                   const estMoi  = membre.id === userId
-                  const niveau  = NIVEAUX[membre.niveau] || NIVEAUX['decouvreur']
+                  const niveau  = NIVEAUX[calculerNiveau(membre.points_total)] || NIVEAUX['decouvreur']
 
                   return (
                     <div key={membre.id} style={{

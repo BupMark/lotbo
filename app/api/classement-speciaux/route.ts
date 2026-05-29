@@ -16,6 +16,7 @@ export async function GET() {
       .from('profiles')
       .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
       .in('role', ['admin', 'ambassadeur', 'contributeur_terrain'])
+      .gt('points_total', 0)
       .limit(200)
 
     if (error) throw error
