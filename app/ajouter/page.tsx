@@ -719,7 +719,6 @@ export default function AjouterEvenement() {
 
             setScanMessage({ type: 'verifier', texte: T_IMAGE[locale].scanVerifier || 'Vérifie et complète les informations avant de publier.' })
             setFilledByScan(true)
-            console.log('[SCAN] filledByScan set to true')
           }
         } catch {
           setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurService || 'Service temporairement indisponible.' })
