@@ -60,5 +60,24 @@
     "topvilles": "Top ciudades",
     "evenements": "eventos",
     "voirtous": "Ver todos"
+  },
+  "organisation": {
+    "suivre": "Seguir",
+    "suivi": "Siguiendo ✓",
+    "contacter": "Contactar",
+    "evenements_a_venir": "Próximos eventos",
+    "aucun_evenement": "Sin eventos próximos",
+    "membres": "miembros",
+    "verifie": "Organización verificada",
+    "creer_titre": "Crear una organización",
+    "creer_nom": "Nombre de la organización",
+    "creer_description": "Descripción",
+    "creer_ville": "Ciudad",
+    "creer_pays": "País",
+    "creer_site": "Sitio web",
+    "creer_email": "Email de contacto",
+    "creer_publier": "Crear organización",
+    "slug_label": "URL de tu página",
+    "introuvable": "Organización no encontrada"
   }
 }

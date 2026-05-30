@@ -60,5 +60,24 @@
     "topvilles": "Top vil yo",
     "evenements": "evènman",
     "voirtous": "Wè tout"
+  },
+  "organisation": {
+    "suivre": "Swiv",
+    "suivi": "Ap swiv ✓",
+    "contacter": "Kontakte",
+    "evenements_a_venir": "Evènman k ap vini",
+    "aucun_evenement": "Pa gen evènman",
+    "membres": "manm",
+    "verifie": "Òganizasyon verifye",
+    "creer_titre": "Kreye yon òganizasyon",
+    "creer_nom": "Non òganizasyon an",
+    "creer_description": "Deskripsyon",
+    "creer_ville": "Vil",
+    "creer_pays": "Peyi",
+    "creer_site": "Site web",
+    "creer_email": "Imèl kontak",
+    "creer_publier": "Kreye òganizasyon an",
+    "slug_label": "URL paj ou a",
+    "introuvable": "Òganizasyon pa jwenn"
   }
 }
