@@ -790,7 +790,31 @@ supabase.auth.getSession().then(({ data: { session } }) => {
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <p style={{ fontSize: 32, marginBottom: 12 }}>✅</p>
                 <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Proposition envoyée !</p>
-                <p style={{ color: '#8C5A40', fontSize: 13 }}>Elle sera examinée par notre équipe. Merci !</p>
+                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 20 }}>Elle sera examinée par notre équipe. Merci !</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <button
+                    onClick={() => {
+                      setPropositionEnvoyee(false)
+                      setPropositionForm({ champ_modifie: 'titre', ancienne_valeur: ev?.titre || '', nouvelle_valeur: '' })
+                    }}
+                    style={{
+                      background: '#C8431A', color: '#F7F2E8', border: 'none',
+                      borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 'bold',
+                      cursor: 'pointer', width: '100%',
+                    }}
+                  >
+                    ✏️ Proposer une autre correction
+                  </button>
+                  <button
+                    onClick={() => { setPropositionModal(false); setPropositionEnvoyee(false) }}
+                    style={{
+                      background: 'transparent', color: '#8C5A40', border: 'none',
+                      fontSize: 13, cursor: 'pointer', padding: '6px',
+                    }}
+                  >
+                    Fermer
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -1106,13 +1130,22 @@ supabase.auth.getSession().then(({ data: { session } }) => {
             }}>
               <span style={{ fontSize: 14 }}>⚠️</span><span>Signaler</span>
             </button>
-            <button onClick={() => setPropositionModal(true)} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              background: 'white', border: '1px solid #E8E0D0',
-              borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12,
-            }}>
-              <span style={{ fontSize: 14 }}>✏️</span><span>Proposer une correction</span>
-            </button>
+            {userProfile && (
+              <button
+                onClick={() => {
+                  setPropositionForm({ champ_modifie: 'titre', ancienne_valeur: ev?.titre || '', nouvelle_valeur: '' })
+                  setPropositionModal(true)
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'white', border: '1px solid #E8E0D0',
+                  borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12,
+                  whiteSpace: 'nowrap', flexShrink: 0,
+                }}
+              >
+                <span style={{ fontSize: 14 }}>✏️</span><span>Corriger</span>
+              </button>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <a href={urlWhatsapp} target="_blank" title="WhatsApp" style={{ width: 38, height: 38, borderRadius: '50%', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>
