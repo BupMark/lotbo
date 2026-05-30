@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
@@ -30,7 +30,8 @@ const labelStyle: React.CSSProperties = {
 }
 
 export default function CreerOrganisation() {
-  const router = useRouter()
+  const router   = useRouter()
+  const fileRef  = useRef<HTMLInputElement>(null)
 
   const [loading, setLoading]         = useState(true)
   const [userId, setUserId]           = useState<string | null>(null)
@@ -43,6 +44,8 @@ export default function CreerOrganisation() {
   const [pays, setPays]               = useState('')
   const [siteWeb, setSiteWeb]         = useState('')
   const [emailContact, setEmailContact] = useState('')
+  const [logoFile, setLogoFile]       = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   const slug = genererSlug(nom)
 
@@ -54,11 +57,34 @@ export default function CreerOrganisation() {
     })
   }, [])
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setLogoPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!userId || !nom.trim()) return
     setSubmitting(true)
     setErreur(null)
+
+    let logoUrl: string | null = null
+
+    if (logoFile) {
+      const ext  = logoFile.name.split('.').pop() ?? 'jpg'
+      const path = `org-${slug}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('logos-organisations')
+        .upload(path, logoFile, { upsert: true, contentType: logoFile.type })
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from('logos-organisations').getPublicUrl(path)
+        logoUrl = urlData.publicUrl
+      }
+    }
 
     const { error } = await supabase.from('organisations').insert({
       nom:           nom.trim(),
@@ -68,6 +94,7 @@ export default function CreerOrganisation() {
       pays:          pays.trim() || null,
       site_web:      siteWeb.trim() || null,
       email_contact: emailContact.trim() || null,
+      logo_url:      logoUrl,
       owner_id:      userId,
       verified:      false,
     })
@@ -128,6 +155,43 @@ export default function CreerOrganisation() {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Logo */}
+          <div>
+            <label style={labelStyle}>Logo de l&apos;organisation (optionnel)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              {logoPreview ? (
+                <img
+                  src={logoPreview}
+                  alt="Aperçu logo"
+                  style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E8E0D0', flexShrink: 0 }}
+                />
+              ) : (
+                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#E8E0D0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>
+                  🏢
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px 16px', fontSize: 13, color: '#8C5A40', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  {logoFile ? '📷 Changer' : '📷 Choisir une image'}
+                </button>
+                {logoFile && (
+                  <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>{logoFile.name}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Description */}

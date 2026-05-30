@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
@@ -37,21 +37,24 @@ function getInitiales(nom: string): string {
 
 export default function PageOrganisation() {
   const params = useParams()
-  const slug = params?.slug as string
+  const slug   = params?.slug as string
+  const copieTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [org, setOrg]                 = useState<Organisation | null>(null)
-  const [evenements, setEvenements]   = useState<EvenementVitrine[]>([])
-  const [nbFollowers, setNbFollowers] = useState(0)
-  const [loading, setLoading]         = useState(true)
-  const [introuvable, setIntrouvable] = useState(false)
-  const [userId, setUserId]           = useState<string | null>(null)
-  const [suivi, setSuivi]             = useState(false)
+  const [org, setOrg]                   = useState<Organisation | null>(null)
+  const [evenements, setEvenements]     = useState<EvenementVitrine[]>([])
+  const [nbFollowers, setNbFollowers]   = useState(0)
+  const [loading, setLoading]           = useState(true)
+  const [introuvable, setIntrouvable]   = useState(false)
+  const [userId, setUserId]             = useState<string | null>(null)
+  const [suivi, setSuivi]               = useState(false)
   const [suiviLoading, setSuiviLoading] = useState(false)
+  const [lienCopie, setLienCopie]       = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUserId(data.session?.user?.id ?? null)
     })
+    return () => { if (copieTimer.current) clearTimeout(copieTimer.current) }
   }, [])
 
   useEffect(() => {
@@ -131,6 +134,15 @@ export default function PageOrganisation() {
     setSuiviLoading(false)
   }
 
+  const partager = () => {
+    const texte = `Suivez nos événements sur Lotbo 👉 https://app.lotbo.app/organisation/${slug}`
+    navigator.clipboard.writeText(texte).then(() => {
+      setLienCopie(true)
+      if (copieTimer.current) clearTimeout(copieTimer.current)
+      copieTimer.current = setTimeout(() => setLienCopie(false), 2000)
+    }).catch(() => {})
+  }
+
   if (loading) return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: '#8C5A40' }}>Chargement...</p>
@@ -159,15 +171,15 @@ export default function PageOrganisation() {
         <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
 
-            {/* Logo ou initiales */}
+            {/* Logo circulaire 80px ou initiales */}
             {org.logo_url ? (
               <img
                 src={org.logo_url}
                 alt={org.nom}
-                style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover', flexShrink: 0, border: '1px solid #E8E0D0' }}
+                style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #E8E0D0' }}
               />
             ) : (
-              <div style={{ width: 64, height: 64, borderRadius: 12, background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22, fontWeight: 'bold', color: 'white' }}>
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 26, fontWeight: 'bold', color: 'white' }}>
                 {getInitiales(org.nom)}
               </div>
             )}
@@ -226,6 +238,19 @@ export default function PageOrganisation() {
                 Contacter
               </a>
             )}
+            <button
+              onClick={partager}
+              style={{
+                background: lienCopie ? 'rgba(45,158,107,0.1)' : 'white',
+                color: lienCopie ? '#2D9E6B' : '#8C5A40',
+                border: lienCopie ? '1px solid #2D9E6B' : '1px solid #E8E0D0',
+                borderRadius: 999, padding: '9px 20px',
+                fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {lienCopie ? 'Lien copié ✓' : '🔗 Partager'}
+            </button>
             {org.site_web && (
               <a
                 href={org.site_web.startsWith('http') ? org.site_web : `https://${org.site_web}`}
