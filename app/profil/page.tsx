@@ -184,6 +184,8 @@ function ProfilInner() {
   const prochainBadgeContrib = getProchainBadge(nbContrib, BADGES_CONTRIBUTEUR)
   const badgeOrgaActuel = getBadgeActuel(nbApprouves, BADGES_ORGANISATEUR)
   const prochainBadgeOrga = getProchainBadge(nbApprouves, BADGES_ORGANISATEUR)
+  const hasPioneerScan = evenements.some((e: any) => e.source === 'scan_publie')
+  const hasWikiBadge   = evenements.some((e: any) => e.source === 'wikimedia' && e.statut === 'approuve')
 
   const nomAffiche = profile?.nom || user?.email?.split('@')[0] || 'Utilisateur'
   const initiales = nomAffiche.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -443,9 +445,39 @@ function ProfilInner() {
                     {nbApprouves} / {prochainBadgeOrga.seuil} — encore {prochainBadgeOrga.seuil - nbApprouves} événement{prochainBadgeOrga.seuil - nbApprouves > 1 ? 's' : ''}
                   </p>
                 </div>
-            )}
+              )}
+            </div>
 
-          </div>
+            {/* Badges spéciaux */}
+            {(hasPioneerScan || hasWikiBadge) && (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
+                <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>✨ Badges Spéciaux</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {hasPioneerScan && (() => {
+                    const b = { id: 'pioneer_scan', emoji: '📸', label: 'Pioneer Scan & Publie', desc: '1er scan publié' }
+                    return (
+                      <div key="pioneer_scan" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 16px', borderRadius: 12, minWidth: 80, background: 'rgba(212,168,32,0.12)', border: '1px solid rgba(212,168,32,0.4)' }}>
+                        <span style={{ fontSize: 28 }}>{b.emoji}</span>
+                        <p style={{ color: '#D4A820', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{b.label}</p>
+                        <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{b.desc}</p>
+                        <button onClick={() => setBadgeSelectionne(b)} style={{ background: 'rgba(200,67,26,0.12)', border: 'none', borderRadius: 6, padding: '3px 8px', color: '#C8431A', fontSize: 10, cursor: 'pointer', fontWeight: 'bold', marginTop: 2 }}>🎨</button>
+                      </div>
+                    )
+                  })()}
+                  {hasWikiBadge && (() => {
+                    const b = { id: 'contributeur_wikimedia', emoji: '🌐', label: 'Contributeur Wikimedia', desc: 'Événement Wikimedia approuvé' }
+                    return (
+                      <div key="contributeur_wikimedia" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 16px', borderRadius: 12, minWidth: 80, background: 'rgba(45,158,107,0.12)', border: '1px solid rgba(45,158,107,0.4)' }}>
+                        <span style={{ fontSize: 28 }}>{b.emoji}</span>
+                        <p style={{ color: '#2D9E6B', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{b.label}</p>
+                        <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{b.desc}</p>
+                        <button onClick={() => setBadgeSelectionne(b)} style={{ background: 'rgba(45,158,107,0.12)', border: 'none', borderRadius: 6, padding: '3px 8px', color: '#2D9E6B', fontSize: 10, cursor: 'pointer', fontWeight: 'bold', marginTop: 2 }}>🎨</button>
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* ── GM12 — Mon classement global ── */}
             <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
