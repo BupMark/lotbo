@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 1000,
         messages: [
           {
@@ -36,20 +36,29 @@ export async function POST(request: Request) {
 Analyse cette image et extrais UNIQUEMENT les informations suivantes en JSON :
 {
   "titre": string | null,
+  "organisateur": string | null,
   "date_debut": string | null,
   "date_fin": string | null,
   "heure_debut": string | null,
   "heure_fin": string | null,
   "lieu": string | null,
+  "adresse": string | null,
   "ville": string | null,
   "pays": string | null,
   "description": string | null,
+  "categorie": string | null,
   "prix": "gratuit" | "payant" | null,
   "lien_officiel": string | null
 }
-Pour les dates, utilise le format YYYY-MM-DD.
-Pour les heures, utilise le format HH:MM.
-Si une information n'est pas visible sur l'image, retourne null pour ce champ.
+Instructions :
+- Pour les dates, utilise le format YYYY-MM-DD.
+- Pour les heures, utilise le format HH:MM.
+- Pour "organisateur" : nom de l'organisation, association, artiste ou personne qui organise.
+- Pour "categorie" : type d'événement parmi — Concert, Festival, Conférence, Exposition, Formation, Tournoi, Culte, Assemblée, Inauguration, Célébration.
+- Pour "lieu" : nom exact du bâtiment, salle ou espace (ex: "Hôtel Karibe", "Stade Sylvio Cator").
+- Pour "adresse" : numéro et rue uniquement, pas la ville.
+- Pour "description" : résume l'événement en 2-3 phrases si pas de texte explicite.
+- Si une information n'est pas visible sur l'image, retourne null pour ce champ.
 Réponds UNIQUEMENT avec le JSON — aucun texte autour.`,
               },
             ],

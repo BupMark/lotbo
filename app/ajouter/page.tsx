@@ -650,6 +650,7 @@ export default function AjouterEvenement() {
               ...f,
               titre:       d.titre       || f.titre,
               nom_lieu:    d.lieu        || f.nom_lieu,
+              adresse:     d.adresse     || f.adresse,
               ville:       d.ville       || f.ville,
               pays:        d.pays        || f.pays,
               date:        d.date_debut  || f.date,
@@ -659,6 +660,7 @@ export default function AjouterEvenement() {
               description: d.description || f.description,
               lien:        d.lien_officiel || f.lien,
               prix:        d.prix        || f.prix,
+              organisateur: d.organisateur || f.organisateur,
             }))
             setScanMessage({ type: 'verifier', texte: T_IMAGE[locale].scanVerifier || 'Vérifie et complète les informations avant de publier.' })
           }
