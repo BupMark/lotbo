@@ -87,6 +87,7 @@ interface Evenement {
   lien: string | null
   organisateur: string | null
   parent_id: string | null
+  user_id: string | null
 }
 
 // ── E12 — 6 réactions ────────────────────────────────────────────────────────
@@ -538,6 +539,10 @@ export default function EvenementPage() {
   const [propositionModal, setPropositionModal]         = useState(false)
   const [propositionEnvoyee, setPropositionEnvoyee]     = useState(false)
   const [propositionForm, setPropositionForm]           = useState({ champ_modifie: 'titre', ancienne_valeur: '', nouvelle_valeur: '' })
+  const [claimModal, setClaimModal]                     = useState(false)
+  const [claimMessage, setClaimMessage]                 = useState('')
+  const [claimEnvoye, setClaimEnvoye]                   = useState(false)
+  const [claimLoading, setClaimLoading]                 = useState(false)
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -971,6 +976,76 @@ supabase.auth.getSession().then(({ data: { session } }) => {
         </>
       )}
 
+      {claimModal && (
+        <>
+          <div onClick={() => { setClaimModal(false); setClaimEnvoye(false); setClaimMessage('') }} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#F7F2E8', borderTop: '1px solid #E8E0D0', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
+            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>C'est mon événement</h3>
+            <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 20, lineHeight: 1.5 }}>
+              Ta demande sera examinée par notre équipe. Si validée, tu deviendras propriétaire de cet événement.
+            </p>
+            {claimEnvoye ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <p style={{ fontSize: 32, marginBottom: 12 }}>✅</p>
+                <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Demande envoyée !</p>
+                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 20 }}>Notre équipe va examiner ta réclamation. Merci !</p>
+                <button onClick={() => { setClaimModal(false); setClaimEnvoye(false) }} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}>
+                  Fermer
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Explique pourquoi cet événement t'appartient (optionnel)</label>
+                  <textarea
+                    value={claimMessage}
+                    onChange={e => setClaimMessage(e.target.value)}
+                    placeholder="Ex: Je suis l'organisateur, mon nom est dans la description..."
+                    rows={3}
+                    maxLength={300}
+                    style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
+                  />
+                </div>
+                <button
+                  disabled={claimLoading}
+                  onClick={async () => {
+                    if (!userProfile) return
+                    setClaimLoading(true)
+                    const { error } = await supabase.from('reclamations_evenements').insert([{
+                      evenement_id: ev.id,
+                      reclamant_id: userProfile.id,
+                      message: claimMessage.trim() || null,
+                      statut: 'en_attente',
+                    }])
+                    if (!error) {
+                      supabase.from('notifications').insert([{
+                        user_id: 'ff21f2e0-135d-4996-9713-4a0e20c38fe1',
+                        type: 'reclamation',
+                        titre: `Réclamation — ${ev.titre}`,
+                        message: `${userProfile.nom} réclame la propriété de "${ev.titre}"`,
+                        lien: '/admin',
+                        lu: false,
+                      }]).then(() => {})
+                      setClaimEnvoye(true)
+                    }
+                    setClaimLoading(false)
+                  }}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: claimLoading ? 'rgba(26,20,16,0.1)' : '#C8431A',
+                    color: claimLoading ? '#8C5A40' : '#F7F2E8',
+                    border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold',
+                    cursor: claimLoading ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {claimLoading ? '...' : 'Envoyer ma réclamation →'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
       <div style={{ width: '100%', height: 280, overflow: 'hidden', position: 'relative' }}>
         <img src={ev.image_url || imageAuto || getEventImage(null, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         {!ev.image_url && imageAuteur && (
@@ -1146,6 +1221,25 @@ supabase.auth.getSession().then(({ data: { session } }) => {
                 }}
               >
                 <span style={{ fontSize: 14 }}>✏️</span><span>Corriger</span>
+              </button>
+            )}
+            {ev.user_id !== userProfile?.id && (
+              <button
+                onClick={() => {
+                  if (!userProfile) {
+                    window.location.href = '/login?redirect=/evenement/' + ev.id
+                    return
+                  }
+                  setClaimModal(true)
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'white', border: '1px solid #E8E0D0',
+                  borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{ fontSize: 14 }}>🔑</span><span>C'est mon événement</span>
               </button>
             )}
           </div>
