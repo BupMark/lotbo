@@ -27,6 +27,8 @@ const BADGES_ORGANISATEUR = [
   { id: 'champion',     emoji: '🏆', label: 'Champion',     seuil: 50, desc: '50 événements' },
 ]
 
+const BADGE_PIONEER_SCAN: Badge = { id: 'pioneer_scan', emoji: '📸', label: 'Pioneer Scan & Publie', seuil: 0, desc: '1er scan publié' }
+
 type Badge = { id: string; emoji: string; label: string; seuil: number; desc: string }
 
 function getBadgeActuel(nb: number, badges: Badge[]): Badge | null {
@@ -549,6 +551,7 @@ export default function AjouterEvenement() {
   const scanInputRef                          = useRef<HTMLInputElement>(null)
   const [scanLoading, setScanLoading]         = useState(false)
   const [scanMessage, setScanMessage]         = useState<{ type: 'verifier' | 'erreur'; texte: string } | null>(null)
+  const [filledByScan, setFilledByScan]       = useState(false)
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
   const locale: Locale = (() => {
@@ -715,6 +718,8 @@ export default function AjouterEvenement() {
             }
 
             setScanMessage({ type: 'verifier', texte: T_IMAGE[locale].scanVerifier || 'Vérifie et complète les informations avant de publier.' })
+            setFilledByScan(true)
+            console.log('[SCAN] filledByScan set to true')
           }
         } catch {
           setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurService || 'Service temporairement indisponible.' })
@@ -852,6 +857,7 @@ export default function AjouterEvenement() {
     const userId = session?.user?.id || ''
     const { count: nbAvant } = await supabase.from('evenements').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('soumis_en_tant_que', choix)
 
+    console.log('[SUBMIT] filledByScan =', filledByScan)
     const { data: inserted, error } = await supabase.from('evenements').insert([{
       titre: form.titre, organisateur: form.organisateur || null, user_id: session?.user?.id || null,
       nom_lieu: form.nom_lieu || null, adresse: form.adresse || null, lieu: lieuAffiche,
@@ -866,6 +872,7 @@ export default function AjouterEvenement() {
       soumis_en_tant_que: soumisEnTantQue,
       visibilite, code_acces: visibilite === 'discret' ? codeAcces : null,
       est_recurrent: estRecurrent,
+      source: filledByScan ? 'scan_publie' : null,
       recurrence_regle: estRecurrent ? {
         type: typeRecurrence,
         jours: joursRecurrence,
@@ -883,7 +890,13 @@ export default function AjouterEvenement() {
     const avant        = nbAvant || 0
     const apres        = nbApres || 1
     const badges       = choix === 'contributeur' ? BADGES_CONTRIBUTEUR : BADGES_ORGANISATEUR
-    const nouveauBadge = detecterNouveauBadge(avant, apres, badges)
+    let   nouveauBadge = detecterNouveauBadge(avant, apres, badges)
+    if (filledByScan && inserted?.id) {
+      const { count: nbScan } = await supabase.from('evenements')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId).eq('source', 'scan_publie')
+      if ((nbScan || 0) === 1) nouveauBadge = BADGE_PIONEER_SCAN
+    }
 
     // ── Notif admin (fire & forget) ───────────────────────────────────────────
     fetch('/api/notify-admin', {
