@@ -16,6 +16,7 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Evenement {
   id: string
+  parent_id: string | null
   titre: string
   lieu: string
   ville?: string | null
@@ -397,8 +398,27 @@ export default function Home() {
   // Score "À la une" — indépendant des filtres actifs
   const aLaUne = useMemo(() => {
     const now = new Date()
-    return evenements
+    const aujourd_hui = new Date().toISOString().split('T')[0]
+    const dejaVus = new Map<string, Evenement>()
+    const evenementsDedupliques = evenements
       .filter(ev => ev.statut === 'approuve')
+      .reduce<Evenement[]>((acc, ev) => {
+        if (!ev.parent_id) { acc.push(ev); return acc }
+        const existing = dejaVus.get(ev.parent_id)
+        const dateEv = ev.date_debut || ev.date
+        if (!existing) {
+          if (dateEv >= aujourd_hui) { dejaVus.set(ev.parent_id, ev); acc.push(ev) }
+        } else {
+          const dateEx = existing.date_debut || existing.date
+          if (dateEv >= aujourd_hui && dateEv < dateEx) {
+            dejaVus.set(ev.parent_id, ev)
+            const idx = acc.indexOf(existing)
+            if (idx !== -1) acc[idx] = ev
+          }
+        }
+        return acc
+      }, [])
+    return evenementsDedupliques
       .map(ev => {
         const expiry  = ev.mis_en_avant_jusqu_au ? new Date(ev.mis_en_avant_jusqu_au) : null
         const actif   = ev.mis_en_avant && (!expiry || expiry >= now)
@@ -424,8 +444,12 @@ export default function Home() {
   // Top villes — calculé à partir des événements chargés
   const topVilles = useMemo<TopVille[]>(() => {
     const map: Record<string, { count: number; pays: string | null }> = {}
+    const EXCLUSIONS = ['haiti', 'haïti', 'france', 'usa', 'canada', 'martinique', 'guadeloupe', 'bresil', 'brésil', 'espagne', 'portugal', 'belgique']
     for (const ev of evenements) {
       if (!ev.ville) continue
+      const villeNorm = ev.ville.trim().toLowerCase()
+      if (villeNorm.length < 3) continue
+      if (EXCLUSIONS.includes(villeNorm)) continue
       const key = ev.ville.trim()
       if (!map[key]) map[key] = { count: 0, pays: ev.pays ?? null }
       map[key].count++
@@ -433,7 +457,7 @@ export default function Home() {
     return Object.entries(map)
       .map(([ville, { count, pays }]) => ({ ville, count, pays }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 8)
+      .slice(0, 5)
   }, [evenements])
 
   // Pin spécial "À la une" — mis à jour quand le carrousel change
