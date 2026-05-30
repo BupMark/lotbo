@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
@@ -12,7 +14,7 @@ import { identifyUser } from '../../lib/amplitude'
 const BADGES_CONTRIBUTEUR = [
   { id: 'decouvreur', emoji: '🌱', label: 'Découvreur', seuil: 1, desc: '1re contribution' },
   { id: 'actif', emoji: '🔥', label: 'Actif', seuil: 5, desc: '5 contributions' },
-  { id: 'contributeur', emoji: '⭐', label: 'Contributeur', seuil: 10, desc: '10 contributions' },
+  { id: 'contributeur', emoji: '⭐', label: 'Engagé', seuil: 10, desc: '10 contributions' },
   { id: 'top_contributeur', emoji: '🏅', label: 'Top Contributeur', seuil: 25, desc: '25 contributions' },
   { id: 'elite', emoji: '🥇', label: 'Élite', seuil: 50, desc: '50 contributions' },
   { id: 'legende', emoji: '👑', label: 'Légende LOTBO', seuil: 100, desc: '100 contributions' },
@@ -247,7 +249,7 @@ function ProfilInner() {
                   : profile?.role === 'ambassadeur' ? '🤝 Ambassadeur'
                   : profile?.role === 'organisateur' ? '🎪 Organisateur'
                   : profile?.role === 'contributeur_terrain' ? '⭐ Contributeur Terrain'
-                  : profile?.role === 'contributeur' ? '⭐ Contributeur'
+                  : profile?.role === 'contributeur' ? '⭐ Engagé'
                   : profile?.role === 'membre' ? '👤 Membre'
                   : '👤 Membre LOTBO'}
               </p>
@@ -256,7 +258,7 @@ function ProfilInner() {
               <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                 {isAdmin && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⚙️ Admin</span>}
                 {(rolesActifs.includes('contributeur_terrain')) && <span style={{ background: 'rgba(200,160,32,0.15)', color: '#C8A020', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur Terrain</span>}
-                {(rolesActifs.includes('contributeur') && !rolesActifs.includes('contributeur_terrain')) && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur</span>}
+                {(rolesActifs.includes('contributeur') && !rolesActifs.includes('contributeur_terrain')) && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Engagé</span>}
                 {rolesActifs.includes('ambassadeur') && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🤝 Ambassadeur</span>}
                 {(rolesActifs.includes('organisateur') || nbOrga > 0) && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🎪 Organisateur</span>}
                 {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {badgeContribActuel.label}</span>}
@@ -364,7 +366,7 @@ function ProfilInner() {
 
             {/* Badges contributeur */}
             <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
-              <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>⭐ Badges Contributeur</h3>
+              <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>⭐ Badges Engagé</h3>
               <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{nbContrib} contribution{nbContrib > 1 ? 's' : ''} repérée{nbContrib > 1 ? 's' : ''}</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {BADGES_CONTRIBUTEUR.map(b => {

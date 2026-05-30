@@ -13,7 +13,7 @@ const T: Record<string, { titre: string; partager: string; telecharger: string; 
       legende:          'Je suis Légende LOTBO',
       elite:            'Je suis Élite LOTBO',
       top_contributeur: 'Je suis Top Contributeur LOTBO',
-      contributeur:     'Je suis Contributeur LOTBO',
+      contributeur:     'Je suis Engagé LOTBO',
       actif:            'Je suis Actif sur LOTBO',
       decouvreur:       'Je découvre LOTBO',
     }
