@@ -47,9 +47,22 @@ interface Signalement {
   created_at: string
 }
 
+interface Reclamation {
+  id: string
+  evenement_id: string
+  reclamant_id: string
+  message: string | null
+  statut: string
+  traite_par: string | null
+  traite_le: string | null
+  created_at: string
+  evenements?: { titre: string; user_id: string | null } | null
+  profiles?: { nom: string | null } | null
+}
+
 type FiltreStatut  = 'en_attente' | 'approuve' | 'en_cours' | 'rejete' | 'hors_ligne' | 'archive' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
-type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs'
+type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations'
 type FiltreRole    = 'tous' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
 type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
 
@@ -280,6 +293,7 @@ export default function Admin() {
   const router = useRouter()
   const [evenements, setEvenements]         = useState<Evenement[]>([])
   const [signalements, setSignalements]     = useState<Signalement[]>([])
+  const [reclamations, setReclamations]     = useState<Reclamation[]>([])
   const [loading, setLoading]               = useState(true)
   const [userEmail, setUserEmail]           = useState<string>('')
   const [filtreStatut, setFiltreStatut]     = useState<FiltreStatut>('en_attente')
@@ -384,9 +398,10 @@ export default function Admin() {
     setRepartitionVilles(villesArr)
 
     // ── 3. Liste événements — limit 2000 pour dépasser la limite par défaut ──
-    const [{ data: evs }, { data: sigs }] = await Promise.all([
+    const [{ data: evs }, { data: sigs }, { data: reclsData }] = await Promise.all([
       supabase.from('evenements').select('*').order('created_at', { ascending: false }).limit(2000),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
+      supabase.from('reclamations_evenements').select('*, evenements(titre, user_id), profiles!reclamations_evenements_reclamant_id_fkey(nom)').order('created_at', { ascending: false }),
     ])
     const { data: rejetesData } = await supabase
       .from('evenements').select('*').eq('statut', 'rejete').order('created_at', { ascending: false })
@@ -412,6 +427,7 @@ export default function Admin() {
     }
     setMisEnAvantConfigs(cfgs)
     setSignalements((sigs as Signalement[]) || [])
+    setReclamations((reclsData as Reclamation[]) || [])
 
     // ── 4. SC7 — Stats import par source ─────────────────────────────────────
     const { data: statsSource } = await supabase
@@ -580,6 +596,18 @@ export default function Admin() {
               }])
             }
           }).catch(() => {})
+        }
+
+        // GM-BADGE-WIKI1 — Badge Contributeur Wikimedia
+        if (ev.source === 'wikimedia') {
+          supabase.from('notifications').insert([{
+            user_id: ev.user_id,
+            type: 'badge_debloque',
+            titre: '🌐 Badge Contributeur Wikimedia !',
+            message: 'Ton événement Wikimedia a été approuvé. Badge débloqué sur LOTBO !',
+            lien: '/profil?onglet=badges',
+            lu: false,
+          }]).then(() => {})
         }
       }
     }
@@ -840,10 +868,11 @@ export default function Admin() {
         {/* ── ADMIN2 — Navigation onglets ───────────────────────────────── */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid #E8E0D0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {[
-            { key: 'evenements',   label: 'Événements',   count: countTotal,          badge: true },
-            { key: 'signalements', label: 'Signalements', count: signalements.length, badge: true },
-            { key: 'import',       label: '📥 Import',    count: statsImport.length,  badge: true },
-            { key: 'utilisateurs', label: '👥 Utilisateurs', count: countMembres,     badge: true },
+            { key: 'evenements',   label: 'Événements',   count: countTotal,                                                badge: true },
+            { key: 'signalements', label: 'Signalements', count: signalements.length,                                       badge: true },
+            { key: 'reclamations', label: '🔑 Claims', count: reclamations.filter(r => r.statut === 'en_attente').length, badge: true },
+            { key: 'import',       label: '📥 Import',  count: statsImport.length,                                        badge: true },
+            { key: 'utilisateurs', label: '👥 Users',   count: countMembres,                                              badge: true },
           ].map(tab => (
             <button
               key={tab.key}
@@ -1160,6 +1189,92 @@ export default function Admin() {
                             style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
                           >
                             ⬇ Retirer l'événement
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            ONGLET RÉCLAMATIONS — CLAIM-1
+        ══════════════════════════════════════════════════════════════ */}
+        {onglet === 'reclamations' && (
+          <div>
+            {reclamations.length === 0 ? (
+              <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucune réclamation pour l'instant.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {reclamations.map(rec => {
+                  const statut = rec.statut || 'en_attente'
+                  const badgeCfg =
+                    statut === 'approuve' ? { label: '✅ Approuvé', bg: '#2D9E6B' } :
+                    statut === 'rejete'   ? { label: '✗ Rejeté',   bg: '#8C5A40' } :
+                                           { label: '🔑 En attente', bg: '#D4A820' }
+                  return (
+                    <div key={rec.id} style={{ background: 'rgba(212,168,32,0.06)', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 12, padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <a
+                            href={`/evenement/${rec.evenement_id}`}
+                            target="_blank"
+                            style={{ color: '#C8431A', fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', marginBottom: 4 }}
+                          >
+                            {rec.evenements?.titre ?? 'Événement inconnu'} ↗
+                          </a>
+                          <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold' }}>
+                            Réclamant : {rec.profiles?.nom ?? rec.reclamant_id.slice(0, 8)}
+                          </p>
+                          {rec.message && <p style={{ color: '#555', fontSize: 12, marginTop: 4, fontStyle: 'italic' }}>"{rec.message}"</p>}
+                          <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>
+                            {new Date(rec.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: badgeCfg.bg, color: 'white', flexShrink: 0, fontWeight: 'bold' }}>
+                          {badgeCfg.label}
+                        </span>
+                      </div>
+                      {statut === 'en_attente' && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Transférer la propriété de "${rec.evenements?.titre}" à ce reclamant ?`)) return
+                              await supabase.from('evenements').update({ user_id: rec.reclamant_id }).eq('id', rec.evenement_id)
+                              await supabase.from('reclamations_evenements').update({ statut: 'approuve', traite_le: new Date().toISOString() }).eq('id', rec.id)
+                              supabase.from('notifications').insert([{
+                                user_id: rec.reclamant_id,
+                                type: 'evenement_approuve',
+                                titre: '🔑 Réclamation approuvée !',
+                                message: `Vous êtes maintenant propriétaire de "${rec.evenements?.titre}".`,
+                                lien: `/evenement/${rec.evenement_id}`,
+                                lu: false,
+                              }]).then(() => {})
+                              setReclamations(prev => prev.map(r => r.id === rec.id ? { ...r, statut: 'approuve' } : r))
+                            }}
+                            style={{ background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
+                          >
+                            ✅ Approuver — transférer propriété
+                          </button>
+                          <button
+                            onClick={async () => {
+                              await supabase.from('reclamations_evenements').update({ statut: 'rejete', traite_le: new Date().toISOString() }).eq('id', rec.id)
+                              supabase.from('notifications').insert([{
+                                user_id: rec.reclamant_id,
+                                type: 'evenement_rejete',
+                                titre: 'Réclamation non approuvée',
+                                message: `Votre réclamation sur "${rec.evenements?.titre}" a été examinée et refusée.`,
+                                lien: null,
+                                lu: false,
+                              }]).then(() => {})
+                              setReclamations(prev => prev.map(r => r.id === rec.id ? { ...r, statut: 'rejete' } : r))
+                            }}
+                            style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
+                          >
+                            ✗ Rejeter
                           </button>
                         </div>
                       )}
