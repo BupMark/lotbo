@@ -1111,7 +1111,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 32 }}>
           {/* Ligne 1 — Actions */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={handleLike} style={{
