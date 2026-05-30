@@ -646,22 +646,74 @@ export default function AjouterEvenement() {
           if (Object.keys(d).length === 0) {
             setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurLecture || "On n'a pas pu lire l'affiche." })
           } else {
+            // Mapping catégorie texte libre → taxonomie LOTBO
+            const CATEGORIE_MAP: Record<string, string> = {
+              'concert': 'Concert / Spectacle', 'spectacle': 'Concert / Spectacle',
+              'festival': 'Festival', 'fête': 'Festival', 'fete': 'Festival',
+              'conférence': 'Conférence / Sommet', 'conference': 'Conférence / Sommet', 'sommet': 'Conférence / Sommet',
+              'exposition': 'Foire / Exposition', 'expo': 'Foire / Exposition', 'foire': 'Foire / Exposition',
+              'formation': 'Formation / Séminaire', 'séminaire': 'Formation / Séminaire', 'seminaire': 'Formation / Séminaire',
+              'tournoi': 'Tournoi / Compétition', 'compétition': 'Tournoi / Compétition', 'sport': 'Tournoi / Compétition',
+              'culte': 'Culte / Cérémonie religieuse', 'messe': 'Culte / Cérémonie religieuse', 'église': 'Culte / Cérémonie religieuse',
+              'assemblée': 'Assemblée / Réunion', 'réunion': 'Assemblée / Réunion',
+              'inauguration': 'Inauguration / Lancement', 'lancement': 'Inauguration / Lancement',
+              'communautaire': 'Célébration communautaire', 'célébration': 'Célébration communautaire',
+            }
+            let categorieDetectee: string | null = null
+            const texteRecherche = `${d.categorie || ''} ${d.titre || ''}`.toLowerCase()
+            for (const [key, val] of Object.entries(CATEGORIE_MAP)) {
+              if (texteRecherche.includes(key)) { categorieDetectee = val; break }
+            }
+
+            const nouvelleVille = d.ville || ''
+            const nouveauPays   = d.pays  || ''
+            const nouveauLieu   = d.lieu  || ''
+
             setForm(f => ({
               ...f,
-              titre:       d.titre       || f.titre,
-              nom_lieu:    d.lieu        || f.nom_lieu,
-              adresse:     d.adresse     || f.adresse,
-              ville:       d.ville       || f.ville,
-              pays:        d.pays        || f.pays,
-              date:        d.date_debut  || f.date,
-              date_fin:    d.date_fin    || f.date_fin,
-              heure_debut: d.heure_debut || f.heure_debut,
-              heure_fin:   d.heure_fin   || f.heure_fin,
-              description: d.description || f.description,
-              lien:        d.lien_officiel || f.lien,
-              prix:        d.prix        || f.prix,
-              organisateur: d.organisateur || f.organisateur,
+              titre:        d.titre           || f.titre,
+              nom_lieu:     nouveauLieu        || f.nom_lieu,
+              adresse:      d.adresse          || f.adresse,
+              ville:        nouvelleVille      || f.ville,
+              pays:         nouveauPays        || f.pays,
+              date:         d.date_debut       || f.date,
+              date_fin:     d.date_fin         || f.date_fin,
+              heure_debut:  d.heure_debut      || f.heure_debut,
+              heure_fin:    d.heure_fin        || f.heure_fin,
+              description:  d.description      || f.description,
+              lien:         d.lien_officiel    || f.lien,
+              prix:         d.prix             || f.prix,
+              organisateur: d.organisateur     || f.organisateur,
             }))
+
+            // Mapping catégorie → event_type_id
+            if (categorieDetectee) {
+              const typeMatch = EVENT_TYPES.find(t => t.nom === categorieDetectee)
+              if (typeMatch) setSelectedType(typeMatch.id)
+            }
+
+            // Géocodage automatique si ville trouvée
+            if (nouvelleVille) {
+              const query = nouveauLieu
+                ? `${nouveauLieu}, ${nouvelleVille}${nouveauPays ? ', ' + nouveauPays : ''}`
+                : `${nouvelleVille}${nouveauPays ? ', ' + nouveauPays : ''}`
+              setRechercheTexte(query)
+              try {
+                const geoRes  = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(query)}`)
+                const geoData = await geoRes.json()
+                if (geoData.predictions?.length > 0) {
+                  const placeId = geoData.predictions[0].place_id
+                  const detRes  = await fetch(`/api/places-details?place_id=${placeId}`)
+                  const detData = await detRes.json()
+                  const loc     = detData.result?.geometry?.location
+                  if (loc) {
+                    setCoordsPin({ longitude: loc.lng, latitude: loc.lat, adresse: query })
+                    setPinConfirme(false)
+                  }
+                }
+              } catch { /* géocodage silencieux */ }
+            }
+
             setScanMessage({ type: 'verifier', texte: T_IMAGE[locale].scanVerifier || 'Vérifie et complète les informations avant de publier.' })
           }
         } catch {
