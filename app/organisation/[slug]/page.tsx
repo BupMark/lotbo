@@ -66,8 +66,8 @@ export default function PageOrganisation() {
     if (!userId || !org) return
     supabase
       .from('organisation_membres')
-      .select('id')
-      .eq('organisation_id', org.id)
+      .select('user_id')
+      .eq('org_id', org.id)
       .eq('user_id', userId)
       .maybeSingle()
       .then(({ data }) => setSuivi(!!data))
@@ -103,8 +103,8 @@ export default function PageOrganisation() {
         .limit(10),
       supabase
         .from('organisation_membres')
-        .select('id', { count: 'exact', head: true })
-        .eq('organisation_id', orgData.id)
+        .select('user_id', { count: 'exact', head: true })
+        .eq('org_id', orgData.id)
         .neq('role', 'owner'),
     ])
 
@@ -120,14 +120,14 @@ export default function PageOrganisation() {
       await supabase
         .from('organisation_membres')
         .delete()
-        .eq('organisation_id', org.id)
+        .eq('org_id', org.id)
         .eq('user_id', userId)
       setSuivi(false)
       setNbFollowers(prev => Math.max(0, prev - 1))
     } else {
       await supabase
         .from('organisation_membres')
-        .insert({ organisation_id: org.id, user_id: userId, role: 'lecteur' })
+        .insert({ org_id: org.id, user_id: userId, role: 'lecteur' })
       setSuivi(true)
       setNbFollowers(prev => prev + 1)
     }
