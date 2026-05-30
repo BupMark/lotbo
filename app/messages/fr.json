@@ -41,7 +41,12 @@
       "description": "Description",
       "lien": "Lien pour plus de détails",
       "photo": "Photo de l'événement",
-      "publier": "Publier l'événement"
+      "publier": "Publier l'événement",
+      "scanAffiche": "📸 Scanner ou importer une affiche",
+      "scanAnalyse": "📸 Analyse en cours...",
+      "scanVerifier": "Vérifie et complète les informations avant de publier",
+      "scanErreurLecture": "On n'a pas pu lire l'affiche. Tu peux remplir le formulaire manuellement.",
+      "scanErreurService": "Service temporairement indisponible. Réessaie dans quelques instants."
     },
     "tabbar": {
       "carte": "Carte",

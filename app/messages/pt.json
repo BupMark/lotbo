@@ -41,7 +41,12 @@
       "description": "Descrição",
       "lien": "Link para mais detalhes",
       "photo": "Foto do evento",
-      "publier": "Publicar evento"
+      "publier": "Publicar evento",
+      "scanAffiche": "📸 Escanear ou importar um cartaz",
+      "scanAnalyse": "📸 A analisar...",
+      "scanVerifier": "Verifique e complete as informações antes de publicar",
+      "scanErreurLecture": "Não conseguimos ler o cartaz. Pode preencher o formulário manualmente.",
+      "scanErreurService": "Serviço temporariamente indisponível. Tente novamente em instantes."
     },
     "tabbar": {
       "carte": "Mapa",

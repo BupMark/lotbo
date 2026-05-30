@@ -41,7 +41,12 @@
       "description": "Deskripsyon",
       "lien": "Lyen pou plis detay",
       "photo": "Foto evènman an",
-      "publier": "Pibliye evènman an"
+      "publier": "Pibliye evènman an",
+      "scanAffiche": "📸 Skane oswa enpòte yon afich",
+      "scanAnalyse": "📸 Ap analize...",
+      "scanVerifier": "Verifye epi konplete enfòmasyon yo anvan ou pibliye",
+      "scanErreurLecture": "Nou pa t kapab li afich la. Ou ka ranpli fòmilè a manyèlman.",
+      "scanErreurService": "Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond."
     },
     "tabbar": {
       "carte": "Kat",

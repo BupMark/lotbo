@@ -46,54 +46,79 @@ function detecterNouveauBadge(avant: number, apres: number, badges: Badge[]): Ba
 // ── Traductions F10 ───────────────────────────────────────────────────────────
 const T_IMAGE = {
   fr: {
-    titre:        'Votre événement serait plus beau avec une image.',
-    stat:         'Les événements avec photo attirent 3× plus de visiteurs.',
-    suggestions:  'Choisissez parmi nos suggestions :',
-    ajouter:      '+ Ajouter ma propre image',
-    continuer:    'Continuer sans image →',
-    credit:       'Photo par',
-    chargement:   'Chargement des suggestions…',
-    selectionnee: '✓ Image sélectionnée',
+    titre:             'Votre événement serait plus beau avec une image.',
+    stat:              'Les événements avec photo attirent 3× plus de visiteurs.',
+    suggestions:       'Choisissez parmi nos suggestions :',
+    ajouter:           '+ Ajouter ma propre image',
+    continuer:         'Continuer sans image →',
+    credit:            'Photo par',
+    chargement:        'Chargement des suggestions…',
+    selectionnee:      '✓ Image sélectionnée',
+    scanAffiche:       '📸 Scanner ou importer une affiche',
+    scanAnalyse:       '📸 Analyse en cours...',
+    scanVerifier:      'Vérifie et complète les informations avant de publier',
+    scanErreurLecture: "On n'a pas pu lire l'affiche. Tu peux remplir le formulaire manuellement.",
+    scanErreurService: 'Service temporairement indisponible. Réessaie dans quelques instants.',
   },
   en: {
-    titre:        'Your event would look even better with a photo.',
-    stat:         'Events with photos attract 3× more visitors.',
-    suggestions:  'Choose from our suggestions:',
-    ajouter:      '+ Add my own image',
-    continuer:    'Continue without image →',
-    credit:       'Photo by',
-    chargement:   'Loading suggestions…',
-    selectionnee: '✓ Image selected',
+    titre:             'Your event would look even better with a photo.',
+    stat:              'Events with photos attract 3× more visitors.',
+    suggestions:       'Choose from our suggestions:',
+    ajouter:           '+ Add my own image',
+    continuer:         'Continue without image →',
+    credit:            'Photo by',
+    chargement:        'Loading suggestions…',
+    selectionnee:      '✓ Image selected',
+    scanAffiche:       '📸 Scan or import a poster',
+    scanAnalyse:       '📸 Analyzing...',
+    scanVerifier:      'Check and complete the information before publishing',
+    scanErreurLecture: "We couldn't read the poster. You can fill in the form manually.",
+    scanErreurService: 'Service temporarily unavailable. Please try again in a moment.',
   },
   es: {
-    titre:        'Tu evento se vería mucho mejor con una imagen.',
-    stat:         'Los eventos con foto atraen 3× más visitantes.',
-    suggestions:  'Elige entre nuestras sugerencias:',
-    ajouter:      '+ Agregar mi propia imagen',
-    continuer:    'Continuar sin imagen →',
-    credit:       'Foto por',
-    chargement:   'Cargando sugerencias…',
-    selectionnee: '✓ Imagen seleccionada',
+    titre:             'Tu evento se vería mucho mejor con una imagen.',
+    stat:              'Los eventos con foto atraen 3× más visitantes.',
+    suggestions:       'Elige entre nuestras sugerencias:',
+    ajouter:           '+ Agregar mi propia imagen',
+    continuer:         'Continuar sin imagen →',
+    credit:            'Foto por',
+    chargement:        'Cargando sugerencias…',
+    selectionnee:      '✓ Imagen seleccionada',
+    scanAffiche:       '📸 Escanear o importar un cartel',
+    scanAnalyse:       '📸 Analizando...',
+    scanVerifier:      'Verifica y completa la información antes de publicar',
+    scanErreurLecture: 'No pudimos leer el cartel. Puedes rellenar el formulario manualmente.',
+    scanErreurService: 'Servicio temporalmente no disponible. Inténtalo de nuevo en un momento.',
   },
   pt: {
-    titre:        'O seu evento ficaria ainda mais bonito com uma imagem.',
-    stat:         'Eventos com foto atraem 3× mais visitantes.',
-    suggestions:  'Escolha entre as nossas sugestões:',
-    ajouter:      '+ Adicionar minha própria imagem',
-    continuer:    'Continuar sem imagem →',
-    credit:       'Foto por',
-    chargement:   'A carregar sugestões…',
-    selectionnee: '✓ Imagem selecionada',
+    titre:             'O seu evento ficaria ainda mais bonito com uma imagem.',
+    stat:              'Eventos com foto atraem 3× mais visitantes.',
+    suggestions:       'Escolha entre as nossas sugestões:',
+    ajouter:           '+ Adicionar minha própria imagem',
+    continuer:         'Continuar sem imagem →',
+    credit:            'Foto por',
+    chargement:        'A carregar sugestões…',
+    selectionnee:      '✓ Imagem selecionada',
+    scanAffiche:       '📸 Escanear ou importar um cartaz',
+    scanAnalyse:       '📸 A analisar...',
+    scanVerifier:      'Verifique e complete as informações antes de publicar',
+    scanErreurLecture: 'Não conseguimos ler o cartaz. Pode preencher o formulário manualmente.',
+    scanErreurService: 'Serviço temporariamente indisponível. Tente novamente em instantes.',
   },
   ht: {
-    titre:        'Evènman ou a ta pi bèl ak yon imaj.',
-    stat:         'Evènman ki gen foto jwenn 3× plis vizitè.',
-    suggestions:  'Chwazi youn nan sijèsyon nou yo:',
-    ajouter:      '+ Ajoute pwòp imaj ou',
-    continuer:    'Kontinye san imaj →',
-    credit:       'Foto pa',
-    chargement:   'Ap chaje sijèsyon…',
-    selectionnee: '✓ Imaj chwazi',
+    titre:             'Evènman ou a ta pi bèl ak yon imaj.',
+    stat:              'Evènman ki gen foto jwenn 3× plis vizitè.',
+    suggestions:       'Chwazi youn nan sijèsyon nou yo:',
+    ajouter:           '+ Ajoute pwòp imaj ou',
+    continuer:         'Kontinye san imaj →',
+    credit:            'Foto pa',
+    chargement:        'Ap chaje sijèsyon…',
+    selectionnee:      '✓ Imaj chwazi',
+    scanAffiche:       '📸 Skane oswa enpòte yon afich',
+    scanAnalyse:       '📸 Ap analize...',
+    scanVerifier:      'Verifye epi konplete enfòmasyon yo anvan ou pibliye',
+    scanErreurLecture: 'Nou pa t kapab li afich la. Ou ka ranpli fòmilè a manyèlman.',
+    scanErreurService: 'Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond.',
   },
 }
 
@@ -521,6 +546,9 @@ export default function AjouterEvenement() {
   const [showImageBloc, setShowImageBloc]     = useState(false)
   const [imageBlocIgnore, setImageBlocIgnore] = useState(false)
   const fileInputRef                          = useRef<HTMLInputElement>(null)
+  const scanInputRef                          = useRef<HTMLInputElement>(null)
+  const [scanLoading, setScanLoading]         = useState(false)
+  const [scanMessage, setScanMessage]         = useState<{ type: 'verifier' | 'erreur'; texte: string } | null>(null)
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
   const locale: Locale = (() => {
@@ -595,6 +623,57 @@ export default function AjouterEvenement() {
     observer.observe(imageSectionRef.current)
     return () => observer.disconnect()
   }, [imageBlocIgnore, image, imageUnsplash])
+
+  const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setScanLoading(true)
+    setScanMessage(null)
+    try {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1]
+        const mimeType = file.type || 'image/jpeg'
+        try {
+          const res = await fetch('/api/scan-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageBase64: base64, mimeType }),
+          })
+          if (!res.ok) throw new Error('service')
+          const json = await res.json()
+          const d = json.data || {}
+          if (Object.keys(d).length === 0) {
+            setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurLecture || "On n'a pas pu lire l'affiche." })
+          } else {
+            setForm(f => ({
+              ...f,
+              titre:       d.titre       || f.titre,
+              nom_lieu:    d.lieu        || f.nom_lieu,
+              ville:       d.ville       || f.ville,
+              pays:        d.pays        || f.pays,
+              date:        d.date_debut  || f.date,
+              date_fin:    d.date_fin    || f.date_fin,
+              heure_debut: d.heure_debut || f.heure_debut,
+              heure_fin:   d.heure_fin   || f.heure_fin,
+              description: d.description || f.description,
+              lien:        d.lien_officiel || f.lien,
+              prix:        d.prix        || f.prix,
+            }))
+            setScanMessage({ type: 'verifier', texte: T_IMAGE[locale].scanVerifier || 'Vérifie et complète les informations avant de publier.' })
+          }
+        } catch {
+          setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurService || 'Service temporairement indisponible.' })
+        }
+        setScanLoading(false)
+      }
+      reader.readAsDataURL(file)
+    } catch {
+      setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurService || 'Service temporairement indisponible.' })
+      setScanLoading(false)
+    }
+    e.target.value = ''
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -934,6 +1013,43 @@ export default function AjouterEvenement() {
         <div style={{ marginBottom: 32 }}>
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
           <h1 style={{ color: '#1A1410', fontSize: 26, fontWeight: 'bold', marginTop: 12, marginBottom: 4 }}>Ajouter un événement</h1>
+          {/* ── FEAT-SCAN-PUBLIE — Bouton scan ── */}
+          <input
+            ref={scanInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={handleScan}
+            style={{ display: 'none' }}
+          />
+          <button
+            type="button"
+            onClick={() => scanInputRef.current?.click()}
+            disabled={scanLoading}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              width: '100%', padding: '13px 16px', marginTop: 16, marginBottom: 4,
+              background: scanLoading ? 'rgba(200,67,26,0.08)' : 'rgba(200,67,26,0.06)',
+              border: '1px dashed rgba(200,67,26,0.4)',
+              borderRadius: 12, cursor: scanLoading ? 'not-allowed' : 'pointer',
+              color: '#C8431A', fontSize: 14, fontWeight: 'bold',
+              transition: 'all 0.2s',
+            }}
+          >
+            {scanLoading
+              ? <><span style={{ fontSize: 18 }}>⏳</span><span>{T_IMAGE[locale].scanAnalyse || '📸 Analyse en cours...'}</span></>
+              : <><span style={{ fontSize: 18 }}>📸</span><span>{T_IMAGE[locale].scanAffiche || '📸 Scanner ou importer une affiche'}</span></>
+            }
+          </button>
+          {scanMessage && (
+            <div style={{
+              padding: '10px 14px', borderRadius: 10, fontSize: 13, lineHeight: 1.5,
+              background: scanMessage.type === 'verifier' ? 'rgba(45,158,107,0.08)' : 'rgba(200,67,26,0.08)',
+              border: `1px solid ${scanMessage.type === 'verifier' ? 'rgba(45,158,107,0.3)' : 'rgba(200,67,26,0.3)'}`,
+              color: scanMessage.type === 'verifier' ? '#2D9E6B' : '#C8431A',
+            }}>
+              {scanMessage.type === 'verifier' ? '✅ ' : '⚠️ '}{scanMessage.texte}
+            </div>
+          )}
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
         </div>
 
