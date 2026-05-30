@@ -1,58 +1,64 @@
 {
-    "nav": {
-      "ajouter": "+ Agregar",
-      "profil": "Mi perfil",
-      "deconnexion": "Cerrar sesión",
-      "community": "Juntos"
-    },
-    "carte": {
-      "recherche": "Ciudad, país o evento...",
-      "toutes": "Todos",
-      "tous": "Todos",
-      "public": "Público",
-      "prive": "Privado",
-      "gratuit": "Gratis",
-      "payant": "De pago",
-      "liste": "Lista",
-      "carte": "Mapa"
-    },
-    "evenement": {
-      "voir": "Ver página →",
-      "details": "Más detalles",
-      "partager_whatsapp": "WhatsApp",
-      "partager_facebook": "Facebook",
-      "similaires": "Eventos similares",
-      "signaler": "Reportar este evento",
-      "retour": "Volver al mapa"
-    },
-    "ajouter": {
-      "titre_page": "Agregar un evento",
-      "sous_titre": "Comparte un evento con la comunidad Lotbo",
-      "titre": "Título del evento",
-      "lieu": "Nombre del lugar",
-      "ville": "Ciudad",
-      "pays": "País",
-      "date": "Fecha",
-      "debut": "Inicio",
-      "fin": "Fin",
-      "categorie": "Categoría",
-      "acces": "Acceso",
-      "prix": "Precio",
-      "description": "Descripción",
-      "lien": "Enlace para más detalles",
-      "photo": "Foto del evento",
-      "publier": "Publicar evento",
-      "scanAffiche": "📸 Escanear o importar un cartel",
-      "scanAnalyse": "📸 Analizando...",
-      "scanVerifier": "Verifica y completa la información antes de publicar",
-      "scanErreurLecture": "No pudimos leer el cartel. Puedes rellenar el formulario manualmente.",
-      "scanErreurService": "Servicio temporalmente no disponible. Inténtalo de nuevo en un momento."
-    },
-    "tabbar": {
-      "carte": "Mapa",
-      "recherche": "Buscar",
-      "ajouter": "Agregar",
-      "community": "Juntos",
-      "profil": "Perfil"
-    }
+  "nav": {
+    "ajouter": "+ Agregar",
+    "profil": "Mi perfil",
+    "deconnexion": "Cerrar sesión",
+    "community": "Juntos"
+  },
+  "carte": {
+    "recherche": "Ciudad, país o evento...",
+    "toutes": "Todos",
+    "tous": "Todos",
+    "public": "Público",
+    "prive": "Privado",
+    "gratuit": "Gratis",
+    "payant": "De pago",
+    "liste": "Lista",
+    "carte": "Mapa"
+  },
+  "evenement": {
+    "voir": "Ver página →",
+    "details": "Más detalles",
+    "partager_whatsapp": "WhatsApp",
+    "partager_facebook": "Facebook",
+    "similaires": "Eventos similares",
+    "signaler": "Reportar este evento",
+    "retour": "Volver al mapa"
+  },
+  "ajouter": {
+    "titre_page": "Agregar un evento",
+    "sous_titre": "Comparte un evento con la comunidad Lotbo",
+    "titre": "Título del evento",
+    "lieu": "Nombre del lugar",
+    "ville": "Ciudad",
+    "pays": "País",
+    "date": "Fecha",
+    "debut": "Inicio",
+    "fin": "Fin",
+    "categorie": "Categoría",
+    "acces": "Acceso",
+    "prix": "Precio",
+    "description": "Descripción",
+    "lien": "Enlace para más detalles",
+    "photo": "Foto del evento",
+    "publier": "Publicar evento",
+    "scanAffiche": "📸 Escanear o importar un cartel",
+    "scanAnalyse": "📸 Analizando...",
+    "scanVerifier": "Verifica y completa la información antes de publicar",
+    "scanErreurLecture": "No pudimos leer el cartel. Puedes rellenar el formulario manualmente.",
+    "scanErreurService": "Servicio temporalmente no disponible. Inténtalo de nuevo en un momento."
+  },
+  "tabbar": {
+    "carte": "Mapa",
+    "recherche": "Buscar",
+    "ajouter": "Agregar",
+    "community": "Juntos",
+    "profil": "Perfil"
+  },
+  "sidebar": {
+    "alune": "Destacados",
+    "topvilles": "Top ciudades",
+    "evenements": "eventos",
+    "voirtous": "Ver todos"
   }
+}

@@ -1,58 +1,64 @@
 {
-    "nav": {
-      "ajouter": "+ Ajoute",
-      "profil": "Pwofil mwen",
-      "deconnexion": "Dekonekte",
-      "community": "Ansanm"
-    },
-    "carte": {
-      "recherche": "Vil, peyi oswa evènman...",
-      "toutes": "Tout",
-      "tous": "Tout",
-      "public": "Piblik",
-      "prive": "Prive",
-      "gratuit": "Gratis",
-      "payant": "Peye",
-      "liste": "Lis",
-      "carte": "Kat"
-    },
-    "evenement": {
-      "voir": "Wè paj la →",
-      "details": "Plis detay",
-      "partager_whatsapp": "WhatsApp",
-      "partager_facebook": "Facebook",
-      "similaires": "Evènman ki sanble",
-      "signaler": "Rapòte evènman sa",
-      "retour": "Retounen nan kat la"
-    },
-    "ajouter": {
-      "titre_page": "Ajoute yon evènman",
-      "sous_titre": "Pataje yon evènman ak kominote Lotbo a",
-      "titre": "Tit evènman an",
-      "lieu": "Non kote a",
-      "ville": "Vil",
-      "pays": "Peyi",
-      "date": "Dat",
-      "debut": "Kòmansman",
-      "fin": "Fen",
-      "categorie": "Kategori",
-      "acces": "Aksè",
-      "prix": "Pri",
-      "description": "Deskripsyon",
-      "lien": "Lyen pou plis detay",
-      "photo": "Foto evènman an",
-      "publier": "Pibliye evènman an",
-      "scanAffiche": "📸 Skane oswa enpòte yon afich",
-      "scanAnalyse": "📸 Ap analize...",
-      "scanVerifier": "Verifye epi konplete enfòmasyon yo anvan ou pibliye",
-      "scanErreurLecture": "Nou pa t kapab li afich la. Ou ka ranpli fòmilè a manyèlman.",
-      "scanErreurService": "Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond."
-    },
-    "tabbar": {
-      "carte": "Kat",
-      "recherche": "Rechèch",
-      "ajouter": "Ajoute",
-      "community": "Ansanm",
-      "profil": "Pwofil"
-    }
+  "nav": {
+    "ajouter": "+ Ajoute",
+    "profil": "Pwofil mwen",
+    "deconnexion": "Dekonekte",
+    "community": "Ansanm"
+  },
+  "carte": {
+    "recherche": "Vil, peyi oswa evènman...",
+    "toutes": "Tout",
+    "tous": "Tout",
+    "public": "Piblik",
+    "prive": "Prive",
+    "gratuit": "Gratis",
+    "payant": "Peye",
+    "liste": "Lis",
+    "carte": "Kat"
+  },
+  "evenement": {
+    "voir": "Wè paj la →",
+    "details": "Plis detay",
+    "partager_whatsapp": "WhatsApp",
+    "partager_facebook": "Facebook",
+    "similaires": "Evènman ki sanble",
+    "signaler": "Rapòte evènman sa",
+    "retour": "Retounen nan kat la"
+  },
+  "ajouter": {
+    "titre_page": "Ajoute yon evènman",
+    "sous_titre": "Pataje yon evènman ak kominote Lotbo a",
+    "titre": "Tit evènman an",
+    "lieu": "Non kote a",
+    "ville": "Vil",
+    "pays": "Peyi",
+    "date": "Dat",
+    "debut": "Kòmansman",
+    "fin": "Fen",
+    "categorie": "Kategori",
+    "acces": "Aksè",
+    "prix": "Pri",
+    "description": "Deskripsyon",
+    "lien": "Lyen pou plis detay",
+    "photo": "Foto evènman an",
+    "publier": "Pibliye evènman an",
+    "scanAffiche": "📸 Skane oswa enpòte yon afich",
+    "scanAnalyse": "📸 Ap analize...",
+    "scanVerifier": "Verifye epi konplete enfòmasyon yo anvan ou pibliye",
+    "scanErreurLecture": "Nou pa t kapab li afich la. Ou ka ranpli fòmilè a manyèlman.",
+    "scanErreurService": "Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond."
+  },
+  "tabbar": {
+    "carte": "Kat",
+    "recherche": "Rechèch",
+    "ajouter": "Ajoute",
+    "community": "Ansanm",
+    "profil": "Pwofil"
+  },
+  "sidebar": {
+    "alune": "Pi gwo",
+    "topvilles": "Top vil yo",
+    "evenements": "evènman",
+    "voirtous": "Wè tout"
   }
+}

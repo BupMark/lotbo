@@ -45,6 +45,12 @@ interface UserMeta {
   email?: string
 }
 
+interface TopVille {
+  ville: string
+  count: number
+  pays: string | null
+}
+
 const CATEGORIES = ['Toutes', 'Festival', 'Musique', 'Art', 'Sport', 'Gastronomie', 'Culture', 'Conference', 'Autre']
 
 function formatDate(dateStr: string): string {
@@ -261,6 +267,7 @@ export default function Home() {
       .eq('statut', 'approuve')
       .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
       .neq('statut', 'hors_ligne')
+      .limit(2000)
       .then(({ data }) => setEvenements((data as Evenement[]) || []))
   }, [])
 
@@ -414,6 +421,21 @@ export default function Home() {
       .map(s => s.ev)
   }, [evenements, userVille, favorisCounts, commCounts])
 
+  // Top villes — calculé à partir des événements chargés
+  const topVilles = useMemo<TopVille[]>(() => {
+    const map: Record<string, { count: number; pays: string | null }> = {}
+    for (const ev of evenements) {
+      if (!ev.ville) continue
+      const key = ev.ville.trim()
+      if (!map[key]) map[key] = { count: 0, pays: ev.pays ?? null }
+      map[key].count++
+    }
+    return Object.entries(map)
+      .map(([ville, { count, pays }]) => ({ ville, count, pays }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8)
+  }, [evenements])
+
   // Pin spécial "À la une" — mis à jour quand le carrousel change
   useEffect(() => {
     if (aLaUneMarkerRef.current) { aLaUneMarkerRef.current.remove(); aLaUneMarkerRef.current = null }
@@ -442,10 +464,26 @@ export default function Home() {
 
   const evenementsFiltres = evenements.filter(filtreActif)
 
+  // Naviguer vers une ville depuis la sidebar
+  const allerVersVille = (ville: string) => {
+    setRecherche(ville)
+    if (!mapRef.current) return
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(ville)}.json?access_token=${token}&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.features?.length > 0) {
+          const [lng, lat] = data.features[0].center as [number, number]
+          mapRef.current!.flyTo({ center: [lng, lat], zoom: 12 })
+        }
+      })
+      .catch(() => {})
+  }
+
   return (
     <main style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ══ CSS grille responsive UX4 ══ */}
+      {/* ══ CSS grille responsive UX4 + sidebar desktop ══ */}
       <style>{`
         .lotbo-grid-evenements {
           display: grid;
@@ -583,7 +621,7 @@ export default function Home() {
           .aune-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
-        /* ── À la une bottom sheet (carte mode) ── */
+        /* ── À la une bottom sheet (carte mode) — masqué sur desktop ── */
         .aune-sheet {
           position: fixed;
           bottom: 64px;
@@ -606,6 +644,121 @@ export default function Home() {
             border-radius: 16px;
             box-shadow: 0 4px 24px rgba(26,20,16,0.18);
           }
+        }
+        /* Masquer le bottom sheet sur desktop — la sidebar prend le relais */
+        @media (min-width: 1024px) {
+          .aune-sheet { display: none !important; }
+        }
+
+        /* ── Sidebar desktop ── */
+        .lotbo-sidebar {
+          display: none;
+        }
+        @media (min-width: 1024px) {
+          .lotbo-carte-wrapper {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+          }
+          .lotbo-carte-inner {
+            flex: 1;
+            position: relative;
+            min-width: 0;
+          }
+          .lotbo-sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+            flex-shrink: 0;
+            background: #F7F2E8;
+            border-left: 1px solid #E8E0D0;
+            overflow-y: auto;
+            padding: 16px 0 80px;
+          }
+        }
+        @media (min-width: 1280px) {
+          .lotbo-sidebar {
+            width: 320px;
+          }
+        }
+
+        /* ── Cards À la une dans la sidebar ── */
+        .sidebar-aune-card {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          padding: 10px 16px;
+          text-decoration: none;
+          color: #1A1410;
+          border-bottom: 1px solid #F0EBE3;
+          transition: background 0.12s;
+        }
+        .sidebar-aune-card:last-child {
+          border-bottom: none;
+        }
+        .sidebar-aune-card:hover {
+          background: #F0EBE3;
+        }
+        .sidebar-aune-card.active {
+          background: rgba(200, 67, 26, 0.06);
+          border-left: 3px solid #C8431A;
+          padding-left: 13px;
+        }
+        .sidebar-aune-img {
+          width: 52px;
+          height: 52px;
+          object-fit: cover;
+          border-radius: 8px;
+          flex-shrink: 0;
+        }
+        .sidebar-aune-titre {
+          font-size: 13px;
+          font-weight: 600;
+          color: #1A1410;
+          line-height: 1.3;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          margin-bottom: 3px;
+        }
+        .sidebar-aune-meta {
+          font-size: 11px;
+          color: #8C5A40;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        /* ── Top villes dans la sidebar ── */
+        .sidebar-ville-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 9px 16px;
+          cursor: pointer;
+          border-radius: 8px;
+          margin: 0 8px;
+          transition: background 0.12s;
+          text-decoration: none;
+          color: #1A1410;
+        }
+        .sidebar-ville-row:hover {
+          background: #F0EBE3;
+        }
+        .sidebar-section-title {
+          font-size: 10px;
+          font-weight: 700;
+          color: #8C5A40;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          padding: 14px 16px 8px;
+        }
+        .sidebar-divider {
+          height: 1px;
+          background: #E8E0D0;
+          margin: 4px 0;
         }
       `}</style>
 
@@ -798,7 +951,7 @@ export default function Home() {
           {/* ══ Section "À la une" ══ */}
           {aLaUne.length > 0 && (
             <div style={{ marginBottom: 32 }}>
-              <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>🔥 À la une</p>
+              <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>🔥 {t.sidebar.alune}</p>
 
               {/* Mobile — carrousel */}
               <div className="aune-carousel">
@@ -944,18 +1097,117 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════
-          CARTE MAPBOX
+          CARTE + SIDEBAR DESKTOP (mode carte)
       ══════════════════════════════════════ */}
-      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-        <div ref={mapContainer} style={{ position: 'absolute', inset: 0 }} />
-        {mode === 'carte' && evenementsFiltres.length === 0 && evenements.length > 0 && (
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10, background: 'white', borderRadius: 16, padding: '24px 20px', boxShadow: '0 8px 32px rgba(26,20,16,0.18)', textAlign: 'center', maxWidth: 280, width: 'calc(100% - 40px)' }}>
-            <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ position: 'absolute', top: 10, right: 12, background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>✕</button>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
-            <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Aucun événement trouvé</p>
-            <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Aucun événement ne correspond à tes filtres actuels.</p>
-            <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>Réinitialiser les filtres</button>
-          </div>
+      <div className="lotbo-carte-wrapper" style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+
+        {/* ── Carte Mapbox ── */}
+        <div className="lotbo-carte-inner">
+          <div ref={mapContainer} style={{ position: 'absolute', inset: 0 }} />
+          {mode === 'carte' && evenementsFiltres.length === 0 && evenements.length > 0 && (
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10, background: 'white', borderRadius: 16, padding: '24px 20px', boxShadow: '0 8px 32px rgba(26,20,16,0.18)', textAlign: 'center', maxWidth: 280, width: 'calc(100% - 40px)' }}>
+              <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ position: 'absolute', top: 10, right: 12, background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>✕</button>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
+              <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Aucun événement trouvé</p>
+              <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Aucun événement ne correspond à tes filtres actuels.</p>
+              <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>Réinitialiser les filtres</button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Sidebar desktop — visible uniquement ≥ 1024px en mode carte ── */}
+        {mode === 'carte' && (
+          <aside className="lotbo-sidebar">
+
+            {/* ── Section À la une ── */}
+            {aLaUne.length > 0 && (
+              <>
+                <div className="sidebar-section-title">🔥 {t.sidebar.alune}</div>
+                <div>
+                  {aLaUne.map((ev, i) => (
+                    <a
+                      key={ev.id}
+                      href={'/evenement/' + ev.id}
+                      className={`sidebar-aune-card${i === carouselIdx ? ' active' : ''}`}
+                      onMouseEnter={() => setCarouselIdx(i)}
+                    >
+                      <img
+                        src={getEventImage(ev.image_url, ev.categorie)}
+                        alt={ev.titre}
+                        className="sidebar-aune-img"
+                        onError={e2 => {
+                          if (ev.image_url) { (e2.target as HTMLImageElement).style.display = 'none'; return }
+                          const img = e2.target as HTMLImageElement
+                          const fb  = FALLBACK_IMAGES[ev.categorie]
+                          if (fb && img.src !== fb) img.src = fb
+                        }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p className="sidebar-aune-titre">{ev.titre}</p>
+                        <p className="sidebar-aune-meta">📍 {ev.lieu}</p>
+                        <p className="sidebar-aune-meta">📅 {afficherPeriode(ev)}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* ── Séparateur ── */}
+            {aLaUne.length > 0 && topVilles.length > 0 && (
+              <div className="sidebar-divider" style={{ margin: '8px 0' }} />
+            )}
+
+            {/* ── Section Top villes ── */}
+            {topVilles.length > 0 && (
+              <>
+                <div className="sidebar-section-title">🌍 {t.sidebar.topvilles}</div>
+                <div>
+                  {topVilles.map((v, i) => (
+                    <div
+                      key={v.ville}
+                      className="sidebar-ville-row"
+                      onClick={() => allerVersVille(v.ville)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={e => e.key === 'Enter' && allerVersVille(v.ville)}
+                      aria-label={`Explorer ${v.ville}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <span style={{
+                          width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                          background: i === 0 ? '#C8431A' : i === 1 ? '#D4A820' : '#E8E0D0',
+                          color: i < 2 ? 'white' : '#8C5A40',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, fontWeight: 'bold',
+                        }}>
+                          {i + 1}
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1410', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.ville}</p>
+                          {v.pays && <p style={{ fontSize: 10, color: '#8C5A40', margin: 0 }}>{v.pays}</p>}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 11, color: '#8C5A40', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {v.count} {t.sidebar.evenements}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lien vers vue liste filtrée */}
+                <div style={{ padding: '12px 16px 0' }}>
+                  <button
+                    onClick={() => setMode('liste')}
+                    style={{ width: '100%', background: 'transparent', border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px', fontSize: 12, color: '#8C5A40', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    {t.sidebar.voirtous} →
+                  </button>
+                </div>
+              </>
+            )}
+
+          </aside>
         )}
       </div>
 
@@ -1001,7 +1253,8 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════
-          BOTTOM SHEET "À la une" (mode carte)
+          BOTTOM SHEET "À la une" (mode carte, mobile/tablette uniquement)
+          Masqué sur desktop ≥ 1024px via CSS
       ══════════════════════════════════════ */}
       {mode === 'carte' && aLaUne.length > 0 && (
         <div
@@ -1010,7 +1263,6 @@ export default function Home() {
           onClick={sheetReduit ? () => setSheetReduit(false) : undefined}
         >
           {sheetReduit ? (
-            /* ── État réduit ──────────────────────────────── */
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', height: 80 }}>
               {aLaUne[carouselIdx] && (
                 <>
@@ -1031,9 +1283,7 @@ export default function Home() {
               )}
             </div>
           ) : (
-            /* ── État ouvert (comportement actuel) ────────── */
             <>
-              {/* Drag handle + bouton réduire */}
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: 8, paddingBottom: 2, position: 'relative' }}>
                 <div style={{ width: 36, height: 4, background: '#D4C8B8', borderRadius: 999 }} />
                 <button
@@ -1042,10 +1292,9 @@ export default function Home() {
                   aria-label="Réduire le panneau">▼</button>
               </div>
 
-              {/* Badge + indicateurs */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 10px' }}>
                 <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
-                  🔥 À la une
+                  🔥 {t.sidebar.alune}
                 </span>
                 {aLaUne.length > 1 && (
                   <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
@@ -1058,7 +1307,6 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Card horizontale avec swipe */}
               <div
                 onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
                 onTouchEnd={e => {
@@ -1099,7 +1347,6 @@ export default function Home() {
           )}
         </div>
       )}
-
 
     </main>
   )

@@ -1,58 +1,64 @@
 {
-    "nav": {
-      "ajouter": "+ Add",
-      "profil": "My profile",
-      "deconnexion": "Sign out",
-      "community": "Together"
-    },
-    "carte": {
-      "recherche": "City, country or event...",
-      "toutes": "All",
-      "tous": "All",
-      "public": "Public",
-      "prive": "Private",
-      "gratuit": "Free",
-      "payant": "Paid",
-      "liste": "List",
-      "carte": "Map"
-    },
-    "evenement": {
-      "voir": "View page →",
-      "details": "More details",
-      "partager_whatsapp": "WhatsApp",
-      "partager_facebook": "Facebook",
-      "similaires": "Similar events",
-      "signaler": "Report this event",
-      "retour": "Back to map"
-    },
-    "ajouter": {
-      "titre_page": "Add an event",
-      "sous_titre": "Share an event with the Lotbo community",
-      "titre": "Event title",
-      "lieu": "Venue name",
-      "ville": "City",
-      "pays": "Country",
-      "date": "Date",
-      "debut": "Start",
-      "fin": "End",
-      "categorie": "Category",
-      "acces": "Access",
-      "prix": "Price",
-      "description": "Description",
-      "lien": "Link for more details",
-      "photo": "Event photo",
-      "publier": "Publish event",
-      "scanAffiche": "📸 Scan or import a poster",
-      "scanAnalyse": "📸 Analyzing...",
-      "scanVerifier": "Check and complete the information before publishing",
-      "scanErreurLecture": "We couldn't read the poster. You can fill in the form manually.",
-      "scanErreurService": "Service temporarily unavailable. Please try again in a moment."
-    },
-    "tabbar": {
-      "carte": "Map",
-      "recherche": "Search",
-      "ajouter": "Add",
-      "community": "Together",
-      "profil": "Profile"
-    }
+  "nav": {
+    "ajouter": "+ Add",
+    "profil": "My profile",
+    "deconnexion": "Sign out",
+    "community": "Together"
+  },
+  "carte": {
+    "recherche": "City, country or event...",
+    "toutes": "All",
+    "tous": "All",
+    "public": "Public",
+    "prive": "Private",
+    "gratuit": "Free",
+    "payant": "Paid",
+    "liste": "List",
+    "carte": "Map"
+  },
+  "evenement": {
+    "voir": "View page →",
+    "details": "More details",
+    "partager_whatsapp": "WhatsApp",
+    "partager_facebook": "Facebook",
+    "similaires": "Similar events",
+    "signaler": "Report this event",
+    "retour": "Back to map"
+  },
+  "ajouter": {
+    "titre_page": "Add an event",
+    "sous_titre": "Share an event with the Lotbo community",
+    "titre": "Event title",
+    "lieu": "Venue name",
+    "ville": "City",
+    "pays": "Country",
+    "date": "Date",
+    "debut": "Start",
+    "fin": "End",
+    "categorie": "Category",
+    "acces": "Access",
+    "prix": "Price",
+    "description": "Description",
+    "lien": "Link for more details",
+    "photo": "Event photo",
+    "publier": "Publish event",
+    "scanAffiche": "📸 Scan or import a poster",
+    "scanAnalyse": "📸 Analyzing...",
+    "scanVerifier": "Check and complete the information before publishing",
+    "scanErreurLecture": "We couldn't read the poster. You can fill in the form manually.",
+    "scanErreurService": "Service temporarily unavailable. Please try again in a moment."
+  },
+  "tabbar": {
+    "carte": "Map",
+    "recherche": "Search",
+    "ajouter": "Add",
+    "community": "Together",
+    "profil": "Profile"
+  },
+  "sidebar": {
+    "alune": "Featured",
+    "topvilles": "Top cities",
+    "evenements": "events",
+    "voirtous": "See all"
   }
+}

@@ -1,58 +1,64 @@
 {
-    "nav": {
-      "ajouter": "+ Ajouter",
-      "profil": "Mon profil",
-      "deconnexion": "Déconnexion",
-      "community": "Ensemble"
-    },
-    "carte": {
-      "recherche": "Ville, pays ou événement...",
-      "toutes": "Toutes",
-      "tous": "Tous",
-      "public": "Public",
-      "prive": "Privé",
-      "gratuit": "Gratuit",
-      "payant": "Payant",
-      "liste": "Liste",
-      "carte": "Carte"
-    },
-    "evenement": {
-      "voir": "Voir la page →",
-      "details": "Plus de détails",
-      "partager_whatsapp": "WhatsApp",
-      "partager_facebook": "Facebook",
-      "similaires": "Événements similaires",
-      "signaler": "Signaler cet événement",
-      "retour": "Retour à la carte"
-    },
-    "ajouter": {
-      "titre_page": "Ajouter un événement",
-      "sous_titre": "Partage un événement avec la communauté Lotbo",
-      "titre": "Titre de l'événement",
-      "lieu": "Nom du lieu",
-      "ville": "Ville",
-      "pays": "Pays",
-      "date": "Date",
-      "debut": "Début",
-      "fin": "Fin",
-      "categorie": "Catégorie",
-      "acces": "Accès",
-      "prix": "Prix",
-      "description": "Description",
-      "lien": "Lien pour plus de détails",
-      "photo": "Photo de l'événement",
-      "publier": "Publier l'événement",
-      "scanAffiche": "📸 Scanner ou importer une affiche",
-      "scanAnalyse": "📸 Analyse en cours...",
-      "scanVerifier": "Vérifie et complète les informations avant de publier",
-      "scanErreurLecture": "On n'a pas pu lire l'affiche. Tu peux remplir le formulaire manuellement.",
-      "scanErreurService": "Service temporairement indisponible. Réessaie dans quelques instants."
-    },
-    "tabbar": {
-      "carte": "Carte",
-      "recherche": "Recherche",
-      "ajouter": "Ajouter",
-      "community": "Ansanm",
-      "profil": "Profil"
-    }
+  "nav": {
+    "ajouter": "+ Ajouter",
+    "profil": "Mon profil",
+    "deconnexion": "Déconnexion",
+    "community": "Ensemble"
+  },
+  "carte": {
+    "recherche": "Ville, pays ou événement...",
+    "toutes": "Toutes",
+    "tous": "Tous",
+    "public": "Public",
+    "prive": "Privé",
+    "gratuit": "Gratuit",
+    "payant": "Payant",
+    "liste": "Liste",
+    "carte": "Carte"
+  },
+  "evenement": {
+    "voir": "Voir la page →",
+    "details": "Plus de détails",
+    "partager_whatsapp": "WhatsApp",
+    "partager_facebook": "Facebook",
+    "similaires": "Événements similaires",
+    "signaler": "Signaler cet événement",
+    "retour": "Retour à la carte"
+  },
+  "ajouter": {
+    "titre_page": "Ajouter un événement",
+    "sous_titre": "Partage un événement avec la communauté Lotbo",
+    "titre": "Titre de l'événement",
+    "lieu": "Nom du lieu",
+    "ville": "Ville",
+    "pays": "Pays",
+    "date": "Date",
+    "debut": "Début",
+    "fin": "Fin",
+    "categorie": "Catégorie",
+    "acces": "Accès",
+    "prix": "Prix",
+    "description": "Description",
+    "lien": "Lien pour plus de détails",
+    "photo": "Photo de l'événement",
+    "publier": "Publier l'événement",
+    "scanAffiche": "📸 Scanner ou importer une affiche",
+    "scanAnalyse": "📸 Analyse en cours...",
+    "scanVerifier": "Vérifie et complète les informations avant de publier",
+    "scanErreurLecture": "On n'a pas pu lire l'affiche. Tu peux remplir le formulaire manuellement.",
+    "scanErreurService": "Service temporairement indisponible. Réessaie dans quelques instants."
+  },
+  "tabbar": {
+    "carte": "Carte",
+    "recherche": "Recherche",
+    "ajouter": "Ajouter",
+    "community": "Ansanm",
+    "profil": "Profil"
+  },
+  "sidebar": {
+    "alune": "À la une",
+    "topvilles": "Top villes",
+    "evenements": "événements",
+    "voirtous": "Voir tous"
   }
+}
