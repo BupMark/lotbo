@@ -535,6 +535,9 @@ export default function EvenementPage() {
   const [expressionChoisie, setExpressionChoisie]       = useState('🙋 Je serai là')
   const [isConnected, setIsConnected]                   = useState(false)
   const [userProfile, setUserProfile]                   = useState<UserProfile | null>(null)
+  const [propositionModal, setPropositionModal]         = useState(false)
+  const [propositionEnvoyee, setPropositionEnvoyee]     = useState(false)
+  const [propositionForm, setPropositionForm]           = useState({ champ_modifie: 'titre', ancienne_valeur: '', nouvelle_valeur: '' })
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -772,6 +775,116 @@ supabase.auth.getSession().then(({ data: { session } }) => {
         />
       )}
 
+      {propositionModal && (
+        <>
+          <div
+            onClick={() => { setPropositionModal(false); setPropositionEnvoyee(false) }}
+            style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+          />
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#F7F2E8', borderTop: '1px solid #E8E0D0', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
+            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Proposer une correction</h3>
+            <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 20, lineHeight: 1.5 }}>
+              Ta proposition sera examinée avant publication. Merci de contribuer à la qualité des informations.
+            </p>
+            {propositionEnvoyee ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <p style={{ fontSize: 32, marginBottom: 12 }}>✅</p>
+                <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Proposition envoyée !</p>
+                <p style={{ color: '#8C5A40', fontSize: 13 }}>Elle sera examinée par notre équipe. Merci !</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Champ à modifier</label>
+                  <select
+                    value={propositionForm.champ_modifie}
+                    onChange={e => {
+                      const champ = e.target.value
+                      const valeurs: Record<string, string> = {
+                        titre:       ev?.titre || '',
+                        lieu:        ev?.lieu || '',
+                        date:        ev?.date || '',
+                        description: ev?.description || '',
+                        lien:        ev?.lien || '',
+                      }
+                      setPropositionForm(f => ({ ...f, champ_modifie: champ, ancienne_valeur: valeurs[champ] || '', nouvelle_valeur: '' }))
+                    }}
+                    style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%' }}
+                  >
+                    <option value="titre">Titre</option>
+                    <option value="lieu">Lieu</option>
+                    <option value="date">Date</option>
+                    <option value="description">Description</option>
+                    <option value="lien">Lien officiel</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Valeur actuelle</label>
+                  <div style={{ background: 'rgba(26,20,16,0.04)', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#8C5A40', fontSize: 13 }}>
+                    {propositionForm.ancienne_valeur || '(vide)'}
+                  </div>
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Valeur corrigée *</label>
+                  {propositionForm.champ_modifie === 'description' ? (
+                    <textarea
+                      value={propositionForm.nouvelle_valeur}
+                      onChange={e => setPropositionForm(f => ({ ...f, nouvelle_valeur: e.target.value }))}
+                      placeholder="Nouvelle valeur..."
+                      rows={4}
+                      style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
+                    />
+                  ) : (
+                    <input
+                      type={propositionForm.champ_modifie === 'date' ? 'date' : 'text'}
+                      value={propositionForm.nouvelle_valeur}
+                      onChange={e => setPropositionForm(f => ({ ...f, nouvelle_valeur: e.target.value }))}
+                      placeholder="Nouvelle valeur..."
+                      style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%' }}
+                    />
+                  )}
+                </div>
+                <button
+                  disabled={!propositionForm.nouvelle_valeur.trim()}
+                  onClick={async () => {
+                    if (!ev || !userProfile) return
+                    const { error } = await supabase.from('propositions_modifications').insert([{
+                      evenement_id:    ev.id,
+                      proposant_id:    userProfile.id,
+                      champ_modifie:   propositionForm.champ_modifie,
+                      ancienne_valeur: propositionForm.ancienne_valeur || null,
+                      nouvelle_valeur: propositionForm.nouvelle_valeur.trim(),
+                      statut:          'en_attente',
+                    }])
+                    if (!error) {
+                      setPropositionEnvoyee(true)
+                      supabase.from('notifications').insert([{
+                        user_id: 'ff21f2e0-135d-4996-9713-4a0e20c38fe1',
+                        type:    'proposition_modification',
+                        titre:   `Correction proposée — ${ev.titre}`,
+                        message: `${userProfile.nom} propose de corriger "${propositionForm.champ_modifie}"`,
+                        lien:    '/admin',
+                        lu:      false,
+                      }]).then(() => {})
+                      setTimeout(() => { setPropositionModal(false); setPropositionEnvoyee(false) }, 3000)
+                    }
+                  }}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: propositionForm.nouvelle_valeur.trim() ? '#C8431A' : 'rgba(26,20,16,0.1)',
+                    color: propositionForm.nouvelle_valeur.trim() ? '#F7F2E8' : '#8C5A40',
+                    border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold',
+                    cursor: propositionForm.nouvelle_valeur.trim() ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Envoyer la proposition →
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
       {signalementModal && (
         <>
           <div onClick={() => { setSignalementModal(false); setSignalementConfirmation(false); setRaisonSignalement(''); setErreurSignalement('') }} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
@@ -992,6 +1105,13 @@ supabase.auth.getSession().then(({ data: { session } }) => {
               borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12,
             }}>
               <span style={{ fontSize: 14 }}>⚠️</span><span>Signaler</span>
+            </button>
+            <button onClick={() => setPropositionModal(true)} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'white', border: '1px solid #E8E0D0',
+              borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12,
+            }}>
+              <span style={{ fontSize: 14 }}>✏️</span><span>Proposer une correction</span>
             </button>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
