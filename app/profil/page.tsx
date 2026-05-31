@@ -80,12 +80,12 @@ function ProfilInner() {
         }).eq('id', data.session.user.id).then(() => {})
       }
 
-      // Rang global : combien de profils ont plus de points_total ?
-      const { count: rangCount } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .gt('points_total', pointsReel)
-      setRangGlobal((rangCount || 0) + 1)
+      // Rang global depuis /api/classement (source de vérité transactions_points)
+      const classementRes = await fetch('/api/classement')
+      const classementJson = classementRes.ok ? await classementRes.json() : { membres: [] }
+      const membres = classementJson.membres || []
+      const posIdx = membres.findIndex((m: { id: string }) => m.id === data.session.user.id)
+      setRangGlobal(posIdx !== -1 ? posIdx + 1 : membres.length + 1)
 
       setProfile({
         ...prof,
@@ -491,7 +491,7 @@ function ProfilInner() {
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410' }}>Classement global LOTBO</p>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginTop: 2 }}>
-                    {profile?.points_total ?? 0} pts · contributeur + organisateur cumulés
+                    {profile?.points_total ?? 0} pts
                   </p>
                 </div>
                 <span style={{ fontSize: 22 }}>🌍</span>
