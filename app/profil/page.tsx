@@ -70,17 +70,10 @@ function ProfilInner() {
       const { data: raRow, error: raErr } = await supabase
         .from('profiles').select('roles_actifs').eq('id', data.session.user.id).single()
 
-      // Sync points depuis transactions_points — recalcule si désynchronisé
-      const { data: txs } = await supabase
-        .from('transactions_points').select('points').eq('user_id', data.session.user.id)
-      const pointsReel = Math.max(0, (txs || []).reduce((s: number, t: any) => s + (t.points || 0), 0))
+      // Points depuis DB uniquement — le recalcul depuis transactions appartient aux routes API (service role)
+      const pointsReel = prof?.points_total || 0
       const niveauReel = calculerNiveau(pointsReel)
       setPointsReel(pointsReel)
-      if (prof && pointsReel !== (prof.points_total || 0)) {
-        supabase.from('profiles').update({
-          points_total: pointsReel, niveau: niveauReel, updated_at: new Date().toISOString(),
-        }).eq('id', data.session.user.id).then(() => {})
-      }
 
       // Rang global depuis /api/classement (source de vérité transactions_points)
       const classementRes = await fetch('/api/classement')
