@@ -141,7 +141,14 @@ export default function Login() {
     if (!accepteCGU)         { setMessage("Tu dois accepter les conditions d'utilisation pour continuer."); setMessageType('erreur'); return }
     setLoading(true); setMessage('')
 
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nom: prenom.trim() } } })
+    const invParam = invitationToken ? `&invitation=${invitationToken}` : ''
+    const { data, error } = await supabase.auth.signUp({
+      email, password,
+      options: {
+        data: { nom: prenom.trim() },
+        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=/${invParam}`,
+      },
+    })
     if (error) { setLoading(false); setMessage('Erreur : ' + error.message); setMessageType('erreur'); return }
 
     if (data.user) {
