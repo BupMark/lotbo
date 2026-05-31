@@ -88,7 +88,7 @@ export default function CreerOrganisation() {
       }
     }
 
-    const { error } = await supabase.from('organisations').insert({
+    const { data: orgData, error } = await supabase.from('organisations').insert({
       nom:           nom.trim(),
       slug,
       slogan:        slogan.trim() || null,
@@ -101,7 +101,7 @@ export default function CreerOrganisation() {
       logo_url:      logoUrl,
       owner_id:      userId,
       verified:      false,
-    })
+    }).select('id').single()
 
     if (error) {
       setErreur(
@@ -111,6 +111,15 @@ export default function CreerOrganisation() {
       )
       setSubmitting(false)
       return
+    }
+
+    if (orgData) {
+      await supabase.from('organisation_membres').insert({
+        org_id:    orgData.id,
+        user_id:   userId,
+        role:      'owner',
+        joined_at: new Date().toISOString(),
+      })
     }
 
     router.push(`/organisation/${slug}`)

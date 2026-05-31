@@ -619,20 +619,30 @@ export default function AjouterEvenement() {
       const estContrib = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
       if (estContrib && profile?.charte_acceptee) setADoubleRole(true)
 
-      // Récupérer les organisations où l'utilisateur est owner/admin/éditeur
+      // Orgs où l'utilisateur est owner (depuis table organisations)
+      const { data: orgsOwner } = await supabase
+        .from('organisations')
+        .select('id, nom')
+        .eq('owner_id', session.user.id)
+
+      // Orgs où l'utilisateur est admin/éditeur (depuis organisation_membres)
       const { data: orgMembres } = await supabase
         .from('organisation_membres')
         .select('org_id, role')
         .eq('user_id', session.user.id)
-        .in('role', ['owner', 'admin', 'editeur'])
-      if (orgMembres && orgMembres.length > 0) {
-        const orgIds = orgMembres.map((m: { org_id: string; role: string }) => m.org_id)
-        const { data: orgs } = await supabase
-          .from('organisations')
-          .select('id, nom')
-          .in('id', orgIds)
-        setMesOrgs(orgs || [])
+        .in('role', ['admin', 'editeur'])
+
+      const orgIdsFromMembres = (orgMembres || []).map((m: { org_id: string; role: string }) => m.org_id)
+      let orgsFromMembres: { id: string; nom: string }[] = []
+      if (orgIdsFromMembres.length > 0) {
+        const { data } = await supabase.from('organisations').select('id, nom').in('id', orgIdsFromMembres)
+        orgsFromMembres = data || []
       }
+
+      // Fusionner sans doublon
+      const toutesOrgs = [...(orgsOwner || []), ...orgsFromMembres]
+      const unique = Array.from(new Map(toutesOrgs.map(o => [o.id, o])).values())
+      setMesOrgs(unique)
     })
   }, [])
 
