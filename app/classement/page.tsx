@@ -6,21 +6,14 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { calculerNiveau } from '../../lib/points'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface Membre {
   id: string
   nom: string | null
   photo_url: string | null
   points_total: number
-  points_utilisateur: number
-  points_organisateur: number
   niveau: string
-  nb_evenements?: number
-  pays?: string | null
-  ville?: string | null
 }
 
-// ── Niveaux GM4 ───────────────────────────────────────────────────────────────
 const NIVEAUX: Record<string, { emoji: string; label: string; couleur: string }> = {
   'decouvreur':       { emoji: '🌱', label: 'Découvreur',       couleur: '#8C5A40' },
   'actif':            { emoji: '🔥', label: 'Actif',            couleur: '#D4A820' },
@@ -29,9 +22,6 @@ const NIVEAUX: Record<string, { emoji: string; label: string; couleur: string }>
   'elite':            { emoji: '🥇', label: 'Élite',            couleur: '#C8431A' },
   'legende':          { emoji: '👑', label: 'Légende LOTBO',    couleur: '#C8431A' },
 }
-
-type Filtre = 'global' | 'contributeur' | 'organisateur'
-type Periode = 'tout' | 'mois' | 'semaine'
 
 function getInitiales(nom: string | null): string {
   if (!nom) return 'LB'
@@ -46,11 +36,10 @@ function medallePosition(pos: number): string {
 }
 
 export default function Classement() {
-  const [membres, setMembres]       = useState<Membre[]>([])
-  const [loading, setLoading]       = useState(true)
-  const [filtre, setFiltre]         = useState<Filtre>('global')
-  const [moi, setMoi]               = useState<{ position: number; total: number; membre: Membre } | null>(null)
-  const [userId, setUserId]         = useState<string | null>(null)
+  const [membres, setMembres] = useState<Membre[]>([])
+  const [loading, setLoading] = useState(true)
+  const [moi, setMoi]         = useState<{ position: number; total: number; membre: Membre } | null>(null)
+  const [userId, setUserId]   = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -60,12 +49,12 @@ export default function Classement() {
 
   useEffect(() => {
     charger()
-  }, [filtre])
+  }, [])
 
   const charger = async () => {
     setLoading(true)
     try {
-      const res  = await fetch(`/api/classement?filtre=${filtre}`)
+      const res  = await fetch('/api/classement')
       const json = res.ok ? await res.json() : { membres: [] }
       setMembres((json.membres || []) as Membre[])
     } catch {
@@ -77,38 +66,38 @@ export default function Classement() {
   // Position de l'utilisateur connecté
   useEffect(() => {
     if (!userId || membres.length === 0) return
-    const colonne = filtre === 'contributeur'
-      ? 'points_utilisateur'
-      : filtre === 'organisateur'
-        ? 'points_organisateur'
-        : 'points_total'
 
     const pos = membres.findIndex(m => m.id === userId)
     if (pos !== -1) {
       setMoi({ position: pos + 1, total: membres.length, membre: membres[pos] })
     } else {
-      // Chercher hors top 100
-      supabase.from('profiles')
-        .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
-        .eq('id', userId)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            // Compter combien ont plus de points
-            const pts = (data as Membre)[colonne as keyof Membre] as number || 0
-            supabase.from('profiles')
-              .select('id', { count: 'exact', head: true })
-              .gt(colonne, pts)
-              .then(({ count }) => {
-                setMoi({ position: (count || 0) + 1, total: membres.length, membre: data as Membre })
-              })
-          }
-        })
+      // Hors top 100 : construire une entrée minimale depuis la session
+      supabase.auth.getSession().then(({ data }) => {
+        const user = data.session?.user
+        if (!user) return
+        supabase.from('profiles')
+          .select('id, nom, photo_url, points_total')
+          .eq('id', userId)
+          .single()
+          .then(({ data: prof }) => {
+            if (!prof) return
+            const membre: Membre = {
+              id:           prof.id,
+              nom:          prof.nom || user.email?.split('@')[0] || null,
+              photo_url:    prof.photo_url,
+              points_total: prof.points_total || 0,
+              niveau:       calculerNiveau(prof.points_total || 0),
+            }
+            // Position = nombre de membres dans le top 100 avec plus de points + 1
+            const position = membres.filter(m => m.points_total > (prof.points_total || 0)).length + 1
+            setMoi({ position, total: membres.length, membre })
+          })
+      })
     }
-  }, [userId, membres, filtre])
+  }, [userId, membres])
 
-  const top3   = membres.slice(0, 3)
-  const reste  = membres.slice(3)
+  const top3  = membres.slice(0, 3)
+  const reste = membres.slice(3)
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
@@ -129,32 +118,6 @@ export default function Classement() {
             <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
           </div>
         </div>
-
-        {/* Filtres */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-          {([
-            { key: 'global',        label: '🌍 Global'        },
-            { key: 'contributeur',  label: '⭐ Contributeurs' },
-            { key: 'organisateur',  label: '🎪 Organisateurs' },
-          ] as { key: Filtre; label: string }[]).map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFiltre(f.key)}
-              style={{
-                padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold',
-                border: 'none', cursor: 'pointer',
-                background: filtre === f.key ? '#C8431A' : 'white',
-                color:      filtre === f.key ? 'white'   : '#8C5A40',
-                boxShadow: '0 1px 4px rgba(26,20,16,0.08)',
-              }}
-            >{f.label}</button>
-          ))}
-        </div>
-        {filtre === 'global' && (
-          <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 20 }}>
-            Score = points contributeur + organisateur cumulés
-          </p>
-        )}
 
         {/* Ma position — si connecté */}
         {moi && (
@@ -177,7 +140,7 @@ export default function Classement() {
             <div style={{ flex: 1 }}>
               <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410' }}>Ma position</p>
               <p style={{ color: '#8C5A40', fontSize: 12 }}>
-                {moi.position}e sur {moi.total}+ membres · {moi.membre.points_total} pts
+                #{moi.position} · {moi.membre.points_total} pts
               </p>
             </div>
             <span style={{ fontSize: 20 }}>{NIVEAUX[calculerNiveau(moi.membre.points_total)]?.emoji || '🌱'}</span>
@@ -200,20 +163,14 @@ export default function Classement() {
             {top3.length > 0 && (
               <div style={{ marginBottom: 24 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
-                  {/* Réorganiser : 2e - 1er - 3e */}
+                  {/* Ordre visuel : 2e - 1er - 3e */}
                   {[top3[1], top3[0], top3[2]].map((membre, i) => {
                     if (!membre) return null
-                    const pos   = i === 0 ? 2 : i === 1 ? 1 : 3
-                    const haut  = pos === 1 ? 140 : pos === 2 ? 110 : 90
-                    const colonne = filtre === 'contributeur'
-                      ? membre.points_utilisateur
-                      : filtre === 'organisateur'
-                        ? membre.points_organisateur
-                        : membre.points_total
+                    const pos  = i === 0 ? 2 : i === 1 ? 1 : 3
+                    const haut = pos === 1 ? 140 : pos === 2 ? 110 : 90
 
                     return (
                       <div key={membre.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: pos === 1 ? 1.2 : 1 }}>
-                        {/* Avatar */}
                         <div style={{ position: 'relative', marginBottom: 8 }}>
                           {membre.photo_url ? (
                             <img src={membre.photo_url} alt={membre.nom || ''} style={{
@@ -237,13 +194,11 @@ export default function Classement() {
                           </span>
                         </div>
 
-                        {/* Nom */}
                         <p style={{ fontWeight: 'bold', fontSize: pos === 1 ? 14 : 12, color: '#1A1410', textAlign: 'center', marginBottom: 2, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {membre.nom || 'Membre LOTBO'}
                         </p>
-                        <p style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>{colonne} pts</p>
+                        <p style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>{membre.points_total} pts</p>
 
-                        {/* Barre podium */}
                         <div style={{
                           width: '100%', height: haut,
                           background: pos === 1 ? 'rgba(212,168,32,0.2)' : pos === 2 ? 'rgba(140,140,140,0.15)' : 'rgba(200,67,26,0.15)',
@@ -266,14 +221,9 @@ export default function Classement() {
             {reste.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {reste.map((membre, i) => {
-                  const pos     = i + 4
-                  const colonne = filtre === 'contributeur'
-                    ? membre.points_utilisateur
-                    : filtre === 'organisateur'
-                      ? membre.points_organisateur
-                      : membre.points_total
-                  const estMoi  = membre.id === userId
-                  const niveau  = NIVEAUX[calculerNiveau(membre.points_total)] || NIVEAUX['decouvreur']
+                  const pos    = i + 4
+                  const estMoi = membre.id === userId
+                  const niveau = NIVEAUX[calculerNiveau(membre.points_total)] || NIVEAUX['decouvreur']
 
                   return (
                     <div key={membre.id} style={{
@@ -301,7 +251,7 @@ export default function Classement() {
                         </p>
                       </div>
                       <span style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 14, flexShrink: 0 }}>
-                        {colonne} pts
+                        {membre.points_total} pts
                       </span>
                     </div>
                   )

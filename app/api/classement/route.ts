@@ -2,16 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { calculerNiveau } from '../../../lib/points'
 
-interface ProfileRow {
-  id: string
-  nom: string | null
-  photo_url: string | null
-  points_total: number
-  points_utilisateur: number
-  points_organisateur: number
-  niveau: string
-}
-
 function makeAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,74 +10,54 @@ function makeAdmin() {
   )
 }
 
-// GET /api/classement?filtre=global|contributeur|organisateur
-// Fusionne top 100 + rôles spéciaux, résout les noms manquants depuis auth.users
+// GET /api/classement — classement unifié par points_total (source : transactions_points)
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const filtre = searchParams.get('filtre') ?? 'global'
-
-  const colonne = filtre === 'contributeur'
-    ? 'points_utilisateur'
-    : filtre === 'organisateur'
-      ? 'points_organisateur'
-      : 'points_total'
-
   try {
     const admin = makeAdmin()
 
-    // 1. Top 100 par points
-    const { data: topPoints } = await admin
+    // 1. Recalculer points_total depuis transactions_points pour tous
+    const { data: txData } = await admin
+      .from('transactions_points')
+      .select('user_id, points')
+
+    // Agréger par user_id
+    const totauxMap: Record<string, number> = {}
+    for (const tx of txData || []) {
+      totauxMap[tx.user_id] = (totauxMap[tx.user_id] || 0) + (tx.points || 0)
+    }
+
+    // 2. Récupérer tous les profils avec points > 0
+    const userIds = Object.keys(totauxMap).filter(id => totauxMap[id] > 0)
+    if (userIds.length === 0) return NextResponse.json({ membres: [] })
+
+    const { data: profiles } = await admin
       .from('profiles')
-      .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
-      .gt(colonne, 0)
-      .order(colonne, { ascending: false })
-      .limit(100)
+      .select('id, nom, photo_url, niveau')
+      .in('id', userIds)
 
-    // 2. Rôles spéciaux — même filtre colonne que requête 1
-    // (ex: onglet organisateurs → .gt('points_organisateur', 0))
-    const { data: rolesSpeciaux } = await admin
-      .from('profiles')
-      .select('id, nom, photo_url, points_total, points_utilisateur, points_organisateur, niveau')
-      .in('role', ['admin', 'ambassadeur', 'contributeur_terrain'])
-      .gt(colonne, 0)
-      .limit(200)
-
-    // 3. Fusion sans doublon
-    const seenIds = new Set((topPoints || []).map((m: ProfileRow) => m.id))
-    const merged: ProfileRow[] = [
-      ...(topPoints || []),
-      ...(rolesSpeciaux || []).filter((m: ProfileRow) => !seenIds.has(m.id)),
-    ]
-
-    // 4. Résoudre les noms manquants depuis auth.users (email prefix)
-    const idsNomNull = merged.filter(m => !m.nom).map(m => m.id)
+    // 3. Résoudre noms manquants
+    const idsNomNull = (profiles || []).filter((p: { id: string; nom: string | null }) => !p.nom).map((p: { id: string }) => p.id)
+    const emailMap: Record<string, string> = {}
     if (idsNomNull.length > 0) {
       const { data: authData } = await admin.auth.admin.listUsers({ perPage: 1000 })
-      const emailMap: Record<string, string> = {}
       for (const u of authData?.users ?? []) {
         if (idsNomNull.includes(u.id) && u.email) {
           emailMap[u.id] = u.email.split('@')[0]
         }
       }
-      for (const m of merged) {
-        if (!m.nom && emailMap[m.id]) {
-          m.nom = emailMap[m.id]
-        }
-      }
     }
 
-    // 5. Tri final par colonne décroissante
-    merged.sort((a, b) => {
-      const va = (a[colonne as keyof ProfileRow] as number) || 0
-      const vb = (b[colonne as keyof ProfileRow] as number) || 0
-      return vb - va
-    })
-
-    // 6. Recalcul niveau depuis points (fiable même si DB désynchronisée)
-    const membres = merged.map(m => ({
-      ...m,
-      niveau: calculerNiveau(m.points_total),
-    }))
+    // 4. Construire la liste finale
+    const membres = (profiles || [])
+      .map((p: { id: string; nom: string | null; photo_url: string | null; niveau: string }) => ({
+        id:           p.id,
+        nom:          p.nom || emailMap[p.id] || 'Membre LOTBO',
+        photo_url:    p.photo_url,
+        points_total: totauxMap[p.id] || 0,
+        niveau:       calculerNiveau(totauxMap[p.id] || 0),
+      }))
+      .sort((a: { points_total: number }, b: { points_total: number }) => b.points_total - a.points_total)
+      .slice(0, 100)
 
     return NextResponse.json({ membres })
   } catch (err: unknown) {
