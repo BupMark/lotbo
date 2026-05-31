@@ -9,7 +9,7 @@ async function envoyerEmail(to: string, subject: string, html: string): Promise<
       'api-key': process.env.BREVO_API_KEY!,
     },
     body: JSON.stringify({
-      sender:      { name: 'LOTBO', email: 'lotbo@bup-mark.com' },
+      sender:      { name: 'LOTBO', email: 'hello@lotbo.app' },
       to:          [{ email: to }],
       subject,
       htmlContent: html,
