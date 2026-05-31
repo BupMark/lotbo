@@ -30,6 +30,15 @@ interface InvitationEnAttente {
   expire_le: string
 }
 
+interface EvenementUser {
+  id: string
+  titre: string
+  date: string
+  date_debut: string | null
+  statut: string
+  organisation_id: string | null
+}
+
 const ROLE_CONFIG: Record<string, { label: string; couleur: string }> = {
   owner:   { label: 'Owner',   couleur: '#D4A820' },
   admin:   { label: 'Admin',   couleur: '#C8431A' },
@@ -68,6 +77,8 @@ export default function PageMembres() {
   const [roleInvit, setRoleInvit]       = useState('lecteur')
   const [invitLoading, setInvitLoading] = useState(false)
   const [invitMsg, setInvitMsg]         = useState<{ type: 'ok' | 'err'; texte: string } | null>(null)
+  const [mesEvenements, setMesEvenements] = useState<EvenementUser[]>([])
+  const [transferLoading, setTransferLoading] = useState<string | null>(null)
 
   const chargerMembres = async (oid: string) => {
     const { data: membresData } = await supabase
@@ -140,6 +151,16 @@ export default function PageMembres() {
       setUserRole(role)
       setLoading(false)
       await Promise.all([chargerMembres(o.id), chargerInvitations(o.id)])
+
+      const { data: evData } = await supabase
+        .from('evenements')
+        .select('id, titre, date, date_debut, statut, organisation_id')
+        .eq('user_id', uid)
+        .is('organisation_id', null)
+        .eq('statut', 'approuve')
+        .order('date_debut', { ascending: false })
+        .limit(50)
+      setMesEvenements(evData || [])
     })
   }, [slug])
 
@@ -192,6 +213,17 @@ export default function PageMembres() {
       .delete()
       .eq('id', invId)
     await chargerInvitations(orgId)
+  }
+
+  const transfererEvenement = async (evenementId: string) => {
+    if (!orgId) return
+    setTransferLoading(evenementId)
+    await supabase
+      .from('evenements')
+      .update({ organisation_id: orgId })
+      .eq('id', evenementId)
+    setMesEvenements(prev => prev.filter(e => e.id !== evenementId))
+    setTransferLoading(null)
   }
 
   const waText = encodeURIComponent(`Rejoins ${orgNom} sur LOTBO 👉 https://app.lotbo.app/organisation/${slug}/rejoindre`)
@@ -290,6 +322,35 @@ export default function PageMembres() {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Transférer événements existants ──────────────────────────── */}
+        {mesEvenements.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 11, fontWeight: 'bold', color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              📅 Rattacher mes événements à cette organisation
+            </h2>
+            <p style={{ fontSize: 12, color: '#8C5A40', marginBottom: 12 }}>
+              Ces événements vous appartiennent et ne sont pas encore liés à une organisation.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {mesEvenements.map(ev => (
+                <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 14px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 'bold', fontSize: 13, color: '#1A1410', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.titre}</p>
+                    <p style={{ fontSize: 11, color: '#8C5A40' }}>📅 {ev.date_debut || ev.date}</p>
+                  </div>
+                  <button
+                    onClick={() => transfererEvenement(ev.id)}
+                    disabled={transferLoading === ev.id}
+                    style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: transferLoading === ev.id ? 'default' : 'pointer', flexShrink: 0, opacity: transferLoading === ev.id ? 0.6 : 1 }}
+                  >
+                    {transferLoading === ev.id ? '...' : 'Rattacher'}
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
