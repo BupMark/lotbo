@@ -10,11 +10,13 @@ interface Organisation {
   id: string
   slug: string
   nom: string
+  slogan: string | null
   description: string | null
   ville: string | null
   pays: string | null
   site_web: string | null
   email_contact: string | null
+  telephone: string | null
   verified: boolean
   logo_url: string | null
   owner_id: string
@@ -36,8 +38,8 @@ function getInitiales(nom: string): string {
 }
 
 export default function PageOrganisation() {
-  const params = useParams()
-  const slug   = params?.slug as string
+  const params     = useParams()
+  const slug       = params?.slug as string
   const copieTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [org, setOrg]                   = useState<Organisation | null>(null)
@@ -78,7 +80,7 @@ export default function PageOrganisation() {
 
     const { data: orgData } = await supabase
       .from('organisations')
-      .select('id, slug, nom, description, ville, pays, site_web, email_contact, verified, logo_url, owner_id')
+      .select('id, slug, nom, slogan, description, ville, pays, site_web, email_contact, telephone, verified, logo_url, owner_id')
       .eq('slug', slug)
       .maybeSingle()
 
@@ -117,16 +119,12 @@ export default function PageOrganisation() {
     if (!userId || !org) return
     setSuiviLoading(true)
     if (suivi) {
-      await supabase
-        .from('organisation_membres')
-        .delete()
-        .eq('org_id', org.id)
-        .eq('user_id', userId)
+      await supabase.from('organisation_membres').delete()
+        .eq('org_id', org.id).eq('user_id', userId)
       setSuivi(false)
       setNbFollowers(prev => Math.max(0, prev - 1))
     } else {
-      await supabase
-        .from('organisation_membres')
+      await supabase.from('organisation_membres')
         .insert({ org_id: org.id, user_id: userId, role: 'lecteur' })
       setSuivi(true)
       setNbFollowers(prev => prev + 1)
@@ -159,6 +157,8 @@ export default function PageOrganisation() {
 
   if (!org) return null
 
+  const isOwner = userId === org.owner_id
+
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 16px 80px' }}>
@@ -173,11 +173,7 @@ export default function PageOrganisation() {
 
             {/* Logo circulaire 80px ou initiales */}
             {org.logo_url ? (
-              <img
-                src={org.logo_url}
-                alt={org.nom}
-                style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #E8E0D0' }}
-              />
+              <img src={org.logo_url} alt={org.nom} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #E8E0D0' }} />
             ) : (
               <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 26, fontWeight: 'bold', color: 'white' }}>
                 {getInitiales(org.nom)}
@@ -185,7 +181,7 @@ export default function PageOrganisation() {
             )}
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
                 <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>{org.nom}</h1>
                 {org.verified && (
                   <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
@@ -193,6 +189,9 @@ export default function PageOrganisation() {
                   </span>
                 )}
               </div>
+              {org.slogan && (
+                <p style={{ color: '#8C5A40', fontSize: 13, fontStyle: 'italic', marginBottom: 6 }}>{org.slogan}</p>
+              )}
               {(org.ville || org.pays) && (
                 <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 6 }}>
                   📍 {[org.ville, org.pays].filter(Boolean).join(', ')}
@@ -215,7 +214,7 @@ export default function PageOrganisation() {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {userId && (
+            {userId && !isOwner && (
               <button
                 onClick={toggleSuivi}
                 disabled={suiviLoading}
@@ -231,11 +230,13 @@ export default function PageOrganisation() {
               </button>
             )}
             {org.email_contact && (
-              <a
-                href={`mailto:${org.email_contact}`}
-                style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}
-              >
-                Contacter
+              <a href={`mailto:${org.email_contact}`} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                ✉️ Email
+              </a>
+            )}
+            {org.telephone && (
+              <a href={`tel:${org.telephone}`} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                📞 Appeler
               </a>
             )}
             <button
@@ -245,8 +246,7 @@ export default function PageOrganisation() {
                 color: lienCopie ? '#2D9E6B' : '#8C5A40',
                 border: lienCopie ? '1px solid #2D9E6B' : '1px solid #E8E0D0',
                 borderRadius: 999, padding: '9px 20px',
-                fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
-                transition: 'all 0.2s',
+                fontSize: 13, fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s',
               }}
             >
               {lienCopie ? 'Lien copié ✓' : '🔗 Partager'}
@@ -254,11 +254,15 @@ export default function PageOrganisation() {
             {org.site_web && (
               <a
                 href={org.site_web.startsWith('http') ? org.site_web : `https://${org.site_web}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                target="_blank" rel="noopener noreferrer"
                 style={{ background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, textDecoration: 'none' }}
               >
                 🌐 Site web
+              </a>
+            )}
+            {isOwner && (
+              <a href={`/organisation/${slug}/modifier`} style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                ✏️ Modifier
               </a>
             )}
           </div>
@@ -276,16 +280,9 @@ export default function PageOrganisation() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {evenements.map(ev => (
-              <a
-                key={ev.id}
-                href={`/evenement/${ev.id}`}
-                style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start' }}
-              >
+              <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start' }}>
                 <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                  {ev.image_url
-                    ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : '📅'
-                  }
+                  {ev.image_url ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📅'}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
