@@ -261,6 +261,24 @@ function ProfilInner() {
             </div>
           </div>
 
+          {/* Bouton Créer une organisation — visible si organisateur ou nbOrga > 0 */}
+          {(rolesActifs.includes('organisateur') || nbOrga > 0) && (
+            <div style={{ marginTop: 12 }}>
+              <a
+                href="/organisation/creer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: 'rgba(200,67,26,0.08)', color: '#C8431A',
+                  border: '1px solid rgba(200,67,26,0.25)', borderRadius: 999,
+                  padding: '8px 16px', fontSize: 13, fontWeight: 'bold',
+                  textDecoration: 'none',
+                }}
+              >
+                🏢 Créer une organisation
+              </a>
+            </div>
+          )}
+
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
             {[
