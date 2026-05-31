@@ -54,6 +54,7 @@ function ProfilInner() {
   const [onglet, setOnglet]         = useState<'evenements' | 'badges' | 'favoris'>(tabParam === 'favoris' || tabParam === 'badges' ? tabParam : 'evenements')
   const [favorisEvs, setFavorisEvs] = useState<any[]>([])
   const [rangGlobal, setRangGlobal] = useState<number | null>(null)
+  const [pointsReel, setPointsReel] = useState<number>(0)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -74,6 +75,7 @@ function ProfilInner() {
         .from('transactions_points').select('points').eq('user_id', data.session.user.id)
       const pointsReel = Math.max(0, (txs || []).reduce((s: number, t: any) => s + (t.points || 0), 0))
       const niveauReel = calculerNiveau(pointsReel)
+      setPointsReel(pointsReel)
       if (prof && pointsReel !== (prof.points_total || 0)) {
         supabase.from('profiles').update({
           points_total: pointsReel, niveau: niveauReel, updated_at: new Date().toISOString(),
@@ -491,7 +493,7 @@ function ProfilInner() {
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410' }}>Classement global LOTBO</p>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginTop: 2 }}>
-                    {profile?.points_total ?? 0} pts
+                    {pointsReel ?? profile?.points_total ?? 0} pts
                   </p>
                 </div>
                 <span style={{ fontSize: 22 }}>🌍</span>
