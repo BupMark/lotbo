@@ -81,6 +81,11 @@
     "slug_label": "URL de votre page",
     "introuvable": "Organisation introuvable"
   },
+  "organisations": {
+    "titre": "Organisations",
+    "sous_titre": "Découvrez les organisations actives sur LOTBO",
+    "aucune": "Aucune organisation pour le moment"
+  },
   "invitation": {
     "bandeau": "Tu as été invité à rejoindre une organisation",
     "creer_compte": "Crée ton compte pour accepter",

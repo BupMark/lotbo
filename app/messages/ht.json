@@ -81,6 +81,11 @@
     "slug_label": "URL paj ou a",
     "introuvable": "Òganizasyon pa jwenn"
   },
+  "organisations": {
+    "titre": "Òganizasyon yo",
+    "sous_titre": "Dekouvri òganizasyon aktif sou LOTBO",
+    "aucune": "Pa gen òganizasyon pou kounye a"
+  },
   "invitation": {
     "bandeau": "Yo envite ou pou rantre nan yon òganizasyon",
     "creer_compte": "Kreye kont ou pou aksepte",

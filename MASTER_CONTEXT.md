@@ -83,6 +83,13 @@ Session 31 mai 2026
 ✅ FEAT-ORG-UPGRADE-1 — Bouton "Créer une organisation" dans /profil
 ✅ ORG-1 — Lier événement à organisation dans /ajouter
 ✅ ORG-1 — Page /organisation/[slug]/modifier complète
+✅ ORG-1 #2 — Page /membres dédiée + invitation email (Cas A ajout direct, Cas B token 14j)
+✅ ORG-1 #2 — Lien rejoindre WhatsApp + page /rejoindre
+✅ ORG-1 #2 — Invitations en attente visibles dans /membres
+✅ ORG-1 #2 — Bouton Ajouter événement sur vitrine org
+✅ Fix — expéditeur Brevo corrigé hello@lotbo.app
+✅ Fix — bouton Suivre masqué pour admin/éditeur
+✅ Fix — invite_par corrigé dans invitations_org_en_attente
 
 Direction Financière & Subventions
 
@@ -153,9 +160,9 @@ Direction Partenariats
 
 🟡 Prochaine session — par priorité
 
-🟡 ORG-1 #2 — Inviter membres avec rôles (owner/admin/éditeur/lecteur)
-🟡 ORG-1 #3 — Transférer événements existants vers une org
-🟡 ORG-1 #4 — Page /organisations liste publique
+⏳ Fix lien invitation → /login?mode=inscription après confirmation email
+⏳ ORG-1 #3 — Transférer événements existants vers une org
+✅ ORG-1 #4 — Page /organisations liste publique
 🟡 FEAT-SCAN-RECURRENT-1 — Détection récurrence dans Scan & Publie
 
 ⚪ Phase 2
@@ -233,4 +240,4 @@ Statut : permanent pour tous les paliers
 MASTER_CONTEXT.md — Version 31 mai 2026
 Compilé par : Direction Technique + toutes directions
 Prochaine mise à jour : vendredi 5 juin 2026
-Session 31 mai 2026 : GM-REFONTE-TOTALE-1 · UX-FORM-ALLDAY-1 · FEAT-ORG-UPGRADE-1 · ORG-1 (lier événement + modifier) — build propre
+Session 31 mai 2026 : GM-REFONTE-TOTALE-1 · UX-FORM-ALLDAY-1 · FEAT-ORG-UPGRADE-1 · ORG-1 (lier + modifier) · ORG-1 #2 complet (membres, invitations, email, rejoindre) · ORG-1 #4 liste publique — build propre
