@@ -145,7 +145,7 @@ export async function POST(request: Request) {
   const { error: upsertError } = await supabaseAdmin
     .from('invitations_org_en_attente')
     .upsert(
-      { org_id, email, role, token: newToken, expire_le: expireLe, statut: 'en_attente' },
+      { org_id, email, role, token: newToken, expire_le: expireLe, statut: 'en_attente', invite_par: user.id },
       { onConflict: 'org_id,email' }
     )
 
