@@ -58,7 +58,13 @@ export default function PageOrganisation() {
     supabase.auth.getSession().then(({ data }) => {
       setUserId(data.session?.user?.id ?? null)
     })
-    return () => { if (copieTimer.current) clearTimeout(copieTimer.current) }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null)
+    })
+    return () => {
+      subscription.unsubscribe()
+      if (copieTimer.current) clearTimeout(copieTimer.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -164,7 +170,7 @@ export default function PageOrganisation() {
 
   if (!org) return null
 
-  const isOwner = userId === org.owner_id
+  const isOwner = userId === org.owner_id || monRole === 'owner'
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
