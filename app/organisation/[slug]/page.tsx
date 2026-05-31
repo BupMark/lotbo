@@ -129,7 +129,11 @@ export default function PageOrganisation() {
   }
 
   const toggleSuivi = async () => {
-    if (!userId || !org) return
+    if (!userId) {
+      window.location.href = '/login?redirect=/organisation/' + slug
+      return
+    }
+    if (!org) return
     setSuiviLoading(true)
     if (suivi) {
       await supabase.from('organisation_membres').delete()
@@ -226,7 +230,7 @@ export default function PageOrganisation() {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {userId && !isOwner && monRole !== 'admin' && monRole !== 'editeur' && (
+            {!isOwner && monRole !== 'admin' && monRole !== 'editeur' && (
               <button
                 onClick={toggleSuivi}
                 disabled={suiviLoading}
