@@ -165,7 +165,7 @@ export async function POST(request: Request) {
         Crée ton compte gratuit pour accepter l'invitation.
       </p>
       <div style="text-align:center;margin-bottom:24px">
-        <a href="https://app.lotbo.app/inscription?invitation=${newToken}"
+        <a href="https://app.lotbo.app/login?mode=inscription&invitation=${newToken}"
            style="background:#C8431A;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:14px;display:inline-block">
           Accepter l'invitation →
         </a>

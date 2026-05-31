@@ -7,20 +7,21 @@ import { track } from '../../lib/amplitude'
 
 export default function Login() {
   const router = useRouter()
-  const [mode, setMode]                       = useState<'connexion' | 'inscription'>('connexion')
-  const [email, setEmail]                     = useState('')
-  const [password, setPassword]               = useState('')
-  const [prenom, setPrenom]                   = useState('')
-  const [accepteCGU, setAccepteCGU]           = useState(false)
-  const [newsletter, setNewsletter]           = useState(false)
-  const [showPassword, setShowPassword]       = useState(false)
-  const [loading, setLoading]                 = useState(false)
-  const [loadingGoogle, setLoadingGoogle]     = useState(false)
-  const [loadingFacebook, setLoadingFacebook] = useState(false)
-  const [message, setMessage]                 = useState('')
-  const [messageType, setMessageType]         = useState<'erreur' | 'succes'>('erreur')
-  const [emailEnvoye, setEmailEnvoye]         = useState(false)
+  const [mode, setMode]                         = useState<'connexion' | 'inscription'>('connexion')
+  const [email, setEmail]                       = useState('')
+  const [password, setPassword]                 = useState('')
+  const [prenom, setPrenom]                     = useState('')
+  const [accepteCGU, setAccepteCGU]             = useState(false)
+  const [newsletter, setNewsletter]             = useState(false)
+  const [showPassword, setShowPassword]         = useState(false)
+  const [loading, setLoading]                   = useState(false)
+  const [loadingGoogle, setLoadingGoogle]       = useState(false)
+  const [loadingFacebook, setLoadingFacebook]   = useState(false)
+  const [message, setMessage]                   = useState('')
+  const [messageType, setMessageType]           = useState<'erreur' | 'succes'>('erreur')
+  const [emailEnvoye, setEmailEnvoye]           = useState(false)
   const [emailInscription, setEmailInscription] = useState('')
+  const [invitationToken, setInvitationToken]   = useState<string | null>(null)
 
   const resetForm = () => {
     setMessage(''); setEmail(''); setPassword(''); setPrenom('')
@@ -31,6 +32,21 @@ export default function Login() {
     const params = new URLSearchParams(window.location.search)
     return params.get('redirect') || '/'
   }
+
+  // ── Lire les params URL ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    const inv = p.get('invitation')
+    const modeParam = p.get('mode')
+    if (inv) {
+      setInvitationToken(inv)
+      localStorage.setItem('lotbo_invitation_token', inv)
+    }
+    if (modeParam === 'inscription') {
+      setMode('inscription')
+    }
+  }, [])
 
   // ── Intercepter le token OAuth dans le hash (flux implicite Supabase) ──────
   useEffect(() => {
@@ -52,6 +68,20 @@ export default function Login() {
     }
   }, [])
 
+  // ── Accepter invitation en attente si token présent ────────────────────────
+  const accepterInvitationSiPresente = async (accessToken: string) => {
+    const stored = localStorage.getItem('lotbo_invitation_token')
+    if (!stored) return
+    try {
+      await fetch('/api/organisation/accepter-invitation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+        body: JSON.stringify({ token: stored }),
+      })
+    } catch {}
+    localStorage.removeItem('lotbo_invitation_token')
+  }
+
   // ── Google OAuth ───────────────────────────────────────────────────────────
   const handleGoogle = async () => {
     setLoadingGoogle(true)
@@ -60,7 +90,6 @@ export default function Login() {
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}`,
         queryParams: { access_type: 'offline', prompt: 'consent' },
-
       },
     })
     if (error) { setMessage('Erreur Google : ' + error.message); setMessageType('erreur'); setLoadingGoogle(false) }
@@ -73,7 +102,6 @@ export default function Login() {
       provider: 'facebook',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}`,
-
       },
     })
     if (error) { setMessage('Erreur Facebook : ' + error.message); setMessageType('erreur'); setLoadingFacebook(false) }
@@ -97,13 +125,15 @@ export default function Login() {
       setMessage(error.message.includes('Anonymous') ? t.anonymous : error.message.includes('Invalid') ? t.invalid : t.default)
       setMessageType('erreur'); return
     }
+    // Accepter invitation en attente si présente
+    if (data.session) await accepterInvitationSiPresente(data.session.access_token)
     track('user_logged_in', { user_id: data.session?.user?.id })
     const role = data.session?.user?.user_metadata?.role
     if (role === 'admin') window.location.href = '/admin'
     else window.location.href = getRedirect()
   }
 
-  /// ── Inscription email ──────────────────────────────────────────────────────
+  // ── Inscription email ──────────────────────────────────────────────────────
   const handleSignup = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (!prenom.trim())      { setMessage('Entre ton prénom pour continuer.'); setMessageType('erreur'); return }
@@ -133,17 +163,8 @@ export default function Login() {
           .single()
 
         if (supporter) {
-          // Attribuer le badge sur le profil
-          await supabase
-            .from('profiles')
-            .update({ badge: supporter.palier })
-            .eq('id', data.user.id)
-
-          // Marquer badge attribué + lier user_id
-          await supabase
-            .from('supporters')
-            .update({ badge_attribue: true, user_id: data.user.id })
-            .eq('id', supporter.id)
+          await supabase.from('profiles').update({ badge: supporter.palier }).eq('id', data.user.id)
+          await supabase.from('supporters').update({ badge_attribue: true, user_id: data.user.id }).eq('id', supporter.id)
         }
       } catch {
         // Pas de supporter trouvé — normal pour la plupart des inscriptions
@@ -153,6 +174,9 @@ export default function Login() {
       if (newsletter) {
         try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {}
       }
+
+      // Accepter invitation si session disponible (auto-confirm activé)
+      if (data.session) await accepterInvitationSiPresente(data.session.access_token)
     }
 
     track('user_signed_up', { user_id: data.user?.id })
@@ -186,11 +210,18 @@ export default function Login() {
           <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: '24px 20px', marginBottom: 20, textAlign: 'left' }}>
             <p style={{ color: '#1A1410', fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>On a envoyé un lien de confirmation à :</p>
             <p style={{ color: '#C8431A', fontSize: 15, fontWeight: 'bold', marginBottom: 16, wordBreak: 'break-all' }}>{emailInscription}</p>
-            <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>Clique sur le lien dans l'email pour activer ton compte. Tu seras automatiquement redirigé vers LOTBO.</p>
+            <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>Clique sur le lien dans l&apos;email pour activer ton compte. Tu seras automatiquement redirigé vers LOTBO.</p>
           </div>
+          {invitationToken && (
+            <div style={{ background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.25)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, textAlign: 'left' }}>
+              <p style={{ color: '#C8431A', fontSize: 12, lineHeight: 1.6 }}>
+                🏢 <strong>Ton invitation est enregistrée.</strong> Elle sera acceptée automatiquement à ta première connexion.
+              </p>
+            </div>
+          )}
           <div style={{ background: 'rgba(212,168,32,0.08)', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 12, padding: '12px 16px', marginBottom: 24, textAlign: 'left' }}>
             <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.6 }}>
-              💡 <strong>Tu ne vois pas l'email ?</strong> Vérifie ton dossier spam. L'expéditeur est <strong>hello@lotbo.app</strong>.
+              💡 <strong>Tu ne vois pas l&apos;email ?</strong> Vérifie ton dossier spam. L&apos;expéditeur est <strong>hello@lotbo.app</strong>.
             </p>
           </div>
           {message && (
@@ -225,14 +256,22 @@ export default function Login() {
         </div>
 
         {/* Sélecteur mode */}
-        <div style={{ display: 'flex', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 4, marginBottom: 28, gap: 4 }}>
+        <div style={{ display: 'flex', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 4, marginBottom: 20, gap: 4 }}>
           <button type="button" onClick={() => { setMode('connexion'); resetForm() }} style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 14, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'connexion' ? '#C8431A' : 'transparent', color: mode === 'connexion' ? 'white' : '#8C5A40' }}>
-            J'ai un compte
+            J&apos;ai un compte
           </button>
           <button type="button" onClick={() => { setMode('inscription'); resetForm() }} style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 14, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'inscription' ? '#C8431A' : 'transparent', color: mode === 'inscription' ? 'white' : '#8C5A40' }}>
             Créer un compte
           </button>
         </div>
+
+        {/* Bandeau invitation */}
+        {invitationToken && mode === 'inscription' && (
+          <div style={{ background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.25)', borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
+            <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 2 }}>🏢 Tu as été invité à rejoindre une organisation</p>
+            <p style={{ color: '#8C5A40', fontSize: 12 }}>Crée ton compte pour accepter.</p>
+          </div>
+        )}
 
         {/* Titre */}
         <div style={{ marginBottom: 20 }}>
@@ -303,8 +342,8 @@ export default function Login() {
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                 <input type="checkbox" checked={accepteCGU} onChange={e => setAccepteCGU(e.target.checked)} style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }} />
                 <span style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>
-                  J'accepte les{' '}
-                  <a href="/cgu" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>conditions d'utilisation</a>
+                  J&apos;accepte les{' '}
+                  <a href="/cgu" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>conditions d&apos;utilisation</a>
                   {' '}et la{' '}
                   <a href="/politique-confidentialite" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>politique de confidentialité</a>
                   {' '}<span style={{ color: '#C8431A' }}>*</span>
