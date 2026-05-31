@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { calculerNiveau } from '../../../lib/points'
 
 // ── Table des points par action ───────────────────────────────────────────────
 const POINTS: Record<string, number> = {
@@ -20,16 +21,6 @@ const POINTS: Record<string, number> = {
   'partage_recu':        3,
   'evenement_signale':  -5,
   'evenement_rejete':  -10,
-}
-
-// ── Niveaux GM4 ───────────────────────────────────────────────────────────────
-function calculerNiveau(points: number): string {
-  if (points >= 500) return 'legende'
-  if (points >= 251) return 'elite'
-  if (points >= 101) return 'top_contributeur'
-  if (points >= 51)  return 'contributeur'
-  if (points >= 21)  return 'actif'
-  return 'decouvreur'
 }
 
 const NIVEAU_LABELS: Record<string, { emoji: string; label: string }> = {
@@ -105,12 +96,17 @@ export async function POST(request: Request) {
       .eq('id', userId)
       .single()
 
-    const ancienTotal = profile?.points_total || 0
+    // 3. Recalculer le total depuis les transactions (source de vérité)
+    const { data: txs } = await supabase
+      .from('transactions_points')
+      .select('points')
+      .eq('user_id', userId)
+    const nouveauTotal = Math.max(0, (txs || []).reduce((s: number, t: { points: number }) => s + (t.points || 0), 0))
 
-    // 3. Mettre à jour les points selon le rôle
+    // 4. Mettre à jour les points selon le rôle (silos conservés pour le classement)
     const isOrga = type_role === 'organisateur'
     const update: Record<string, number | string> = {
-      points_total: Math.max(0, ancienTotal + pts),
+      points_total: nouveauTotal,
     }
 
     if (isOrga) {
@@ -119,11 +115,11 @@ export async function POST(request: Request) {
       update.points_utilisateur  = Math.max(0, (profile?.points_utilisateur  || 0) + pts)
     }
 
-    // 4. Calculer le nouveau niveau
+    // 5. Calculer le nouveau niveau
     const nouveauNiveau = calculerNiveau(update.points_total as number)
     update.niveau = nouveauNiveau
 
-    // 4b. Promotion automatique membre → contributeur à la première action
+    // 5b. Promotion automatique membre → contributeur à la première action
     const roleActuel = (profile as any)?.role ?? 'membre'
     if (roleActuel === 'membre' || roleActuel === 'visiteur') {
       update.role = 'contributeur'
@@ -135,7 +131,7 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString(),
     })
 
-    // 5. Détecter montée de niveau
+    // 6. Détecter montée de niveau
     const ancienNiveau = profile?.niveau || 'decouvreur'
     const niveauChange = ancienNiveau !== nouveauNiveau
 
@@ -157,6 +153,11 @@ export async function POST(request: Request) {
 
 // GET — Récupérer les points d'un utilisateur
 export async function GET(request: Request) {
+  const acces = await verifierAcces(request)
+  if (!acces.ok) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const user_id = searchParams.get('user_id')
 

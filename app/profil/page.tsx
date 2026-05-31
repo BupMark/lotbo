@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
 import { useRouter, useSearchParams } from 'next/navigation'
 import CarteBadge from '../../components/CarteBadge'
-import { syncUserPoints, calculerNiveau } from '../../lib/points'
+import { calculerNiveau } from '../../lib/points'
 import { identifyUser } from '../../lib/amplitude'
 
 // ── Système de badges ─────────────────────────────────────────────────────────

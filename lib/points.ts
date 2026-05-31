@@ -32,31 +32,3 @@ export async function attributerPoints(params: AttributerPointsParams): Promise<
     // Points non critiques
   }
 }
-
-/**
- * Recalcule points_total + niveau depuis transactions_points
- * et met à jour profiles si la valeur a changé.
- * Retourne le total réel.
- */
-export async function syncUserPoints(userId: string): Promise<number> {
-  try {
-    const { supabase } = await import('./supabase')
-
-    const { data: txs } = await supabase
-      .from('transactions_points')
-      .select('points')
-      .eq('user_id', userId)
-
-    const total  = Math.max(0, (txs || []).reduce((s: number, t: any) => s + (t.points || 0), 0))
-    const niveau = calculerNiveau(total)
-
-    await supabase
-      .from('profiles')
-      .update({ points_total: total, niveau, updated_at: new Date().toISOString() })
-      .eq('id', userId)
-
-    return total
-  } catch {
-    return 0
-  }
-}
