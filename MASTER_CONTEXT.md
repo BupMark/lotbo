@@ -90,6 +90,9 @@ Session 31 mai 2026
 ✅ Fix — expéditeur Brevo corrigé hello@lotbo.app
 ✅ Fix — bouton Suivre masqué pour admin/éditeur
 ✅ Fix — invite_par corrigé dans invitations_org_en_attente
+✅ ORG-1 #3 — Transférer événements existants vers organisation (page /membres)
+✅ ORG-1 #4 — Page /organisations liste publique
+✅ ORG-1 Sprint 1 — COMPLET
 
 Direction Financière & Subventions
 
@@ -161,8 +164,9 @@ Direction Partenariats
 🟡 Prochaine session — par priorité
 
 ⏳ Fix lien invitation → /login?mode=inscription après confirmation email
-⏳ ORG-1 #3 — Transférer événements existants vers une org
-✅ ORG-1 #4 — Page /organisations liste publique
+🟡 MAP-CLUSTER-LIEU-1 — Groupement pins même lieu sur la carte
+🟡 UX-PAGES-CONTENT-1 — Hero visuel + optimisation grand écran
+🟡 SC-MONDIAL-FIFA-2 — Événements Coupe du Monde 16 villes
 🟡 FEAT-SCAN-RECURRENT-1 — Détection récurrence dans Scan & Publie
 
 ⚪ Phase 2
@@ -240,4 +244,4 @@ Statut : permanent pour tous les paliers
 MASTER_CONTEXT.md — Version 31 mai 2026
 Compilé par : Direction Technique + toutes directions
 Prochaine mise à jour : vendredi 5 juin 2026
-Session 31 mai 2026 : GM-REFONTE-TOTALE-1 · UX-FORM-ALLDAY-1 · FEAT-ORG-UPGRADE-1 · ORG-1 (lier + modifier) · ORG-1 #2 complet (membres, invitations, email, rejoindre) · ORG-1 #4 liste publique — build propre
+Session 31 mai 2026 : GM-REFONTE-TOTALE-1 · UX-FORM-ALLDAY-1 · FEAT-ORG-UPGRADE-1 · ORG-1 Sprint 1 COMPLET (lier + modifier + membres + invitations + email + rejoindre + transférer events + liste publique) — build propre
