@@ -573,6 +573,7 @@ export default function AjouterEvenement() {
   const [aDoubleRole, setADoubleRole]         = useState(false)
 
   // F8 — Récurrence
+  const [touteJournee, setTouteJournee]           = useState(false)
   const [estRecurrent, setEstRecurrent]           = useState(false)
   const [typeRecurrence, setTypeRecurrence]       = useState<'quotidien' | 'hebdomadaire' | 'mensuel' | 'annuel'>('hebdomadaire')
   const [joursRecurrence, setJoursRecurrence]     = useState<string[]>([])
@@ -822,7 +823,6 @@ export default function AjouterEvenement() {
     if (!coordsPin) { alert("Recherche et place le pin sur la carte pour localiser l'événement."); return }
     if (!pinConfirme) { alert("Confirme l'emplacement du pin sur la carte."); return }
     if (visibilite === 'discret' && (!codeAcces || codeAcces.length < 4)) { alert("Le code d'accès doit contenir au moins 4 chiffres."); return }
-    if (!form.heure_debut) { alert("L'heure de début est obligatoire."); return }
     setLoading(true)
 
     let image_url = ''
@@ -862,7 +862,8 @@ export default function AjouterEvenement() {
       nom_lieu: form.nom_lieu || null, adresse: form.adresse || null, lieu: lieuAffiche,
       ville: form.ville, pays: form.pays, date: form.date, date_debut: form.date,
       date_fin: multiJours && form.date_fin ? form.date_fin : null,
-      heure_debut: form.heure_debut || null, heure_fin: form.heure_fin || null,
+      heure_debut: touteJournee ? null : form.heure_debut || null,
+      heure_fin: touteJournee ? null : form.heure_fin || null,
       fuseau_organisateur: form.fuseau_organisateur, categorie: categorieNom,
       event_type_id: selectedType, description: form.description, lien: form.lien,
       longitude: coordsPin.longitude, latitude: coordsPin.latitude,
@@ -1241,9 +1242,28 @@ export default function AjouterEvenement() {
             )}
           </div>
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <input
+              type="checkbox"
+              id="toute-journee"
+              checked={touteJournee}
+              onChange={e => {
+                setTouteJournee(e.target.checked)
+                if (e.target.checked) {
+                  setForm(prev => ({ ...prev, heure_debut: '', heure_fin: '' }))
+                }
+              }}
+              style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#C8431A' }}
+            />
+            <label htmlFor="toute-journee" style={{ fontSize: 14, color: '#1A1410', cursor: 'pointer' }}>
+              Toute la journée
+            </label>
+          </div>
+
+          {!touteJournee && (
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Heure de début *</label>
+              <label style={labelStyle}>Heure de début</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <select
                   value={form.heure_debut.split(':')[0] || ''}
@@ -1309,6 +1329,7 @@ export default function AjouterEvenement() {
               </div>
             </div>
           </div>
+          )}
 
           {/* ── F8 — Récurrence ── */}
           <div>

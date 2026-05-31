@@ -46,7 +46,8 @@
     "scanAnalyse": "📸 A analisar...",
     "scanVerifier": "Verifique e complete as informações antes de publicar",
     "scanErreurLecture": "Não conseguimos ler o cartaz. Pode preencher o formulário manualmente.",
-    "scanErreurService": "Serviço temporariamente indisponível. Tente novamente em instantes."
+    "scanErreurService": "Serviço temporariamente indisponível. Tente novamente em instantes.",
+    "toute_journee": "O dia todo"
   },
   "tabbar": {
     "carte": "Mapa",

@@ -46,7 +46,8 @@
     "scanAnalyse": "📸 Analyzing...",
     "scanVerifier": "Check and complete the information before publishing",
     "scanErreurLecture": "We couldn't read the poster. You can fill in the form manually.",
-    "scanErreurService": "Service temporarily unavailable. Please try again in a moment."
+    "scanErreurService": "Service temporarily unavailable. Please try again in a moment.",
+    "toute_journee": "All day"
   },
   "tabbar": {
     "carte": "Map",

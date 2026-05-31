@@ -46,7 +46,8 @@
     "scanAnalyse": "📸 Analyse en cours...",
     "scanVerifier": "Vérifie et complète les informations avant de publier",
     "scanErreurLecture": "On n'a pas pu lire l'affiche. Tu peux remplir le formulaire manuellement.",
-    "scanErreurService": "Service temporairement indisponible. Réessaie dans quelques instants."
+    "scanErreurService": "Service temporairement indisponible. Réessaie dans quelques instants.",
+    "toute_journee": "Toute la journée"
   },
   "tabbar": {
     "carte": "Carte",

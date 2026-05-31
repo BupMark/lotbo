@@ -46,7 +46,8 @@
     "scanAnalyse": "📸 Ap analize...",
     "scanVerifier": "Verifye epi konplete enfòmasyon yo anvan ou pibliye",
     "scanErreurLecture": "Nou pa t kapab li afich la. Ou ka ranpli fòmilè a manyèlman.",
-    "scanErreurService": "Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond."
+    "scanErreurService": "Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond.",
+    "toute_journee": "Tout jounen an"
   },
   "tabbar": {
     "carte": "Kat",
