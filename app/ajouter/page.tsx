@@ -574,6 +574,8 @@ export default function AjouterEvenement() {
 
   // F8 — Récurrence
   const [touteJournee, setTouteJournee]           = useState(false)
+  const [mesOrgs, setMesOrgs]                     = useState<{ id: string; nom: string }[]>([])
+  const [orgSelectionnee, setOrgSelectionnee]     = useState<string>('')
   const [estRecurrent, setEstRecurrent]           = useState(false)
   const [typeRecurrence, setTypeRecurrence]       = useState<'quotidien' | 'hebdomadaire' | 'mensuel' | 'annuel'>('hebdomadaire')
   const [joursRecurrence, setJoursRecurrence]     = useState<string[]>([])
@@ -594,6 +596,7 @@ export default function AjouterEvenement() {
     date: '', date_fin: '', heure_debut: '', heure_fin: '',
     fuseau_organisateur: 'America/Port-au-Prince',
     description: '', lien: '', acces: 'public', prix: 'gratuit',
+    organisation_id: '',
   })
 
   useEffect(() => {
@@ -615,6 +618,21 @@ export default function AjouterEvenement() {
       const rolesActifs: string[] = (raRow1 as any)?.roles_actifs?.length ? (raRow1 as any).roles_actifs : (profile?.role ? [profile.role] : [])
       const estContrib = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
       if (estContrib && profile?.charte_acceptee) setADoubleRole(true)
+
+      // Récupérer les organisations où l'utilisateur est owner/admin/éditeur
+      const { data: orgMembres } = await supabase
+        .from('organisation_membres')
+        .select('org_id, role')
+        .eq('user_id', session.user.id)
+        .in('role', ['owner', 'admin', 'editeur'])
+      if (orgMembres && orgMembres.length > 0) {
+        const orgIds = orgMembres.map((m: { org_id: string; role: string }) => m.org_id)
+        const { data: orgs } = await supabase
+          .from('organisations')
+          .select('id, nom')
+          .in('id', orgIds)
+        setMesOrgs(orgs || [])
+      }
     })
   }, [])
 
@@ -870,6 +888,7 @@ export default function AjouterEvenement() {
       acces: form.acces, prix: form.prix, image_url,
       statut: statutInsertion,
       soumis_en_tant_que: soumisEnTantQue,
+      organisation_id: orgSelectionnee || null,
       visibilite, code_acces: visibilite === 'discret' ? codeAcces : null,
       est_recurrent: estRecurrent,
       source: filledByScan ? 'scan_publie' : null,
@@ -1538,6 +1557,27 @@ export default function AjouterEvenement() {
               </div>
             )}
           </div>
+
+          {mesOrgs.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 'bold', color: '#1A1410', marginBottom: 6 }}>
+                🏢 Organisation (optionnel)
+              </label>
+              <select
+                value={orgSelectionnee}
+                onChange={e => setOrgSelectionnee(e.target.value)}
+                style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#1A1410', outline: 'none' }}
+              >
+                <option value="">— Aucune organisation —</option>
+                {mesOrgs.map(org => (
+                  <option key={org.id} value={org.id}>{org.nom}</option>
+                ))}
+              </select>
+              <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>
+                Cet événement apparaîtra sur la page de l'organisation
+              </p>
+            </div>
+          )}
 
           <button type="submit" disabled={loading} style={{ background: loading ? '#8C5A40' : '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8 }}>
             {loading ? 'Publication en cours...' : "Soumettre l'événement"}
