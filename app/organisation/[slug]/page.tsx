@@ -52,6 +52,7 @@ export default function PageOrganisation() {
   const [suiviLoading, setSuiviLoading] = useState(false)
   const [lienCopie, setLienCopie]       = useState(false)
   const [canManage, setCanManage]       = useState(false)
+  const [monRole, setMonRole]           = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -77,6 +78,7 @@ export default function PageOrganisation() {
         setSuivi(!!data)
         const r = (data as { role?: string } | null)?.role ?? ''
         setCanManage(['owner', 'admin'].includes(r))
+        setMonRole(r || null)
       })
   }, [userId, org])
 
@@ -176,7 +178,6 @@ export default function PageOrganisation() {
         <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
 
-            {/* Logo circulaire 80px ou initiales */}
             {org.logo_url ? (
               <img src={org.logo_url} alt={org.nom} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #E8E0D0' }} />
             ) : (
@@ -219,7 +220,7 @@ export default function PageOrganisation() {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {userId && !isOwner && (
+            {userId && !isOwner && monRole !== 'admin' && monRole !== 'editeur' && (
               <button
                 onClick={toggleSuivi}
                 disabled={suiviLoading}
