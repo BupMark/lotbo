@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const CATEGORIES = [
@@ -35,12 +35,22 @@ const labelStyle = {
 }
 
 export default function Inscription() {
-  const [email, setEmail] = useState('')
-  const [ville, setVille] = useState('')
-  const [categories, setCategories] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [succes, setSucces] = useState(false)
-  const [erreur, setErreur] = useState('')
+  const [email, setEmail]                       = useState('')
+  const [ville, setVille]                       = useState('')
+  const [categories, setCategories]             = useState<string[]>([])
+  const [loading, setLoading]                   = useState(false)
+  const [succes, setSucces]                     = useState(false)
+  const [erreur, setErreur]                     = useState('')
+  const [invitationToken, setInvitationToken]   = useState<string | null>(null)
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    const inv = p.get('invitation')
+    if (inv) {
+      setInvitationToken(inv)
+      localStorage.setItem('lotbo_invitation_token', inv)
+    }
+  }, [])
 
   const toggleCategorie = (cat: string) => {
     setCategories(prev =>
@@ -54,49 +64,52 @@ export default function Inscription() {
     setLoading(true)
     setErreur('')
 
-    const { error } = await supabase.from('abonnements').insert([{
-      email,
-      ville,
-      categories,
-    }])
-
-    setLoading(false)
+    const { error } = await supabase.from('abonnements').insert([{ email, ville, categories }])
 
     if (error) {
+      setLoading(false)
       if (error.code === '23505') {
         setErreur('Cet email est déjà inscrit.')
       } else {
         setErreur('Erreur : ' + error.message)
       }
-    } else {
-      setSucces(true)
+      return
     }
+
+    // Tenter d'accepter une invitation en attente si l'utilisateur est connecté
+    const token = localStorage.getItem('lotbo_invitation_token')
+    if (token) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await fetch('/api/organisation/accepter-invitation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ token }),
+        })
+        localStorage.removeItem('lotbo_invitation_token')
+      }
+    }
+
+    setLoading(false)
+    setSucces(true)
   }
 
   if (succes) {
     return (
-      <main style={{
-        minHeight: '100dvh', background: '#1A1410',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px 16px'
-      }}>
+      <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
         <div style={{ textAlign: 'center', maxWidth: 400 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-          <h2 style={{ color: '#F7F2E8', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>
-            Tu es inscrit !
-          </h2>
+          <h2 style={{ color: '#F7F2E8', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>Tu es inscrit !</h2>
           <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 8, lineHeight: 1.6 }}>
             Tu recevras un email dès qu'un événement près de <strong style={{ color: '#F7F2E8' }}>{ville}</strong> est disponible.
           </p>
           <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
             Catégories suivies : {categories.length > 0 ? categories.join(', ') : 'Toutes'}
           </p>
-          <a href="/" style={{
-            background: '#C8431A', color: '#F7F2E8',
-            padding: '12px 24px', borderRadius: 10,
-            fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
-            display: 'inline-block'
-          }}>
+          <a href="/" style={{ background: '#C8431A', color: '#F7F2E8', padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'inline-block' }}>
             Voir la carte →
           </a>
         </div>
@@ -108,11 +121,16 @@ export default function Inscription() {
     <main style={{ minHeight: '100dvh', background: '#1A1410', padding: '32px 16px' }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-        {/* Header */}
+        {/* Bandeau invitation */}
+        {invitationToken && (
+          <div style={{ background: 'rgba(200,67,26,0.12)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
+            <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 2 }}>🏢 Tu as été invité à rejoindre une organisation</p>
+            <p style={{ color: '#8C5A40', fontSize: 12 }}>Crée ton compte pour accepter</p>
+          </div>
+        )}
+
         <div style={{ marginBottom: 32 }}>
-          <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>
-            ← Retour à la carte
-          </a>
+          <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
           <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 24, fontWeight: 'bold', marginTop: 16, marginBottom: 4 }}>
             <span style={{ color: '#F7F2E8' }}>lot</span>
             <span style={{ color: '#C8431A' }}>bo</span>
@@ -127,36 +145,19 @@ export default function Inscription() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Email */}
           <div>
             <label style={labelStyle}>Email *</label>
-            <input
-              type="email"
-              placeholder="ton@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              style={inputStyle}
-              required
-            />
+            <input type="email" placeholder="ton@email.com" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} required />
           </div>
 
-          {/* Ville */}
           <div>
             <label style={labelStyle}>Ta ville *</label>
-            <input
-              type="text"
-              placeholder="Ex: Port-au-Prince, Paris, Montréal..."
-              value={ville}
-              onChange={e => setVille(e.target.value)}
-              style={inputStyle}
-              required
-            />
+            <input type="text" placeholder="Ex: Port-au-Prince, Paris, Montréal..." value={ville} onChange={e => setVille(e.target.value)} style={inputStyle} required />
           </div>
 
-          {/* Catégories */}
           <div>
             <label style={labelStyle}>
-              Catégories qui t'intéressent
+              Catégories qui t&apos;intéressent
               <span style={{ color: '#555', marginLeft: 6 }}>(optionnel — toutes par défaut)</span>
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
@@ -181,22 +182,14 @@ export default function Inscription() {
             </div>
           </div>
 
-          {erreur && (
-            <p style={{ color: '#e57373', fontSize: 13 }}>{erreur}</p>
-          )}
+          {erreur && <p style={{ color: '#e57373', fontSize: 13 }}>{erreur}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              background: loading ? '#8C5A40' : '#C8431A',
-              color: '#F7F2E8', fontWeight: 'bold',
-              padding: '14px', borderRadius: 10,
-              border: 'none', fontSize: 15,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: 8
-            }}>
-            {loading ? 'Inscription...' : 'M\'inscrire aux notifications →'}
+            style={{ background: loading ? '#8C5A40' : '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8 }}
+          >
+            {loading ? 'Inscription...' : "M'inscrire aux notifications →"}
           </button>
 
           <p style={{ color: '#555', fontSize: 12, textAlign: 'center' }}>

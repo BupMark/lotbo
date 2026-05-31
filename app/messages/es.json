@@ -80,5 +80,13 @@
     "creer_publier": "Crear organización",
     "slug_label": "URL de tu página",
     "introuvable": "Organización no encontrada"
+  },
+  "invitation": {
+    "bandeau": "Has sido invitado a unirte a una organización",
+    "creer_compte": "Crea tu cuenta para aceptar",
+    "expiree": "Esta invitación ha expirado.",
+    "acceptee": "¡Te has unido!",
+    "renvoyee": "Invitación reenviada",
+    "ajoute": "Miembro añadido"
   }
 }

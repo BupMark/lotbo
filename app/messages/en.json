@@ -80,5 +80,13 @@
     "creer_publier": "Create organization",
     "slug_label": "Your page URL",
     "introuvable": "Organization not found"
+  },
+  "invitation": {
+    "bandeau": "You've been invited to join an organization",
+    "creer_compte": "Create your account to accept",
+    "expiree": "This invitation has expired.",
+    "acceptee": "You've joined the organization!",
+    "renvoyee": "Invitation resent",
+    "ajoute": "Member added"
   }
 }

@@ -80,5 +80,13 @@
     "creer_publier": "Kreye òganizasyon an",
     "slug_label": "URL paj ou a",
     "introuvable": "Òganizasyon pa jwenn"
+  },
+  "invitation": {
+    "bandeau": "Yo envite ou pou rantre nan yon òganizasyon",
+    "creer_compte": "Kreye kont ou pou aksepte",
+    "expiree": "Envitasyon sa a ekspire.",
+    "acceptee": "Ou rantre nan òganizasyon an!",
+    "renvoyee": "Envitasyon voye ankò",
+    "ajoute": "Manm ajoute"
   }
 }

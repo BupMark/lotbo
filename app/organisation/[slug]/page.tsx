@@ -51,6 +51,7 @@ export default function PageOrganisation() {
   const [suivi, setSuivi]               = useState(false)
   const [suiviLoading, setSuiviLoading] = useState(false)
   const [lienCopie, setLienCopie]       = useState(false)
+  const [canManage, setCanManage]       = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -68,11 +69,15 @@ export default function PageOrganisation() {
     if (!userId || !org) return
     supabase
       .from('organisation_membres')
-      .select('user_id')
+      .select('user_id, role')
       .eq('org_id', org.id)
       .eq('user_id', userId)
       .maybeSingle()
-      .then(({ data }) => setSuivi(!!data))
+      .then(({ data }) => {
+        setSuivi(!!data)
+        const r = (data as { role?: string } | null)?.role ?? ''
+        setCanManage(['owner', 'admin'].includes(r))
+      })
   }, [userId, org])
 
   const charger = async () => {
@@ -263,6 +268,11 @@ export default function PageOrganisation() {
             {isOwner && (
               <a href={`/organisation/${slug}/modifier`} style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
                 ✏️ Modifier
+              </a>
+            )}
+            {(isOwner || canManage) && (
+              <a href={`/organisation/${slug}/membres`} style={{ background: 'rgba(29,106,158,0.1)', color: '#1D6A9E', border: '1px solid rgba(29,106,158,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                👥 Membres
               </a>
             )}
           </div>
