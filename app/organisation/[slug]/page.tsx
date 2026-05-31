@@ -276,6 +276,11 @@ export default function PageOrganisation() {
                 👥 Membres
               </a>
             )}
+            {(isOwner || monRole === 'admin' || monRole === 'editeur') && (
+              <a href="/ajouter" style={{ background: 'rgba(45,158,107,0.1)', color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                ➕ Ajouter un événement
+              </a>
+            )}
           </div>
         </div>
 

@@ -23,6 +23,13 @@ interface Membre {
   role: string
 }
 
+interface InvitationEnAttente {
+  id: string
+  email: string
+  role: string
+  expire_le: string
+}
+
 const ROLE_CONFIG: Record<string, { label: string; couleur: string }> = {
   owner:   { label: 'Owner',   couleur: '#D4A820' },
   admin:   { label: 'Admin',   couleur: '#C8431A' },
@@ -33,6 +40,10 @@ const ROLE_CONFIG: Record<string, { label: string; couleur: string }> = {
 function initiales(nom: string | null, fallback: string): string {
   if (!nom) return fallback.slice(0, 2).toUpperCase()
   return nom.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'
+}
+
+function formatExpiry(iso: string): string {
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
 const inputStyle: React.CSSProperties = {
@@ -52,6 +63,7 @@ export default function PageMembres() {
   const [userRole, setUserRole]         = useState('')
   const [userId, setUserId]             = useState('')
   const [membres, setMembres]           = useState<Membre[]>([])
+  const [invitations, setInvitations]   = useState<InvitationEnAttente[]>([])
   const [emailInvit, setEmailInvit]     = useState('')
   const [roleInvit, setRoleInvit]       = useState('lecteur')
   const [invitLoading, setInvitLoading] = useState(false)
@@ -77,6 +89,18 @@ export default function PageMembres() {
       email:   m.user_id.slice(0, 8) + '...',
       role:    m.role,
     })))
+  }
+
+  const chargerInvitations = async (oid: string) => {
+    const { data } = await supabase
+      .from('invitations_org_en_attente')
+      .select('id, email, role, expire_le')
+      .eq('org_id', oid)
+      .eq('statut', 'en_attente')
+      .gt('expire_le', new Date().toISOString())
+      .order('expire_le', { ascending: true })
+
+    setInvitations((data as InvitationEnAttente[]) ?? [])
   }
 
   useEffect(() => {
@@ -115,7 +139,7 @@ export default function PageMembres() {
 
       setUserRole(role)
       setLoading(false)
-      await chargerMembres(o.id)
+      await Promise.all([chargerMembres(o.id), chargerInvitations(o.id)])
     })
   }, [slug])
 
@@ -140,12 +164,12 @@ export default function PageMembres() {
 
     if (res.ok) {
       const msg =
-        json.cas === 'ajout_direct'      ? 'Membre ajouté — email de confirmation envoyé' :
+        json.cas === 'ajout_direct'        ? 'Membre ajouté — email de confirmation envoyé' :
         json.cas === 'invitation_renvoyee' ? 'Invitation renvoyée' :
         'Invitation envoyée'
       setInvitMsg({ type: 'ok', texte: msg })
       setEmailInvit('')
-      await chargerMembres(orgId)
+      await Promise.all([chargerMembres(orgId), chargerInvitations(orgId)])
     } else {
       setInvitMsg({ type: 'err', texte: json.error ?? 'Erreur inconnue' })
     }
@@ -160,6 +184,14 @@ export default function PageMembres() {
       .eq('org_id', orgId)
       .eq('user_id', memberId)
     if (!error) await chargerMembres(orgId)
+  }
+
+  const handleAnnulerInvitation = async (invId: string) => {
+    await supabase
+      .from('invitations_org_en_attente')
+      .delete()
+      .eq('id', invId)
+    await chargerInvitations(orgId)
   }
 
   const waText = encodeURIComponent(`Rejoins ${orgNom} sur LOTBO 👉 https://app.lotbo.app/organisation/${slug}/rejoindre`)
@@ -185,7 +217,7 @@ export default function PageMembres() {
           <p style={{ color: '#8C5A40', fontSize: 14 }}>{orgNom}</p>
         </div>
 
-        {/* ── Liste membres ──────────────────────────────────────────────── */}
+        {/* ── Liste membres actuels ─────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
           {membres.length === 0 && (
             <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>
@@ -198,7 +230,6 @@ export default function PageMembres() {
             const isMe = m.user_id === userId
             return (
               <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '10px 14px' }}>
-                {/* Avatar initiales */}
                 <div style={{ width: 40, height: 40, borderRadius: '50%', background: cfg.couleur + '22', border: `2px solid ${cfg.couleur}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, fontWeight: 'bold', color: cfg.couleur }}>
                   {ini}
                 </div>
@@ -225,6 +256,43 @@ export default function PageMembres() {
             )
           })}
         </div>
+
+        {/* ── Invitations en attente ───────────────────────────────────── */}
+        {invitations.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 12, fontWeight: 'bold', color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+              ✉️ Invitations en attente
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {invitations.map(inv => {
+                const cfg = ROLE_CONFIG[inv.role] ?? { label: inv.role, couleur: '#8C5A40' }
+                return (
+                  <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(212,168,32,0.06)', border: '1px solid rgba(212,168,32,0.2)', borderRadius: 12, padding: '10px 14px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, color: '#1A1410', fontWeight: 'bold', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {inv.email}
+                      </p>
+                      <p style={{ fontSize: 11, color: '#8C5A40' }}>
+                        Expire le {formatExpiry(inv.expire_le)}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, fontWeight: 'bold', color: cfg.couleur, background: cfg.couleur + '18', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
+                        {cfg.label}
+                      </span>
+                      <button
+                        onClick={() => handleAnnulerInvitation(inv.id)}
+                        style={{ fontSize: 11, color: '#8C5A40', background: 'white', border: '1px solid #E8E0D0', borderRadius: 999, padding: '3px 8px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Lien partage WhatsApp ─────────────────────────────────────── */}
         <a
