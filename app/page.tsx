@@ -460,6 +460,14 @@ export default function Home() {
       .slice(0, 5)
   }, [evenements])
 
+  const nbPays = useMemo(() =>
+    new Set(evenements.map((e: Evenement) => e.pays).filter(Boolean)).size
+  , [evenements])
+
+  const nbVilles = useMemo(() =>
+    new Set(evenements.map((e: Evenement) => e.ville).filter(Boolean)).size
+  , [evenements])
+
   // Pin spécial "À la une" — mis à jour quand le carrousel change
   useEffect(() => {
     if (aLaUneMarkerRef.current) { aLaUneMarkerRef.current.remove(); aLaUneMarkerRef.current = null }
@@ -972,6 +980,56 @@ export default function Home() {
       ══════════════════════════════════════ */}
       {mode === 'liste' && (
         <div className="lotbo-vue-liste" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: '#F7F2E8', zIndex: 5, overflowY: 'auto', paddingTop: 100, paddingLeft: 16, paddingRight: 16, paddingBottom: 80 }}>
+
+          {/* ── Hero vue liste ── */}
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1410 0%, #2C1810 100%)',
+            borderRadius: 16,
+            padding: '28px 20px',
+            marginBottom: 28,
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {/* Image de fond Unsplash */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: 'url(https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=80)',
+              backgroundSize: 'cover', backgroundPosition: 'center',
+              opacity: 0.12, borderRadius: 16,
+            }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 6, letterSpacing: 2, textTransform: 'uppercase' }}>
+                LOTBO · Tous les événements
+              </p>
+              <h2 style={{
+                fontSize: 24, fontWeight: 'bold',
+                fontFamily: 'serif', fontStyle: 'italic',
+                color: 'white', marginBottom: 16, lineHeight: 1.2,
+              }}>
+                Tous les événements,<br/>un seul endroit.
+              </h2>
+              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                <div>
+                  <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
+                    {evenements.length.toLocaleString()}+
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>événements</p>
+                </div>
+                <div>
+                  <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
+                    {nbVilles}+
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>villes</p>
+                </div>
+                <div>
+                  <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
+                    {nbPays}+
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>pays</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* ══ Section "À la une" ══ */}
           {aLaUne.length > 0 && (
