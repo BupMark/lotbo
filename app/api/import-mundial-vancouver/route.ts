@@ -72,7 +72,7 @@ const EVENEMENTS_VANCOUVER_MUNDIAL: EvenementMundial[] = [
   {
     source_id: 'mundial2026-vancouver-concert-motley-crue-pne',
     titre: 'Mötley Crüe + Finger Eleven + Toque — FIFA Fan Festival Concert · PNE',
-    description: 'Concert signature à l\'amphithéâtre Freedom Mobile Arch du PNE. Mötley Crüe, les légendes du glam metal américain, headlinent le plus grand show rock du FIFA Fan Festival Vancouver, avec Finger Eleven (rock canadien) et Toque en support. Un événement ticketé qui mêle l\'esprit rock'n'roll et la ferveur de la Coupe du Monde. Le show le plus attendu du festival à Vancouver. 12 juillet 2026.',
+    description: 'Concert signature à l\'amphithéâtre Freedom Mobile Arch du PNE. Mötley Crüe, les légendes du glam metal américain, headlinent le plus grand show rock du FIFA Fan Festival Vancouver, avec Finger Eleven (rock canadien) et Toque en support. Un événement ticketé qui mêle l\'esprit rock and roll et la ferveur de la Coupe du Monde. Le show le plus attendu du festival à Vancouver. 12 juillet 2026.',
     lieu_key: 'PNE — Hastings Park (FIFA Fan Festival)',
     date_debut: '2026-07-12T19:00:00',
     date_fin: '2026-07-12T23:30:00',
