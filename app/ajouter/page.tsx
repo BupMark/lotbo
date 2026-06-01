@@ -748,6 +748,27 @@ export default function AjouterEvenement() {
 
             setScanMessage({ type: 'verifier', texte: T_IMAGE[locale].scanVerifier || 'Vérifie et complète les informations avant de publier.' })
             setFilledByScan(true)
+
+            // FEAT-SCAN-RECURRENT-1 — Pré-remplissage récurrence depuis Scan & Publie
+            if (d.est_recurrent === true) {
+              setEstRecurrent(true)
+              if (d.type_recurrence) setTypeRecurrence(d.type_recurrence)
+              if (d.jours_semaine && Array.isArray(d.jours_semaine)) {
+                const JOURS_NORM: Record<string, string> = {
+                  'lundi': 'Lundi',     'monday': 'Lundi',
+                  'mardi': 'Mardi',     'tuesday': 'Mardi',
+                  'mercredi': 'Mercredi', 'wednesday': 'Mercredi',
+                  'jeudi': 'Jeudi',     'thursday': 'Jeudi',
+                  'vendredi': 'Vendredi', 'friday': 'Vendredi',
+                  'samedi': 'Samedi',   'saturday': 'Samedi',
+                  'dimanche': 'Dimanche', 'sunday': 'Dimanche',
+                }
+                const normalises = d.jours_semaine
+                  .map((j: string) => JOURS_NORM[j.toLowerCase()] ?? null)
+                  .filter((j: string | null): j is string => j !== null)
+                if (normalises.length > 0) setJoursRecurrence(normalises)
+              }
+            }
           }
         } catch {
           setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurService || 'Service temporairement indisponible.' })
