@@ -40,6 +40,14 @@ export default function Classement() {
   const [loading, setLoading] = useState(true)
   const [moi, setMoi]         = useState<{ position: number; total: number; membre: Membre } | null>(null)
   const [userId, setUserId]   = useState<string | null>(null)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -88,7 +96,6 @@ export default function Classement() {
               points_total: prof.points_total || 0,
               niveau:       calculerNiveau(prof.points_total || 0),
             }
-            // Position = nombre de membres dans le top 100 avec plus de points + 1
             const position = membres.filter(m => m.points_total > (prof.points_total || 0)).length + 1
             setMoi({ position, total: membres.length, membre })
           })
@@ -101,25 +108,64 @@ export default function Classement() {
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px 80px' }}>
+      <div style={{ maxWidth: isDesktop ? 1100 : 680, margin: '0 auto', padding: isDesktop ? '40px 32px 80px' : '24px 16px 80px' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-          <div>
-            <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
-            <h1 style={{ fontSize: 28, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', marginTop: 8, color: '#1A1410' }}>
+        {/* ── Lien retour ── */}
+        <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'inline-block', marginBottom: 20 }}>
+          ← Retour à la carte
+        </a>
+
+        {/* ── Hero ── */}
+        <div style={{
+          background: 'linear-gradient(135deg, #1A1410 0%, #2C1810 100%)',
+          borderRadius: 16,
+          padding: isDesktop ? '48px 48px' : '28px 20px',
+          marginBottom: 32,
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: 'url(https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=1200&q=80)',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            opacity: 0.15, borderRadius: 16,
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase' }}>
+              Communauté LOTBO
+            </p>
+            <h1 style={{
+              fontSize: isDesktop ? 42 : 28, fontWeight: 'bold',
+              fontFamily: 'serif', fontStyle: 'italic',
+              color: 'white', marginBottom: 12,
+            }}>
               🏆 Classement
             </h1>
-            <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 4 }}>
-              Les membres les plus actifs de LOTBO
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: isDesktop ? 16 : 14, maxWidth: 500 }}>
+              Les membres les plus actifs de LOTBO — chaque contribution compte.
             </p>
-          </div>
-          <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 22, fontWeight: 'bold' }}>
-            <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
+            <div style={{ display: 'flex', gap: isDesktop ? 32 : 16, marginTop: 24, flexWrap: 'wrap' }}>
+              <div>
+                <p style={{ color: '#C8431A', fontSize: isDesktop ? 28 : 22, fontWeight: 'bold' }}>{membres.length}</p>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>membres actifs</p>
+              </div>
+              <div>
+                <p style={{ color: '#C8431A', fontSize: isDesktop ? 28 : 22, fontWeight: 'bold' }}>
+                  {membres.reduce((sum, m) => sum + (m.points_total || 0), 0).toLocaleString()}
+                </p>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>points distribués</p>
+              </div>
+              <div>
+                <p style={{ color: '#C8431A', fontSize: isDesktop ? 28 : 22, fontWeight: 'bold' }}>
+                  {membres[0]?.points_total?.toLocaleString() || 0}
+                </p>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>record du leader</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Ma position — si connecté */}
+        {/* ── Ma position — si connecté ── */}
         {moi && (
           <div style={{
             background: 'rgba(200,67,26,0.08)',
@@ -147,6 +193,7 @@ export default function Classement() {
           </div>
         )}
 
+        {/* ── Contenu principal ── */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <p style={{ color: '#8C5A40' }}>Chargement du classement…</p>
@@ -158,12 +205,27 @@ export default function Classement() {
             <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 8 }}>Sois le premier à contribuer !</p>
           </div>
         ) : (
-          <>
-            {/* ── Podium Top 3 ── */}
+          <div style={{
+            display: isDesktop ? 'grid' : 'block',
+            gridTemplateColumns: isDesktop ? '1fr 1.4fr' : undefined,
+            gap: isDesktop ? 32 : 0,
+            alignItems: 'start',
+          }}>
+
+            {/* ── Colonne gauche — Podium Top 3 ── */}
             {top3.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
+              <div style={{
+                background: 'white', borderRadius: 16,
+                padding: isDesktop ? '24px' : '0',
+                border: isDesktop ? '1px solid #E8E0D0' : 'none',
+                marginBottom: isDesktop ? 0 : 24,
+              }}>
+                {isDesktop && (
+                  <p style={{ fontWeight: 'bold', fontSize: 14, color: '#8C5A40', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    🥇 Top 3
+                  </p>
+                )}
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
-                  {/* Ordre visuel : 2e - 1er - 3e */}
                   {[top3[1], top3[0], top3[2]].map((membre, i) => {
                     if (!membre) return null
                     const pos  = i === 0 ? 2 : i === 1 ? 1 : 3
@@ -217,48 +279,56 @@ export default function Classement() {
               </div>
             )}
 
-            {/* ── Liste 4e et plus ── */}
-            {reste.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {reste.map((membre, i) => {
-                  const pos    = i + 4
-                  const estMoi = membre.id === userId
-                  const niveau = NIVEAUX[calculerNiveau(membre.points_total)] || NIVEAUX['decouvreur']
+            {/* ── Colonne droite — Liste 4e+ ── */}
+            <div>
+              {isDesktop && (
+                <p style={{ fontWeight: 'bold', fontSize: 14, color: '#8C5A40', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  📋 Classement complet
+                </p>
+              )}
+              {reste.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {reste.map((membre, i) => {
+                    const pos    = i + 4
+                    const estMoi = membre.id === userId
+                    const niveau = NIVEAUX[calculerNiveau(membre.points_total)] || NIVEAUX['decouvreur']
 
-                  return (
-                    <div key={membre.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      background: estMoi ? 'rgba(200,67,26,0.08)' : 'white',
-                      border: estMoi ? '1px solid rgba(200,67,26,0.3)' : '1px solid #E8E0D0',
-                      borderRadius: 12, padding: '12px 16px',
-                    }}>
-                      <span style={{ color: '#8C5A40', fontSize: 13, fontWeight: 'bold', minWidth: 28, textAlign: 'right' }}>
-                        {pos}
-                      </span>
-                      {membre.photo_url ? (
-                        <img src={membre.photo_url} alt={membre.nom || ''} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E8E0D0', flexShrink: 0 }} />
-                      ) : (
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: 14, flexShrink: 0 }}>
-                          {getInitiales(membre.nom)}
+                    return (
+                      <div key={membre.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        background: estMoi ? 'rgba(200,67,26,0.08)' : 'white',
+                        border: estMoi ? '1px solid rgba(200,67,26,0.3)' : '1px solid #E8E0D0',
+                        borderRadius: 12, padding: '12px 16px',
+                      }}>
+                        <span style={{ color: '#8C5A40', fontSize: 13, fontWeight: 'bold', minWidth: 28, textAlign: 'right' }}>
+                          {pos}
+                        </span>
+                        {membre.photo_url ? (
+                          <img src={membre.photo_url} alt={membre.nom || ''} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E8E0D0', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: 14, flexShrink: 0 }}>
+                            {getInitiales(membre.nom)}
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {membre.nom || 'Membre LOTBO'} {estMoi && <span style={{ color: '#C8431A', fontSize: 12 }}>← Toi</span>}
+                          </p>
+                          <p style={{ color: '#8C5A40', fontSize: 12 }}>
+                            {niveau.emoji} {niveau.label}
+                          </p>
                         </div>
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {membre.nom || 'Membre LOTBO'} {estMoi && <span style={{ color: '#C8431A', fontSize: 12 }}>← Toi</span>}
-                        </p>
-                        <p style={{ color: '#8C5A40', fontSize: 12 }}>
-                          {niveau.emoji} {niveau.label}
-                        </p>
+                        <span style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 14, flexShrink: 0 }}>
+                          {membre.points_total} pts
+                        </span>
                       </div>
-                      <span style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 14, flexShrink: 0 }}>
-                        {membre.points_total} pts
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
         )}
 
       </div>
