@@ -48,13 +48,19 @@ Analyse cette image et extrais UNIQUEMENT les informations suivantes en JSON :
   "description": string | null,
   "categorie": string | null,
   "prix": "gratuit" | "payant" | null,
-  "lien_officiel": string | null
+  "lien_officiel": string | null,
+  "est_recurrent": boolean,
+  "type_recurrence": "quotidien" | "hebdomadaire" | "mensuel" | "annuel" | null,
+  "jours_semaine": string[] | null
 }
 Instructions :
 - Pour les dates, utilise le format YYYY-MM-DD.
 - Pour les heures, utilise le format HH:MM.
 - Pour "organisateur" : nom de l'organisation, association, artiste ou personne qui organise.
 - Pour "categorie" : type d'événement parmi — Concert, Festival, Conférence, Exposition, Formation, Tournoi, Culte, Assemblée, Inauguration, Célébration.
+- Pour "est_recurrent" : true si l'affiche mentionne une répétition (ex: "tous les vendredis", "chaque semaine", "every Sunday", "chaque mois", "tous les dimanches", "hebdomadaire", "weekly", "monthly", "każdy piątek" etc.). false si c'est un événement unique.
+- Pour "type_recurrence" : "quotidien" si chaque jour, "hebdomadaire" si chaque semaine, "mensuel" si chaque mois, "annuel" si chaque année. null si est_recurrent = false.
+- Pour "jours_semaine" : tableau des jours concernés si hebdomadaire (ex: ["vendredi"], ["lundi", "mercredi"], ["sunday"]). null si pas hebdomadaire ou pas précisé.
 - Pour "lieu" : nom exact du bâtiment, salle ou espace (ex: "Hôtel Karibe", "Stade Sylvio Cator").
 - Pour "adresse" : numéro et rue uniquement, pas la ville.
 - Pour "description" : résume l'événement en 2-3 phrases si pas de texte explicite.
@@ -79,6 +85,12 @@ Réponds UNIQUEMENT avec le JSON — aucun texte autour.`,
     try {
       const clean = text.replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean)
+      // Limiter à 5 occurrences si récurrent sans date de fin
+      if (parsed.est_recurrent && !parsed.date_fin) {
+        parsed.occurrences_max = 5
+      } else {
+        parsed.occurrences_max = null
+      }
       return NextResponse.json({ success: true, data: parsed })
     } catch {
       console.error('[scan-event] JSON parse error:', text)
