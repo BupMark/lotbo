@@ -123,6 +123,7 @@ export default function Home() {
   const [commCounts, setCommCounts]         = useState<Record<string, number>>({})
   const [carouselIdx, setCarouselIdx]       = useState(0)
   const [clicsEvenements, setClicsEvenements] = useState(0)
+  const [totalEvenementsBase, setTotalEvenementsBase] = useState(0)
   const [inviteVisible, setInviteVisible]   = useState(false)
   const [favoriTooltipId, setFavoriTooltipId] = useState<string | null>(null)
   const [sheetReduit, setSheetReduit]       = useState(false)
@@ -270,6 +271,15 @@ export default function Home() {
       .neq('statut', 'hors_ligne')
       .limit(2000)
       .then(({ data }) => setEvenements((data as Evenement[]) || []))
+  }, [])
+
+  useEffect(() => {
+    supabase
+      .from('evenements')
+      .select('*', { count: 'exact', head: true })
+      .then(({ count }) => {
+        if (count) setTotalEvenementsBase(count)
+      })
   }, [])
 
   useEffect(() => {
@@ -1011,7 +1021,7 @@ export default function Home() {
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                 <div>
                   <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
-                    {evenements.length.toLocaleString()}+
+                    {(totalEvenementsBase || evenements.length).toLocaleString()}+
                   </p>
                   <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>événements</p>
                 </div>
