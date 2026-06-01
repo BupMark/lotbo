@@ -1125,7 +1125,7 @@ export default function AjouterEvenement() {
   // ── Formulaire ────────────────────────────────────────────────────────────
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', padding: '32px 16px' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
         <div style={{ marginBottom: 32 }}>
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
