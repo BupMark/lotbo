@@ -88,6 +88,7 @@ interface Evenement {
   organisateur: string | null
   parent_id: string | null
   user_id: string | null
+  organisation_id: string | null
 }
 
 // ── E12 — 6 réactions ────────────────────────────────────────────────────────
@@ -543,6 +544,7 @@ export default function EvenementPage() {
   const [claimMessage, setClaimMessage]                 = useState('')
   const [claimEnvoye, setClaimEnvoye]                   = useState(false)
   const [claimLoading, setClaimLoading]                 = useState(false)
+  const [roleOrg, setRoleOrg]                           = useState<string | null>(null)
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -663,6 +665,18 @@ if (data?.parent_id) {
             nom: profil.nom || session.user.user_metadata?.full_name || session.user.email || 'Anonyme',
             photo_url: profil.photo_url ?? null,
           })
+        }
+        // Charger rôle org si événement lié à une organisation
+        const { data: evOrg } = await supabase
+          .from('evenements').select('organisation_id').eq('id', id).single()
+        if (evOrg?.organisation_id) {
+          const { data: membre } = await supabase
+            .from('organisation_membres')
+            .select('role')
+            .eq('org_id', evOrg.organisation_id)
+            .eq('user_id', session.user.id)
+            .maybeSingle()
+          setRoleOrg(membre?.role ?? null)
         }
       }
     })
@@ -1243,7 +1257,21 @@ supabase.auth.getSession().then(({ data: { session } }) => {
               </button>
             )}
           </div>
-          {/* Ligne 2 — Partage */}
+          {/* Ligne 2 — Modifier (auteur ou membre org autorisé) */}
+          {ev && (userProfile?.id === ev.user_id || roleOrg === 'owner' || roleOrg === 'admin' || roleOrg === 'editeur') && (
+            <div style={{ marginBottom: 8 }}>
+              <a href={`/evenement/${ev.id}/modifier`} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'rgba(200,67,26,0.1)', color: '#C8431A',
+                border: '1px solid rgba(200,67,26,0.3)',
+                borderRadius: 999, padding: '8px 18px',
+                fontSize: 13, fontWeight: 'bold', textDecoration: 'none',
+              }}>
+                ✏️ Modifier cet événement
+              </a>
+            </div>
+          )}
+          {/* Ligne 3 — Partage */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: '#8C5A40', marginRight: 4 }}>Partager :</span>
             <a href={urlWhatsapp} target="_blank" title="WhatsApp" style={{ width: 38, height: 38, borderRadius: '50%', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>
