@@ -57,6 +57,7 @@ export default function PageOrganisation() {
   const [isDesktop, setIsDesktop]       = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [coverUrl, setCoverUrl]         = useState<string | null>(null)
+  const [coverPosition, setCoverPosition] = useState<'top' | 'center' | 'bottom'>('center')
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -232,13 +233,13 @@ export default function PageOrganisation() {
         <div style={{
           position: 'absolute', inset: 0,
           backgroundImage: coverUrl ? `url(${coverUrl})` : 'url(https://images.unsplash.com/photo-1511578314322-379afb476865?w=1400&q=80)',
-          backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundSize: 'cover', backgroundPosition: coverPosition,
           opacity: coverUrl ? 0.85 : 0.2,
         }} />
         {/* Logo flottant sur le cover — desktop seulement */}
         {isDesktop && org.logo_url && (
           <div style={{
-            position: 'absolute', bottom: -48, left: 32,
+            position: 'absolute', bottom: 16, left: 24,
             width: 96, height: 96, borderRadius: '50%',
             border: '4px solid #F7F2E8',
             overflow: 'hidden', background: 'white',
@@ -320,6 +321,23 @@ export default function PageOrganisation() {
                 {uploadingCover ? '⏳ Upload...' : '🖼️ Changer la cover'}
                 <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleUploadCover} />
               </label>
+            )}
+            {isOwner && coverUrl && (
+              <select
+                value={coverPosition}
+                onChange={e => setCoverPosition(e.target.value as 'top' | 'center' | 'bottom')}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  color: 'rgba(247,242,232,0.6)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 999, padding: '7px 12px',
+                  fontSize: 12, cursor: 'pointer',
+                }}
+              >
+                <option value="top">Haut</option>
+                <option value="center">Centre</option>
+                <option value="bottom">Bas</option>
+              </select>
             )}
           </div>
         )}
