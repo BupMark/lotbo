@@ -8,7 +8,6 @@ const FONDS = [
   { id: 'brique', label: 'Brique', bg: '#C8431A' },
   { id: 'or', label: 'Or', bg: '#D4A820' },
   { id: 'terre', label: 'Terre', bg: '#8C5A40' },
-  { id: 'vert', label: 'Vert', bg: '#2D9E6B' },
 ]
 
 const EXPRESSIONS = [
@@ -22,11 +21,15 @@ const EXPRESSIONS = [
   { id: 'custom', emoji: '✏️', texte: 'Personnaliser...' },
 ]
 
-type Disposition = 'centree' | 'split' | 'paysage'
+type Disposition = 'centree' | 'split' | 'paysage' | 'portrait' | 'story' | 'minimal' | 'badge_vip'
 const DISPOSITIONS = [
   { id: 'centree' as Disposition, label: 'Centrée', icon: '⬛', size: '1080×1080' },
   { id: 'split' as Disposition, label: 'Split', icon: '◧', size: '1080×1080' },
   { id: 'paysage' as Disposition, label: 'Paysage', icon: '▬', size: '1200×630' },
+  { id: 'portrait' as Disposition, label: 'Portrait Élégant', icon: '🖼️', size: '1080×1350' },
+  { id: 'story' as Disposition, label: 'Story Immersive', icon: '📱', size: '1080×1920' },
+  { id: 'minimal' as Disposition, label: 'Minimal Chic', icon: '◻️', size: '1080×1080' },
+  { id: 'badge_vip' as Disposition, label: 'Badge VIP', icon: '💎', size: '1080×1080' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -221,7 +224,12 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     dessinerCarte()
   }, [fondActif, useFotoEvent, texteExpression, etape, nomUtilisateur, disposition, photoProfil, photoFond, offsetX, offsetY, zoom])
 
-  const getDimensions = () => disposition === 'paysage' ? { W: 1200, H: 630 } : { W: 1080, H: 1080 }
+  const getDimensions = () => {
+    if (disposition === 'paysage') return { W: 1200, H: 630 }
+    if (disposition === 'portrait') return { W: 1080, H: 1350 }
+    if (disposition === 'story') return { W: 1080, H: 1920 }
+    return { W: 1080, H: 1080 }
+  }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -396,6 +404,276 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ctx.textAlign = 'left'
   }
 
+  // ── PORTRAIT ÉLÉGANT ──────────────────────────────────────────────────────
+  const dessinerPortrait = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+    const photoH = Math.round(H * 0.68)
+    const bg = fondActif.bg
+    const textColor = getTextColor(bg)
+
+    await dessinerZonePhotoAjustable(ctx, 0, 0, W, photoH, photoProfil || evenement.image_url || null, '#1A1410', offsetX, offsetY, zoom)
+
+    const grad = ctx.createLinearGradient(0, photoH * 0.5, 0, photoH)
+    grad.addColorStop(0, 'rgba(26,20,16,0)')
+    grad.addColorStop(1, 'rgba(26,20,16,0.85)')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, W, photoH)
+
+    dessinerLogo(ctx, 48, 72, 44, '#F7F2E8')
+
+    const badgeY = photoH - 80
+    ctx.fillStyle = '#C8431A'
+    ctx.beginPath()
+    ctx.roundRect(48, badgeY - 44, 440, 56, 28)
+    ctx.fill()
+    ctx.font = 'bold 28px system-ui, sans-serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.textAlign = 'left'
+    ctx.fillText(texteExpression, 72, badgeY - 8)
+
+    ctx.fillStyle = bg
+    ctx.fillRect(0, photoH, W, H - photoH)
+
+    ctx.font = 'bold 96px Georgia, serif'
+    ctx.fillStyle = textColor
+    ctx.textAlign = 'left'
+    ctx.fillText(nomUtilisateur, 48, photoH + 110)
+
+    ctx.fillStyle = '#C8431A'
+    ctx.fillRect(48, photoH + 128, 120, 4)
+
+    ctx.font = 'italic 36px Georgia, serif'
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.75)' : 'rgba(26,20,16,0.65)'
+    const titreLines = wrapText(ctx, evenement.titre, W - 96)
+    titreLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, 48, photoH + 182 + i * 44))
+
+    ctx.font = '28px system-ui, sans-serif'
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.5)' : 'rgba(26,20,16,0.45)'
+    ctx.fillText(`📅 ${formatDateCourte(evenement.date)}`, 48, H - 88)
+    const lieuDisplay = evenement.lieu.length > 38 ? evenement.lieu.slice(0, 38) + '…' : evenement.lieu
+    ctx.fillText(`📍 ${lieuDisplay}`, 48, H - 48)
+
+    ctx.font = '22px system-ui, sans-serif'
+    ctx.fillStyle = getLuminance(bg) < 0.5 ? 'rgba(247,242,232,0.25)' : 'rgba(26,20,16,0.22)'
+    ctx.textAlign = 'right'
+    ctx.fillText('app.lotbo.app', W - 48, H - 20)
+    ctx.textAlign = 'left'
+  }
+
+  // ── STORY IMMERSIVE ───────────────────────────────────────────────────────
+  const dessinerStory = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+    await dessinerZonePhotoAjustable(ctx, 0, 0, W, H, photoProfil || evenement.image_url || null, '#1A1410', offsetX, offsetY, zoom)
+
+    const grad = ctx.createLinearGradient(0, H * 0.35, 0, H)
+    grad.addColorStop(0, 'rgba(26,20,16,0)')
+    grad.addColorStop(0.6, 'rgba(26,20,16,0.75)')
+    grad.addColorStop(1, 'rgba(26,20,16,0.95)')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, W, H)
+
+    dessinerLogo(ctx, 48, 100, 48, '#F7F2E8')
+
+    ctx.fillStyle = '#C8431A'
+    ctx.beginPath()
+    ctx.roundRect(W - 380, 60, 332, 60, 30)
+    ctx.fill()
+    ctx.font = 'bold 28px system-ui, sans-serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.textAlign = 'right'
+    ctx.fillText(texteExpression, W - 72, 100)
+    ctx.textAlign = 'left'
+
+    ctx.font = 'bold 120px Georgia, serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.fillText(nomUtilisateur, 56, H - 420)
+
+    ctx.font = 'bold 36px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(247,242,232,0.7)'
+    ctx.fillText('VIBES ONLY ✨', 56, H - 360)
+
+    ctx.fillStyle = '#C8431A'
+    ctx.fillRect(56, H - 330, 160, 4)
+
+    ctx.fillStyle = 'rgba(247,242,232,0.12)'
+    ctx.beginPath()
+    ctx.roundRect(48, H - 300, W - 96, 180, 16)
+    ctx.fill()
+
+    ctx.font = 'bold italic 38px Georgia, serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.fillText(evenement.titre.slice(0, 36) + (evenement.titre.length > 36 ? '…' : ''), 72, H - 246)
+
+    ctx.font = '28px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(247,242,232,0.65)'
+    ctx.fillText(`📅 ${formatDateCourte(evenement.date)}`, 72, H - 196)
+    const lieuDisplay = evenement.lieu.length > 36 ? evenement.lieu.slice(0, 36) + '…' : evenement.lieu
+    ctx.fillText(`📍 ${lieuDisplay}`, 72, H - 156)
+
+    ctx.font = '24px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(247,242,232,0.3)'
+    ctx.textAlign = 'right'
+    ctx.fillText('app.lotbo.app', W - 48, H - 32)
+    ctx.textAlign = 'left'
+  }
+
+  // ── MINIMAL CHIC ──────────────────────────────────────────────────────────
+  const dessinerMinimal = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+    const bg = '#F7F2E8'
+    const textColor = '#1A1410'
+
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, W, H)
+
+    ctx.fillStyle = '#C8431A'
+    ctx.fillRect(80, 80, W - 160, 3)
+
+    dessinerLogo(ctx, 80, 160, 44, textColor)
+
+    ctx.fillStyle = '#C8431A'
+    ctx.beginPath()
+    ctx.roundRect(80, 196, 380, 52, 26)
+    ctx.fill()
+    ctx.font = 'bold 26px system-ui, sans-serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.textAlign = 'left'
+    ctx.fillText(texteExpression, 104, 230)
+
+    const avatarX = W / 2, avatarY = 490, avatarR = 180
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
+
+    ctx.font = 'bold 88px Georgia, serif'
+    ctx.fillStyle = textColor
+    ctx.textAlign = 'center'
+    ctx.fillText(nomUtilisateur, W / 2, 720)
+
+    ctx.fillStyle = 'rgba(26,20,16,0.15)'
+    ctx.fillRect(80, 748, W - 160, 1)
+
+    ctx.font = 'bold 22px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(26,20,16,0.4)'
+    ctx.textAlign = 'center'
+    ctx.fillText('ON SE RETROUVE LÀ-BAS', W / 2, 800)
+
+    ctx.fillStyle = 'white'
+    ctx.beginPath()
+    ctx.roundRect(80, 832, W - 160, 160, 16)
+    ctx.fill()
+    ctx.strokeStyle = '#E8E0D0'
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    ctx.font = 'bold italic 34px Georgia, serif'
+    ctx.fillStyle = textColor
+    ctx.textAlign = 'left'
+    ctx.fillText(evenement.titre.slice(0, 38) + (evenement.titre.length > 38 ? '…' : ''), 110, 884)
+
+    ctx.font = '24px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(26,20,16,0.5)'
+    ctx.fillText(`📅 ${formatDateCourte(evenement.date)}  ·  📍 ${evenement.lieu.slice(0, 28)}`, 110, 924)
+
+    ctx.fillStyle = '#C8431A'
+    ctx.beginPath()
+    ctx.arc(W - 110, 912, 28, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.font = 'bold 24px system-ui, sans-serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.textAlign = 'center'
+    ctx.fillText('→', W - 110, 920)
+
+    ctx.fillStyle = '#C8431A'
+    ctx.fillRect(80, H - 80, W - 160, 3)
+
+    ctx.font = '20px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(26,20,16,0.25)'
+    ctx.textAlign = 'right'
+    ctx.fillText('app.lotbo.app', W - 80, H - 24)
+    ctx.textAlign = 'left'
+  }
+
+  // ── BADGE VIP ─────────────────────────────────────────────────────────────
+  const dessinerBadgeVip = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+    const bg = '#1A1410'
+
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, W, H)
+
+    ctx.strokeStyle = '#D4A820'
+    ctx.lineWidth = 6
+    ctx.strokeRect(32, 32, W - 64, H - 64)
+
+    const drawCorner = (x: number, y: number, sx: number, sy: number) => {
+      ctx.fillStyle = 'rgba(212,168,32,0.12)'
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(x + sx * 120, y)
+      ctx.lineTo(x, y + sy * 120)
+      ctx.closePath()
+      ctx.fill()
+    }
+    drawCorner(32, 32, 1, 1)
+    drawCorner(W - 32, 32, -1, 1)
+    drawCorner(32, H - 32, 1, -1)
+    drawCorner(W - 32, H - 32, -1, -1)
+
+    dessinerLogo(ctx, 80, 110, 42, '#F7F2E8')
+
+    ctx.fillStyle = '#D4A820'
+    ctx.beginPath()
+    ctx.roundRect(W - 180, 70, 112, 48, 24)
+    ctx.fill()
+    ctx.font = 'bold 24px system-ui, sans-serif'
+    ctx.fillStyle = '#1A1410'
+    ctx.textAlign = 'center'
+    ctx.fillText('VIP', W - 124, 102)
+    ctx.textAlign = 'left'
+
+    const avatarX = 220, avatarY = H / 2 - 20, avatarR = 150
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
+
+    ctx.font = 'bold 72px Georgia, serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.textAlign = 'left'
+    ctx.fillText(nomUtilisateur, avatarX * 2 - 20, avatarY - 60)
+
+    ctx.fillStyle = '#C8431A'
+    ctx.beginPath()
+    ctx.roundRect(avatarX * 2 - 20, avatarY - 30, 360, 52, 26)
+    ctx.fill()
+    ctx.font = 'bold 26px system-ui, sans-serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.fillText(texteExpression, avatarX * 2, avatarY + 6)
+
+    ctx.fillStyle = '#D4A820'
+    ctx.fillRect(avatarX * 2 - 20, avatarY + 76, 380, 2)
+
+    ctx.font = 'bold 18px system-ui, sans-serif'
+    ctx.fillStyle = '#D4A820'
+    ctx.fillText("MEMBRE DE L'EXPÉRIENCE ✦", avatarX * 2 - 20, avatarY + 116)
+
+    ctx.fillStyle = 'rgba(247,242,232,0.06)'
+    ctx.beginPath()
+    ctx.roundRect(80, H - 280, W - 160, 180, 12)
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(212,168,32,0.3)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    ctx.font = 'bold italic 34px Georgia, serif'
+    ctx.fillStyle = '#F7F2E8'
+    ctx.textAlign = 'left'
+    ctx.fillText(evenement.titre.slice(0, 34) + (evenement.titre.length > 34 ? '…' : ''), 110, H - 218)
+
+    ctx.font = '26px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(247,242,232,0.55)'
+    ctx.fillText(`📅 ${formatDateCourte(evenement.date)}`, 110, H - 166)
+    ctx.fillText(`📍 ${evenement.lieu.slice(0, 32)}`, 110, H - 126)
+
+    ctx.font = '20px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(247,242,232,0.2)'
+    ctx.textAlign = 'right'
+    ctx.fillText('app.lotbo.app', W - 80, H - 52)
+    ctx.textAlign = 'left'
+  }
+
   const dessinerCarte = async () => {
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext('2d'); if (!ctx) return
@@ -404,6 +682,10 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ctx.clearRect(0, 0, W, H)
     if (disposition === 'split') await dessinerSplit(ctx, W, H)
     else if (disposition === 'paysage') await dessinerPaysage(ctx, W, H)
+    else if (disposition === 'portrait') await dessinerPortrait(ctx, W, H)
+    else if (disposition === 'story') await dessinerStory(ctx, W, H)
+    else if (disposition === 'minimal') await dessinerMinimal(ctx, W, H)
+    else if (disposition === 'badge_vip') await dessinerBadgeVip(ctx, W, H)
     else await dessinerCentree(ctx, W, H)
   }
 
@@ -611,7 +893,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
               {/* Disposition */}
               <div>
-                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Disposition</p>
+                <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Template</p>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {DISPOSITIONS.map(d => (
                     <button key={d.id} onClick={() => setDisposition(d.id)} style={{
