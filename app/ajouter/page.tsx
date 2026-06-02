@@ -877,8 +877,10 @@ export default function AjouterEvenement() {
     let image_url: string | null = null
 
     if (image) {
+      const ext = image.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('evenements').upload(`${Date.now()}-${image.name}`, image)
+        .from('evenements').upload(safeName, image, { upsert: true })
       if (!uploadError && uploadData) {
         const { data: urlData } = supabase.storage.from('evenements').getPublicUrl(uploadData.path)
         image_url = urlData.publicUrl
