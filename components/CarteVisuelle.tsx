@@ -715,6 +715,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
   const { W: cW, H: cH } = getDimensions()
   const aspectRatio = `${cW}/${cH}`
   const isPaysage = disposition === 'paysage'
+  const hasPhotoZone = isPaysage || disposition === 'split' || disposition === 'portrait' || disposition === 'story'
 
   // ── Styles communs mode clair ─────────────────────────────────────────────
   const inputClair = {
@@ -839,7 +840,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               >
                 <canvas
                   ref={canvasRef}
-                  style={{ width: '100%', height: '100%', display: 'block', cursor: (isPaysage || disposition === 'split') && photoFondPaysage ? 'grab' : 'default' }}
+                  style={{ width: '100%', height: '100%', display: 'block', cursor: hasPhotoZone && photoFondPaysage ? 'grab' : 'default' }}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
@@ -850,7 +851,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               </div>
 
               {/* Contrôles zoom/drag */}
-              {(isPaysage || disposition === 'split') && (photoFondPaysage || photoProfil || evenement.image_url) && (
+              {hasPhotoZone && (photoFondPaysage || photoProfil || evenement.image_url) && (
                 <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px 14px' }}>
                   <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8 }}>🖱️ Glisse l'aperçu pour repositionner la photo</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -870,7 +871,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               )}
 
               {/* Upload photo fond */}
-              {(isPaysage || disposition === 'split') && (
+              {hasPhotoZone && (
                 <div>
                   <button onClick={() => fileInputFondRef.current?.click()} style={{
                     width: '100%', padding: '10px', borderRadius: 10, fontSize: 13,
