@@ -2,11 +2,8 @@ name: Scraping automatique LOTBO
 
 on:
   schedule:
-    # PredictHQ — toutes les 6h
     - cron: '0 */6 * * *'
-    # Peatix Asie — une fois par jour à 2h UTC
-    - cron: '0 2 * * *'
-  workflow_dispatch: # Déclenchement manuel possible
+  workflow_dispatch:
 
 jobs:
   scrape-predicthq:
@@ -33,14 +30,5 @@ jobs:
       - name: Import World Cup
         run: |
           curl -s "https://app.lotbo.app/api/scrape-worldcup" \
-            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
-            | head -c 500
-
-  scrape-peatix:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Import Peatix (Asie)
-        run: |
-          curl -s "https://app.lotbo.app/api/scrape-peatix" \
             -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
             | head -c 500

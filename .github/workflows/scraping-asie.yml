@@ -1,0 +1,16 @@
+name: Scraping Asie — Peatix
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape-peatix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import Peatix (Asie — 18 villes)
+        run: |
+          curl -s "https://app.lotbo.app/api/scrape-peatix" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
