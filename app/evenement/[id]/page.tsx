@@ -64,7 +64,7 @@ export async function generateMetadata(
   const categorie  = ev?.categorie   || ''
   const description = ev?.description
     ? ev.description.slice(0, 160)
-    : `${lieu}${date ? ' · ' + date : ''} · Découvre cet événement sur Lotbo`
+    : `${lieu ? lieu : ''}${date ? ' · ' + date : ''} · Découvre cet événement sur Lotbo`
 
   const url = `https://app.lotbo.app/evenement/${id}`
 
@@ -81,7 +81,9 @@ export async function generateMetadata(
 
   // ── Titre enrichi pour le partage ─────────────────────────────────────────
   const titreOG      = titre
-  const descriptionOG = `${lieu ? '📍 ' + lieu + '  ' : ''}${date ? '📅 ' + date + '  ' : ''}${description}`
+  const descriptionOG = description
+    ? description.slice(0, 160)
+    : `${lieu ? lieu : ''}${date ? ' · ' + date : ''} · Découvre cet événement sur Lotbo`
 
   return {
     title: `${titre} · Lotbo`,
