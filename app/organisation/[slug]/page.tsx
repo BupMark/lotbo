@@ -19,6 +19,7 @@ interface Organisation {
   telephone: string | null
   verified: boolean
   logo_url: string | null
+  cover_url?: string | null
   owner_id: string
 }
 
@@ -54,6 +55,8 @@ export default function PageOrganisation() {
   const [canManage, setCanManage]       = useState(false)
   const [monRole, setMonRole]           = useState<string | null>(null)
   const [isDesktop, setIsDesktop]       = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const [coverUrl, setCoverUrl]         = useState<string | null>(null)
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -81,6 +84,10 @@ export default function PageOrganisation() {
   }, [slug])
 
   useEffect(() => {
+    if (org?.cover_url) setCoverUrl(org.cover_url)
+  }, [org])
+
+  useEffect(() => {
     if (!userId || !org) return
     supabase
       .from('organisation_membres')
@@ -101,7 +108,7 @@ export default function PageOrganisation() {
 
     const { data: orgData } = await supabase
       .from('organisations')
-      .select('id, slug, nom, slogan, description, ville, pays, site_web, email_contact, telephone, verified, logo_url, owner_id')
+      .select('id, slug, nom, slogan, description, ville, pays, site_web, email_contact, telephone, verified, logo_url, cover_url, owner_id')
       .eq('slug', slug)
       .maybeSingle()
 
@@ -157,6 +164,32 @@ export default function PageOrganisation() {
     setSuiviLoading(false)
   }
 
+  const handleUploadCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !org) return
+    setUploadingCover(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${org.id}/cover.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('covers-organisations')
+        .upload(path, file, { upsert: true })
+      if (upErr) throw upErr
+      const { data: { publicUrl } } = supabase.storage
+        .from('covers-organisations')
+        .getPublicUrl(path)
+      await supabase
+        .from('organisations')
+        .update({ cover_url: publicUrl })
+        .eq('id', org.id)
+      setCoverUrl(publicUrl)
+    } catch (err) {
+      console.error('Erreur upload cover:', err)
+    } finally {
+      setUploadingCover(false)
+    }
+  }
+
   const partager = () => {
     const texte = `Suivez nos événements sur Lotbo 👉 https://app.lotbo.app/organisation/${slug}`
     navigator.clipboard.writeText(texte).then(() => {
@@ -198,18 +231,19 @@ export default function PageOrganisation() {
         {/* Futur : cover_url de l'org ici */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'url(https://images.unsplash.com/photo-1511578314322-379afb476865?w=1400&q=80)',
+          backgroundImage: coverUrl ? `url(${coverUrl})` : 'url(https://images.unsplash.com/photo-1511578314322-379afb476865?w=1400&q=80)',
           backgroundSize: 'cover', backgroundPosition: 'center',
-          opacity: 0.2,
+          opacity: coverUrl ? 0.85 : 0.2,
         }} />
         {/* Logo flottant sur le cover — desktop seulement */}
         {isDesktop && org.logo_url && (
           <div style={{
-            position: 'absolute', bottom: -40, left: 48,
-            width: 80, height: 80, borderRadius: '50%',
+            position: 'absolute', bottom: -48, left: 32,
+            width: 96, height: 96, borderRadius: '50%',
             border: '4px solid #F7F2E8',
             overflow: 'hidden', background: 'white',
             zIndex: 2,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
           }}>
             <img src={org.logo_url} alt={org.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
@@ -283,8 +317,8 @@ export default function PageOrganisation() {
                 fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
                 marginLeft: 'auto',
               }}>
-                🖼️ Changer la cover
-                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} />
+                {uploadingCover ? '⏳ Upload...' : '🖼️ Changer la cover'}
+                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleUploadCover} />
               </label>
             )}
           </div>
