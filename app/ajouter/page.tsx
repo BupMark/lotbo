@@ -258,6 +258,26 @@ interface SuccesData {
   nouveauBadge?: Badge
 }
 
+interface ScanEvent {
+  titre: string | null
+  organisateur: string | null
+  date_debut: string | null
+  date_fin: string | null
+  heure_debut: string | null
+  heure_fin: string | null
+  lieu: string | null
+  adresse: string | null
+  ville: string | null
+  pays: string | null
+  description: string | null
+  categorie: string | null
+  prix: 'gratuit' | 'payant' | null
+  lien_officiel: string | null
+  est_recurrent: boolean
+  type_recurrence: string | null
+  jours_semaine: string[] | null
+}
+
 // ── Confetti ──────────────────────────────────────────────────────────────────
 const CONFETTI_COLORS = ['#C8431A', '#D4A820', '#2D9E6B', '#F7F2E8', '#E8620A']
 
@@ -552,6 +572,10 @@ export default function AjouterEvenement() {
   const [scanLoading, setScanLoading]         = useState(false)
   const [scanMessage, setScanMessage]         = useState<{ type: 'verifier' | 'erreur'; texte: string } | null>(null)
   const [filledByScan, setFilledByScan]       = useState(false)
+  const [scanMultiEvents, setScanMultiEvents] = useState<ScanEvent[]>([])
+  const [scanMultiMode, setScanMultiMode]     = useState(false)
+  const [scanMultiSelected, setScanMultiSelected] = useState<Set<number>>(new Set())
+  const [saving, setSaving]                   = useState(false)
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
   const locale: Locale = (() => {
@@ -674,6 +698,16 @@ export default function AjouterEvenement() {
           })
           if (!res.ok) throw new Error('service')
           const json = await res.json()
+
+          // Gestion multi-événements
+          if (json.mode === 'multi' && json.events && json.events.length > 1) {
+            setScanMultiEvents(json.events as ScanEvent[])
+            setScanMultiMode(true)
+            setScanMultiSelected(new Set(json.events.map((_: ScanEvent, i: number) => i)))
+            setScanLoading(false)
+            return
+          }
+
           const d = json.data || {}
           if (Object.keys(d).length === 0) {
             setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurLecture || "On n'a pas pu lire l'affiche." })
@@ -781,6 +815,55 @@ export default function AjouterEvenement() {
       setScanLoading(false)
     }
     e.target.value = ''
+  }
+
+  const handleSubmitMulti = async () => {
+    if (scanMultiSelected.size === 0) return
+    setSaving(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setSaving(false); return }
+
+    let imported = 0
+    let errors = 0
+
+    for (const i of scanMultiSelected) {
+      const ev = scanMultiEvents[i]
+      const categorieNom = ev.categorie || ''
+      try {
+        const { error } = await supabase.from('evenements').insert([{
+          titre: ev.titre || 'Sans titre',
+          organisateur: ev.organisateur || null,
+          ville: ev.ville || '',
+          pays: ev.pays || '',
+          nom_lieu: ev.lieu || null,
+          adresse: ev.adresse || null,
+          date: ev.date_debut || null,
+          date_debut: ev.date_debut || null,
+          date_fin: ev.date_fin || null,
+          heure_debut: ev.heure_debut || null,
+          heure_fin: ev.heure_fin || null,
+          description: ev.description || null,
+          lien: ev.lien_officiel || null,
+          acces: 'public',
+          prix: ev.prix || 'gratuit',
+          statut: 'en_attente',
+          user_id: session.user.id,
+          source: 'scan_publie',
+          categorie: categorieNom,
+          longitude: 0,
+          latitude: 0,
+        }])
+        if (!error) imported++
+        else errors++
+      } catch { errors++ }
+    }
+
+    setSaving(false)
+    setScanMultiMode(false)
+    setScanMessage({
+      type: 'verifier',
+      texte: `✅ ${imported} événement${imported > 1 ? 's' : ''} soumis${errors > 0 ? ` · ${errors} erreur(s)` : ''} — en attente de validation.`,
+    })
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -1171,6 +1254,92 @@ export default function AjouterEvenement() {
           )}
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
         </div>
+
+        {scanMultiMode && scanMultiEvents.length > 0 && (
+          <div style={{
+            background: 'white', border: '2px solid #C8431A',
+            borderRadius: 16, padding: 20, marginBottom: 24,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410', marginBottom: 4 }}>
+                  📋 {scanMultiEvents.length} événements détectés
+                </h3>
+                <p style={{ fontSize: 13, color: '#8C5A40' }}>
+                  Sélectionne les événements à importer
+                </p>
+              </div>
+              <button
+                onClick={handleSubmitMulti}
+                disabled={scanMultiSelected.size === 0 || saving}
+                style={{
+                  background: '#C8431A', color: 'white', border: 'none',
+                  borderRadius: 10, padding: '10px 20px', fontSize: 13,
+                  fontWeight: 'bold', cursor: 'pointer',
+                }}
+              >
+                ✅ Importer {scanMultiSelected.size} événement{scanMultiSelected.size > 1 ? 's' : ''}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {scanMultiEvents.map((ev, i) => (
+                <div key={i} style={{
+                  display: 'flex', gap: 12, alignItems: 'flex-start',
+                  background: scanMultiSelected.has(i) ? 'rgba(200,67,26,0.05)' : '#F7F2E8',
+                  border: `1px solid ${scanMultiSelected.has(i) ? 'rgba(200,67,26,0.3)' : '#E8E0D0'}`,
+                  borderRadius: 12, padding: '12px 16px', cursor: 'pointer',
+                }}
+                  onClick={() => {
+                    setScanMultiSelected(prev => {
+                      const next = new Set(prev)
+                      if (next.has(i)) next.delete(i)
+                      else next.add(i)
+                      return next
+                    })
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={scanMultiSelected.has(i)}
+                    onChange={() => {}}
+                    style={{ marginTop: 2, accentColor: '#C8431A', flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', marginBottom: 4 }}>
+                      {ev.titre || 'Sans titre'}
+                    </p>
+                    <p style={{ fontSize: 12, color: '#8C5A40' }}>
+                      {ev.date_debut && `📅 ${ev.date_debut}`}
+                      {ev.heure_debut && ` · ${ev.heure_debut}`}
+                      {ev.lieu && ` · 📍 ${ev.lieu}`}
+                      {ev.ville && `, ${ev.ville}`}
+                    </p>
+                    {ev.description && (
+                      <p style={{ fontSize: 12, color: '#8C5A40', marginTop: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {ev.description}
+                      </p>
+                    )}
+                  </div>
+                  <span style={{
+                    background: ev.prix === 'gratuit' ? 'rgba(45,158,107,0.1)' : 'rgba(200,67,26,0.1)',
+                    color: ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A',
+                    borderRadius: 999, padding: '2px 10px', fontSize: 11, fontWeight: 'bold', flexShrink: 0,
+                  }}>
+                    {ev.prix || 'N/A'}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setScanMultiMode(false)}
+              style={{ marginTop: 12, background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              ← Annuler et saisir manuellement
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 

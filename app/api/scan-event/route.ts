@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1000,
+        max_tokens: 2000,
         messages: [
           {
             role: 'user',
@@ -32,8 +32,26 @@ export async function POST(request: Request) {
               },
               {
                 type: 'text',
-                text: `Tu es un assistant qui extrait les informations d'événements depuis des affiches ou flyers.
-Analyse cette image et extrais UNIQUEMENT les informations suivantes en JSON :
+                text: `Tu es un assistant qui extrait les informations d'événements depuis des affiches, flyers ou calendriers.
+
+Analyse cette image et détermine si elle contient UN ou PLUSIEURS événements.
+
+Si UN seul événement, retourne :
+{
+  "mode": "single",
+  "events": [{ ...champs habituels... }]
+}
+
+Si PLUSIEURS événements (calendrier, programme, liste de dates), retourne :
+{
+  "mode": "multi",
+  "events": [
+    { ...champs event 1... },
+    { ...champs event 2... }
+  ]
+}
+
+Chaque événement dans le tableau "events" contient :
 {
   "titre": string | null,
   "organisateur": string | null,
@@ -53,19 +71,15 @@ Analyse cette image et extrais UNIQUEMENT les informations suivantes en JSON :
   "type_recurrence": "quotidien" | "hebdomadaire" | "mensuel" | "annuel" | null,
   "jours_semaine": string[] | null
 }
+
 Instructions :
-- Pour les dates, utilise le format YYYY-MM-DD.
-- Pour les heures, utilise le format HH:MM.
-- Pour "organisateur" : nom de l'organisation, association, artiste ou personne qui organise.
-- Pour "categorie" : type d'événement parmi — Concert, Festival, Conférence, Exposition, Formation, Tournoi, Culte, Assemblée, Inauguration, Célébration.
-- Pour "est_recurrent" : true si l'affiche mentionne une répétition (ex: "tous les vendredis", "chaque semaine", "every Sunday", "chaque mois", "tous les dimanches", "hebdomadaire", "weekly", "monthly", "każdy piątek" etc.). false si c'est un événement unique.
-- Pour "type_recurrence" : "quotidien" si chaque jour, "hebdomadaire" si chaque semaine, "mensuel" si chaque mois, "annuel" si chaque année. null si est_recurrent = false.
-- Pour "jours_semaine" : tableau des jours concernés si hebdomadaire (ex: ["vendredi"], ["lundi", "mercredi"], ["sunday"]). null si pas hebdomadaire ou pas précisé.
-- Pour "lieu" : nom exact du bâtiment, salle ou espace (ex: "Hôtel Karibe", "Stade Sylvio Cator").
-- Pour "adresse" : numéro et rue uniquement, pas la ville.
-- Pour "description" : résume l'événement en 2-3 phrases si pas de texte explicite.
-- Si une information n'est pas visible sur l'image, retourne null pour ce champ.
-Réponds UNIQUEMENT avec le JSON — aucun texte autour.`,
+- Pour les dates, utilise le format YYYY-MM-DD
+- Pour les heures, utilise le format HH:MM
+- Pour "categorie" : Concert, Festival, Conférence, Exposition, Formation, Tournoi, Culte, Assemblée, Inauguration, Célébration
+- Pour "lieu" : nom exact du bâtiment ou espace
+- Si plusieurs événements partagent le même lieu/organisateur, répète l'info dans chaque événement
+- Maximum 20 événements par document
+- Réponds UNIQUEMENT avec le JSON — aucun texte autour`,
               },
             ],
           },
@@ -85,16 +99,18 @@ Réponds UNIQUEMENT avec le JSON — aucun texte autour.`,
     try {
       const clean = text.replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean)
-      // Limiter à 5 occurrences si récurrent sans date de fin
-      if (parsed.est_recurrent && !parsed.date_fin) {
-        parsed.occurrences_max = 5
-      } else {
-        parsed.occurrences_max = null
-      }
-      return NextResponse.json({ success: true, data: parsed })
+      const events: unknown[] = parsed.events || []
+      const firstEvent = events[0] as Record<string, unknown> | undefined
+      return NextResponse.json({
+        success: true,
+        mode: parsed.mode || 'single',
+        data: firstEvent || parsed,
+        events,
+        occurrences_max: firstEvent && firstEvent.est_recurrent && !firstEvent.date_fin ? 5 : null,
+      })
     } catch {
       console.error('[scan-event] JSON parse error:', text)
-      return NextResponse.json({ success: true, data: {} })
+      return NextResponse.json({ success: true, mode: 'single', data: {}, events: [], occurrences_max: null })
     }
 
   } catch (err: unknown) {
