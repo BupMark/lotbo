@@ -41,14 +41,14 @@
   "screenshots": [
     {
       "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
+      "sizes": "1664x1432",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "LOTBO — Carte des événements"
     },
     {
       "src": "/screenshot-desktop.png",
-      "sizes": "1280x800",
+      "sizes": "1630x1376",
       "type": "image/png",
       "form_factor": "wide",
       "label": "LOTBO — Vue liste desktop"
