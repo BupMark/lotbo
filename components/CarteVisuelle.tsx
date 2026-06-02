@@ -134,7 +134,13 @@ async function dessinerAvatar(
   if (photoUrl) {
     const img = await chargerImage(photoUrl)
     if (img) {
-      ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2)
+      const size = r * 2
+      const ratio = Math.max(size / img.naturalWidth, size / img.naturalHeight)
+      const dw = img.naturalWidth * ratio
+      const dh = img.naturalHeight * ratio
+      const dx = cx - r + (size - dw) / 2
+      const dy = cy - r + (size - dh) / 2
+      ctx.drawImage(img, dx, dy, dw, dh)
       ctx.restore()
       ctx.strokeStyle = '#C8431A'; ctx.lineWidth = 5
       ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.stroke()
