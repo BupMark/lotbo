@@ -53,6 +53,14 @@ export default function PageOrganisation() {
   const [lienCopie, setLienCopie]       = useState(false)
   const [canManage, setCanManage]       = useState(false)
   const [monRole, setMonRole]           = useState<string | null>(null)
+  const [isDesktop, setIsDesktop]       = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -178,150 +186,208 @@ export default function PageOrganisation() {
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 16px 80px' }}>
+
+      {/* Cover photo — placeholder en attendant FEAT-ORG-COVER-1 */}
+      <div style={{
+        width: '100%',
+        height: isDesktop ? 220 : 140,
+        background: 'linear-gradient(135deg, #1A1410 0%, #2C1810 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Futur : cover_url de l'org ici */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'url(https://images.unsplash.com/photo-1511578314322-379afb476865?w=1400&q=80)',
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          opacity: 0.2,
+        }} />
+        {/* Logo flottant sur le cover — desktop seulement */}
+        {isDesktop && org.logo_url && (
+          <div style={{
+            position: 'absolute', bottom: -40, left: 48,
+            width: 80, height: 80, borderRadius: '50%',
+            border: '4px solid #F7F2E8',
+            overflow: 'hidden', background: 'white',
+            zIndex: 2,
+          }}>
+            <img src={org.logo_url} alt={org.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
+      </div>
+
+      <div style={{ maxWidth: isDesktop ? 1100 : 640, margin: '0 auto', padding: isDesktop ? '48px 32px 80px' : '24px 16px 80px' }}>
 
         <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'inline-block', marginBottom: 24 }}>
           ← Retour à la carte
         </a>
 
-        {/* Carte organisation */}
-        <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{
+          display: isDesktop ? 'grid' : 'block',
+          gridTemplateColumns: isDesktop ? '340px 1fr' : undefined,
+          gap: isDesktop ? 32 : 0,
+          alignItems: 'start',
+          marginTop: isDesktop ? 48 : 0,
+        }}>
 
-            {org.logo_url ? (
-              <img src={org.logo_url} alt={org.nom} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #E8E0D0' }} />
-            ) : (
-              <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 26, fontWeight: 'bold', color: 'white' }}>
-                {getInitiales(org.nom)}
+          {/* Colonne gauche — Infos org (sticky) */}
+          <div style={{ position: isDesktop ? 'sticky' : 'static', top: 24 }}>
+
+            {/* Carte organisation */}
+            <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
+
+                {/* Logo — masqué sur desktop car affiché sur le cover */}
+                {!isDesktop && (
+                  org.logo_url ? (
+                    <img src={org.logo_url} alt={org.nom} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #E8E0D0' }} />
+                  ) : (
+                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 26, fontWeight: 'bold', color: 'white' }}>
+                      {getInitiales(org.nom)}
+                    </div>
+                  )
+                )}
+                {isDesktop && !org.logo_url && (
+                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 26, fontWeight: 'bold', color: 'white' }}>
+                    {getInitiales(org.nom)}
+                  </div>
+                )}
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
+                    <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>{org.nom}</h1>
+                    {org.verified && (
+                      <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
+                        ✅ Organisation vérifiée
+                      </span>
+                    )}
+                  </div>
+                  {org.slogan && (
+                    <p style={{ color: '#8C5A40', fontSize: 13, fontStyle: 'italic', marginBottom: 6 }}>{org.slogan}</p>
+                  )}
+                  {(org.ville || org.pays) && (
+                    <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 6 }}>
+                      📍 {[org.ville, org.pays].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <span style={{ color: '#8C5A40', fontSize: 12 }}>
+                      <strong style={{ color: '#1A1410' }}>{evenements.length}</strong> événements à venir
+                    </span>
+                    <span style={{ color: '#8C5A40', fontSize: 12 }}>
+                      <strong style={{ color: '#1A1410' }}>{nbFollowers}</strong> membres
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
-                <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>{org.nom}</h1>
-                {org.verified && (
-                  <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
-                    ✅ Organisation vérifiée
-                  </span>
+              {org.description && (
+                <p style={{ color: '#4A3830', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>{org.description}</p>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {!isOwner && monRole !== 'admin' && monRole !== 'editeur' && (
+                  <button
+                    onClick={toggleSuivi}
+                    disabled={suiviLoading}
+                    style={{
+                      background: suivi ? 'rgba(200,67,26,0.1)' : '#C8431A',
+                      color: suivi ? '#C8431A' : 'white',
+                      border: suivi ? '1px solid #C8431A' : 'none',
+                      borderRadius: 999, padding: '9px 20px',
+                      fontSize: 13, fontWeight: 'bold', cursor: suiviLoading ? 'default' : 'pointer',
+                    }}
+                  >
+                    {suivi ? 'Suivi ✓' : 'Suivre'}
+                  </button>
+                )}
+                {org.email_contact && (
+                  <a href={`mailto:${org.email_contact}`} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                    ✉️ Email
+                  </a>
+                )}
+                {org.telephone && (
+                  <a href={`tel:${org.telephone}`} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                    📞 Appeler
+                  </a>
+                )}
+                <button
+                  onClick={partager}
+                  style={{
+                    background: lienCopie ? 'rgba(45,158,107,0.1)' : 'white',
+                    color: lienCopie ? '#2D9E6B' : '#8C5A40',
+                    border: lienCopie ? '1px solid #2D9E6B' : '1px solid #E8E0D0',
+                    borderRadius: 999, padding: '9px 20px',
+                    fontSize: 13, fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                >
+                  {lienCopie ? 'Lien copié ✓' : '🔗 Partager'}
+                </button>
+                {org.site_web && (
+                  <a
+                    href={org.site_web.startsWith('http') ? org.site_web : `https://${org.site_web}`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, textDecoration: 'none' }}
+                  >
+                    🌐 Site web
+                  </a>
+                )}
+                {isOwner && (
+                  <a href={`/organisation/${slug}/modifier`} style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                    ✏️ Modifier
+                  </a>
+                )}
+                {(isOwner || canManage) && (
+                  <a href={`/organisation/${slug}/membres`} style={{ background: 'rgba(29,106,158,0.1)', color: '#1D6A9E', border: '1px solid rgba(29,106,158,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                    👥 Membres
+                  </a>
+                )}
+                {(isOwner || monRole === 'admin' || monRole === 'editeur') && (
+                  <a href="/ajouter" style={{ background: 'rgba(45,158,107,0.1)', color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+                    ➕ Ajouter un événement
+                  </a>
                 )}
               </div>
-              {org.slogan && (
-                <p style={{ color: '#8C5A40', fontSize: 13, fontStyle: 'italic', marginBottom: 6 }}>{org.slogan}</p>
-              )}
-              {(org.ville || org.pays) && (
-                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 6 }}>
-                  📍 {[org.ville, org.pays].filter(Boolean).join(', ')}
-                </p>
-              )}
-              <div style={{ display: 'flex', gap: 16 }}>
-                <span style={{ color: '#8C5A40', fontSize: 12 }}>
-                  <strong style={{ color: '#1A1410' }}>{evenements.length}</strong> événements à venir
-                </span>
-                <span style={{ color: '#8C5A40', fontSize: 12 }}>
-                  <strong style={{ color: '#1A1410' }}>{nbFollowers}</strong> membres
-                </span>
-              </div>
             </div>
+
           </div>
 
-          {org.description && (
-            <p style={{ color: '#4A3830', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>{org.description}</p>
-          )}
+          {/* Colonne droite — Événements */}
+          <div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {!isOwner && monRole !== 'admin' && monRole !== 'editeur' && (
-              <button
-                onClick={toggleSuivi}
-                disabled={suiviLoading}
-                style={{
-                  background: suivi ? 'rgba(200,67,26,0.1)' : '#C8431A',
-                  color: suivi ? '#C8431A' : 'white',
-                  border: suivi ? '1px solid #C8431A' : 'none',
-                  borderRadius: 999, padding: '9px 20px',
-                  fontSize: 13, fontWeight: 'bold', cursor: suiviLoading ? 'default' : 'pointer',
-                }}
-              >
-                {suivi ? 'Suivi ✓' : 'Suivre'}
-              </button>
+            {/* Événements à venir */}
+            <h2 style={{ fontSize: 11, fontWeight: 'bold', color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              Événements à venir
+            </h2>
+
+            {evenements.length === 0 ? (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '32px 16px', textAlign: 'center' }}>
+                <p style={{ color: '#8C5A40', fontSize: 14 }}>Aucun événement à venir</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {evenements.map(ev => (
+                  <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start' }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                      {ev.image_url ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📅'}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date_debut ?? ev.date}</p>
+                    </div>
+                    <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10, flexShrink: 0, alignSelf: 'flex-start' }}>
+                      {ev.categorie}
+                    </span>
+                  </a>
+                ))}
+              </div>
             )}
-            {org.email_contact && (
-              <a href={`mailto:${org.email_contact}`} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                ✉️ Email
-              </a>
-            )}
-            {org.telephone && (
-              <a href={`tel:${org.telephone}`} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                📞 Appeler
-              </a>
-            )}
-            <button
-              onClick={partager}
-              style={{
-                background: lienCopie ? 'rgba(45,158,107,0.1)' : 'white',
-                color: lienCopie ? '#2D9E6B' : '#8C5A40',
-                border: lienCopie ? '1px solid #2D9E6B' : '1px solid #E8E0D0',
-                borderRadius: 999, padding: '9px 20px',
-                fontSize: 13, fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s',
-              }}
-            >
-              {lienCopie ? 'Lien copié ✓' : '🔗 Partager'}
-            </button>
-            {org.site_web && (
-              <a
-                href={org.site_web.startsWith('http') ? org.site_web : `https://${org.site_web}`}
-                target="_blank" rel="noopener noreferrer"
-                style={{ background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, textDecoration: 'none' }}
-              >
-                🌐 Site web
-              </a>
-            )}
-            {isOwner && (
-              <a href={`/organisation/${slug}/modifier`} style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                ✏️ Modifier
-              </a>
-            )}
-            {(isOwner || canManage) && (
-              <a href={`/organisation/${slug}/membres`} style={{ background: 'rgba(29,106,158,0.1)', color: '#1D6A9E', border: '1px solid rgba(29,106,158,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                👥 Membres
-              </a>
-            )}
-            {(isOwner || monRole === 'admin' || monRole === 'editeur') && (
-              <a href="/ajouter" style={{ background: 'rgba(45,158,107,0.1)', color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                ➕ Ajouter un événement
-              </a>
-            )}
+
           </div>
+
         </div>
-
-        {/* Événements à venir */}
-        <h2 style={{ fontSize: 11, fontWeight: 'bold', color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-          Événements à venir
-        </h2>
-
-        {evenements.length === 0 ? (
-          <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ color: '#8C5A40', fontSize: 14 }}>Aucun événement à venir</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {evenements.map(ev => (
-              <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start' }}>
-                <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                  {ev.image_url ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📅'}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date_debut ?? ev.date}</p>
-                </div>
-                <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10, flexShrink: 0, alignSelf: 'flex-start' }}>
-                  {ev.categorie}
-                </span>
-              </a>
-            ))}
-          </div>
-        )}
 
       </div>
     </main>
