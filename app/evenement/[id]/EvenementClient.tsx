@@ -548,7 +548,7 @@ export default function EvenementPage() {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
       .then(async ({ data }) => {
         setEv(data as Evenement)
-        if (data && !data.image_url && data.categorie) {
+        if (data && !data.image_url?.trim() && data.categorie) {
           fetch(`/api/unsplash?categorie=${encodeURIComponent(data.categorie)}&q=${encodeURIComponent(data.titre)}`)
             .then(r => r.json())
             .then(img => { if (img.url) { setImageAuto(img.url); setImageAuteur(img.author) } })
