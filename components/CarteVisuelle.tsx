@@ -335,7 +335,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
   // ── Dessiner split ────────────────────────────────────────────────────────
   const dessinerSplit = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    const photoW = Math.round(W * 0.42)
+    const photoW = Math.round(W * 0.55)
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
     const exprColor = getExprColor(bg, false)
