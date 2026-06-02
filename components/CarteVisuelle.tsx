@@ -894,7 +894,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
               {/* Disposition */}
               <div>
                 <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>Template</p>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {DISPOSITIONS.map(d => (
                     <button key={d.id} onClick={() => setDisposition(d.id)} style={{
                       flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, cursor: 'pointer',
