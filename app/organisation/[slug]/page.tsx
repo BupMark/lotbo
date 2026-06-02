@@ -225,29 +225,67 @@ export default function PageOrganisation() {
         {(isOwner || canManage || monRole === 'admin' || monRole === 'editeur') && (
           <div style={{
             display: 'flex', gap: 8, flexWrap: 'wrap',
-            marginBottom: 16,
-            padding: '10px 14px',
-            background: 'rgba(212,168,32,0.06)',
-            border: '1px solid rgba(212,168,32,0.2)',
-            borderRadius: 12,
+            alignItems: 'center',
+            marginBottom: 20,
+            padding: '12px 18px',
+            background: 'linear-gradient(135deg, #1A1410 0%, #2C1A10 100%)',
+            border: '1px solid rgba(232,98,10,0.3)',
+            borderRadius: 14,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
           }}>
-            <span style={{ color: '#8C5A40', fontSize: 12, alignSelf: 'center', marginRight: 4 }}>
+            <span style={{
+              color: '#E8620A', fontSize: 11, fontWeight: 'bold',
+              textTransform: 'uppercase', letterSpacing: 1.5,
+              marginRight: 8, alignSelf: 'center',
+            }}>
               ⚙️ Gestion
             </span>
             {isOwner && (
-              <a href={`/organisation/${slug}/modifier`} style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 999, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>
+              <a href={`/organisation/${slug}/modifier`} style={{
+                background: 'rgba(232,98,10,0.15)',
+                color: '#E8620A',
+                border: '1px solid rgba(232,98,10,0.4)',
+                borderRadius: 999, padding: '7px 16px',
+                fontSize: 12, fontWeight: 'bold', textDecoration: 'none',
+                transition: 'all 0.2s',
+              }}>
                 ✏️ Modifier
               </a>
             )}
             {(isOwner || canManage) && (
-              <a href={`/organisation/${slug}/membres`} style={{ background: 'rgba(29,106,158,0.1)', color: '#1D6A9E', border: '1px solid rgba(29,106,158,0.3)', borderRadius: 999, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>
+              <a href={`/organisation/${slug}/membres`} style={{
+                background: 'rgba(255,255,255,0.08)',
+                color: '#F7F2E8',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 999, padding: '7px 16px',
+                fontSize: 12, fontWeight: 'bold', textDecoration: 'none',
+              }}>
                 👥 Membres
               </a>
             )}
             {(isOwner || monRole === 'admin' || monRole === 'editeur') && (
-              <a href="/ajouter" style={{ background: 'rgba(45,158,107,0.1)', color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 999, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>
+              <a href="/ajouter" style={{
+                background: '#C8431A',
+                color: 'white',
+                border: 'none',
+                borderRadius: 999, padding: '7px 16px',
+                fontSize: 12, fontWeight: 'bold', textDecoration: 'none',
+              }}>
                 ➕ Ajouter un événement
               </a>
+            )}
+            {isOwner && (
+              <label style={{
+                background: 'rgba(255,255,255,0.06)',
+                color: 'rgba(247,242,232,0.6)',
+                border: '1px dashed rgba(255,255,255,0.2)',
+                borderRadius: 999, padding: '7px 16px',
+                fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
+                marginLeft: 'auto',
+              }}>
+                🖼️ Changer la cover
+                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} />
+              </label>
             )}
           </div>
         )}
