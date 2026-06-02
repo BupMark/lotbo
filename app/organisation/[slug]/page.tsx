@@ -222,6 +222,36 @@ export default function PageOrganisation() {
           ← Retour à la carte
         </a>
 
+        {(isOwner || canManage || monRole === 'admin' || monRole === 'editeur') && (
+          <div style={{
+            display: 'flex', gap: 8, flexWrap: 'wrap',
+            marginBottom: 16,
+            padding: '10px 14px',
+            background: 'rgba(212,168,32,0.06)',
+            border: '1px solid rgba(212,168,32,0.2)',
+            borderRadius: 12,
+          }}>
+            <span style={{ color: '#8C5A40', fontSize: 12, alignSelf: 'center', marginRight: 4 }}>
+              ⚙️ Gestion
+            </span>
+            {isOwner && (
+              <a href={`/organisation/${slug}/modifier`} style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 999, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>
+                ✏️ Modifier
+              </a>
+            )}
+            {(isOwner || canManage) && (
+              <a href={`/organisation/${slug}/membres`} style={{ background: 'rgba(29,106,158,0.1)', color: '#1D6A9E', border: '1px solid rgba(29,106,158,0.3)', borderRadius: 999, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>
+                👥 Membres
+              </a>
+            )}
+            {(isOwner || monRole === 'admin' || monRole === 'editeur') && (
+              <a href="/ajouter" style={{ background: 'rgba(45,158,107,0.1)', color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 999, padding: '7px 16px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>
+                ➕ Ajouter un événement
+              </a>
+            )}
+          </div>
+        )}
+
         <div style={{
           display: isDesktop ? 'grid' : 'block',
           gridTemplateColumns: isDesktop ? '340px 1fr' : undefined,
@@ -331,21 +361,6 @@ export default function PageOrganisation() {
                     style={{ background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, textDecoration: 'none' }}
                   >
                     🌐 Site web
-                  </a>
-                )}
-                {isOwner && (
-                  <a href={`/organisation/${slug}/modifier`} style={{ background: 'rgba(212,168,32,0.12)', color: '#D4A820', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                    ✏️ Modifier
-                  </a>
-                )}
-                {(isOwner || canManage) && (
-                  <a href={`/organisation/${slug}/membres`} style={{ background: 'rgba(29,106,158,0.1)', color: '#1D6A9E', border: '1px solid rgba(29,106,158,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                    👥 Membres
-                  </a>
-                )}
-                {(isOwner || monRole === 'admin' || monRole === 'editeur') && (
-                  <a href="/ajouter" style={{ background: 'rgba(45,158,107,0.1)', color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                    ➕ Ajouter un événement
                   </a>
                 )}
               </div>
