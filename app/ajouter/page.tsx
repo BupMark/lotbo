@@ -874,7 +874,7 @@ export default function AjouterEvenement() {
     if (visibilite === 'discret' && (!codeAcces || codeAcces.length < 4)) { alert("Le code d'accès doit contenir au moins 4 chiffres."); return }
     setLoading(true)
 
-    let image_url = ''
+    let image_url: string | null = null
 
     if (image) {
       const { data: uploadData, error: uploadError } = await supabase.storage
