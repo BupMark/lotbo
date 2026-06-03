@@ -41,7 +41,7 @@
   "screenshots": [
     {
       "src": "/screenshot-mobile.png",
-      "sizes": "1664x1432",
+      "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "LOTBO — Carte des événements"
