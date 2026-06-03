@@ -699,6 +699,11 @@ if (data?.parent_id) {
     if (!id) return
     const { data: { session } } = await supabase.auth.getSession()
 
+    if (!session?.user?.id) {
+      router.push('/login')
+      return
+    }
+
     if (session?.user?.id) {
       const userId = session.user.id
       if (liked) {
@@ -725,6 +730,11 @@ if (data?.parent_id) {
   const handleSeraiLa = async () => {
     if (!id || loadingParticipation) return
     const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session?.user?.id) {
+      router.push('/login')
+      return
+    }
 
     setLoadingParticipation(true)
     const sessionId = getSessionId()
