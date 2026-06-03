@@ -405,7 +405,7 @@ export default function Home() {
       const loadPin = (name: string, fill: string, w: number, h: number) =>
         new Promise<void>(resolve => {
           const svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-            <path d="M${w/2} 2C${w*0.14} 2 2 ${h*0.25} 2 ${w/2}C2 ${h*0.68} ${w/2} ${h-2} ${w/2} ${h-2}S${w-2} ${h*0.68} ${w-2} ${w/2}C${w-2} ${h*0.25} ${w*0.86} 2 ${w/2} 2Z" fill="${fill}" stroke="#1A1410" stroke-width="2.5"/>
+            <path d="M${w/2} 2C${w*0.14} 2 2 ${h*0.25} 2 ${w/2}C2 ${h*0.68} ${w/2} ${h-2} ${w/2} ${h-2}S${w-2} ${h*0.68} ${w-2} ${w/2}C${w-2} ${h*0.25} ${w*0.86} 2 ${w/2} 2Z" fill="${fill}" stroke="#1A1410" stroke-width="0.8"/>
             <circle cx="${w/2}" cy="${w/2}" r="${w*0.22}" fill="rgba(255,255,255,0.95)"/>
           </svg>`
           const img = new Image(w, h)
