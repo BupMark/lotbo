@@ -548,6 +548,7 @@ export default function EvenementPage() {
   const [claimEnvoye, setClaimEnvoye]                   = useState(false)
   const [claimLoading, setClaimLoading]                 = useState(false)
   const [roleOrg, setRoleOrg]                           = useState<string | null>(null)
+  const [isDesktop, setIsDesktop]                        = useState(false)
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -694,6 +695,13 @@ if (data?.parent_id) {
     const expressions = JSON.parse(localStorage.getItem('lotbo_expressions') || '{}')
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
   }, [id])
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const handleLike = async () => {
     if (!id) return
@@ -1256,16 +1264,47 @@ if (data?.parent_id) {
         </>
       )}
 
-      <div style={{ width: '100%', height: 280, overflow: 'hidden', position: 'relative' }}>
-        <img src={ev.image_url || imageAuto || getEventImage(null, ev.categorie)} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        {!ev.image_url && imageAuteur && (
-          <p style={{ position: 'absolute', bottom: 6, right: 10, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-            Photo: {imageAuteur} / Unsplash
-          </p>
-        )}
-      </div>
+      {/* Layout desktop 2 colonnes */}
+      <div style={{
+        maxWidth: isDesktop ? 1200 : '100%',
+        margin: '0 auto',
+        display: isDesktop ? 'grid' : 'block',
+        gridTemplateColumns: isDesktop ? '480px 1fr' : undefined,
+        alignItems: 'start',
+        minHeight: isDesktop ? '100dvh' : undefined,
+      }}>
 
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px 64px' }}>
+        {/* Colonne gauche — Image sticky */}
+        <div style={{
+          position: isDesktop ? 'sticky' : 'static',
+          top: 0,
+          height: isDesktop ? '100dvh' : 280,
+          overflow: 'hidden',
+        }}>
+          <img
+            src={ev.image_url || imageAuto || getEventImage(null, ev.categorie)}
+            alt={ev.titre}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+          {isDesktop && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to right, transparent 60%, #F7F2E8 100%)',
+            }} />
+          )}
+          {!ev.image_url && imageAuteur && (
+            <p style={{ position: 'absolute', bottom: 6, right: 10, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+              Photo: {imageAuteur} / Unsplash
+            </p>
+          )}
+        </div>
+
+        {/* Colonne droite — Contenu */}
+        <div style={{
+          padding: isDesktop ? '40px 48px 80px' : '24px 16px 64px',
+          maxWidth: isDesktop ? '100%' : 680,
+          margin: isDesktop ? 0 : '0 auto',
+        }}>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
@@ -1587,7 +1626,8 @@ if (data?.parent_id) {
           </div>
         )}
 
-      </div>
+        </div>{/* fin colonne droite */}
+      </div>{/* fin grid 2 colonnes */}
     </main>
   )
 }
