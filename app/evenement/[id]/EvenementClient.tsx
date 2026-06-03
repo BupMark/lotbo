@@ -651,6 +651,14 @@ if (data?.parent_id) {
   useEffect(() => {
     if (!id) return
     const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
+    // Si connecté, vérifier les favoris en DB
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user?.id) {
+        const { data: fav } = await supabase.from('favoris')
+          .select('id').eq('evenement_id', id).eq('user_id', session.user.id).single()
+        if (fav) setLiked(true)
+      }
+    })
     const count = JSON.parse(localStorage.getItem('lotbo_likes_count') || '{}')
     setLiked(!!likes[id as string])
     setNbLikes(count[id as string] || 0)
@@ -687,49 +695,63 @@ if (data?.parent_id) {
     if (expressions[id as string]) setExpressionChoisie(expressions[id as string])
   }, [id])
 
-  const handleLike = () => {
-  if (!id) return
-  const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
-  const count = JSON.parse(localStorage.getItem('lotbo_likes_count') || '{}')
-  if (liked) { delete likes[id as string]; count[id as string] = Math.max(0, (count[id as string] || 1) - 1) }
-  else {
-    likes[id as string] = true
-    count[id as string] = (count[id as string] || 0) + 1
-    // GM1 — Points like
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.id) {
-        attributerPoints({ user_id: session.user.id, action: 'liker', evenement_id: id as string, type_role: 'utilisateur' })
+  const handleLike = async () => {
+    if (!id) return
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (session?.user?.id) {
+      const userId = session.user.id
+      if (liked) {
+        await supabase.from('favoris').delete()
+          .eq('evenement_id', id).eq('user_id', userId)
+        setNbLikes(n => Math.max(0, n - 1))
+      } else {
+        await supabase.from('favoris').insert([{ evenement_id: id, user_id: userId }])
+        setNbLikes(n => n + 1)
+        attributerPoints({ user_id: userId, action: 'liker', evenement_id: id as string, type_role: 'utilisateur' })
       }
-    })
+    } else {
+      const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
+      const count = JSON.parse(localStorage.getItem('lotbo_likes_count') || '{}')
+      if (liked) { delete likes[id as string]; count[id as string] = Math.max(0, (count[id as string] || 1) - 1) }
+      else { likes[id as string] = true; count[id as string] = (count[id as string] || 0) + 1 }
+      localStorage.setItem('lotbo_likes', JSON.stringify(likes))
+      localStorage.setItem('lotbo_likes_count', JSON.stringify(count))
+      setNbLikes(count[id as string])
+    }
+    setLiked(!liked)
   }
-  localStorage.setItem('lotbo_likes', JSON.stringify(likes))
-  localStorage.setItem('lotbo_likes_count', JSON.stringify(count))
-  setLiked(!liked); setNbLikes(count[id as string])
-}
 
   const handleSeraiLa = async () => {
     if (!id || loadingParticipation) return
+    const { data: { session } } = await supabase.auth.getSession()
+
     setLoadingParticipation(true)
-    const participations = JSON.parse(localStorage.getItem('lotbo_participations') || '{}')
     const sessionId = getSessionId()
+    const userId = session?.user?.id || null
+
     if (seraiLa) {
-      await supabase.from('participations').delete().eq('evenement_id', id).eq('session_id', sessionId)
-      delete participations[id as string]
+      const query = supabase.from('participations').delete().eq('evenement_id', id)
+      if (userId) await query.eq('user_id', userId)
+      else await query.eq('session_id', sessionId)
       setNbParticipants(n => Math.max(0, n - 1))
       setSeraiLa(false)
     } else {
-      await supabase.from('participations').insert([{ evenement_id: id, session_id: sessionId }])
-      participations[id as string] = true
+      await supabase.from('participations').insert([{
+        evenement_id: id,
+        session_id: sessionId,
+        user_id: userId || null,
+      }])
       setNbParticipants(n => n + 1)
       setSeraiLa(true)
-      // GM1 — Points "Je serai là"
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session?.user?.id) {
-    attributerPoints({ user_id: session.user.id, action: 'serai_la', evenement_id: id as string, type_role: 'utilisateur' })
-  }
-})
-      setCarteVisuelleouverte(true)
+      if (userId) {
+        attributerPoints({ user_id: userId, action: 'serai_la', evenement_id: id as string, type_role: 'utilisateur' })
+      }
     }
+
+    const participations = JSON.parse(localStorage.getItem('lotbo_participations') || '{}')
+    if (seraiLa) delete participations[id as string]
+    else participations[id as string] = true
     localStorage.setItem('lotbo_participations', JSON.stringify(participations))
     setLoadingParticipation(false)
   }
