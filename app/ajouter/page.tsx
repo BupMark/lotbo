@@ -975,7 +975,17 @@ export default function AjouterEvenement() {
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
     const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
-    if (profile?.nom) setNomUtilisateur(profile.nom)
+    const nomResolu = profile?.nom
+      || session?.user?.user_metadata?.full_name
+      || session?.user?.user_metadata?.name
+      || session?.user?.email?.split('@')[0]
+      || ''
+    setNomUtilisateur(nomResolu)
+    if (!profile?.nom && nomResolu && session?.user?.id) {
+      supabase.from('profiles').update({ nom: nomResolu })
+        .eq('id', session.user.id)
+        .then(() => {})
+    }
     const { data: raRow2 } = await supabase.from('profiles').select('roles_actifs').eq('id', session?.user?.id || '').single()
     const rolesActifs: string[] = (raRow2 as any)?.roles_actifs?.length ? (raRow2 as any).roles_actifs : (profile?.role ? [profile.role] : [])
     const estContributeur        = rolesActifs.some(r => ['contributeur', 'contributeur_terrain', 'admin', 'ambassadeur'].includes(r))
