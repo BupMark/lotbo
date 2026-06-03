@@ -38,7 +38,26 @@ export async function GET(request: Request) {
 
     if (error) throw error
 
-    return NextResponse.json({ profiles: data || [] })
+    const profilsEnrichis = await Promise.all(
+      (data || []).map(async (p: { id: string; nom: string | null; role: string | null }) => {
+        if (p.nom) return p
+        try {
+          const { data: { user } } = await admin.auth.admin.getUserById(p.id)
+          const nomAuth = user?.user_metadata?.full_name
+            || user?.user_metadata?.name
+            || user?.email?.split('@')[0]
+            || null
+          if (nomAuth) {
+            await admin.from('profiles').update({ nom: nomAuth }).eq('id', p.id)
+          }
+          return { ...p, nom: nomAuth }
+        } catch {
+          return p
+        }
+      })
+    )
+
+    return NextResponse.json({ profiles: profilsEnrichis })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
     return NextResponse.json({ error: message }, { status: 500 })
