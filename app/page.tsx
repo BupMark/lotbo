@@ -11,8 +11,6 @@ import { getEventImage, FALLBACK_IMAGES } from '../lib/fallbackImages'
 import NotifCloche from '../components/NotifCloche'
 import { track } from '../lib/amplitude'
 import { attributerPoints } from '../lib/points'
-// @ts-ignore — types référencent maplibre-gl (non installé), lib compatible mapbox-gl v3
-import Spiderfy from '@nazka/map-gl-js-spiderfy'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -22,6 +20,7 @@ interface Evenement {
   parent_id: string | null
   titre: string
   lieu: string
+  nom_lieu?: string | null
   ville?: string | null
   pays?: string | null
   date: string
@@ -137,7 +136,6 @@ export default function Home() {
   const searchRef                           = useRef<HTMLInputElement>(null)
   const clusterInitialized                  = useRef(false)
   const evenementsFiltresRef                = useRef<Evenement[]>([])
-  const spiderfyRef                         = useRef<{ unspiderfyAll: () => void; applyTo: (id: string) => void } | null>(null)
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
@@ -325,6 +323,68 @@ export default function Home() {
 
   const evenementsFiltres = evenements.filter(filtreActif)
 
+  const preClusterParLieu = (events: typeof evenementsFiltres): GeoJSON.Feature[] => {
+    const groupes = new Map<string, typeof evenementsFiltres>()
+    for (const ev of events) {
+      if (!ev.longitude || !ev.latitude) continue
+      const nomLieu = ev.nom_lieu?.trim().toLowerCase() || ev.lieu?.trim().toLowerCase() || ''
+      const coordKey = `${ev.longitude.toFixed(4)},${ev.latitude.toFixed(4)}`
+      const key = nomLieu.length > 2 ? `lieu:${nomLieu}` : `coord:${coordKey}`
+      if (!groupes.has(key)) groupes.set(key, [])
+      groupes.get(key)!.push(ev)
+    }
+    const features: GeoJSON.Feature[] = []
+    for (const [, evs] of groupes) {
+      const premier = evs[0]
+      if (evs.length === 1) {
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [premier.longitude, premier.latitude] },
+          properties: {
+            id: premier.id,
+            titre: premier.titre,
+            lieu: premier.lieu || '',
+            nom_lieu: premier.nom_lieu || premier.lieu || '',
+            ville: premier.ville || '',
+            date_debut: premier.date_debut || premier.date || '',
+            date_fin: premier.date_fin || '',
+            image_url: premier.image_url || '',
+            categorie: premier.categorie || '',
+            prix: premier.prix || '',
+            acces: premier.acces || '',
+            est_a_la_une: premier.mis_en_avant || false,
+            count: 1,
+            ids: JSON.stringify([premier.id]),
+            titres: JSON.stringify([premier.titre]),
+          },
+        })
+      } else {
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [premier.longitude, premier.latitude] },
+          properties: {
+            id: premier.id,
+            titre: premier.titre,
+            lieu: premier.lieu || premier.nom_lieu || '',
+            nom_lieu: premier.nom_lieu || premier.lieu || '',
+            ville: premier.ville || '',
+            date_debut: premier.date_debut || premier.date || '',
+            date_fin: evs[evs.length - 1].date_fin || '',
+            image_url: premier.image_url || '',
+            categorie: premier.categorie || '',
+            prix: premier.prix || '',
+            acces: premier.acces || '',
+            est_a_la_une: evs.some(e => e.mis_en_avant) || false,
+            count: evs.length,
+            ids: JSON.stringify(evs.map(e => e.id)),
+            titres: JSON.stringify(evs.map(e => e.titre)),
+          },
+        })
+      }
+    }
+    return features
+  }
+
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
@@ -332,29 +392,7 @@ export default function Home() {
 
     const geojson: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
-      features: evenementsFiltres
-        .filter(ev => ev.longitude && ev.latitude && ev.longitude !== 0 && ev.latitude !== 0)
-        .map(ev => ({
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: [ev.longitude, ev.latitude],
-          },
-          properties: {
-            id: ev.id,
-            titre: ev.titre,
-            lieu: ev.lieu || '',
-            ville: ev.ville || '',
-            date_debut: ev.date_debut || ev.date || '',
-            date_fin: ev.date_fin || '',
-            image_url: ev.image_url || '',
-            categorie: ev.categorie || '',
-            prix: ev.prix || '',
-            acces: ev.acces || '',
-            statut: ev.statut || '',
-            est_a_la_une: ev.mis_en_avant || false,
-          },
-        })),
+      features: preClusterParLieu(evenementsFiltres),
     }
 
     const addLayers = () => {
@@ -366,43 +404,15 @@ export default function Home() {
       map.addSource('events', {
         type: 'geojson',
         data: geojson,
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50,
+        cluster: false,
       })
 
-      map.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'events',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': ['step', ['get', 'point_count'], '#C8431A', 10, '#A03315', 30, '#7A2510'],
-          'circle-radius': ['step', ['get', 'point_count'], 20, 10, 28, 30, 36],
-          'circle-opacity': 0.92,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#F7F2E8',
-        },
-      })
-
-      map.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'events',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': '{point_count_abbreviated}',
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 13,
-        },
-        paint: { 'text-color': '#F7F2E8' },
-      })
-
+      // Points individuels (count = 1)
       map.addLayer({
         id: 'unclustered-point',
         type: 'circle',
         source: 'events',
-        filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'est_a_la_une'], true]],
+        filter: ['==', ['get', 'count'], 1],
         paint: {
           'circle-color': '#C8431A',
           'circle-radius': 10,
@@ -412,11 +422,51 @@ export default function Home() {
         },
       })
 
+      // Pins groupés par lieu (count > 1)
+      map.addLayer({
+        id: 'lieu-cluster',
+        type: 'circle',
+        source: 'events',
+        filter: ['>', ['get', 'count'], 1],
+        paint: {
+          'circle-color': [
+            'step', ['get', 'count'],
+            '#C8431A', 5,
+            '#A03315', 15,
+            '#7A2510',
+          ],
+          'circle-radius': [
+            'step', ['get', 'count'],
+            18, 5,
+            24, 15,
+            32,
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#F7F2E8',
+          'circle-opacity': 0.95,
+        },
+      })
+
+      // Compteur sur les pins groupés
+      map.addLayer({
+        id: 'lieu-cluster-count',
+        type: 'symbol',
+        source: 'events',
+        filter: ['>', ['get', 'count'], 1],
+        layout: {
+          'text-field': ['get', 'count'],
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 13,
+        },
+        paint: { 'text-color': '#F7F2E8' },
+      })
+
+      // À la une (par dessus tout)
       map.addLayer({
         id: 'unclustered-aune',
         type: 'circle',
         source: 'events',
-        filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'est_a_la_une'], true]],
+        filter: ['==', ['get', 'est_a_la_une'], true],
         paint: {
           'circle-color': '#E8620A',
           'circle-radius': 13,
@@ -428,15 +478,26 @@ export default function Home() {
 
       clusterInitialized.current = true
 
-      map.on('click', 'clusters', (e: mapboxgl.MapLayerMouseEvent) => {
+      // Clic sur pin groupé → popup liste des événements du lieu
+      map.on('click', 'lieu-cluster', (e: mapboxgl.MapLayerMouseEvent) => {
         if (!e.features?.length) return
-        const clusterId = e.features[0].properties?.cluster_id as number
-        const source = map.getSource('events') as mapboxgl.GeoJSONSource
-        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err) return
-          const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number]
-          map.easeTo({ center: coords, zoom: zoom ?? 12 })
-        })
+        const props = e.features[0].properties
+        if (!props) return
+        const ids: string[] = JSON.parse(props.ids || '[]')
+        const titres: string[] = JSON.parse(props.titres || '[]')
+        const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
+        const listHTML = titres.map((titre, i) =>
+          `<a href="/evenement/${ids[i]}" style="display:block;padding:6px 0;border-bottom:1px solid #E8E0D0;font-size:12px;color:#1A1410;text-decoration:none;">${titre}</a>`
+        ).join('')
+        new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup' })
+          .setLngLat(coords)
+          .setHTML(`
+            <div style="padding:10px 12px;max-height:240px;overflow-y:auto;">
+              <p style="font-weight:bold;font-size:13px;margin:0 0 8px;color:#C8431A;">📍 ${props.nom_lieu || props.lieu} · ${props.count} événements</p>
+              ${listHTML}
+            </div>
+          `)
+          .addTo(map)
       })
 
       const handlePointClick = (e: mapboxgl.MapLayerMouseEvent) => {
@@ -469,54 +530,13 @@ export default function Home() {
           .addTo(map)
       }
 
+      map.on('click', 'unclustered-point', handlePointClick)
       map.on('click', 'unclustered-aune', handlePointClick)
 
-      ;['clusters', 'unclustered-point', 'unclustered-aune'].forEach(layer => {
+      ;['unclustered-point', 'lieu-cluster', 'unclustered-aune'].forEach(layer => {
         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = '' })
       })
-
-      // Spiderfy — éclatement en étoile pour les points superposés
-      if (spiderfyRef.current) {
-        spiderfyRef.current.unspiderfyAll()
-      }
-
-      spiderfyRef.current = new Spiderfy(map, {
-        onLeafClick: (feature: { properties: Record<string, unknown> | null; geometry: { coordinates: [number, number] } }, _e: unknown) => {
-          const props = feature.properties
-          if (!props) return
-          const coords = feature.geometry.coordinates as [number, number]
-          const ev = evenementsFiltresRef.current.find(item => item.id === props.id)
-          if (!ev) return
-
-          const periodeAffichee = ev.date_fin && ev.date_fin !== ev.date
-            ? `${new Date(ev.date_debut || ev.date).toLocaleDateString('fr-FR')} → ${new Date(ev.date_fin).toLocaleDateString('fr-FR')}`
-            : ev.date_debut ? new Date(ev.date_debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-
-          const imageUrl = ev.image_url || getEventImage(null, ev.categorie)
-
-          new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup' })
-            .setLngLat(coords)
-            .setHTML(`
-              <a href="/evenement/${ev.id}" style="text-decoration:none;color:inherit;display:block;">
-                ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" crossorigin="anonymous"/>` : ''}
-                <div style="padding:10px 12px;">
-                  <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#1A1410;line-height:1.3;">${ev.titre}</p>
-                  ${ev.lieu ? `<p style="font-size:11px;color:#8C5A40;margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
-                  ${periodeAffichee ? `<p style="font-size:11px;color:#8C5A40;margin:0;">📅 ${periodeAffichee}</p>` : ''}
-                  ${ev.prix ? `<span style="display:inline-block;margin-top:6px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;background:${ev.prix === 'gratuit' ? 'rgba(45,158,107,0.12)' : 'rgba(200,67,26,0.12)'};color:${ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A'};">${ev.prix}</span>` : ''}
-                </div>
-              </a>
-            `)
-            .addTo(map)
-        },
-        forceSpiderifyMinZoom: 12,
-        circleSpiralSwitchover: 8,
-        spiderLegsColor: '#C8431A',
-        spiderLegsWidth: 2,
-      })
-
-      spiderfyRef.current.applyTo('unclustered-point')
     }
 
     if (map.isStyleLoaded()) {

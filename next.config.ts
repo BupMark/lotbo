@@ -1,7 +1,6 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@nazka/map-gl-js-spiderfy'],
   async headers() {
     return [
       {
