@@ -425,13 +425,15 @@ export default function Home() {
 
       clusterInitialized.current = true
 
-      map.on('click', 'clusters', async (e: mapboxgl.MapLayerMouseEvent) => {
+      map.on('click', 'clusters', (e: mapboxgl.MapLayerMouseEvent) => {
         if (!e.features?.length) return
         const clusterId = e.features[0].properties?.cluster_id as number
         const source = map.getSource('events') as mapboxgl.GeoJSONSource
-        const zoom = await source.getClusterExpansionZoom(clusterId)
-        const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
-        map.easeTo({ center: coords, zoom: zoom ?? 12 })
+        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return
+          const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number]
+          map.easeTo({ center: coords, zoom: zoom ?? 12 })
+        })
       })
 
       const handlePointClick = (e: mapboxgl.MapLayerMouseEvent) => {
