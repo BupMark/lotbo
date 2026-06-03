@@ -11,6 +11,8 @@ import { getEventImage, FALLBACK_IMAGES } from '../lib/fallbackImages'
 import NotifCloche from '../components/NotifCloche'
 import { track } from '../lib/amplitude'
 import { attributerPoints } from '../lib/points'
+// @ts-ignore — types référencent maplibre-gl (non installé), lib compatible mapbox-gl v3
+import Spiderfy from '@nazka/map-gl-js-spiderfy'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -135,6 +137,7 @@ export default function Home() {
   const searchRef                           = useRef<HTMLInputElement>(null)
   const clusterInitialized                  = useRef(false)
   const evenementsFiltresRef                = useRef<Evenement[]>([])
+  const spiderfyRef                         = useRef<{ unspiderfyAll: () => void; applyTo: (id: string) => void } | null>(null)
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
@@ -466,13 +469,54 @@ export default function Home() {
           .addTo(map)
       }
 
-      map.on('click', 'unclustered-point', handlePointClick)
       map.on('click', 'unclustered-aune', handlePointClick)
 
       ;['clusters', 'unclustered-point', 'unclustered-aune'].forEach(layer => {
         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = '' })
       })
+
+      // Spiderfy — éclatement en étoile pour les points superposés
+      if (spiderfyRef.current) {
+        spiderfyRef.current.unspiderfyAll()
+      }
+
+      spiderfyRef.current = new Spiderfy(map, {
+        onLeafClick: (feature: { properties: Record<string, unknown> | null; geometry: { coordinates: [number, number] } }, _e: unknown) => {
+          const props = feature.properties
+          if (!props) return
+          const coords = feature.geometry.coordinates as [number, number]
+          const ev = evenementsFiltresRef.current.find(item => item.id === props.id)
+          if (!ev) return
+
+          const periodeAffichee = ev.date_fin && ev.date_fin !== ev.date
+            ? `${new Date(ev.date_debut || ev.date).toLocaleDateString('fr-FR')} → ${new Date(ev.date_fin).toLocaleDateString('fr-FR')}`
+            : ev.date_debut ? new Date(ev.date_debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+
+          const imageUrl = ev.image_url || getEventImage(null, ev.categorie)
+
+          new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup' })
+            .setLngLat(coords)
+            .setHTML(`
+              <a href="/evenement/${ev.id}" style="text-decoration:none;color:inherit;display:block;">
+                ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" crossorigin="anonymous"/>` : ''}
+                <div style="padding:10px 12px;">
+                  <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#1A1410;line-height:1.3;">${ev.titre}</p>
+                  ${ev.lieu ? `<p style="font-size:11px;color:#8C5A40;margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
+                  ${periodeAffichee ? `<p style="font-size:11px;color:#8C5A40;margin:0;">📅 ${periodeAffichee}</p>` : ''}
+                  ${ev.prix ? `<span style="display:inline-block;margin-top:6px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;background:${ev.prix === 'gratuit' ? 'rgba(45,158,107,0.12)' : 'rgba(200,67,26,0.12)'};color:${ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A'};">${ev.prix}</span>` : ''}
+                </div>
+              </a>
+            `)
+            .addTo(map)
+        },
+        forceSpiderifyMinZoom: 12,
+        circleSpiralSwitchover: 8,
+        spiderLegsColor: '#C8431A',
+        spiderLegsWidth: 2,
+      })
+
+      spiderfyRef.current.applyTo('unclustered-point')
     }
 
     if (map.isStyleLoaded()) {
