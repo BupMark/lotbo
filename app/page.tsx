@@ -1,3 +1,4 @@
+/// <reference types="geojson" />
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -100,7 +101,6 @@ function emojiCategorie(categorie: string): string {
 export default function Home() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<mapboxgl.Map | null>(null)
-  const markersRef   = useRef<mapboxgl.Marker[]>([])
   const headerRef    = useRef<HTMLDivElement>(null)
   const [headerHeight, setHeaderHeight] = useState(116)
 
@@ -133,6 +133,8 @@ export default function Home() {
   const [enCoursIds, setEnCoursIds]         = useState<Set<string>>(new Set())
   const enCoursIntervalRef                  = useRef<ReturnType<typeof setInterval> | null>(null)
   const searchRef                           = useRef<HTMLInputElement>(null)
+  const clusterInitialized                  = useRef(false)
+  const evenementsFiltresRef                = useRef<Evenement[]>([])
 
   const t       = getTraductions(langue)
   const isAdmin = user?.user_metadata?.role === 'admin'
@@ -318,55 +320,165 @@ export default function Home() {
     return true
   }
 
-  useEffect(() => {
-    if (!mapRef.current || evenements.length === 0) return
-    markersRef.current.forEach(m => m.remove())
-    markersRef.current = []
+  const evenementsFiltres = evenements.filter(filtreActif)
 
-    evenements.filter(filtreActif).forEach(ev => {
-      const enCours     = enCoursIds.has(ev.id)
-      const periodePopup = afficherPeriode(ev)
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
-        '<div style="font-family:sans-serif;padding:12px;background:#1A1410;color:#F7F2E8;border-radius:8px;min-width:200px">' +
-        (enCours ? '<span style="display:inline-block;background:#D4A820;color:white;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:bold;margin-bottom:8px">🔴 En cours</span><br/>' : '') +
-        '<img src="' + getEventImage(ev.image_url, ev.categorie) + '" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px" />' +
-        '<strong style="font-size:16px;color:#F7F2E8">' + ev.titre + '</strong>' +
-        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
-        '<span style="background:#C8431A;color:#F7F2E8;padding:2px 8px;border-radius:20px;font-size:11px">' + ev.categorie + '</span>' +
-        (ev.date_fin && ev.date_fin !== ev.date ? '<span style="background:rgba(212,168,32,0.2);color:#D4A820;padding:2px 8px;border-radius:20px;font-size:11px">🗓️ Multi-jours</span>' : '') +
-        '<span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">' + (ev.acces || 'public') + '</span>' +
-        '<span style="background:#333;color:white;padding:2px 8px;border-radius:20px;font-size:11px">' + (ev.prix || 'gratuit') + '</span>' +
-        '</div>' +
-        '<div style="margin-top:10px;font-size:13px;color:#E8E0D0;line-height:1.6">' +
-        '📍 ' + ev.lieu + '<br/>' +
-        '📅 ' + periodePopup + '<br/>' +
-        (ev.heure_debut ? '🕐 ' + ev.heure_debut + (ev.heure_fin ? ' → ' + ev.heure_fin : '') + '<br/>' : '') +
-        (ev.description ? '<br/>' + ev.description.replace(/\n/g, '<br/>') : '') +
-        (ev.lien ? '<br/><br/><a href="' + ev.lien + '" target="_blank" style="color:#C8431A">🔗 Plus de détails</a>' : '') +
-        '<div style="display:flex;gap:8px;margin-top:12px">' +
-        '<a href="/evenement/' + ev.id + '" style="flex:1;display:block;background:#C8431A;color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">Voir →</a>' +
-        '<a href="https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude + '" target="_blank" style="flex:1;display:block;background:rgba(255,255,255,0.08);color:#F7F2E8;text-align:center;padding:8px 12px;border-radius:8px;font-weight:bold;font-size:12px;text-decoration:none">🧭 S\'y rendre</a>' +
-        '</div></div></div>'
-      )
-      let marker: mapboxgl.Marker
-      if (enCours) {
-        const el = document.createElement('div')
-        el.className = 'pin-en-cours'
-        el.innerHTML = '<div class="pin-pulse"></div><div class="pin-dot"></div>'
-        marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([ev.longitude, ev.latitude])
-          .setPopup(popup)
-          .addTo(mapRef.current!)
-      } else {
-        const markerColor = ev.statut === 'à compléter' ? '#E87C2A' : '#C8431A'
-        marker = new mapboxgl.Marker({ color: markerColor })
-          .setLngLat([ev.longitude, ev.latitude])
-          .setPopup(popup)
-          .addTo(mapRef.current!)
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+    evenementsFiltresRef.current = evenementsFiltres
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: evenementsFiltres
+        .filter(ev => ev.longitude && ev.latitude && ev.longitude !== 0 && ev.latitude !== 0)
+        .map(ev => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [ev.longitude, ev.latitude],
+          },
+          properties: {
+            id: ev.id,
+            titre: ev.titre,
+            lieu: ev.lieu || '',
+            ville: ev.ville || '',
+            date_debut: ev.date_debut || ev.date || '',
+            date_fin: ev.date_fin || '',
+            image_url: ev.image_url || '',
+            categorie: ev.categorie || '',
+            prix: ev.prix || '',
+            acces: ev.acces || '',
+            statut: ev.statut || '',
+            est_a_la_une: ev.mis_en_avant || false,
+          },
+        })),
+    }
+
+    const addLayers = () => {
+      if (map.getSource('events')) {
+        ;(map.getSource('events') as mapboxgl.GeoJSONSource).setData(geojson)
+        return
       }
-      markersRef.current.push(marker)
-    })
-  }, [evenements, categorie, acces, prix, recherche, dateDebut, dateFin, enCoursIds])
+
+      map.addSource('events', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 50,
+      })
+
+      map.addLayer({
+        id: 'clusters',
+        type: 'circle',
+        source: 'events',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': ['step', ['get', 'point_count'], '#C8431A', 10, '#A03315', 30, '#7A2510'],
+          'circle-radius': ['step', ['get', 'point_count'], 20, 10, 28, 30, 36],
+          'circle-opacity': 0.92,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#F7F2E8',
+        },
+      })
+
+      map.addLayer({
+        id: 'cluster-count',
+        type: 'symbol',
+        source: 'events',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 13,
+        },
+        paint: { 'text-color': '#F7F2E8' },
+      })
+
+      map.addLayer({
+        id: 'unclustered-point',
+        type: 'circle',
+        source: 'events',
+        filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'est_a_la_une'], true]],
+        paint: {
+          'circle-color': '#C8431A',
+          'circle-radius': 10,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#F7F2E8',
+          'circle-opacity': 0.9,
+        },
+      })
+
+      map.addLayer({
+        id: 'unclustered-aune',
+        type: 'circle',
+        source: 'events',
+        filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'est_a_la_une'], true]],
+        paint: {
+          'circle-color': '#E8620A',
+          'circle-radius': 13,
+          'circle-stroke-width': 3,
+          'circle-stroke-color': '#F7F2E8',
+          'circle-opacity': 1,
+        },
+      })
+
+      clusterInitialized.current = true
+
+      map.on('click', 'clusters', async (e: mapboxgl.MapLayerMouseEvent) => {
+        if (!e.features?.length) return
+        const clusterId = e.features[0].properties?.cluster_id as number
+        const source = map.getSource('events') as mapboxgl.GeoJSONSource
+        const zoom = await source.getClusterExpansionZoom(clusterId)
+        const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
+        map.easeTo({ center: coords, zoom: zoom ?? 12 })
+      })
+
+      const handlePointClick = (e: mapboxgl.MapLayerMouseEvent) => {
+        if (!e.features?.length) return
+        const props = e.features[0].properties
+        if (!props) return
+        const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
+        const ev = evenementsFiltresRef.current.find(item => item.id === props.id)
+        if (!ev) return
+
+        const periodeAffichee = ev.date_fin && ev.date_fin !== ev.date
+          ? `${new Date(ev.date_debut || ev.date).toLocaleDateString('fr-FR')} → ${new Date(ev.date_fin).toLocaleDateString('fr-FR')}`
+          : ev.date_debut ? new Date(ev.date_debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+
+        const imageUrl = ev.image_url || getEventImage(null, ev.categorie)
+
+        new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup' })
+          .setLngLat(coords)
+          .setHTML(`
+            <a href="/evenement/${ev.id}" style="text-decoration:none;color:inherit;display:block;">
+              ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" crossorigin="anonymous"/>` : ''}
+              <div style="padding:10px 12px;">
+                <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#1A1410;line-height:1.3;">${ev.titre}</p>
+                ${ev.lieu ? `<p style="font-size:11px;color:#8C5A40;margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
+                ${periodeAffichee ? `<p style="font-size:11px;color:#8C5A40;margin:0;">📅 ${periodeAffichee}</p>` : ''}
+                ${ev.prix ? `<span style="display:inline-block;margin-top:6px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;background:${ev.prix === 'gratuit' ? 'rgba(45,158,107,0.12)' : 'rgba(200,67,26,0.12)'};color:${ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A'};">${ev.prix}</span>` : ''}
+              </div>
+            </a>
+          `)
+          .addTo(map)
+      }
+
+      map.on('click', 'unclustered-point', handlePointClick)
+      map.on('click', 'unclustered-aune', handlePointClick)
+
+      ;['clusters', 'unclustered-point', 'unclustered-aune'].forEach(layer => {
+        map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = '' })
+      })
+    }
+
+    if (map.isStyleLoaded()) {
+      addLayers()
+    } else {
+      map.once('load', addLayers)
+    }
+  }, [evenementsFiltres])
 
   const btnStyle = (actif: boolean) => ({
     padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold' as const,
@@ -503,8 +615,6 @@ export default function Home() {
     const t = setInterval(() => setCarouselIdx(prev => (prev + 1) % aLaUne.length), 5000)
     return () => clearInterval(t)
   }, [aLaUne.length])
-
-  const evenementsFiltres = evenements.filter(filtreActif)
 
   // Naviguer vers une ville depuis la sidebar
   const allerVersVille = (ville: string) => {
