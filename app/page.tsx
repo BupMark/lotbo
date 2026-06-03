@@ -405,7 +405,7 @@ export default function Home() {
       const loadPin = (name: string, fill: string, w: number, h: number) =>
         new Promise<void>(resolve => {
           const svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-            <path d="M${w/2} 2C${w*0.14} 2 2 ${h*0.25} 2 ${w/2}C2 ${h*0.68} ${w/2} ${h-2} ${w/2} ${h-2}S${w-2} ${h*0.68} ${w-2} ${w/2}C${w-2} ${h*0.25} ${w*0.86} 2 ${w/2} 2Z" fill="${fill}" stroke="white" stroke-width="2"/>
+            <path d="M${w/2} 2C${w*0.14} 2 2 ${h*0.25} 2 ${w/2}C2 ${h*0.68} ${w/2} ${h-2} ${w/2} ${h-2}S${w-2} ${h*0.68} ${w-2} ${w/2}C${w-2} ${h*0.25} ${w*0.86} 2 ${w/2} 2Z" fill="${fill}" stroke="#1A1410" stroke-width="2.5"/>
             <circle cx="${w/2}" cy="${w/2}" r="${w*0.22}" fill="rgba(255,255,255,0.95)"/>
           </svg>`
           const img = new Image(w, h)
@@ -506,7 +506,7 @@ export default function Home() {
         const titres: string[] = JSON.parse(props.titres || '[]')
         const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
         const listHTML = titres.map((titre, i) =>
-          `<a href="/evenement/${ids[i]}" style="display:block;padding:6px 0;border-bottom:1px solid #E8E0D0;font-size:12px;color:#1A1410;text-decoration:none;">${titre}</a>`
+          `<a href="/evenement/${ids[i]}" style="display:block;padding:6px 0;border-bottom:1px solid rgba(247,242,232,0.15);font-size:12px;text-decoration:none;">${titre}</a>`
         ).join('')
         new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup' })
           .setLngLat(coords)
