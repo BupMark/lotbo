@@ -540,6 +540,9 @@ export default function EvenementPage() {
   const [propositionModal, setPropositionModal]         = useState(false)
   const [propositionEnvoyee, setPropositionEnvoyee]     = useState(false)
   const [propositionForm, setPropositionForm]           = useState({ champ_modifie: 'titre', ancienne_valeur: '', nouvelle_valeur: '' })
+  const [propositionLat, setPropositionLat]             = useState<number>(ev?.latitude || 0)
+  const [propositionLng, setPropositionLng]             = useState<number>(ev?.longitude || 0)
+  const [propositionImageFile, setPropositionImageFile] = useState<File | null>(null)
   const [claimModal, setClaimModal]                     = useState(false)
   const [claimMessage, setClaimMessage]                 = useState('')
   const [claimEnvoye, setClaimEnvoye]                   = useState(false)
@@ -844,13 +847,20 @@ supabase.auth.getSession().then(({ data: { session } }) => {
                     onChange={e => {
                       const champ = e.target.value
                       const valeurs: Record<string, string> = {
-                        titre:       ev?.titre || '',
-                        lieu:        ev?.lieu || '',
-                        date:        ev?.date || '',
-                        description: ev?.description || '',
-                        lien:        ev?.lien || '',
+                        titre:          ev?.titre || '',
+                        lieu:           ev?.lieu || '',
+                        date:           ev?.date || '',
+                        description:    ev?.description || '',
+                        lien:           ev?.lien || '',
+                        emplacement_pin: `${ev?.latitude?.toFixed(5) || '?'}, ${ev?.longitude?.toFixed(5) || '?'}`,
+                        categorie:      ev?.categorie || '',
+                        heure:          `${ev?.heure_debut || '?'} → ${ev?.heure_fin || '?'}`,
+                        prix_acces:     `${ev?.prix || '?'} · ${ev?.acces || '?'}`,
+                        image:          ev?.image_url ? 'Image existante' : 'Aucune image',
                       }
                       setPropositionForm(f => ({ ...f, champ_modifie: champ, ancienne_valeur: valeurs[champ] || '', nouvelle_valeur: '' }))
+                      if (champ === 'emplacement_pin') { setPropositionLat(ev?.latitude || 0); setPropositionLng(ev?.longitude || 0) }
+                      if (champ === 'image') setPropositionImageFile(null)
                     }}
                     style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%' }}
                   >
@@ -859,6 +869,11 @@ supabase.auth.getSession().then(({ data: { session } }) => {
                     <option value="date">Date</option>
                     <option value="description">Description</option>
                     <option value="lien">Lien officiel</option>
+                    <option value="emplacement_pin">📍 Emplacement du pin sur la carte</option>
+                    <option value="image">🖼️ Image de l&apos;événement</option>
+                    <option value="categorie">🏷️ Catégorie</option>
+                    <option value="heure">🕐 Heure de début / fin</option>
+                    <option value="prix_acces">💰 Prix / Accès</option>
                   </select>
                 </div>
                 <div style={{ marginBottom: 14 }}>
@@ -877,6 +892,155 @@ supabase.auth.getSession().then(({ data: { session } }) => {
                       rows={4}
                       style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
                     />
+                  ) : propositionForm.champ_modifie === 'emplacement_pin' ? (
+                    <div>
+                      <p style={{ fontSize: 12, color: '#8C5A40', marginBottom: 8 }}>
+                        Coordonnées actuelles : {ev?.latitude?.toFixed(5)}, {ev?.longitude?.toFixed(5)}
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                        <div>
+                          <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Latitude</label>
+                          <input
+                            type="number"
+                            step="0.00001"
+                            value={propositionLat}
+                            onChange={e => {
+                              setPropositionLat(parseFloat(e.target.value))
+                              setPropositionForm(f => ({ ...f, nouvelle_valeur: `${e.target.value},${propositionLng}` }))
+                            }}
+                            style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Longitude</label>
+                          <input
+                            type="number"
+                            step="0.00001"
+                            value={propositionLng}
+                            onChange={e => {
+                              setPropositionLng(parseFloat(e.target.value))
+                              setPropositionForm(f => ({ ...f, nouvelle_valeur: `${propositionLat},${e.target.value}` }))
+                            }}
+                            style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }}
+                          />
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 11, color: '#8C5A40', fontStyle: 'italic' }}>
+                        💡 Cherche le lieu sur Google Maps → clic droit → &quot;Plus d&apos;infos sur cet endroit&quot; pour les coordonnées exactes.
+                      </p>
+                    </div>
+                  ) : propositionForm.champ_modifie === 'image' ? (
+                    <div>
+                      <label style={{
+                        display: 'block', background: 'white', border: '1px dashed #C8431A',
+                        borderRadius: 10, padding: '12px 16px', cursor: 'pointer',
+                        fontSize: 13, color: '#C8431A', fontWeight: 'bold', textAlign: 'center' as const,
+                      }}>
+                        📷 {propositionImageFile ? propositionImageFile.name : 'Choisir une nouvelle image'}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          style={{ display: 'none' }}
+                          onChange={e => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            setPropositionImageFile(file)
+                            setPropositionForm(f => ({ ...f, nouvelle_valeur: file.name }))
+                          }}
+                        />
+                      </label>
+                      {propositionImageFile && (
+                        <p style={{ fontSize: 11, color: '#2D9E6B', marginTop: 6 }}>✅ Image sélectionnée : {propositionImageFile.name}</p>
+                      )}
+                    </div>
+                  ) : propositionForm.champ_modifie === 'categorie' ? (
+                    <select
+                      value={propositionForm.nouvelle_valeur}
+                      onChange={e => setPropositionForm(f => ({ ...f, nouvelle_valeur: e.target.value }))}
+                      style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#1A1410' }}
+                    >
+                      <option value="">Choisir une catégorie...</option>
+                      <option value="Festival">Festival</option>
+                      <option value="Concert/Spectacle">Concert / Spectacle</option>
+                      <option value="Conférence/Formation">Conférence / Formation</option>
+                      <option value="Foire/Exposition">Foire / Exposition</option>
+                      <option value="Tournoi/Compétition">Tournoi / Compétition</option>
+                      <option value="Célébration communautaire">Célébration communautaire</option>
+                      <option value="Culte/Assemblée">Culte / Assemblée</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  ) : propositionForm.champ_modifie === 'heure' ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <div>
+                        <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Heure de début</label>
+                        <input
+                          type="time"
+                          onChange={e => setPropositionForm(f => ({
+                            ...f,
+                            nouvelle_valeur: `début:${e.target.value}${f.nouvelle_valeur.includes('fin:') ? ' ' + f.nouvelle_valeur.substring(f.nouvelle_valeur.indexOf('fin:')) : ''}`,
+                          }))}
+                          style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Heure de fin</label>
+                        <input
+                          type="time"
+                          onChange={e => setPropositionForm(f => ({
+                            ...f,
+                            nouvelle_valeur: f.nouvelle_valeur.replace(/ fin:.*$/, '') + ` fin:${e.target.value}`,
+                          }))}
+                          style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }}
+                        />
+                      </div>
+                    </div>
+                  ) : propositionForm.champ_modifie === 'prix_acces' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {(['gratuit', 'payant'] as const).map(p => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setPropositionForm(f => ({
+                              ...f,
+                              nouvelle_valeur: f.nouvelle_valeur.includes('prix:')
+                                ? f.nouvelle_valeur.replace(/prix:\w+/, `prix:${p}`)
+                                : `prix:${p} ${f.nouvelle_valeur}`.trim(),
+                            }))}
+                            style={{
+                              flex: 1, padding: '10px 0', borderRadius: 8, fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                              background: propositionForm.nouvelle_valeur.includes(`prix:${p}`) ? '#C8431A' : 'white',
+                              color: propositionForm.nouvelle_valeur.includes(`prix:${p}`) ? 'white' : '#8C5A40',
+                              border: `1px solid ${propositionForm.nouvelle_valeur.includes(`prix:${p}`) ? '#C8431A' : '#E8E0D0'}`,
+                            }}
+                          >
+                            {p === 'gratuit' ? '🎟️ Gratuit' : '💳 Payant'}
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {(['public', 'prive'] as const).map(a => (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => setPropositionForm(f => ({
+                              ...f,
+                              nouvelle_valeur: f.nouvelle_valeur.includes('acces:')
+                                ? f.nouvelle_valeur.replace(/acces:\w+/, `acces:${a}`)
+                                : `${f.nouvelle_valeur} acces:${a}`.trim(),
+                            }))}
+                            style={{
+                              flex: 1, padding: '10px 0', borderRadius: 8, fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                              background: propositionForm.nouvelle_valeur.includes(`acces:${a}`) ? '#1A1410' : 'white',
+                              color: propositionForm.nouvelle_valeur.includes(`acces:${a}`) ? 'white' : '#8C5A40',
+                              border: `1px solid ${propositionForm.nouvelle_valeur.includes(`acces:${a}`) ? '#1A1410' : '#E8E0D0'}`,
+                            }}
+                          >
+                            {a === 'public' ? '🌐 Public' : '🔒 Privé'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ) : (
                     <input
                       type={propositionForm.champ_modifie === 'date' ? 'date' : 'text'}
