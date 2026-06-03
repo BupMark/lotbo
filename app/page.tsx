@@ -395,11 +395,29 @@ export default function Home() {
       features: preClusterParLieu(evenementsFiltres),
     }
 
-    const addLayers = () => {
+    const addLayers = async () => {
       if (map.getSource('events')) {
         ;(map.getSource('events') as mapboxgl.GeoJSONSource).setData(geojson)
         return
       }
+
+      // Charger les icônes SVG pin avant d'ajouter les layers
+      const loadPin = (name: string, fill: string, w: number, h: number) =>
+        new Promise<void>(resolve => {
+          const svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+            <path d="M${w/2} 2C${w*0.14} 2 2 ${h*0.25} 2 ${w/2}C2 ${h*0.68} ${w/2} ${h-2} ${w/2} ${h-2}S${w-2} ${h*0.68} ${w-2} ${w/2}C${w-2} ${h*0.25} ${w*0.86} 2 ${w/2} 2Z" fill="${fill}" stroke="white" stroke-width="2"/>
+            <circle cx="${w/2}" cy="${w/2}" r="${w*0.22}" fill="rgba(255,255,255,0.95)"/>
+          </svg>`
+          const img = new Image(w, h)
+          img.onload = () => { if (!map.hasImage(name)) map.addImage(name, img); resolve() }
+          img.onerror = () => resolve()
+          img.src = 'data:image/svg+xml,' + encodeURIComponent(svg)
+        })
+
+      await Promise.all([
+        loadPin('pin-event', '#C8431A', 28, 36),
+        loadPin('pin-aune',  '#E8620A', 34, 44),
+      ])
 
       map.addSource('events', {
         type: 'geojson',
@@ -407,22 +425,22 @@ export default function Home() {
         cluster: false,
       })
 
-      // Points individuels (count = 1)
+      // Pins individuels (count = 1)
       map.addLayer({
         id: 'unclustered-point',
-        type: 'circle',
+        type: 'symbol',
         source: 'events',
         filter: ['==', ['get', 'count'], 1],
-        paint: {
-          'circle-color': '#C8431A',
-          'circle-radius': 10,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#F7F2E8',
-          'circle-opacity': 0.9,
+        layout: {
+          'icon-image': 'pin-event',
+          'icon-size': 1,
+          'icon-anchor': 'bottom',
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       })
 
-      // Pins groupés par lieu (count > 1)
+      // Pins groupés par lieu (count > 1) — cercles pour garder lisible le compteur
       map.addLayer({
         id: 'lieu-cluster',
         type: 'circle',
@@ -457,22 +475,23 @@ export default function Home() {
           'text-field': ['get', 'count'],
           'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
           'text-size': 13,
+          'text-allow-overlap': true,
         },
         paint: { 'text-color': '#F7F2E8' },
       })
 
-      // À la une (par dessus tout)
+      // Pins "À la une" (par dessus tout)
       map.addLayer({
         id: 'unclustered-aune',
-        type: 'circle',
+        type: 'symbol',
         source: 'events',
         filter: ['==', ['get', 'est_a_la_une'], true],
-        paint: {
-          'circle-color': '#E8620A',
-          'circle-radius': 13,
-          'circle-stroke-width': 3,
-          'circle-stroke-color': '#F7F2E8',
-          'circle-opacity': 1,
+        layout: {
+          'icon-image': 'pin-aune',
+          'icon-size': 1,
+          'icon-anchor': 'bottom',
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       })
 
