@@ -829,6 +829,31 @@ export default function AjouterEvenement() {
     for (const i of scanMultiSelected) {
       const ev = scanMultiEvents[i]
       const categorieNom = ev.categorie || ''
+
+      // Géocodage automatique
+      let longitude = 0
+      let latitude = 0
+      let statut: string = 'a_localiser'
+
+      if (ev.ville) {
+        try {
+          const q = [ev.lieu, ev.ville].filter(Boolean).join(' ')
+          const acRes = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(q)}`)
+          const acJson = await acRes.json()
+          const placeId = acJson?.predictions?.[0]?.place_id
+          if (placeId) {
+            const detRes = await fetch(`/api/places-details?place_id=${encodeURIComponent(placeId)}`)
+            const detJson = await detRes.json()
+            const loc = detJson?.result?.geometry?.location
+            if (loc?.lat && loc?.lng) {
+              latitude = loc.lat
+              longitude = loc.lng
+              statut = 'en_attente'
+            }
+          }
+        } catch { /* géocodage non bloquant */ }
+      }
+
       try {
         const { error } = await supabase.from('evenements').insert([{
           titre: ev.titre || 'Sans titre',
@@ -846,12 +871,12 @@ export default function AjouterEvenement() {
           lien: ev.lien_officiel || null,
           acces: 'public',
           prix: ev.prix || 'gratuit',
-          statut: 'en_attente',
+          statut,
           user_id: session.user.id,
           source: 'scan_publie',
           categorie: categorieNom,
-          longitude: null,
-          latitude: null,
+          longitude,
+          latitude,
         }])
         if (!error) imported++
         else { console.error('[MULTI] error:', error); errors++ }
