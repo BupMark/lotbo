@@ -28,6 +28,15 @@ const BADGES_ORGANISATEUR = [
   { id: 'champion', emoji: '🏆', label: 'Champion', seuil: 50, desc: '50 événements' },
 ]
 
+const PALIERS_ANCIENNETE = [
+  { mois: 1,  badge: '🌱', label: '1 mois',  message: "Tu fais partie de l'aventure" },
+  { mois: 3,  badge: '🔥', label: '3 mois',  message: 'LOTBO grandit avec toi' },
+  { mois: 6,  badge: '⭐', label: '6 mois',  message: '6 mois à cartographier le monde' },
+  { mois: 12, badge: '🏅', label: '1 an',    message: "Un an. Merci d'être là depuis le début." },
+  { mois: 24, badge: '🥇', label: '2 ans',   message: 'Bâtisseur de la première heure' },
+  { mois: 60, badge: '👑', label: '5 ans',   message: 'Légende vivante de LOTBO' },
+]
+
 function getBadgeActuel(nb: number, badges: typeof BADGES_CONTRIBUTEUR) {
   const obtenus = badges.filter(b => nb >= b.seuil)
   return obtenus[obtenus.length - 1] || null
@@ -55,6 +64,9 @@ function ProfilInner() {
   const [favorisEvs, setFavorisEvs] = useState<any[]>([])
   const [rangGlobal, setRangGlobal] = useState<number | null>(null)
   const [pointsReel, setPointsReel] = useState<number>(0)
+  const [dateNaissance, setDateNaissance] = useState<string>('')
+  const [anniversairePublic, setAnniversairePublic] = useState<boolean>(false)
+  const [savingBirthday, setSavingBirthday] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -70,7 +82,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public')
         .eq('id', data.session.user.id)
         .single()
       // roles_actifs optionnel — requiert migration DB
@@ -102,6 +114,8 @@ function ProfilInner() {
       })
       if (prof?.nom) setNomInput(prof.nom)
       if (prof?.photo_url) setPhotoUrl(prof.photo_url)
+      if (prof?.date_naissance) setDateNaissance(prof.date_naissance)
+      setAnniversairePublic(prof?.anniversaire_public ?? false)
 
       const { data: evs } = await supabase
         .from('evenements')
@@ -152,6 +166,17 @@ function ProfilInner() {
     setUploadingPhoto(false)
   }
 
+  const handleSaveBirthday = async () => {
+    if (!user) return
+    setSavingBirthday(true)
+    await supabase.from('profiles').update({
+      date_naissance: dateNaissance || null,
+      anniversaire_public: anniversairePublic,
+      updated_at: new Date().toISOString(),
+    }).eq('id', user.id)
+    setSavingBirthday(false)
+  }
+
   const statutLabel = (statut: string) => {
     switch (statut) {
       case 'approuve': return { label: '✓ Approuvé', bg: 'rgba(200,67,26,0.15)', color: '#C8431A' }
@@ -191,6 +216,10 @@ function ProfilInner() {
   const hasPioneerScan = evenements.some((e: any) => e.source === 'scan_publie')
   const hasWikiBadge   = evenements.some((e: any) => e.source === 'wikimedia' && e.statut === 'approuve')
 
+  const moisAnciennete = user?.created_at
+    ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24 * 30.44))
+    : 0
+
   const nomAffiche = profile?.nom || user?.email?.split('@')[0] || 'Utilisateur'
   const initiales = nomAffiche.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
@@ -222,7 +251,7 @@ function ProfilInner() {
           <div style={{ position: isDesktop ? 'sticky' : 'static', top: isDesktop ? 24 : 'auto' }}>
 
             {/* Carte profil */}
-            <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+            <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
 
                 {/* Avatar */}
@@ -310,6 +339,38 @@ function ProfilInner() {
                     <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 2 }}>{s.label}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* 🎂 Anniversaire */}
+            <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+              <h3 style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', marginBottom: 12 }}>🎂 Anniversaire</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <label style={{ color: '#8C5A40', fontSize: 12, display: 'block', marginBottom: 4 }}>Date de naissance</label>
+                  <input
+                    type="date"
+                    value={dateNaissance}
+                    onChange={e => setDateNaissance(e.target.value)}
+                    style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 12px', color: '#1A1410', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={anniversairePublic}
+                    onChange={e => setAnniversairePublic(e.target.checked)}
+                    style={{ accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={{ color: '#8C5A40', fontSize: 12 }}>Afficher dans l'espace communautaire</span>
+                </label>
+                <button
+                  onClick={handleSaveBirthday}
+                  disabled={savingBirthday}
+                  style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', opacity: savingBirthday ? 0.7 : 1 }}
+                >
+                  {savingBirthday ? 'Enregistrement...' : 'Enregistrer'}
+                </button>
               </div>
             </div>
 
@@ -516,6 +577,30 @@ function ProfilInner() {
                     </div>
                   </div>
                 )}
+
+                {/* 🗓️ Ancienneté */}
+                <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
+                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>🗓️ Ancienneté</h3>
+                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{moisAnciennete} mois sur LOTBO</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {PALIERS_ANCIENNETE.map(p => {
+                      const obtenu = moisAnciennete >= p.mois
+                      return (
+                        <div key={p.mois} style={{
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                          padding: '12px 16px', borderRadius: 12, minWidth: 80,
+                          background: obtenu ? 'rgba(200,67,26,0.12)' : 'rgba(26,20,16,0.03)',
+                          border: obtenu ? '1px solid rgba(200,67,26,0.4)' : '1px solid #E8E0D0',
+                          opacity: obtenu ? 1 : 0.4,
+                        }}>
+                          <span style={{ fontSize: 28 }}>{p.badge}</span>
+                          <p style={{ color: obtenu ? '#C8431A' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{p.label}</p>
+                          {obtenu && <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{p.message}</p>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
 
                 {/* ── GM12 — Mon classement global ── */}
                 <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>

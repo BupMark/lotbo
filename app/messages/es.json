@@ -93,5 +93,16 @@
     "acceptee": "¡Te has unido!",
     "renvoyee": "Invitación reenviada",
     "ajoute": "Miembro añadido"
+  },
+  "anniversaire": {
+    "date_naissance": "Fecha de nacimiento",
+    "anniversaire_public": "Mostrar en el espacio comunitario",
+    "palier_1mois": "Formas parte de la aventura",
+    "palier_3mois": "LOTBO crece contigo",
+    "palier_6mois": "6 meses cartografiando el mundo",
+    "palier_1an": "Un año. Gracias por estar desde el principio.",
+    "palier_2ans": "Constructor de la primera hora",
+    "palier_5ans": "Leyenda viva de LOTBO",
+    "anciennete": "Antigüedad"
   }
 }

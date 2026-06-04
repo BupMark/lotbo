@@ -93,5 +93,16 @@
     "acceptee": "Ou rantre nan òganizasyon an!",
     "renvoyee": "Envitasyon voye ankò",
     "ajoute": "Manm ajoute"
+  },
+  "anniversaire": {
+    "date_naissance": "Dat nesans",
+    "anniversaire_public": "Montre nan espas kominotè a",
+    "palier_1mois": "Ou fè pati avanti a",
+    "palier_3mois": "LOTBO grandi avèk ou",
+    "palier_6mois": "6 mwa ap kartografye mond lan",
+    "palier_1an": "Yon ane. Mèsi pou yo la depi kòmansman.",
+    "palier_2ans": "Batisè premye lè a",
+    "palier_5ans": "Lejann vivan LOTBO",
+    "anciennete": "Lontan"
   }
 }

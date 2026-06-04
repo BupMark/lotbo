@@ -93,5 +93,16 @@
     "acceptee": "You've joined the organization!",
     "renvoyee": "Invitation resent",
     "ajoute": "Member added"
+  },
+  "anniversaire": {
+    "date_naissance": "Date of birth",
+    "anniversaire_public": "Show in community space",
+    "palier_1mois": "You're part of the adventure",
+    "palier_3mois": "LOTBO grows with you",
+    "palier_6mois": "6 months mapping the world",
+    "palier_1an": "One year. Thank you for being here from the start.",
+    "palier_2ans": "Early builder",
+    "palier_5ans": "Living legend of LOTBO",
+    "anciennete": "Membership"
   }
 }

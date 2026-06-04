@@ -1,0 +1,14 @@
+name: Anniversaires quotidiens
+on:
+  schedule:
+    - cron: '0 7 * * *'  # chaque jour à 7h UTC
+  workflow_dispatch:
+jobs:
+  anniversaires:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Envoyer emails anniversaire
+        run: |
+          curl -X POST https://app.lotbo.app/api/cron/anniversaires \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            -H "Content-Type: application/json"
