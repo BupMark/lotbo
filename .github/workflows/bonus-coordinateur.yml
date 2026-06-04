@@ -1,0 +1,16 @@
+name: Bonus Coordinateur Mensuel
+
+on:
+  schedule:
+    - cron: '0 8 1 * *'  # 1er du mois à 8h UTC
+  workflow_dispatch:  # déclenchement manuel possible
+
+jobs:
+  bonus:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculer et attribuer bonus coordinateur
+        run: |
+          curl -X POST https://app.lotbo.app/api/cron/bonus-coordinateur \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            -H "Content-Type: application/json"
