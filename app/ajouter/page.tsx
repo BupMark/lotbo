@@ -824,7 +824,7 @@ export default function AjouterEvenement() {
     if (!session) { setSaving(false); return }
 
     let imported = 0
-    let errors = 0
+    const errDetails: string[] = []
 
     for (const i of scanMultiSelected) {
       const ev = scanMultiEvents[i]
@@ -855,16 +855,6 @@ export default function AjouterEvenement() {
       }
 
       try {
-        console.log('[MULTI INSERT]', JSON.stringify({
-          titre: ev.titre || 'Sans titre',
-          ville: ev.ville || '',
-          pays: ev.pays || '',
-          date: ev.date_debut || null,
-          date_debut: ev.date_debut || null,
-          longitude,
-          latitude,
-          statut,
-        }))
         const { error } = await supabase.from('evenements').insert([{
           titre: ev.titre || 'Sans titre',
           organisateur: ev.organisateur || null,
@@ -889,15 +879,19 @@ export default function AjouterEvenement() {
           latitude,
         }])
         if (!error) imported++
-        else { console.error('[MULTI] error:', error); errors++ }
-      } catch (err) { console.error('[MULTI] catch:', err); errors++ }
+        else errDetails.push(`"${ev.titre || '?'}" → ${error.message} (${error.code})`)
+      } catch (err) {
+        errDetails.push(`"${ev.titre || '?'}" → exception: ${err instanceof Error ? err.message : String(err)}`)
+      }
     }
 
     setSaving(false)
     setScanMultiMode(false)
     setScanMessage({
-      type: 'verifier',
-      texte: `✅ ${imported} événement${imported > 1 ? 's' : ''} soumis${errors > 0 ? ` · ${errors} erreur(s)` : ''} — en attente de validation.`,
+      type: errDetails.length > 0 ? 'erreur' : 'verifier',
+      texte: errDetails.length > 0
+        ? `⚠️ ${imported} ok · ${errDetails.length} erreur(s) :\n${errDetails.join('\n')}`
+        : `✅ ${imported} événement${imported > 1 ? 's' : ''} soumis — en attente de validation.`,
     })
   }
 
