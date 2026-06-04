@@ -816,7 +816,7 @@ if (data?.parent_id) {
     </main>
   )
 
-  const urlEvenement  = 'https://app.lotbo.app/evenement/' + ev.id
+  const urlEvenement  = `https://app.lotbo.app/e/${ev.id}?utm_source=share&utm_medium=whatsapp&utm_campaign=event`
   const texteWhatsapp = 'Découvre cet événement sur Lotbo : ' + ev.titre + ' — ' + urlEvenement
   const urlWhatsapp   = 'https://wa.me/?text=' + encodeURIComponent(texteWhatsapp)
   const urlFacebook   = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)

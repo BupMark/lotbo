@@ -192,7 +192,7 @@ export default function PageOrganisation() {
   }
 
   const partager = () => {
-    const texte = `Suivez nos événements sur Lotbo 👉 https://app.lotbo.app/organisation/${slug}`
+    const texte = `Suivez nos événements sur Lotbo 👉 https://app.lotbo.app/o/${slug}?utm_source=share&utm_medium=whatsapp&utm_campaign=org`
     navigator.clipboard.writeText(texte).then(() => {
       setLienCopie(true)
       if (copieTimer.current) clearTimeout(copieTimer.current)
