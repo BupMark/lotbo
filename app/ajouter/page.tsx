@@ -855,6 +855,16 @@ export default function AjouterEvenement() {
       }
 
       try {
+        console.log('[MULTI INSERT]', JSON.stringify({
+          titre: ev.titre || 'Sans titre',
+          ville: ev.ville || '',
+          pays: ev.pays || '',
+          date: ev.date_debut || null,
+          date_debut: ev.date_debut || null,
+          longitude,
+          latitude,
+          statut,
+        }))
         const { error } = await supabase.from('evenements').insert([{
           titre: ev.titre || 'Sans titre',
           organisateur: ev.organisateur || null,
