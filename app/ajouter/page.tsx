@@ -576,6 +576,9 @@ export default function AjouterEvenement() {
   const [scanMultiMode, setScanMultiMode]     = useState(false)
   const [scanMultiSelected, setScanMultiSelected] = useState<Set<number>>(new Set())
   const [saving, setSaving]                   = useState(false)
+  const [scanMultiEtape, setScanMultiEtape]   = useState<'selection' | 'revision'>('selection')
+  const [scanMultiRevisionIdx, setScanMultiRevisionIdx] = useState(0)
+  const [scanMultiEdits, setScanMultiEdits]   = useState<ScanEvent[]>([])
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
   const locale: Locale = (() => {
@@ -817,8 +820,15 @@ export default function AjouterEvenement() {
     e.target.value = ''
   }
 
-  const handleSubmitMulti = async () => {
+  const handleSubmitMulti = () => {
     if (scanMultiSelected.size === 0) return
+    const edits = scanMultiEvents.filter((_, i) => scanMultiSelected.has(i))
+    setScanMultiEdits(edits)
+    setScanMultiRevisionIdx(0)
+    setScanMultiEtape('revision')
+  }
+
+  const handlePublierMulti = async () => {
     setSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { setSaving(false); return }
@@ -826,11 +836,9 @@ export default function AjouterEvenement() {
     let imported = 0
     const errDetails: string[] = []
 
-    for (const i of scanMultiSelected) {
-      const ev = scanMultiEvents[i]
+    for (const ev of scanMultiEdits) {
       const categorieNom = ev.categorie || ''
 
-      // Géocodage automatique
       let longitude = 0
       let latitude = 0
       let statut: string = 'a_localiser'
@@ -887,6 +895,7 @@ export default function AjouterEvenement() {
 
     setSaving(false)
     setScanMultiMode(false)
+    setScanMultiEtape('selection')
     setScanMessage({
       type: errDetails.length > 0 ? 'erreur' : 'verifier',
       texte: errDetails.length > 0
@@ -1294,90 +1303,191 @@ export default function AjouterEvenement() {
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
         </div>
 
-        {scanMultiMode && scanMultiEvents.length > 0 && (
-          <div style={{
-            background: 'white', border: '2px solid #C8431A',
-            borderRadius: 16, padding: 20, marginBottom: 24,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410', marginBottom: 4 }}>
-                  📋 {scanMultiEvents.length} événements détectés
-                </h3>
-                <p style={{ fontSize: 13, color: '#8C5A40' }}>
-                  Sélectionne les événements à importer
-                </p>
-              </div>
-              <button
-                onClick={handleSubmitMulti}
-                disabled={scanMultiSelected.size === 0 || saving}
-                style={{
-                  background: '#C8431A', color: 'white', border: 'none',
-                  borderRadius: 10, padding: '10px 20px', fontSize: 13,
-                  fontWeight: 'bold', cursor: 'pointer',
-                }}
-              >
-                ✅ Importer {scanMultiSelected.size} événement{scanMultiSelected.size > 1 ? 's' : ''}
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {scanMultiEvents.map((ev, i) => (
-                <div key={i} style={{
-                  display: 'flex', gap: 12, alignItems: 'flex-start',
-                  background: scanMultiSelected.has(i) ? 'rgba(200,67,26,0.05)' : '#F7F2E8',
-                  border: `1px solid ${scanMultiSelected.has(i) ? 'rgba(200,67,26,0.3)' : '#E8E0D0'}`,
-                  borderRadius: 12, padding: '12px 16px', cursor: 'pointer',
-                }}
-                  onClick={() => {
-                    setScanMultiSelected(prev => {
-                      const next = new Set(prev)
-                      if (next.has(i)) next.delete(i)
-                      else next.add(i)
-                      return next
-                    })
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={scanMultiSelected.has(i)}
-                    onChange={() => {}}
-                    style={{ marginTop: 2, accentColor: '#C8431A', flexShrink: 0 }}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', marginBottom: 4 }}>
-                      {ev.titre || 'Sans titre'}
-                    </p>
-                    <p style={{ fontSize: 12, color: '#8C5A40' }}>
-                      {ev.date_debut && `📅 ${ev.date_debut}`}
-                      {ev.heure_debut && ` · ${ev.heure_debut}`}
-                      {ev.lieu && ` · 📍 ${ev.lieu}`}
-                      {ev.ville && `, ${ev.ville}`}
-                    </p>
-                    {ev.description && (
-                      <p style={{ fontSize: 12, color: '#8C5A40', marginTop: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                        {ev.description}
-                      </p>
-                    )}
+        {scanMultiMode && (
+          <>
+            {/* ── Étape 1 : Sélection ── */}
+            {scanMultiEtape === 'selection' && scanMultiEvents.length > 0 && (
+              <div style={{ background: 'white', border: '2px solid #C8431A', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410', marginBottom: 4 }}>
+                      📋 {scanMultiEvents.length} événements détectés
+                    </h3>
+                    <p style={{ fontSize: 13, color: '#8C5A40' }}>Sélectionne les événements à importer</p>
                   </div>
-                  <span style={{
-                    background: ev.prix === 'gratuit' ? 'rgba(45,158,107,0.1)' : 'rgba(200,67,26,0.1)',
-                    color: ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A',
-                    borderRadius: 999, padding: '2px 10px', fontSize: 11, fontWeight: 'bold', flexShrink: 0,
-                  }}>
-                    {ev.prix || 'N/A'}
-                  </span>
+                  <button
+                    onClick={handleSubmitMulti}
+                    disabled={scanMultiSelected.size === 0}
+                    style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 'bold', cursor: scanMultiSelected.size === 0 ? 'not-allowed' : 'pointer', opacity: scanMultiSelected.size === 0 ? 0.5 : 1 }}
+                  >
+                    Réviser {scanMultiSelected.size} événement{scanMultiSelected.size > 1 ? 's' : ''} →
+                  </button>
                 </div>
-              ))}
-            </div>
 
-            <button
-              onClick={() => setScanMultiMode(false)}
-              style={{ marginTop: 12, background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              ← Annuler et saisir manuellement
-            </button>
-          </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {scanMultiEvents.map((ev, i) => (
+                    <div key={i}
+                      style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: scanMultiSelected.has(i) ? 'rgba(200,67,26,0.05)' : '#F7F2E8', border: `1px solid ${scanMultiSelected.has(i) ? 'rgba(200,67,26,0.3)' : '#E8E0D0'}`, borderRadius: 12, padding: '12px 16px', cursor: 'pointer' }}
+                      onClick={() => setScanMultiSelected(prev => { const next = new Set(prev); if (next.has(i)) next.delete(i); else next.add(i); return next })}
+                    >
+                      <input type="checkbox" checked={scanMultiSelected.has(i)} onChange={() => {}} style={{ marginTop: 2, accentColor: '#C8431A', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', marginBottom: 4 }}>{ev.titre || 'Sans titre'}</p>
+                        <p style={{ fontSize: 12, color: '#8C5A40' }}>
+                          {ev.date_debut && `📅 ${ev.date_debut}`}
+                          {ev.heure_debut && ` · ${ev.heure_debut}`}
+                          {ev.lieu && ` · 📍 ${ev.lieu}`}
+                          {ev.ville && `, ${ev.ville}`}
+                        </p>
+                        {ev.description && (
+                          <p style={{ fontSize: 12, color: '#8C5A40', marginTop: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{ev.description}</p>
+                        )}
+                      </div>
+                      <span style={{ background: ev.prix === 'gratuit' ? 'rgba(45,158,107,0.1)' : 'rgba(200,67,26,0.1)', color: ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A', borderRadius: 999, padding: '2px 10px', fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
+                        {ev.prix || 'N/A'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <button onClick={() => setScanMultiMode(false)} style={{ marginTop: 12, background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
+                  ← Annuler et saisir manuellement
+                </button>
+              </div>
+            )}
+
+            {/* ── Étape 2 : Révision one-by-one ── */}
+            {scanMultiEtape === 'revision' && scanMultiEdits.length > 0 && (
+              <div style={{ background: 'white', border: '2px solid #C8431A', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+                {/* Header + barre de progression */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 'bold', color: '#1A1410' }}>
+                      📝 Événement {scanMultiRevisionIdx + 1} sur {scanMultiEdits.length}
+                    </h3>
+                    <button
+                      onClick={() => { setScanMultiEtape('selection'); setScanMultiRevisionIdx(0) }}
+                      style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      ← Retour à la sélection
+                    </button>
+                  </div>
+                  <div style={{ background: '#E8E0D0', borderRadius: 999, height: 6, overflow: 'hidden' }}>
+                    <div style={{ background: '#C8431A', height: '100%', borderRadius: 999, width: `${((scanMultiRevisionIdx + 1) / scanMultiEdits.length) * 100}%`, transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+
+                {/* Champs éditables */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Titre *</label>
+                    <input
+                      type="text"
+                      value={scanMultiEdits[scanMultiRevisionIdx]?.titre || ''}
+                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], titre: e.target.value }; return next })}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>Date de début</label>
+                      <input
+                        type="date"
+                        value={scanMultiEdits[scanMultiRevisionIdx]?.date_debut || ''}
+                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], date_debut: e.target.value || null }; return next })}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>Heure <span style={{ color: '#8C5A40' }}>(opt.)</span></label>
+                      <input
+                        type="time"
+                        value={scanMultiEdits[scanMultiRevisionIdx]?.heure_debut || ''}
+                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], heure_debut: e.target.value || null }; return next })}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Lieu</label>
+                    <input
+                      type="text"
+                      value={scanMultiEdits[scanMultiRevisionIdx]?.lieu || ''}
+                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], lieu: e.target.value || null }; return next })}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>Ville</label>
+                      <input
+                        type="text"
+                        value={scanMultiEdits[scanMultiRevisionIdx]?.ville || ''}
+                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], ville: e.target.value || null }; return next })}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>Pays</label>
+                      <input
+                        type="text"
+                        value={scanMultiEdits[scanMultiRevisionIdx]?.pays || ''}
+                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], pays: e.target.value || null }; return next })}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Prix</label>
+                    <select
+                      value={scanMultiEdits[scanMultiRevisionIdx]?.prix || 'gratuit'}
+                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], prix: e.target.value as 'gratuit' | 'payant' }; return next })}
+                      style={inputStyle}
+                    >
+                      <option value="gratuit">Gratuit</option>
+                      <option value="payant">Payant</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Description <span style={{ color: '#8C5A40' }}>(opt.)</span></label>
+                    <textarea
+                      value={scanMultiEdits[scanMultiRevisionIdx]?.description || ''}
+                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], description: e.target.value || null }; return next })}
+                      rows={3}
+                      style={{ ...inputStyle, resize: 'vertical' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                  <button
+                    onClick={() => setScanMultiRevisionIdx(i => i - 1)}
+                    disabled={scanMultiRevisionIdx === 0}
+                    style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 'bold', cursor: scanMultiRevisionIdx === 0 ? 'not-allowed' : 'pointer', opacity: scanMultiRevisionIdx === 0 ? 0.4 : 1 }}
+                  >
+                    ← Précédent
+                  </button>
+                  {scanMultiRevisionIdx < scanMultiEdits.length - 1 ? (
+                    <button
+                      onClick={() => setScanMultiRevisionIdx(i => i + 1)}
+                      style={{ flex: 2, background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                      Suivant →
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handlePublierMulti}
+                      disabled={saving}
+                      style={{ flex: 2, background: saving ? '#8C5A40' : '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 'bold', cursor: saving ? 'not-allowed' : 'pointer' }}
+                    >
+                      {saving ? 'Publication...' : `✅ Publier ${scanMultiEdits.length} événement${scanMultiEdits.length > 1 ? 's' : ''}`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
