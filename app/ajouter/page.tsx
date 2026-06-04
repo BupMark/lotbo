@@ -850,12 +850,12 @@ export default function AjouterEvenement() {
           user_id: session.user.id,
           source: 'scan_publie',
           categorie: categorieNom,
-          longitude: 0,
-          latitude: 0,
+          longitude: null,
+          latitude: null,
         }])
         if (!error) imported++
-        else errors++
-      } catch { errors++ }
+        else { console.error('[MULTI] error:', error); errors++ }
+      } catch (err) { console.error('[MULTI] catch:', err); errors++ }
     }
 
     setSaving(false)
