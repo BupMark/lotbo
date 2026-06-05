@@ -869,6 +869,7 @@ export default function AjouterEvenement() {
           ville: ev.ville || '',
           pays: ev.pays || '',
           nom_lieu: ev.lieu || null,
+          lieu: [ev.lieu, ev.ville, ev.pays].filter(Boolean).join(', ') || 'Lieu à préciser',
           adresse: ev.adresse || null,
           date: ev.date_debut || null,
           date_debut: ev.date_debut || null,
