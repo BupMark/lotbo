@@ -220,6 +220,19 @@ const VISIBILITES = [
   { value: 'prive',   label: '🫧 Privé',   description: 'Invisible sur la carte — accessible uniquement via lien secret', color: '#C8431A', bg: 'rgba(200,67,26,0.12)',  border: 'rgba(200,67,26,0.4)'  },
 ]
 
+const CATEGORIE_MAP: Record<string, string> = {
+  'concert': 'Concert / Spectacle', 'spectacle': 'Concert / Spectacle',
+  'festival': 'Festival', 'fête': 'Festival', 'fete': 'Festival',
+  'conférence': 'Conférence / Sommet', 'conference': 'Conférence / Sommet', 'sommet': 'Conférence / Sommet',
+  'exposition': 'Foire / Exposition', 'expo': 'Foire / Exposition', 'foire': 'Foire / Exposition',
+  'formation': 'Formation / Séminaire', 'séminaire': 'Formation / Séminaire', 'seminaire': 'Formation / Séminaire',
+  'tournoi': 'Tournoi / Compétition', 'compétition': 'Tournoi / Compétition', 'sport': 'Tournoi / Compétition',
+  'culte': 'Culte / Cérémonie religieuse', 'messe': 'Culte / Cérémonie religieuse', 'église': 'Culte / Cérémonie religieuse',
+  'assemblée': 'Assemblée / Réunion', 'réunion': 'Assemblée / Réunion',
+  'inauguration': 'Inauguration / Lancement', 'lancement': 'Inauguration / Lancement',
+  'communautaire': 'Célébration communautaire', 'célébration': 'Célébration communautaire',
+}
+
 const inputStyle = {
   background: 'white', border: '1px solid #E8E0D0', borderRadius: 10,
   padding: '12px 16px', color: '#1A1410', fontSize: 14, outline: 'none',
@@ -573,12 +586,8 @@ export default function AjouterEvenement() {
   const [scanMessage, setScanMessage]         = useState<{ type: 'verifier' | 'erreur'; texte: string } | null>(null)
   const [filledByScan, setFilledByScan]       = useState(false)
   const [scanMultiEvents, setScanMultiEvents] = useState<ScanEvent[]>([])
-  const [scanMultiMode, setScanMultiMode]     = useState(false)
-  const [scanMultiSelected, setScanMultiSelected] = useState<Set<number>>(new Set())
-  const [saving, setSaving]                   = useState(false)
-  const [scanMultiEtape, setScanMultiEtape]   = useState<'selection' | 'revision'>('selection')
-  const [scanMultiRevisionIdx, setScanMultiRevisionIdx] = useState(0)
-  const [scanMultiEdits, setScanMultiEdits]   = useState<ScanEvent[]>([])
+  const [scanMultiIndex, setScanMultiIndex]   = useState(0)
+  const [scanMultiTotal, setScanMultiTotal]   = useState(0)
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
   const locale: Locale = (() => {
@@ -683,6 +692,86 @@ export default function AjouterEvenement() {
     return () => observer.disconnect()
   }, [imageBlocIgnore, image, imageUnsplash])
 
+  const chargerEvenementScan = async (events: ScanEvent[], index: number, total: number) => {
+    const d = events[index]
+    if (!d) return
+    const nouvelleVille = d.ville || ''
+    const nouveauPays   = d.pays  || ''
+    const nouveauLieu   = d.lieu  || ''
+    setForm({
+      titre:               d.titre         || '',
+      organisateur:        d.organisateur  || '',
+      nom_lieu:            nouveauLieu,
+      adresse:             d.adresse       || '',
+      ville:               nouvelleVille,
+      pays:                nouveauPays,
+      date:                d.date_debut    || '',
+      date_fin:            d.date_fin      || '',
+      heure_debut:         d.heure_debut   || '',
+      heure_fin:           d.heure_fin     || '',
+      fuseau_organisateur: 'America/Port-au-Prince',
+      description:         d.description   || '',
+      lien:                d.lien_officiel || '',
+      acces:               'public',
+      prix:                d.prix          || 'gratuit',
+      organisation_id:     '',
+    })
+    setCoordsPin(null)
+    setPinConfirme(false)
+    setRechercheTexte('')
+    setEstRecurrent(false)
+    setJoursRecurrence([])
+    setSelectedType(null)
+    setImage(null)
+    setImageUnsplash(null)
+    setShowImageBloc(false)
+    setImageBlocIgnore(false)
+    const texteRecherche = `${d.categorie || ''} ${d.titre || ''}`.toLowerCase()
+    for (const [key, val] of Object.entries(CATEGORIE_MAP)) {
+      if (texteRecherche.includes(key)) {
+        const typeMatch = EVENT_TYPES.find(t => t.nom === val)
+        if (typeMatch) setSelectedType(typeMatch.id)
+        break
+      }
+    }
+    if (nouvelleVille) {
+      const query = nouveauLieu
+        ? `${nouveauLieu}, ${nouvelleVille}${nouveauPays ? ', ' + nouveauPays : ''}`
+        : `${nouvelleVille}${nouveauPays ? ', ' + nouveauPays : ''}`
+      setRechercheTexte(query)
+      try {
+        const geoRes  = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(query)}`)
+        const geoData = await geoRes.json()
+        if (geoData.predictions?.length > 0) {
+          const placeId = geoData.predictions[0].place_id
+          const detRes  = await fetch(`/api/places-details?place_id=${placeId}`)
+          const detData = await detRes.json()
+          const loc     = detData.result?.geometry?.location
+          if (loc) setCoordsPin({ longitude: loc.lng, latitude: loc.lat, adresse: query })
+        }
+      } catch { /* géocodage silencieux */ }
+    }
+    if (d.est_recurrent === true) {
+      setEstRecurrent(true)
+      if (d.type_recurrence) setTypeRecurrence(d.type_recurrence as 'quotidien' | 'hebdomadaire' | 'mensuel' | 'annuel')
+      if (d.jours_semaine && Array.isArray(d.jours_semaine)) {
+        const JOURS_NORM: Record<string, string> = {
+          'lundi': 'Lundi', 'monday': 'Lundi', 'mardi': 'Mardi', 'tuesday': 'Mardi',
+          'mercredi': 'Mercredi', 'wednesday': 'Mercredi', 'jeudi': 'Jeudi', 'thursday': 'Jeudi',
+          'vendredi': 'Vendredi', 'friday': 'Vendredi', 'samedi': 'Samedi', 'saturday': 'Samedi',
+          'dimanche': 'Dimanche', 'sunday': 'Dimanche',
+        }
+        const normalises = d.jours_semaine
+          .map((j: string) => JOURS_NORM[j.toLowerCase()] ?? null)
+          .filter((j: string | null): j is string => j !== null)
+        if (normalises.length > 0) setJoursRecurrence(normalises)
+      }
+    }
+    setFilledByScan(true)
+    setScanMessage({ type: 'verifier', texte: `📋 Événement ${index + 1}/${total} — Vérifie et complète avant de publier` })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -704,9 +793,11 @@ export default function AjouterEvenement() {
 
           // Gestion multi-événements
           if (json.mode === 'multi' && json.events && json.events.length > 1) {
-            setScanMultiEvents(json.events as ScanEvent[])
-            setScanMultiMode(true)
-            setScanMultiSelected(new Set(json.events.map((_: ScanEvent, i: number) => i)))
+            const events = json.events as ScanEvent[]
+            setScanMultiEvents(events)
+            setScanMultiTotal(events.length)
+            setScanMultiIndex(0)
+            await chargerEvenementScan(events, 0, events.length)
             setScanLoading(false)
             return
           }
@@ -715,19 +806,6 @@ export default function AjouterEvenement() {
           if (Object.keys(d).length === 0) {
             setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurLecture || "On n'a pas pu lire l'affiche." })
           } else {
-            // Mapping catégorie texte libre → taxonomie LOTBO
-            const CATEGORIE_MAP: Record<string, string> = {
-              'concert': 'Concert / Spectacle', 'spectacle': 'Concert / Spectacle',
-              'festival': 'Festival', 'fête': 'Festival', 'fete': 'Festival',
-              'conférence': 'Conférence / Sommet', 'conference': 'Conférence / Sommet', 'sommet': 'Conférence / Sommet',
-              'exposition': 'Foire / Exposition', 'expo': 'Foire / Exposition', 'foire': 'Foire / Exposition',
-              'formation': 'Formation / Séminaire', 'séminaire': 'Formation / Séminaire', 'seminaire': 'Formation / Séminaire',
-              'tournoi': 'Tournoi / Compétition', 'compétition': 'Tournoi / Compétition', 'sport': 'Tournoi / Compétition',
-              'culte': 'Culte / Cérémonie religieuse', 'messe': 'Culte / Cérémonie religieuse', 'église': 'Culte / Cérémonie religieuse',
-              'assemblée': 'Assemblée / Réunion', 'réunion': 'Assemblée / Réunion',
-              'inauguration': 'Inauguration / Lancement', 'lancement': 'Inauguration / Lancement',
-              'communautaire': 'Célébration communautaire', 'célébration': 'Célébration communautaire',
-            }
             let categorieDetectee: string | null = null
             const texteRecherche = `${d.categorie || ''} ${d.titre || ''}`.toLowerCase()
             for (const [key, val] of Object.entries(CATEGORIE_MAP)) {
@@ -818,91 +896,6 @@ export default function AjouterEvenement() {
       setScanLoading(false)
     }
     e.target.value = ''
-  }
-
-  const handleSubmitMulti = () => {
-    if (scanMultiSelected.size === 0) return
-    const edits = scanMultiEvents.filter((_, i) => scanMultiSelected.has(i))
-    setScanMultiEdits(edits)
-    setScanMultiRevisionIdx(0)
-    setScanMultiEtape('revision')
-  }
-
-  const handlePublierMulti = async () => {
-    setSaving(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setSaving(false); return }
-
-    let imported = 0
-    const errDetails: string[] = []
-
-    for (const ev of scanMultiEdits) {
-      const categorieNom = ev.categorie || ''
-
-      let longitude = 0
-      let latitude = 0
-      let statut: string = 'a_localiser'
-
-      if (ev.ville) {
-        try {
-          const q = [ev.lieu, ev.ville].filter(Boolean).join(' ')
-          const acRes = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(q)}`)
-          const acJson = await acRes.json()
-          const placeId = acJson?.predictions?.[0]?.place_id
-          if (placeId) {
-            const detRes = await fetch(`/api/places-details?place_id=${encodeURIComponent(placeId)}`)
-            const detJson = await detRes.json()
-            const loc = detJson?.result?.geometry?.location
-            if (loc?.lat && loc?.lng) {
-              latitude = loc.lat
-              longitude = loc.lng
-              statut = 'en_attente'
-            }
-          }
-        } catch { /* géocodage non bloquant */ }
-      }
-
-      try {
-        const { error } = await supabase.from('evenements').insert([{
-          titre: ev.titre || 'Sans titre',
-          organisateur: ev.organisateur || null,
-          ville: ev.ville || '',
-          pays: ev.pays || '',
-          nom_lieu: ev.lieu || null,
-          lieu: [ev.lieu, ev.ville, ev.pays].filter(Boolean).join(', ') || 'Lieu à préciser',
-          adresse: ev.adresse || null,
-          date: ev.date_debut || null,
-          date_debut: ev.date_debut || null,
-          date_fin: ev.date_fin || null,
-          heure_debut: ev.heure_debut || null,
-          heure_fin: ev.heure_fin || null,
-          description: ev.description || null,
-          lien: ev.lien_officiel || null,
-          acces: 'public',
-          prix: ev.prix || 'gratuit',
-          statut,
-          user_id: session.user.id,
-          source: 'scan_publie',
-          categorie: categorieNom,
-          longitude,
-          latitude,
-        }])
-        if (!error) imported++
-        else errDetails.push(`"${ev.titre || '?'}" → ${error.message} (${error.code})`)
-      } catch (err) {
-        errDetails.push(`"${ev.titre || '?'}" → exception: ${err instanceof Error ? err.message : String(err)}`)
-      }
-    }
-
-    setSaving(false)
-    setScanMultiMode(false)
-    setScanMultiEtape('selection')
-    setScanMessage({
-      type: errDetails.length > 0 ? 'erreur' : 'verifier',
-      texte: errDetails.length > 0
-        ? `⚠️ ${imported} ok · ${errDetails.length} erreur(s) :\n${errDetails.join('\n')}`
-        : `✅ ${imported} événement${imported > 1 ? 's' : ''} soumis — en attente de validation.`,
-    })
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -1039,7 +1032,6 @@ export default function AjouterEvenement() {
     const userId = session?.user?.id || ''
     const { count: nbAvant } = await supabase.from('evenements').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('soumis_en_tant_que', choix)
 
-    console.log('[SUBMIT] filledByScan =', filledByScan)
     const { data: inserted, error } = await supabase.from('evenements').insert([{
       titre: form.titre, organisateur: form.organisateur || null, user_id: session?.user?.id || null,
       nom_lieu: form.nom_lieu || null, adresse: form.adresse || null, lieu: lieuAffiche,
@@ -1156,6 +1148,13 @@ export default function AjouterEvenement() {
           role: choix,
         }),
       }).catch(() => {})
+    }
+
+    if (scanMultiTotal > 1 && scanMultiIndex < scanMultiTotal - 1) {
+      const nextIndex = scanMultiIndex + 1
+      setScanMultiIndex(nextIndex)
+      await chargerEvenementScan(scanMultiEvents, nextIndex, scanMultiTotal)
+      return
     }
 
     setSuccesData({
@@ -1304,194 +1303,18 @@ export default function AjouterEvenement() {
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
         </div>
 
-        {scanMultiMode && (
-          <>
-            {/* ── Étape 1 : Sélection ── */}
-            {scanMultiEtape === 'selection' && scanMultiEvents.length > 0 && (
-              <div style={{ background: 'white', border: '2px solid #C8431A', borderRadius: 16, padding: 20, marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410', marginBottom: 4 }}>
-                      📋 {scanMultiEvents.length} événements détectés
-                    </h3>
-                    <p style={{ fontSize: 13, color: '#8C5A40' }}>Sélectionne les événements à importer</p>
-                  </div>
-                  <button
-                    onClick={handleSubmitMulti}
-                    disabled={scanMultiSelected.size === 0}
-                    style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 'bold', cursor: scanMultiSelected.size === 0 ? 'not-allowed' : 'pointer', opacity: scanMultiSelected.size === 0 ? 0.5 : 1 }}
-                  >
-                    Réviser {scanMultiSelected.size} événement{scanMultiSelected.size > 1 ? 's' : ''} →
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {scanMultiEvents.map((ev, i) => (
-                    <div key={i}
-                      style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: scanMultiSelected.has(i) ? 'rgba(200,67,26,0.05)' : '#F7F2E8', border: `1px solid ${scanMultiSelected.has(i) ? 'rgba(200,67,26,0.3)' : '#E8E0D0'}`, borderRadius: 12, padding: '12px 16px', cursor: 'pointer' }}
-                      onClick={() => setScanMultiSelected(prev => { const next = new Set(prev); if (next.has(i)) next.delete(i); else next.add(i); return next })}
-                    >
-                      <input type="checkbox" checked={scanMultiSelected.has(i)} onChange={() => {}} style={{ marginTop: 2, accentColor: '#C8431A', flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', marginBottom: 4 }}>{ev.titre || 'Sans titre'}</p>
-                        <p style={{ fontSize: 12, color: '#8C5A40' }}>
-                          {ev.date_debut && `📅 ${ev.date_debut}`}
-                          {ev.heure_debut && ` · ${ev.heure_debut}`}
-                          {ev.lieu && ` · 📍 ${ev.lieu}`}
-                          {ev.ville && `, ${ev.ville}`}
-                        </p>
-                        {ev.description && (
-                          <p style={{ fontSize: 12, color: '#8C5A40', marginTop: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{ev.description}</p>
-                        )}
-                      </div>
-                      <span style={{ background: ev.prix === 'gratuit' ? 'rgba(45,158,107,0.1)' : 'rgba(200,67,26,0.1)', color: ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A', borderRadius: 999, padding: '2px 10px', fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
-                        {ev.prix || 'N/A'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <button onClick={() => setScanMultiMode(false)} style={{ marginTop: 12, background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
-                  ← Annuler et saisir manuellement
-                </button>
-              </div>
-            )}
-
-            {/* ── Étape 2 : Révision one-by-one ── */}
-            {scanMultiEtape === 'revision' && scanMultiEdits.length > 0 && (
-              <div style={{ background: 'white', border: '2px solid #C8431A', borderRadius: 16, padding: 20, marginBottom: 24 }}>
-                {/* Header + barre de progression */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 'bold', color: '#1A1410' }}>
-                      📝 Événement {scanMultiRevisionIdx + 1} sur {scanMultiEdits.length}
-                    </h3>
-                    <button
-                      onClick={() => { setScanMultiEtape('selection'); setScanMultiRevisionIdx(0) }}
-                      style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      ← Retour à la sélection
-                    </button>
-                  </div>
-                  <div style={{ background: '#E8E0D0', borderRadius: 999, height: 6, overflow: 'hidden' }}>
-                    <div style={{ background: '#C8431A', height: '100%', borderRadius: 999, width: `${((scanMultiRevisionIdx + 1) / scanMultiEdits.length) * 100}%`, transition: 'width 0.3s ease' }} />
-                  </div>
-                </div>
-
-                {/* Champs éditables */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div>
-                    <label style={labelStyle}>Titre *</label>
-                    <input
-                      type="text"
-                      value={scanMultiEdits[scanMultiRevisionIdx]?.titre || ''}
-                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], titre: e.target.value }; return next })}
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={labelStyle}>Date de début</label>
-                      <input
-                        type="date"
-                        value={scanMultiEdits[scanMultiRevisionIdx]?.date_debut || ''}
-                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], date_debut: e.target.value || null }; return next })}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={labelStyle}>Heure <span style={{ color: '#8C5A40' }}>(opt.)</span></label>
-                      <input
-                        type="time"
-                        value={scanMultiEdits[scanMultiRevisionIdx]?.heure_debut || ''}
-                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], heure_debut: e.target.value || null }; return next })}
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Lieu</label>
-                    <input
-                      type="text"
-                      value={scanMultiEdits[scanMultiRevisionIdx]?.lieu || ''}
-                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], lieu: e.target.value || null }; return next })}
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={labelStyle}>Ville</label>
-                      <input
-                        type="text"
-                        value={scanMultiEdits[scanMultiRevisionIdx]?.ville || ''}
-                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], ville: e.target.value || null }; return next })}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={labelStyle}>Pays</label>
-                      <input
-                        type="text"
-                        value={scanMultiEdits[scanMultiRevisionIdx]?.pays || ''}
-                        onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], pays: e.target.value || null }; return next })}
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Prix</label>
-                    <select
-                      value={scanMultiEdits[scanMultiRevisionIdx]?.prix || 'gratuit'}
-                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], prix: e.target.value as 'gratuit' | 'payant' }; return next })}
-                      style={inputStyle}
-                    >
-                      <option value="gratuit">Gratuit</option>
-                      <option value="payant">Payant</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Description <span style={{ color: '#8C5A40' }}>(opt.)</span></label>
-                    <textarea
-                      value={scanMultiEdits[scanMultiRevisionIdx]?.description || ''}
-                      onChange={e => setScanMultiEdits(prev => { const next = [...prev]; next[scanMultiRevisionIdx] = { ...next[scanMultiRevisionIdx], description: e.target.value || null }; return next })}
-                      rows={3}
-                      style={{ ...inputStyle, resize: 'vertical' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Navigation */}
-                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-                  <button
-                    onClick={() => setScanMultiRevisionIdx(i => i - 1)}
-                    disabled={scanMultiRevisionIdx === 0}
-                    style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 'bold', cursor: scanMultiRevisionIdx === 0 ? 'not-allowed' : 'pointer', opacity: scanMultiRevisionIdx === 0 ? 0.4 : 1 }}
-                  >
-                    ← Précédent
-                  </button>
-                  {scanMultiRevisionIdx < scanMultiEdits.length - 1 ? (
-                    <button
-                      onClick={() => setScanMultiRevisionIdx(i => i + 1)}
-                      style={{ flex: 2, background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                      Suivant →
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handlePublierMulti}
-                      disabled={saving}
-                      style={{ flex: 2, background: saving ? '#8C5A40' : '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 'bold', cursor: saving ? 'not-allowed' : 'pointer' }}
-                    >
-                      {saving ? 'Publication...' : `✅ Publier ${scanMultiEdits.length} événement${scanMultiEdits.length > 1 ? 's' : ''}`}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {scanMultiTotal > 1 && (
+            <div style={{ background: '#C8431A', color: 'white', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 'bold', fontSize: 14 }}>📋 Événement {scanMultiIndex + 1} / {scanMultiTotal}</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {Array.from({ length: scanMultiTotal }, (_, i) => (
+                  <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === scanMultiIndex ? 'white' : 'rgba(255,255,255,0.4)' }} />
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <label style={labelStyle}>Titre de l'événement *</label>
@@ -1932,7 +1755,14 @@ export default function AjouterEvenement() {
           )}
 
           <button type="submit" disabled={loading} style={{ background: loading ? '#8C5A40' : '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8 }}>
-            {loading ? 'Publication en cours...' : "Soumettre l'événement"}
+            {loading
+              ? 'Publication en cours...'
+              : scanMultiTotal > 1 && scanMultiIndex < scanMultiTotal - 1
+                ? `Soumettre et passer au suivant (${scanMultiIndex + 2}/${scanMultiTotal}) →`
+                : scanMultiTotal > 1 && scanMultiIndex === scanMultiTotal - 1
+                  ? 'Soumettre le dernier événement ✓'
+                  : "Soumettre l'événement"
+            }
           </button>
 
         </form>
