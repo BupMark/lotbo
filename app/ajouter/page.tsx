@@ -1091,7 +1091,7 @@ export default function AjouterEvenement() {
     }).catch(() => {})
 
     // ── F8 — Générer les occurrences si récurrent ─────────────────────────────
-    if (estRecurrent && inserted?.id) {
+    if (estRecurrent && !multiJours && inserted?.id) {
       fetch('/api/generer-occurrences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
