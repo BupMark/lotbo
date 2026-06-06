@@ -128,7 +128,7 @@ export default function PageOrganisation() {
         .from('evenements')
         .select('id, titre, lieu, date_debut, date, categorie, prix, image_url')
         .eq('organisation_id', orgData.id)
-        .gte('date_debut', aujourd_hui)
+        .gte('date_debut', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .eq('statut', 'approuve')
         .order('date_debut', { ascending: true })
         .limit(10),
@@ -449,25 +449,35 @@ export default function PageOrganisation() {
 
             {evenements.length === 0 ? (
               <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '32px 16px', textAlign: 'center' }}>
-                <p style={{ color: '#8C5A40', fontSize: 14 }}>Aucun événement à venir</p>
+                <p style={{ color: '#8C5A40', fontSize: 14 }}>Aucun événement récent</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {evenements.map(ev => (
-                  <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start' }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                      {ev.image_url ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📅'}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
-                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                      <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date_debut ?? ev.date}</p>
-                    </div>
-                    <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10, flexShrink: 0, alignSelf: 'flex-start' }}>
-                      {ev.categorie}
-                    </span>
-                  </a>
-                ))}
+                {evenements.map(ev => {
+                  const estPasse = (ev.date_debut ?? ev.date) < aujourd_hui
+                  return (
+                    <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start', opacity: estPasse ? 0.7 : 1 }}>
+                      <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                        {ev.image_url ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📅'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
+                        <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                        <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date_debut ?? ev.date}</p>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', flexShrink: 0 }}>
+                        <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>
+                          {ev.categorie}
+                        </span>
+                        {estPasse && (
+                          <span style={{ background: 'rgba(140,90,64,0.15)', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 'bold' }}>
+                            Passé
+                          </span>
+                        )}
+                      </div>
+                    </a>
+                  )
+                })}
               </div>
             )}
 
