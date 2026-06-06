@@ -34,15 +34,22 @@ export async function POST(request: Request) {
                 type: 'text',
                 text: `Tu es un assistant qui extrait les informations d'événements depuis des affiches, flyers ou calendriers.
 
-Analyse cette image et détermine si elle contient UN ou PLUSIEURS événements.
+Analyse cette image et détermine si elle contient UN ou PLUSIEURS événements DISTINCTS.
 
-Si UN seul événement, retourne :
+RÈGLE CRITIQUE — Distinguer event multi-jours vs events distincts :
+- Un événement qui dure plusieurs jours consécutifs (ex: "du 10 au 15 juin") = UN SEUL événement avec date_debut + date_fin → mode "single"
+- Un événement récurrent (ex: "tous les dimanches", "chaque semaine") = UN SEUL événement avec est_recurrent: true → mode "single"
+- Plusieurs événements avec des TITRES DIFFÉRENTS = mode "multi"
+- Un programme/calendrier avec des activités DIFFÉRENTES à des dates différentes = mode "multi"
+- Si tu hésites entre single et multi → choisis TOUJOURS single
+
+Si UN seul événement (ou event multi-jours ou récurrent), retourne :
 {
   "mode": "single",
   "events": [{ ...champs habituels... }]
 }
 
-Si PLUSIEURS événements (calendrier, programme, liste de dates), retourne :
+Si PLUSIEURS événements DISTINCTS avec titres différents, retourne :
 {
   "mode": "multi",
   "events": [
