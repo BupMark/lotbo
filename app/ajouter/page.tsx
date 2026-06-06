@@ -56,8 +56,8 @@ const T_IMAGE = {
     credit:            'Photo par',
     chargement:        'Chargement des suggestions…',
     selectionnee:      '✓ Image sélectionnée',
-    scanAffiche:       '📸 Scanner ou importer une affiche',
-    scanAnalyse:       '📸 Analyse en cours...',
+    scanAffiche:       'Scanner ou importer une affiche',
+    scanAnalyse:       'Analyse en cours...',
     scanVerifier:      'Vérifie et complète les informations avant de publier',
     scanErreurLecture: "On n'a pas pu lire l'affiche. Tu peux remplir le formulaire manuellement.",
     scanErreurService: 'Service temporairement indisponible. Réessaie dans quelques instants.',
@@ -71,8 +71,8 @@ const T_IMAGE = {
     credit:            'Photo by',
     chargement:        'Loading suggestions…',
     selectionnee:      '✓ Image selected',
-    scanAffiche:       '📸 Scan or import a poster',
-    scanAnalyse:       '📸 Analyzing...',
+    scanAffiche:       'Scan or import a poster',
+    scanAnalyse:       'Analyzing...',
     scanVerifier:      'Check and complete the information before publishing',
     scanErreurLecture: "We couldn't read the poster. You can fill in the form manually.",
     scanErreurService: 'Service temporarily unavailable. Please try again in a moment.',
@@ -86,8 +86,8 @@ const T_IMAGE = {
     credit:            'Foto por',
     chargement:        'Cargando sugerencias…',
     selectionnee:      '✓ Imagen seleccionada',
-    scanAffiche:       '📸 Escanear o importar un cartel',
-    scanAnalyse:       '📸 Analizando...',
+    scanAffiche:       'Escanear o importar un cartel',
+    scanAnalyse:       'Analizando...',
     scanVerifier:      'Verifica y completa la información antes de publicar',
     scanErreurLecture: 'No pudimos leer el cartel. Puedes rellenar el formulario manualmente.',
     scanErreurService: 'Servicio temporalmente no disponible. Inténtalo de nuevo en un momento.',
@@ -101,8 +101,8 @@ const T_IMAGE = {
     credit:            'Foto por',
     chargement:        'A carregar sugestões…',
     selectionnee:      '✓ Imagem selecionada',
-    scanAffiche:       '📸 Escanear ou importar um cartaz',
-    scanAnalyse:       '📸 A analisar...',
+    scanAffiche:       'Escanear ou importar um cartaz',
+    scanAnalyse:       'A analisar...',
     scanVerifier:      'Verifique e complete as informações antes de publicar',
     scanErreurLecture: 'Não conseguimos ler o cartaz. Pode preencher o formulário manualmente.',
     scanErreurService: 'Serviço temporariamente indisponível. Tente novamente em instantes.',
@@ -116,8 +116,8 @@ const T_IMAGE = {
     credit:            'Foto pa',
     chargement:        'Ap chaje sijèsyon…',
     selectionnee:      '✓ Imaj chwazi',
-    scanAffiche:       '📸 Skane oswa enpòte yon afich',
-    scanAnalyse:       '📸 Ap analize...',
+    scanAffiche:       'Skane oswa enpòte yon afich',
+    scanAnalyse:       'Ap analize...',
     scanVerifier:      'Verifye epi konplete enfòmasyon yo anvan ou pibliye',
     scanErreurLecture: 'Nou pa t kapab li afich la. Ou ka ranpli fòmilè a manyèlman.',
     scanErreurService: 'Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond.',
@@ -1295,8 +1295,8 @@ export default function AjouterEvenement() {
             }}
           >
             {scanLoading
-              ? <><span style={{ fontSize: 18 }}>⏳</span><span>{T_IMAGE[locale].scanAnalyse || '📸 Analyse en cours...'}</span></>
-              : <><span style={{ fontSize: 18 }}>📸</span><span>{T_IMAGE[locale].scanAffiche || '📸 Scanner ou importer une affiche'}</span></>
+              ? <><span style={{ fontSize: 18 }}>⏳</span><span>Analyse en cours...</span></>
+              : <><span style={{ fontSize: 18 }}>📸</span><span>Scanner ou importer une affiche</span></>
             }
           </button>
           {scanMessage && (
