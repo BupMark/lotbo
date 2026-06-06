@@ -1,6 +1,5 @@
 .mapboxgl-popup-content {
-    background: #1A1410 !important;
-    color: #F7F2E8 !important;
+    background: white !important;
     border-radius: 12px !important;
     padding: 0 !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
