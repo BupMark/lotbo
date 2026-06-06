@@ -67,6 +67,7 @@ function ProfilInner() {
   const [dateNaissance, setDateNaissance] = useState<string>('')
   const [anniversairePublic, setAnniversairePublic] = useState<boolean>(false)
   const [savingBirthday, setSavingBirthday] = useState(false)
+  const [birthdaySaved, setBirthdaySaved]   = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -175,6 +176,8 @@ function ProfilInner() {
       updated_at: new Date().toISOString(),
     }).eq('id', user.id)
     setSavingBirthday(false)
+    setBirthdaySaved(true)
+    setTimeout(() => setBirthdaySaved(false), 3000)
   }
 
   const statutLabel = (statut: string) => {
@@ -371,6 +374,11 @@ function ProfilInner() {
                 >
                   {savingBirthday ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
+                {birthdaySaved && (
+                  <p style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold', marginTop: 6 }}>
+                    ✓ Date enregistrée
+                  </p>
+                )}
               </div>
             </div>
 
