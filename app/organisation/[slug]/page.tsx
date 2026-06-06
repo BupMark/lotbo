@@ -454,7 +454,7 @@ export default function PageOrganisation() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {evenements.map(ev => {
-                  const estPasse = (ev.date_debut ?? ev.date) < aujourd_hui
+                  const estPasse = (ev.date_debut ?? ev.date) < new Date().toISOString().split('T')[0]
                   return (
                     <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start', opacity: estPasse ? 0.7 : 1 }}>
                       <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
