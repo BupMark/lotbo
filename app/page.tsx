@@ -539,9 +539,9 @@ export default function Home() {
             <a href="/evenement/${ev.id}" style="text-decoration:none;color:inherit;display:block;">
               ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" crossorigin="anonymous"/>` : ''}
               <div style="padding:10px 12px;">
-                <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#1A1410;line-height:1.3;">${ev.titre}</p>
-                ${ev.lieu ? `<p style="font-size:11px;color:#8C5A40;margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
-                ${periodeAffichee ? `<p style="font-size:11px;color:#8C5A40;margin:0;">📅 ${periodeAffichee}</p>` : ''}
+                <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#F7F2E8;line-height:1.3;">${ev.titre}</p>
+                ${ev.lieu ? `<p style="font-size:11px;color:rgba(247,242,232,0.7);margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
+                ${periodeAffichee ? `<p style="font-size:11px;color:rgba(247,242,232,0.7);margin:0;">📅 ${periodeAffichee}</p>` : ''}
                 ${ev.prix ? `<span style="display:inline-block;margin-top:6px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;background:${ev.prix === 'gratuit' ? 'rgba(45,158,107,0.12)' : 'rgba(200,67,26,0.12)'};color:${ev.prix === 'gratuit' ? '#2D9E6B' : '#C8431A'};">${ev.prix}</span>` : ''}
               </div>
             </a>
