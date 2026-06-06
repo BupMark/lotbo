@@ -1315,13 +1315,18 @@ export default function AjouterEvenement() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {scanMultiTotal > 1 && (
-            <div style={{ background: '#C8431A', color: 'white', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 'bold', fontSize: 14 }}>📋 Événement {scanMultiIndex + 1} / {scanMultiTotal}</span>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {Array.from({ length: scanMultiTotal }, (_, i) => (
-                  <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === scanMultiIndex ? 'white' : 'rgba(255,255,255,0.4)' }} />
-                ))}
+            <div style={{ background: '#C8431A', color: 'white', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontWeight: 'bold', fontSize: 14 }}>📋 Événement {scanMultiIndex + 1} / {scanMultiTotal}</span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {Array.from({ length: scanMultiTotal }, (_, i) => (
+                    <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === scanMultiIndex ? 'white' : 'rgba(255,255,255,0.4)' }} />
+                  ))}
+                </div>
               </div>
+              <p style={{ fontSize: 12, opacity: 0.85, margin: 0 }}>
+                Vérifie et complète les infos, puis soumets ou passe au suivant.
+              </p>
             </div>
           )}
 
@@ -1763,6 +1768,20 @@ export default function AjouterEvenement() {
             </div>
           )}
 
+          {scanMultiTotal > 1 && scanMultiIndex < scanMultiTotal - 1 && (
+            <button
+              type="button"
+              onClick={async () => {
+                const nextIndex = scanMultiIndex + 1
+                setScanMultiIndex(nextIndex)
+                await chargerEvenementScan(scanMultiEvents, nextIndex, scanMultiTotal)
+                setScanMessage({ type: 'verifier', texte: `📋 Événement ${nextIndex + 1}/${scanMultiTotal} — Vérifie et complète avant de soumettre` })
+              }}
+              style={{ width: '100%', background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', marginBottom: 8 }}
+            >
+              ⏭ Passer cet événement ({scanMultiIndex + 2}/{scanMultiTotal})
+            </button>
+          )}
           <button type="submit" disabled={loading} style={{ background: loading ? '#8C5A40' : '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8 }}>
             {loading
               ? 'Publication en cours...'
