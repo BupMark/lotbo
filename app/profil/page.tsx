@@ -49,7 +49,7 @@ function getProchainBadge(nb: number, badges: typeof BADGES_CONTRIBUTEUR) {
 function ProfilInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const tabParam = searchParams.get('tab') as 'evenements' | 'badges' | 'favoris' | null
+  const tabParam = searchParams.get('tab') as 'evenements' | 'badges' | 'favoris' | 'parametres' | null
   const [user, setUser] = useState<any>(null)
   const [evenements, setEvenements] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
@@ -60,7 +60,7 @@ function ProfilInner() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [badgeSelectionne, setBadgeSelectionne] = useState<{ emoji: string; label: string; desc: string; id: string } | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  const [onglet, setOnglet]         = useState<'evenements' | 'badges' | 'favoris'>(tabParam === 'favoris' || tabParam === 'badges' ? tabParam : 'evenements')
+  const [onglet, setOnglet]         = useState<'evenements' | 'badges' | 'favoris' | 'parametres'>(tabParam === 'favoris' || tabParam === 'badges' || tabParam === 'parametres' ? tabParam : 'evenements')
   const [favorisEvs, setFavorisEvs] = useState<any[]>([])
   const [rangGlobal, setRangGlobal] = useState<number | null>(null)
   const [pointsReel, setPointsReel] = useState<number>(0)
@@ -68,6 +68,11 @@ function ProfilInner() {
   const [anniversairePublic, setAnniversairePublic] = useState<boolean>(false)
   const [savingBirthday, setSavingBirthday] = useState(false)
   const [birthdaySaved, setBirthdaySaved]   = useState(false)
+  const [genre, setGenre]                           = useState<string>('non_precise')
+  const [anniversaireVisibilite, setAnniversaireVisibilite] = useState<string>('mois')
+  const [languePreference, setLanguePreference]     = useState<string>('fr')
+  const [savingParams, setSavingParams]             = useState(false)
+  const [paramsSaved, setParamsSaved]               = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -83,7 +88,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference')
         .eq('id', data.session.user.id)
         .single()
       // roles_actifs optionnel — requiert migration DB
@@ -117,6 +122,9 @@ function ProfilInner() {
       if (prof?.photo_url) setPhotoUrl(prof.photo_url)
       if (prof?.date_naissance) setDateNaissance(prof.date_naissance)
       setAnniversairePublic(prof?.anniversaire_public ?? false)
+      if (prof?.genre) setGenre(prof.genre)
+      if (prof?.anniversaire_visibilite) setAnniversaireVisibilite(prof.anniversaire_visibilite)
+      if (prof?.langue_preference) setLanguePreference(prof.langue_preference)
 
       const { data: evs } = await supabase
         .from('evenements')
@@ -393,6 +401,7 @@ function ProfilInner() {
                 { id: 'evenements', label: '📅 Événements' },
                 { id: 'badges', label: '🏅 Badges' },
                 { id: 'favoris', label: '🔖 Favoris' },
+                { id: 'parametres', label: '⚙️ Paramètres' },
               ].map(o => (
                 <button key={o.id} onClick={() => setOnglet(o.id as any)} style={{
                   flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
@@ -628,6 +637,112 @@ function ProfilInner() {
                   <a href="/classement" style={{ display: 'block', textAlign: 'center', marginTop: 16, background: '#C8431A', color: 'white', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
                     Voir le classement complet →
                   </a>
+                </div>
+
+              </div>
+            )}
+
+            {/* ── Onglet Favoris ── */}
+            {/* ── Onglet Paramètres ── */}
+            {onglet === 'parametres' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                {/* Infos perso */}
+                <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid #E8E0D0' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>👤 Informations personnelles</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Nom affiché</label>
+                      <input value={nomInput} onChange={e => setNomInput(e.target.value)}
+                        style={{ width: '100%', background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#1A1410', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Email</label>
+                      <input value={user?.email || ''} disabled
+                        style={{ width: '100%', background: '#F0EBE3', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#8C5A40', outline: 'none', cursor: 'not-allowed' }} />
+                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 4 }}>L&apos;email ne peut pas être modifié ici</p>
+                    </div>
+                    <button onClick={async () => {
+                      if (!user?.id || !nomInput.trim()) return
+                      await supabase.from('profiles').update({ nom: nomInput.trim(), updated_at: new Date().toISOString() }).eq('id', user.id)
+                    }} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>
+                      Enregistrer le nom
+                    </button>
+                  </div>
+                </div>
+
+                {/* Préférences */}
+                <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid #E8E0D0' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>🎛️ Préférences</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+                    {/* Genre */}
+                    <div>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>Genre</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {[
+                          { val: 'masculin', label: 'Masculin' },
+                          { val: 'feminin', label: 'Féminin' },
+                          { val: 'neutre', label: 'Neutre' },
+                          { val: 'non_precise', label: 'Non précisé' },
+                        ].map(g => (
+                          <button key={g.val} onClick={() => setGenre(g.val)}
+                            style={{ padding: '7px 14px', borderRadius: 999, fontSize: 13, border: 'none', cursor: 'pointer', background: genre === g.val ? '#C8431A' : '#F0EBE3', color: genre === g.val ? 'white' : '#8C5A40', fontWeight: genre === g.val ? 'bold' : 'normal' }}>
+                            {g.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Visibilité anniversaire */}
+                    <div>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>Afficher mon anniversaire</label>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {[
+                          { val: 'mois', label: 'Mois uniquement (15 mai)' },
+                          { val: 'annee', label: 'Année uniquement (1990)' },
+                          { val: 'complet', label: 'Date complète (15 mai 1990)' },
+                        ].map(v => (
+                          <button key={v.val} onClick={() => setAnniversaireVisibilite(v.val)}
+                            style={{ padding: '7px 14px', borderRadius: 999, fontSize: 12, border: 'none', cursor: 'pointer', background: anniversaireVisibilite === v.val ? '#C8431A' : '#F0EBE3', color: anniversaireVisibilite === v.val ? 'white' : '#8C5A40' }}>
+                            {v.val === 'mois' ? 'Mois uniquement' : v.val === 'annee' ? 'Année uniquement' : 'Date complète'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Langue */}
+                    <div>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>Langue préférée</label>
+                      <select value={languePreference} onChange={e => setLanguePreference(e.target.value)}
+                        style={{ width: '100%', background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#1A1410', outline: 'none' }}>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="pt">🇵🇹 Português</option>
+                        <option value="ht">🇭🇹 Kreyòl ayisyen</option>
+                      </select>
+                    </div>
+
+                    {/* Bouton sauvegarder */}
+                    <button onClick={async () => {
+                      if (!user?.id) return
+                      setSavingParams(true)
+                      await supabase.from('profiles').update({
+                        genre,
+                        anniversaire_visibilite: anniversaireVisibilite,
+                        langue_preference: languePreference,
+                        updated_at: new Date().toISOString(),
+                      }).eq('id', user.id)
+                      setSavingParams(false)
+                      setParamsSaved(true)
+                      setTimeout(() => setParamsSaved(false), 3000)
+                    }} disabled={savingParams}
+                      style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}>
+                      {savingParams ? 'Enregistrement...' : 'Enregistrer les préférences'}
+                    </button>
+                    {paramsSaved && <p style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>✓ Préférences enregistrées</p>}
+                  </div>
                 </div>
 
               </div>
