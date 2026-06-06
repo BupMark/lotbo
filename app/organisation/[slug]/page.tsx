@@ -287,6 +287,17 @@ export default function PageOrganisation() {
                 ✏️ Modifier
               </a>
             )}
+            {isOwner && (
+              <a href={`/organisation/${slug}/parametres`} style={{
+                background: 'rgba(212,168,32,0.15)',
+                color: '#D4A820',
+                border: '1px solid rgba(212,168,32,0.4)',
+                borderRadius: 999, padding: '7px 16px',
+                fontSize: 12, fontWeight: 'bold', textDecoration: 'none',
+              }}>
+                ⚙️ Paramètres
+              </a>
+            )}
             {(isOwner || canManage) && (
               <a href={`/organisation/${slug}/membres`} style={{
                 background: 'rgba(255,255,255,0.08)',
