@@ -32,3 +32,12 @@ jobs:
           curl -s "https://app.lotbo.app/api/scrape-worldcup" \
             -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
             | head -c 500
+
+  scrape-mondial:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import événements Mondial 2026
+        run: |
+          curl -s "https://app.lotbo.app/api/scrape-mondial-events" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
