@@ -246,6 +246,8 @@ interface Suggestion {
   text: string
   context?: { id: string; text: string }[]
   place_id?: string
+  _osm_lat?: string
+  _osm_lon?: string
 }
 
 interface Coords {
@@ -914,11 +916,13 @@ export default function AjouterEvenement() {
         const res  = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(query)}`)
         const data = await res.json()
         if (data.predictions?.length > 0) {
-          setSuggestions(data.predictions.map((p: { description: string; structured_formatting?: { main_text: string }; place_id: string }) => ({
+          setSuggestions(data.predictions.map((p: { description: string; structured_formatting?: { main_text: string }; place_id: string; _osm_lat?: string; _osm_lon?: string }) => ({
             place_name: p.description,
             text: p.structured_formatting?.main_text || p.description,
             center: [0, 0] as [number, number],
             place_id: p.place_id,
+            _osm_lat: p._osm_lat,
+            _osm_lon: p._osm_lon,
           })))
           setShowSuggestions(true)
         }
@@ -931,6 +935,11 @@ export default function AjouterEvenement() {
     setSuggestions([])
     setShowSuggestions(false)
     setPinConfirme(false)
+    // Coordonnées OSM embarquées → pas besoin d'appeler places-details
+    if (suggestion._osm_lat && suggestion._osm_lon) {
+      setCoordsPin({ longitude: parseFloat(suggestion._osm_lon), latitude: parseFloat(suggestion._osm_lat), adresse: suggestion.place_name })
+      return
+    }
     if (suggestion.place_id) {
       try {
         const res  = await fetch(`/api/places-details?place_id=${suggestion.place_id}`)
