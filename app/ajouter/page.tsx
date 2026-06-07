@@ -587,9 +587,11 @@ export default function AjouterEvenement() {
   const [scanLoading, setScanLoading]         = useState(false)
   const [scanMessage, setScanMessage]         = useState<{ type: 'verifier' | 'erreur'; texte: string } | null>(null)
   const [filledByScan, setFilledByScan]       = useState(false)
-  const [scanMultiEvents, setScanMultiEvents] = useState<ScanEvent[]>([])
-  const [scanMultiIndex, setScanMultiIndex]   = useState(0)
-  const [scanMultiTotal, setScanMultiTotal]   = useState(0)
+  const [scanMultiEvents, setScanMultiEvents]         = useState<ScanEvent[]>([])
+  const [scanMultiIndex, setScanMultiIndex]           = useState(0)
+  const [scanMultiTotal, setScanMultiTotal]           = useState(0)
+  const [scanMultiSelectMode, setScanMultiSelectMode] = useState(false)
+  const [scanMultiSelected, setScanMultiSelected]     = useState<Set<number>>(new Set())
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
   const locale: Locale = (() => {
@@ -797,9 +799,8 @@ export default function AjouterEvenement() {
           if (json.mode === 'multi' && json.events && json.events.length > 1) {
             const events = json.events as ScanEvent[]
             setScanMultiEvents(events)
-            setScanMultiTotal(events.length)
-            setScanMultiIndex(0)
-            await chargerEvenementScan(events, 0, events.length)
+            setScanMultiSelected(new Set(events.map((_, i) => i)))
+            setScanMultiSelectMode(true)
             setScanLoading(false)
             return
           }
@@ -1311,6 +1312,81 @@ export default function AjouterEvenement() {
           )}
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
         </div>
+
+        {scanMultiSelectMode && scanMultiEvents.length > 0 && (
+          <div style={{ background: 'white', border: '2px solid #C8431A', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>
+                📋 {scanMultiEvents.length} événements détectés
+              </h3>
+              <span style={{ fontSize: 12, color: '#8C5A40' }}>
+                {scanMultiSelected.size} sélectionné(s)
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: '#8C5A40', marginBottom: 14 }}>
+              Sélectionne les événements à publier, puis clique sur Continuer.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {scanMultiEvents.map((ev, i) => (
+                <div
+                  key={i}
+                  onClick={() => setScanMultiSelected(prev => {
+                    const next = new Set(prev)
+                    if (next.has(i)) next.delete(i)
+                    else next.add(i)
+                    return next
+                  })}
+                  style={{
+                    display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer',
+                    background: scanMultiSelected.has(i) ? 'rgba(200,67,26,0.06)' : '#F7F2E8',
+                    border: `1px solid ${scanMultiSelected.has(i) ? 'rgba(200,67,26,0.3)' : '#E8E0D0'}`,
+                    borderRadius: 10, padding: '10px 14px',
+                  }}
+                >
+                  <input type="checkbox" checked={scanMultiSelected.has(i)} onChange={() => {}}
+                    style={{ marginTop: 2, accentColor: '#C8431A', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 'bold', fontSize: 13, color: '#1A1410', marginBottom: 2 }}>
+                      {ev.titre || 'Sans titre'}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#8C5A40' }}>
+                      {ev.date_debut && `📅 ${ev.date_debut}`}
+                      {ev.heure_debut && ` · ${ev.heure_debut}`}
+                      {ev.lieu && ` · 📍 ${ev.lieu}`}
+                      {ev.ville && `, ${ev.ville}`}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setScanMultiSelectMode(false)}
+                style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}
+              >
+                Annuler
+              </button>
+              <button
+                disabled={scanMultiSelected.size === 0}
+                onClick={async () => {
+                  const selectedEvents = [...scanMultiSelected].sort().map(i => scanMultiEvents[i])
+                  setScanMultiEvents(selectedEvents)
+                  setScanMultiTotal(selectedEvents.length)
+                  setScanMultiIndex(0)
+                  setScanMultiSelectMode(false)
+                  await chargerEvenementScan(selectedEvents, 0, selectedEvents.length)
+                }}
+                style={{
+                  flex: 2, background: scanMultiSelected.size === 0 ? '#E8E0D0' : '#C8431A',
+                  color: 'white', border: 'none', borderRadius: 10, padding: '10px',
+                  fontSize: 13, fontWeight: 'bold', cursor: scanMultiSelected.size === 0 ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Continuer avec {scanMultiSelected.size} événement{scanMultiSelected.size > 1 ? 's' : ''} →
+              </button>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
