@@ -38,6 +38,11 @@
       "purpose": "maskable"
     }
   ],
+  "iarc_rating_id": "",
+  "prefer_related_applications": false,
+  "display_override": ["window-controls-overlay", "standalone"],
+  "related_applications": [],
+  "scope_extensions": [],
   "screenshots": [
     {
       "src": "/screenshot-mobile.png",
