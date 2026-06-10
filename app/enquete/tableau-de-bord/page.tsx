@@ -20,6 +20,14 @@ interface EnqueteTerrain {
   created_at: string
 }
 
+const ENQUETEUR_NOMS: Record<string, string> = {
+  gaetchens: 'Gaetchens Pierre Louis',
+  nancy: 'Nancy Gilot',
+  aicha: 'Aïcha Jeffkina Gaëlla',
+  syndia: 'Syndia Alexis',
+  osny: 'Osny Pierre Louis',
+}
+
 function getTodayHaiti(): string {
   return new Date().toLocaleString('sv', { timeZone: 'America/Port-au-Prince' }).slice(0, 10)
 }
@@ -126,7 +134,7 @@ export default async function TableauDeBord({ searchParams }: PageProps) {
           <select name="enqueteur" style={S.select} defaultValue={enqueteurFilter}>
             <option value="">— Tous les enquêteurs —</option>
             {enqueteurs.map((e) => (
-              <option key={e} value={e}>{e}</option>
+              <option key={e} value={e}>{ENQUETEUR_NOMS[e] ?? e}</option>
             ))}
           </select>
           <input type="hidden" name="from" value={fromDate} />
@@ -200,7 +208,7 @@ export default async function TableauDeBord({ searchParams }: PageProps) {
                 <tr key={e.id} style={{ background: i % 2 === 0 ? '#fff' : '#faf9f6' }}>
                   <td style={S.td}>{e.date ?? '—'}</td>
                   <td style={S.td}>{e.heure ?? '—'}</td>
-                  <td style={S.td}>{e.enqueteur ?? <em style={{ color: '#aaa' }}>anon</em>}</td>
+                  <td style={S.td}>{e.enqueteur ? (ENQUETEUR_NOMS[e.enqueteur] ?? e.enqueteur) : <em style={{ color: '#aaa' }}>anon</em>}</td>
                   <td style={S.td}>
                     <span style={{
                       background: e.type === 'terrain' ? '#1A1410' : '#E8620A',
