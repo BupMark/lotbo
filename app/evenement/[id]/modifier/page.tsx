@@ -70,9 +70,10 @@ export default function ModifierEvenement() {
   const [image, setImage]           = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
-  const [latitude, setLatitude]       = useState<number | null>(null)
-  const [longitude, setLongitude]     = useState<number | null>(null)
-  const [pinConfirme, setPinConfirme] = useState(false)
+  const [latitude, setLatitude]         = useState<number | null>(null)
+  const [longitude, setLongitude]       = useState<number | null>(null)
+  const [pinConfirme, setPinConfirme]   = useState(false)
+  const [coordsModifiees, setCoordsModifiees] = useState(false)
   const [rechercheTexte, setRechercheTexte]   = useState('')
   const [suggestions, setSuggestions]         = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -197,6 +198,7 @@ export default function ModifierEvenement() {
       setLatitude(parseFloat(suggestion._osm_lat))
       setLongitude(parseFloat(suggestion._osm_lon))
       setPinConfirme(true)
+      setCoordsModifiees(true)
       return
     }
     if (suggestion.place_id) {
@@ -208,6 +210,7 @@ export default function ModifierEvenement() {
           setLatitude(loc.lat)
           setLongitude(loc.lng)
           setPinConfirme(true)
+          setCoordsModifiees(true)
           return
         }
       } catch {}
@@ -222,6 +225,7 @@ export default function ModifierEvenement() {
         setLatitude(lat)
         setLongitude(lng)
         setPinConfirme(true)
+        setCoordsModifiees(true)
       }
     } catch {}
   }
@@ -264,8 +268,9 @@ export default function ModifierEvenement() {
           acces,
           prix,
           image_url,
-          latitude: latitude ?? ev.latitude,
-          longitude: longitude ?? ev.longitude,
+          ...(coordsModifiees && latitude !== null && longitude !== null
+            ? { latitude, longitude }
+            : {}),
         })
         .eq('id', ev.id)
 
@@ -409,6 +414,7 @@ export default function ModifierEvenement() {
                   setLatitude(c.latitude)
                   setLongitude(c.longitude)
                   setPinConfirme(true)
+                  setCoordsModifiees(true)
                 }}
               />
               <div style={{ marginTop: 10 }}>
