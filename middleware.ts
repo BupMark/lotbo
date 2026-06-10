@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
   // getUser() revalide le token côté serveur — obligatoire dans le middleware
   const { data: { user } } = await supabase.auth.getUser()
 
-  // ── Protection /admin uniquement ──────────────────────────────────────────
+  // ── Protection /admin ────────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -49,6 +49,22 @@ export async function middleware(request: NextRequest) {
       .single()
     const role = profile?.role ?? user.user_metadata?.role
     if (role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
+  // ── Protection /enquete ───────────────────────────────────────────────────
+  if (pathname.startsWith('/enquete')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    const role = profile?.role ?? user.user_metadata?.role
+    if (role !== 'contributeur_terrain' && role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url))
     }
   }

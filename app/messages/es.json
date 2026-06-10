@@ -104,5 +104,19 @@
     "palier_2ans": "Constructor de la primera hora",
     "palier_5ans": "Leyenda viva de LOTBO",
     "anciennete": "Antigüedad"
+  },
+  "dashboard": {
+    "title": "Panel de control — Encuestadores",
+    "filterLabel": "Filtrar por encuestador",
+    "filterAll": "— Todos los encuestadores —",
+    "todayTitle": "Hoy",
+    "periodTitle": "Período",
+    "totalTitle": "Total",
+    "terrainLabel": "Terreno",
+    "publicLabel": "Público",
+    "emptyState": "No hay encuestas para estos criterios.",
+    "fromLabel": "Desde",
+    "toLabel": "Hasta",
+    "accessDenied": "Acceso denegado — rol insuficiente."
   }
 }

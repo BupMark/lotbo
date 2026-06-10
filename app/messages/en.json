@@ -104,5 +104,19 @@
     "palier_2ans": "Early builder",
     "palier_5ans": "Living legend of LOTBO",
     "anciennete": "Membership"
+  },
+  "dashboard": {
+    "title": "Dashboard — Field surveyors",
+    "filterLabel": "Filter by surveyor",
+    "filterAll": "— All surveyors —",
+    "todayTitle": "Today",
+    "periodTitle": "Period",
+    "totalTitle": "Total",
+    "terrainLabel": "Field",
+    "publicLabel": "Public",
+    "emptyState": "No surveys for these criteria.",
+    "fromLabel": "From",
+    "toLabel": "To",
+    "accessDenied": "Access denied — insufficient role."
   }
 }

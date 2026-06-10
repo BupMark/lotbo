@@ -104,5 +104,19 @@
     "palier_2ans": "Bâtisseur de la première heure",
     "palier_5ans": "Légende vivante de LOTBO",
     "anciennete": "Ancienneté"
+  },
+  "dashboard": {
+    "title": "Tableau de bord — Enquêteurs",
+    "filterLabel": "Filtrer par enquêteur",
+    "filterAll": "— Tous les enquêteurs —",
+    "todayTitle": "Aujourd'hui",
+    "periodTitle": "Période",
+    "totalTitle": "Total",
+    "terrainLabel": "Terrain",
+    "publicLabel": "Public",
+    "emptyState": "Aucune enquête pour ces critères.",
+    "fromLabel": "Du",
+    "toLabel": "Au",
+    "accessDenied": "Accès refusé — rôle insuffisant."
   }
 }

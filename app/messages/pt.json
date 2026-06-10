@@ -104,5 +104,19 @@
     "palier_2ans": "Construtor da primeira hora",
     "palier_5ans": "Lenda viva do LOTBO",
     "anciennete": "Antiguidade"
+  },
+  "dashboard": {
+    "title": "Painel — Pesquisadores de campo",
+    "filterLabel": "Filtrar por pesquisador",
+    "filterAll": "— Todos os pesquisadores —",
+    "todayTitle": "Hoje",
+    "periodTitle": "Período",
+    "totalTitle": "Total",
+    "terrainLabel": "Campo",
+    "publicLabel": "Público",
+    "emptyState": "Nenhuma pesquisa para estes critérios.",
+    "fromLabel": "De",
+    "toLabel": "Até",
+    "accessDenied": "Acesso negado — função insuficiente."
   }
 }

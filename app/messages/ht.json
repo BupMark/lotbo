@@ -104,5 +104,19 @@
     "palier_2ans": "Batisè premye lè a",
     "palier_5ans": "Lejann vivan LOTBO",
     "anciennete": "Lontan"
+  },
+  "dashboard": {
+    "title": "Tablo de bò — Ankètè yo",
+    "filterLabel": "Filtre pa ankètè",
+    "filterAll": "— Tout ankètè yo —",
+    "todayTitle": "Jodi a",
+    "periodTitle": "Peryòd",
+    "totalTitle": "Total",
+    "terrainLabel": "Tèren",
+    "publicLabel": "Piblik",
+    "emptyState": "Pa gen ankèt pou kritè sa yo.",
+    "fromLabel": "De",
+    "toLabel": "Jiska",
+    "accessDenied": "Aksè refize — wòl pa ase."
   }
 }
