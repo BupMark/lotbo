@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 interface PageProps {
-  searchParams: { enqueteur?: string; from?: string; to?: string }
+  searchParams: Promise<{ enqueteur?: string; from?: string; to?: string }>
 }
 
 interface EnqueteTerrain {
@@ -25,7 +25,9 @@ function getTodayHaiti(): string {
 }
 
 export default async function TableauDeBord({ searchParams }: PageProps) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
+  const params = await searchParams
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -55,19 +57,18 @@ export default async function TableauDeBord({ searchParams }: PageProps) {
   }
 
   // ── Requête principale ────────────────────────────────────────────────────
+  const enqueteurFilter = params.enqueteur || ''
+  const defaultFrom = '2026-06-08'
+  const fromDate = params.from || defaultFrom
+  const toDate = params.to || getTodayHaiti()
+
   let query = supabase
     .from('enquetes_terrain')
     .select('id, enqueteur, date, heure, zone, profil, enthousiasme, type, ville, pays, created_at')
     .order('created_at', { ascending: false })
     .limit(2000)
 
-  const enqueteurFilter = searchParams.enqueteur || ''
   if (enqueteurFilter) query = query.eq('enqueteur', enqueteurFilter)
-
-  const defaultFrom = '2026-06-08'
-  const fromDate = searchParams.from || defaultFrom
-  const toDate = searchParams.to || getTodayHaiti()
-
   if (fromDate) query = query.gte('date', fromDate)
   if (toDate) query = query.lte('date', toDate)
 
@@ -80,7 +81,9 @@ export default async function TableauDeBord({ searchParams }: PageProps) {
     .select('enqueteur')
     .not('enqueteur', 'is', null)
     .limit(2000)
-  const enqueteurs = Array.from(new Set((allRows ?? []).map((r) => r.enqueteur).filter(Boolean))).sort()
+  const enqueteurs = Array.from(
+    new Set((allRows ?? []).map((r: { enqueteur: string | null }) => r.enqueteur).filter(Boolean))
+  ).sort() as string[]
 
   // ── Bloc 1 : compteur du jour ─────────────────────────────────────────────
   const todayHaiti = getTodayHaiti()
@@ -123,19 +126,18 @@ export default async function TableauDeBord({ searchParams }: PageProps) {
           <select name="enqueteur" style={S.select} defaultValue={enqueteurFilter}>
             <option value="">— Tous les enquêteurs —</option>
             {enqueteurs.map((e) => (
-              <option key={e} value={e!}>{e}</option>
+              <option key={e} value={e}>{e}</option>
             ))}
           </select>
-          {/* Préserver les autres filtres */}
-          {fromDate && <input type="hidden" name="from" value={fromDate} />}
-          {searchParams.to && <input type="hidden" name="to" value={searchParams.to} />}
+          <input type="hidden" name="from" value={fromDate} />
+          {params.to && <input type="hidden" name="to" value={params.to} />}
           <button type="submit" style={S.btn}>Appliquer</button>
         </form>
       </section>
 
       {/* Bloc 1 : compteur aujourd'hui */}
       <section style={S.section}>
-        <span style={S.label}>Aujourd'hui ({todayHaiti})</span>
+        <span style={S.label}>Aujourd&apos;hui ({todayHaiti})</span>
         <p style={S.big}>{todayCount}</p>
         <p style={{ margin: '.3rem 0 0', fontSize: '.85rem', color: '#666' }}>
           enquête{todayCount !== 1 ? 's' : ''} enregistrée{todayCount !== 1 ? 's' : ''}
