@@ -419,6 +419,23 @@ export default function Home() {
         loadPin('pin-aune',  '#E8620A', 34, 44),
       ])
 
+      const loadClusterPin = (name: string, fill: string, w: number, h: number) =>
+        new Promise<void>(resolve => {
+          const svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+            <path d="M${w/2} 2C${w*0.14} 2 2 ${h*0.25} 2 ${w/2}C2 ${h*0.68} ${w/2} ${h-2} ${w/2} ${h-2}S${w-2} ${h*0.68} ${w-2} ${w/2}C${w-2} ${h*0.25} ${w*0.86} 2 ${w/2} 2Z" fill="${fill}" stroke="#F7F2E8" stroke-width="1.2"/>
+          </svg>`
+          const img = new Image(w, h)
+          img.onload = () => { if (!map.hasImage(name)) map.addImage(name, img); resolve() }
+          img.onerror = () => resolve()
+          img.src = 'data:image/svg+xml,' + encodeURIComponent(svg)
+        })
+
+      await Promise.all([
+        loadClusterPin('pin-cluster-sm', '#C8431A', 36, 46),
+        loadClusterPin('pin-cluster-md', '#A03315', 44, 56),
+        loadClusterPin('pin-cluster-lg', '#7A2510', 52, 66),
+      ])
+
       map.addSource('events', {
         type: 'geojson',
         data: geojson,
@@ -440,28 +457,21 @@ export default function Home() {
         },
       })
 
-      // Pins groupés par lieu (count > 1) — cercles pour garder lisible le compteur
+      // Pins groupés par lieu (count > 1) — pins SVG taille variable
       map.addLayer({
         id: 'lieu-cluster',
-        type: 'circle',
+        type: 'symbol',
         source: 'events',
         filter: ['>', ['get', 'count'], 1],
-        paint: {
-          'circle-color': [
+        layout: {
+          'icon-image': [
             'step', ['get', 'count'],
-            '#C8431A', 5,
-            '#A03315', 15,
-            '#7A2510',
+            'pin-cluster-sm', 5,
+            'pin-cluster-md', 15,
+            'pin-cluster-lg',
           ],
-          'circle-radius': [
-            'step', ['get', 'count'],
-            18, 5,
-            24, 15,
-            32,
-          ],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#F7F2E8',
-          'circle-opacity': 0.95,
+          'icon-allow-overlap': true,
+          'icon-anchor': 'bottom',
         },
       })
 
@@ -474,10 +484,16 @@ export default function Home() {
         layout: {
           'text-field': ['get', 'count'],
           'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 13,
+          'text-size': 12,
           'text-allow-overlap': true,
+          'text-anchor': 'bottom',
+          'text-offset': [0, -1.2],
         },
-        paint: { 'text-color': '#F7F2E8' },
+        paint: {
+          'text-color': '#F7F2E8',
+          'text-halo-color': 'rgba(0,0,0,0.3)',
+          'text-halo-width': 0.5,
+        },
       })
 
       // Pins "À la une" (par dessus tout)
