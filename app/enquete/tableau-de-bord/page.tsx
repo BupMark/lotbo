@@ -83,15 +83,19 @@ export default async function TableauDeBord({ searchParams }: PageProps) {
   const { data: rows } = await query
   const enquetes: EnqueteTerrain[] = rows ?? []
 
-  // ── Tous les enquêteurs distincts (pour le sélecteur) ────────────────────
+  // ── Enquêteurs pour le sélecteur : liste statique + slugs inconnus en base ─
   const { data: allRows } = await supabase
     .from('enquetes_terrain')
     .select('enqueteur')
     .not('enqueteur', 'is', null)
     .limit(2000)
-  const enqueteurs = Array.from(
+  const dbSlugs = Array.from(
     new Set((allRows ?? []).map((r: { enqueteur: string | null }) => r.enqueteur).filter(Boolean))
-  ).sort() as string[]
+  ) as string[]
+  // Toujours afficher les 5 enquêteurs connus + tout slug inconnu présent en base
+  const knownSlugs = Object.keys(ENQUETEUR_NOMS)
+  const extraSlugs = dbSlugs.filter((s) => !knownSlugs.includes(s)).sort()
+  const enqueteurs = [...knownSlugs, ...extraSlugs]
 
   // ── Bloc 1 : compteur du jour ─────────────────────────────────────────────
   const todayHaiti = getTodayHaiti()
