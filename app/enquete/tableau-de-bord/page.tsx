@@ -23,7 +23,7 @@ interface EnqueteTerrain {
 const ENQUETEUR_NOMS: Record<string, string> = {
   gaetchens: 'Gaetchens Pierre Louis',
   nancy: 'Nancy Gilot',
-  aicha: 'Aïcha Jeffkina Gaëlla',
+  aicha: 'Aïcha Jeffkina Gaëlla Moreau',
   syndia: 'Syndia Alexis',
   osny: 'Osny Pierre Louis',
 }
