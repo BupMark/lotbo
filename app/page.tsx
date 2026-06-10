@@ -522,7 +522,7 @@ export default function Home() {
         const titres: string[] = JSON.parse(props.titres || '[]')
         const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
         const listHTML = titres.map((titre, i) =>
-          `<a href="/evenement/${ids[i]}" style="display:block;padding:6px 0;border-bottom:1px solid rgba(247,242,232,0.15);font-size:12px;text-decoration:none;">${titre}</a>`
+          `<a href="/evenement/${ids[i]}" style="display:block;padding:6px 0;border-bottom:1px solid rgba(247,242,232,0.15);font-size:12px;text-decoration:none;color:#F7F2E8;">${titre}</a>`
         ).join('')
         new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup' })
           .setLngLat(coords)
