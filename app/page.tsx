@@ -538,7 +538,7 @@ export default function Home() {
           .setHTML(`
             <a href="/evenement/${ev.id}" style="text-decoration:none;color:inherit;display:block;">
               ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" crossorigin="anonymous"/>` : ''}
-              <div style="padding:10px 12px;background:white;">
+              <div style="padding:10px 12px;background:#1A1410;">
                 <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#F7F2E8;line-height:1.3;">${ev.titre}</p>
                 ${ev.lieu ? `<p style="font-size:11px;color:rgba(247,242,232,0.7);margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
                 ${periodeAffichee ? `<p style="font-size:11px;color:rgba(247,242,232,0.7);margin:0;">📅 ${periodeAffichee}</p>` : ''}
