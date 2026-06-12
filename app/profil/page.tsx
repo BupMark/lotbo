@@ -456,7 +456,7 @@ function ProfilInner() {
           <div>
 
             {/* Onglets */}
-            <div style={{ display: 'flex', gap: 4, marginBottom: 20, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+            <div style={{ display: 'flex', gap: 2, marginBottom: 20, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
               {[
                 { id: 'evenements', label: '📅 Événements' },
                 { id: 'badges', label: '🏅 Badges' },
@@ -464,7 +464,7 @@ function ProfilInner() {
                 { id: 'parametres', label: '⚙️ Paramètres' },
               ].map(o => (
                 <button key={o.id} onClick={() => setOnglet(o.id as any)} style={{
-                  flex: 1, minWidth: 0, flexShrink: 1, whiteSpace: 'nowrap', padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                  flex: 1, minWidth: 0, flexShrink: 1, whiteSpace: 'nowrap', padding: '10px', borderRadius: 10, fontSize: 11, fontWeight: 'bold', cursor: 'pointer',
                   background: onglet === o.id ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
                   border: onglet === o.id ? '1px solid #C8431A' : '1px solid #2a2a2a',
                   color: onglet === o.id ? '#C8431A' : '#8C5A40',
