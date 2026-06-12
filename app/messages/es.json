@@ -118,5 +118,13 @@
     "fromLabel": "Desde",
     "toLabel": "Hasta",
     "accessDenied": "Acceso denegado — rol insuficiente."
+  },
+  "referral": {
+    "referralTitle": "Referidos",
+    "referralLink": "Tu enlace de referido",
+    "referralCopy": "Copiar enlace",
+    "referralCount": "{n} persona(s) registrada(s) con tu enlace",
+    "referralPoints": "{n} puntos ganados por referidos",
+    "referralWhatsApp": "Compartir en WhatsApp"
   }
 }

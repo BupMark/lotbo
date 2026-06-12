@@ -46,6 +46,8 @@ export default function Login() {
     if (modeParam === 'inscription') {
       setMode('inscription')
     }
+    const ref = p.get('ref')
+    if (ref) localStorage.setItem('lotbo_ref_code', ref)
   }, [])
 
   // ── Intercepter le token OAuth dans le hash (flux implicite Supabase) ──────
@@ -159,6 +161,33 @@ export default function Login() {
         role:       'membre',
         created_at: new Date().toISOString(),
       })
+
+      // Résolution du parrain
+      try {
+        const refCode = localStorage.getItem('lotbo_ref_code')
+        if (refCode) {
+          const { data: parrain } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('referral_code', refCode)
+            .single()
+          if (parrain && parrain.id !== data.user.id) {
+            await supabase.from('profiles')
+              .update({ parrain_id: parrain.id })
+              .eq('id', data.user.id)
+            await fetch('/api/points', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: parrain.id,
+                action: 'referral',
+                meta: { filleul_id: data.user.id },
+              }),
+            })
+            localStorage.removeItem('lotbo_ref_code')
+          }
+        }
+      } catch {}
 
       // Vérifier si c'est un supporter fondateur
       try {

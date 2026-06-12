@@ -64,6 +64,9 @@ function ProfilInner() {
   const [favorisEvs, setFavorisEvs] = useState<any[]>([])
   const [rangGlobal, setRangGlobal] = useState<number | null>(null)
   const [pointsReel, setPointsReel] = useState<number>(0)
+  const [nbFilleuls, setNbFilleuls] = useState<number>(0)
+  const [pointsReferral, setPointsReferral] = useState<number>(0)
+  const [lienCopie, setLienCopie] = useState(false)
   const [dateNaissance, setDateNaissance] = useState<string>('')
   const [anniversairePublic, setAnniversairePublic] = useState<boolean>(false)
   const [savingBirthday, setSavingBirthday] = useState(false)
@@ -88,7 +91,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id')
         .eq('id', data.session.user.id)
         .single()
       // roles_actifs optionnel — requiert migration DB
@@ -139,6 +142,19 @@ function ProfilInner() {
         .eq('user_id', data.session.user.id)
         .order('created_at', { ascending: false })
       setFavorisEvs(favs?.map((f: any) => f.evenements).filter(Boolean) || [])
+
+      const { count: filleulsCount } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('parrain_id', data.session.user.id)
+      setNbFilleuls(filleulsCount || 0)
+
+      const { data: txsRef } = await supabase
+        .from('transactions_points')
+        .select('points')
+        .eq('user_id', data.session.user.id)
+        .eq('type', 'referral')
+      setPointsReferral((txsRef || []).reduce((s: number, t: { points: number }) => s + (t.points || 0), 0))
 
       setLoading(false)
     })
@@ -390,6 +406,50 @@ function ProfilInner() {
               </div>
             </div>
 
+            {/* 🔗 Parrainage */}
+            {profile?.referral_code && (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+                <h3 style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', marginBottom: 12 }}>🔗 Parrainage</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div>
+                    <label style={{ color: '#8C5A40', fontSize: 12, display: 'block', marginBottom: 4 }}>Ton lien de parrainage</label>
+                    <div style={{ background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#1A1410', wordBreak: 'break-all' }}>
+                      {`https://app.lotbo.app/login?mode=inscription&ref=${profile.referral_code}`}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(`https://app.lotbo.app/login?mode=inscription&ref=${profile.referral_code}`)
+                        setLienCopie(true)
+                        setTimeout(() => setLienCopie(false), 2000)
+                      }}
+                      style={{ flex: 1, background: lienCopie ? 'rgba(45,158,107,0.15)' : 'rgba(200,67,26,0.08)', color: lienCopie ? '#2D9E6B' : '#C8431A', border: `1px solid ${lienCopie ? 'rgba(45,158,107,0.3)' : 'rgba(200,67,26,0.25)'}`, borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                      {lienCopie ? '✓ Copié !' : '📋 Copier le lien'}
+                    </button>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent('Rejoins LOTBO — tous les événements, un seul endroit 🌍 https://app.lotbo.app/login?mode=inscription&ref=' + profile.referral_code)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.3)', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}
+                    >
+                      <span>💬</span> WhatsApp
+                    </a>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                    <div style={{ flex: 1, background: 'rgba(200,67,26,0.06)', borderRadius: 8, padding: '10px', textAlign: 'center' }}>
+                      <p style={{ fontSize: 18, fontWeight: 'bold', color: '#C8431A' }}>{nbFilleuls}</p>
+                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 2 }}>personne{nbFilleuls > 1 ? 's' : ''} inscrite{nbFilleuls > 1 ? 's' : ''}</p>
+                    </div>
+                    <div style={{ flex: 1, background: 'rgba(212,168,32,0.06)', borderRadius: 8, padding: '10px', textAlign: 'center' }}>
+                      <p style={{ fontSize: 18, fontWeight: 'bold', color: '#D4A820' }}>{pointsReferral}</p>
+                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 2 }}>pts via parrainage</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── COLONNE DROITE — Onglets + Contenu ── */}

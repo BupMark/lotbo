@@ -118,5 +118,13 @@
     "fromLabel": "Du",
     "toLabel": "Au",
     "accessDenied": "Accès refusé — rôle insuffisant."
+  },
+  "referral": {
+    "referralTitle": "Parrainage",
+    "referralLink": "Ton lien de parrainage",
+    "referralCopy": "Copier le lien",
+    "referralCount": "{n} personne(s) inscrite(s) via ton lien",
+    "referralPoints": "{n} points gagnés via parrainage",
+    "referralWhatsApp": "Partager sur WhatsApp"
   }
 }

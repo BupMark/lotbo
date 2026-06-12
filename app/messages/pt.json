@@ -118,5 +118,13 @@
     "fromLabel": "De",
     "toLabel": "Até",
     "accessDenied": "Acesso negado — função insuficiente."
+  },
+  "referral": {
+    "referralTitle": "Indicação",
+    "referralLink": "Seu link de indicação",
+    "referralCopy": "Copiar link",
+    "referralCount": "{n} pessoa(s) inscrita(s) via seu link",
+    "referralPoints": "{n} pontos ganhos via indicação",
+    "referralWhatsApp": "Compartilhar no WhatsApp"
   }
 }
