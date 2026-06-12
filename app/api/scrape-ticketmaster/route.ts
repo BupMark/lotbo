@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifierDoublon } from '../../../lib/deduplication'
+import { normaliserPays } from '../../../lib/normalisation'
 
 const CLASSIFICATIONS = [
   { nom: 'Musique',        segment: 'music',  emoji: '🎵', categorie: 'Musique'  },
@@ -63,7 +64,7 @@ export async function GET() {
         }
 
         const ville    = venue?.city?.name    || ''
-        const pays     = venue?.country?.name || ''
+        const pays     = normaliserPays(venue?.country?.name || '')
         const adresse  = venue?.address?.line1 || ''
         const image    = ev.images?.find((img: { ratio: string; width: number; url: string }) =>
           img.ratio === '16_9' && img.width > 500

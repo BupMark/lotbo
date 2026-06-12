@@ -35,39 +35,55 @@ export function normaliserVille(ville: string): string {
 
 export function normaliserPays(p: string): string {
   const s = strip(p)
-  if (s === 'haiti' || s === 'ht') return 'Haiti'
+  if (s === 'haiti' || s === 'ht') return 'Haïti'
   if (s === 'republique dominicaine' || s === 'dominican republic' || s === 'rd' || s === 'dom. rep.' || s === 'dom rep') return 'République Dominicaine'
   if (s === 'bahamas' || s === 'the bahamas') return 'Bahamas'
-  return p.trim()
+  return codeVersNomPays(p.trim())
 }
 
-// Convertit codes ISO 2 lettres → noms complets affichables.
-// Appliqué après normaliserPays pour couvrir les codes laissés tels quels.
+// Convertit codes ISO 2 lettres et variantes textuelles → noms FR normalisés.
 const CODE_PAYS: Record<string, string> = {
-  'US':                     'États-Unis',
-  'FR':                     'France',
-  'France':                 'France',
-  'CA':                     'Canada',
-  'NG':                     'Nigeria',
-  'MQ':                     'Martinique',
-  'Martinique':             'Martinique',
-  'GP':                     'Guadeloupe',
-  'Guadeloupe':             'Guadeloupe',
-  'DO':                     'République Dominicaine',
-  'République Dominicaine': 'République Dominicaine',
-  'Dominican Republic':     'République Dominicaine',
-  'JM':                     'Jamaïque',
-  'CI':                     "Côte d'Ivoire",
-  "Côte d'Ivoire":          "Côte d'Ivoire",
-  'SN':                     'Sénégal',
-  'HT':                     'Haiti',
-  'Haiti':                  'Haiti',
-  'Haïti':                  'Haiti',
-  'PH':                     'Philippines',
-  'CH':                     'Suisse',
-  'BS':                     'Bahamas',
-  'Bahamas':                'Bahamas',
-  'The Bahamas':            'Bahamas',
+  'US':                              'USA',
+  'United States':                   'USA',
+  'États-Unis':                      'USA',
+  'Etats-Unis':                      'USA',
+  'Floride':                         'USA',
+  'FR':                              'France',
+  'France':                          'France',
+  'CA':                              'Canada',
+  'Canada':                          'Canada',
+  'HT':                              'Haïti',
+  'Haiti':                           'Haïti',
+  'Haïti':                           'Haïti',
+  'NG':                              'Nigeria',
+  'Nigeria':                         'Nigeria',
+  'MQ':                              'Martinique',
+  'Martinique':                      'Martinique',
+  'GP':                              'Guadeloupe',
+  'Guadeloupe':                      'Guadeloupe',
+  'DO':                              'République Dominicaine',
+  'République Dominicaine':          'République Dominicaine',
+  'Dominican Republic':              'République Dominicaine',
+  'JM':                              'Jamaïque',
+  'Jamaïque':                        'Jamaïque',
+  'Jamaica':                         'Jamaïque',
+  'CI':                              "Côte d'Ivoire",
+  "Côte d'Ivoire":                   "Côte d'Ivoire",
+  'SN':                              'Sénégal',
+  'Sénégal':                         'Sénégal',
+  'Senegal':                         'Sénégal',
+  'CD':                              'Congo (RDC)',
+  'Democratic Republic of Congo':    'Congo (RDC)',
+  'Congo (RDC)':                     'Congo (RDC)',
+  'DR Congo':                        'Congo (RDC)',
+  'Mexico':                          'Mexique',
+  'Mexique':                         'Mexique',
+  'PH':                              'Philippines',
+  'Philippines':                     'Philippines',
+  'CH':                              'Suisse',
+  'BS':                              'Bahamas',
+  'Bahamas':                         'Bahamas',
+  'The Bahamas':                     'Bahamas',
 }
 
 export function codeVersNomPays(v: string): string {

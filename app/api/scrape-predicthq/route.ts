@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifierDoublon } from '../../../lib/deduplication'
+import { codeVersNomPays } from '../../../lib/normalisation'
 
 const CATEGORIE_MAP: Record<string, string> = {
   'concerts':        'Concert / Spectacle',
@@ -120,7 +121,7 @@ export async function GET() {
             ? `${venueEntity.name}${venueEntity.formatted_address ? ', ' + venueEntity.formatted_address : ''}`
             : zone.label
           const ville         = venueEntity?.address?.locality || zone.label
-          const pays          = venueEntity?.address?.country_code || zone.country
+          const pays          = codeVersNomPays(venueEntity?.address?.country_code || zone.country)
           const dateFin       = ev.end?.split('T')[0] || null
           const dateFinDiff   = dateFin && dateFin !== dateDebut ? dateFin : null
           const categorieNom  = CATEGORIE_MAP[ev.category] || 'Autre'

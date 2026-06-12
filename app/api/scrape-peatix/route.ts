@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { normaliserPays } from '../../../lib/normalisation'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -244,7 +245,7 @@ export async function GET() {
           description: ev.description?.slice(0, 500) ?? '',
           lieu:        ev.location ?? ev.venue_name ?? zone.ville,
           ville:       ev.city    ?? zone.ville,
-          pays:        ev.country ?? zone.pays,
+          pays:        normaliserPays(ev.country ?? zone.pays),
           latitude,
           longitude,
           date_debut:  dateDebut,
