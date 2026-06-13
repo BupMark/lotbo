@@ -19,6 +19,13 @@ const VILLE_MAP: Record<string, string> = {
   'port de paix':   'Port-de-Paix',
   'saint-marc':     'Saint-Marc',
   'saint marc':     'Saint-Marc',
+  'petit-goave':    'Petit-Goâve',
+  'petit goave':    'Petit-Goâve',
+  'petit goâve':    'Petit-Goâve',
+  'tigwav':         'Petit-Goâve',
+  'brussel':        'Bruxelles',
+  'montreal':       'Montréal',
+  'cap haïtien':    'Cap-Haïtien',
 }
 
 function strip(s: string): string {
