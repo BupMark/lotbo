@@ -307,6 +307,7 @@ export default function Admin() {
   const [countApprouves, setCountApprouves] = useState(0)
   const [countEnAttente, setCountEnAttente] = useState(0)
   const [countRejetes,   setCountRejetes]   = useState(0)
+  const [countHorsLigne, setCountHorsLigne] = useState(0)
   const [countVilles,    setCountVilles]    = useState(0)
   const [countPays,      setCountPays]      = useState(0)
   const [repartitionVilles, setRepartitionVilles] = useState<{ ville: string; nb: number }[]>([])
@@ -368,16 +369,19 @@ export default function Admin() {
       { count: approuves },
       { count: enAttente },
       { count: rejetes },
+      { count: horsLigne },
     ] = await Promise.all([
       supabase.from('evenements').select('*', { count: 'exact', head: true }),
       supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'approuve'),
       supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'en_attente'),
       supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'rejete'),
+      supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'hors_ligne'),
     ])
     setCountTotal(total || 0)
     setCountApprouves(approuves || 0)
     setCountEnAttente(enAttente || 0)
     setCountRejetes(rejetes || 0)
+    setCountHorsLigne(horsLigne || 0)
 
     // ── 2. Villes distinctes (count côté client sur colonne ville) ───────────
     const { data: villesData } = await supabase
@@ -917,7 +921,7 @@ export default function Admin() {
                 { key: 'en_cours',    label: '🔴 En cours',   count: nbEnCours  },
                 { key: 'archive',     label: '📅 Archivés',   count: nbArchives },
                 { key: 'rejete',      label: '✗ Rejetés',     count: countRejetes   },
-                { key: 'hors_ligne',  label: '⬇ Hors ligne',  count: evenements.filter(e => e.statut === 'hors_ligne').length },
+                { key: 'hors_ligne',  label: '⬇ Hors ligne',  count: countHorsLigne },
                 { key: 'tous',        label: 'Tous',           count: countTotal     },
               ] as { key: FiltreStatut; label: string; count: number }[]).map(f => (
                 <button
