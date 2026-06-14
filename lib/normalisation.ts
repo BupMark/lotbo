@@ -26,6 +26,10 @@ const VILLE_MAP: Record<string, string> = {
   'brussel':        'Bruxelles',
   'montreal':       'Montréal',
   'cap haïtien':    'Cap-Haïtien',
+  'bogota':         'Bogotá',
+  'ciudad de mexico':  'Ciudad de México',
+  'ciudad de méxico':  'Ciudad de México',
+  'cdmx':              'Ciudad de México',
 }
 
 function strip(s: string): string {
@@ -85,12 +89,19 @@ const CODE_PAYS: Record<string, string> = {
   'DR Congo':                        'Congo (RDC)',
   'Mexico':                          'Mexique',
   'Mexique':                         'Mexique',
+  'MX':                              'Mexique',
   'PH':                              'Philippines',
   'Philippines':                     'Philippines',
   'CH':                              'Suisse',
   'BS':                              'Bahamas',
   'Bahamas':                         'Bahamas',
   'The Bahamas':                     'Bahamas',
+  'AR':                              'Argentine',
+  'Argentina':                       'Argentine',
+  'Argentine':                       'Argentine',
+  'CO':                              'Colombie',
+  'Colombia':                        'Colombie',
+  'Colombie':                        'Colombie',
 }
 
 export function codeVersNomPays(v: string): string {

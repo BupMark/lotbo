@@ -1,0 +1,43 @@
+name: Scraping LATAM — Eventbrite
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03h00 UTC tous les jours
+  workflow_dispatch:
+
+jobs:
+  scrape-eventbrite-latam:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import Eventbrite — Mexico City
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=mexico-city" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+
+      - name: Pause entre zones
+        run: sleep 10
+
+      - name: Import Eventbrite — Guadalajara
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=guadalajara" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+
+      - name: Pause entre zones
+        run: sleep 10
+
+      - name: Import Eventbrite — Buenos Aires
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=buenos-aires" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+
+      - name: Pause entre zones
+        run: sleep 10
+
+      - name: Import Eventbrite — Bogotá
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=bogota" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
