@@ -136,6 +136,7 @@ const DRAPEAUX_PAYS: Record<string, string> = {
   'Italie':                 '🇮🇹',
   'Allemagne':              '🇩🇪',
   'Brésil':                 '🇧🇷',
+  'Argentine':              '🇦🇷',
   'Mexique':                '🇲🇽',
   'Colombie':               '🇨🇴',
   'Cuba':                   '🇨🇺',

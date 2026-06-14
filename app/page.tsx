@@ -272,6 +272,7 @@ export default function Home() {
       .eq('statut', 'approuve')
       .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
       .neq('statut', 'hors_ligne')
+      .order('date_debut', { ascending: true, nullsFirst: false })
       .limit(2000)
       .then(({ data }) => setEvenements((data as Evenement[]) || []))
   }, [])
