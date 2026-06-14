@@ -54,6 +54,12 @@ interface TopVille {
   pays: string | null
 }
 
+interface StatsApp {
+  total: number
+  villes: number
+  pays: number
+}
+
 const CATEGORIES = ['Toutes', 'Festival', 'Musique', 'Art', 'Sport', 'Gastronomie', 'Culture', 'Conference', 'Autre']
 
 function formatDate(dateStr: string): string {
@@ -109,6 +115,7 @@ export default function Home() {
   const [acces, setAcces]                   = useState('tous')
   const [prix, setPrix]                     = useState('tous')
   const [evenements, setEvenements]         = useState<Evenement[]>([])
+  const [evenementsListe, setEvenementsListe] = useState<Evenement[]>([])
   const [user, setUser]                     = useState<UserMeta | null>(null)
   const [recherche, setRecherche]           = useState('')
   const [mode, setMode]                     = useState<'carte' | 'liste'>('carte')
@@ -125,6 +132,7 @@ export default function Home() {
   const [carouselIdx, setCarouselIdx]       = useState(0)
   const [clicsEvenements, setClicsEvenements] = useState(0)
   const [totalEvenementsBase, setTotalEvenementsBase] = useState(0)
+  const [statsApp, setStatsApp] = useState<StatsApp>({ total: 0, villes: 0, pays: 0 })
   const [inviteVisible, setInviteVisible]   = useState(false)
   const [favoriTooltipId, setFavoriTooltipId] = useState<string | null>(null)
   const [sheetReduit, setSheetReduit]       = useState(false)
@@ -286,6 +294,28 @@ export default function Home() {
       })
   }, [])
 
+  // BUG-LIMIT1000-1 Phase A — chargement dédié Liste : fenêtre 90j + mis_en_avant toujours inclus
+  useEffect(() => {
+    const aujourd_hui = new Date().toISOString().split('T')[0]
+    const dans90Jours = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0]
+    supabase
+      .from('evenements')
+      .select('*')
+      .eq('statut', 'approuve')
+      .or(`and(date_debut.gte.${aujourd_hui},date_debut.lte.${dans90Jours}),date_debut.is.null,and(mis_en_avant.eq.true,date_debut.gt.${dans90Jours})`)
+      .order('date_debut', { ascending: true, nullsFirst: false })
+      .limit(2000)
+      .then(({ data }) => setEvenementsListe((data as Evenement[]) || []))
+  }, [])
+
+  // BUG-LIMIT1000-1 Phase A — stats globales exactes (indépendantes du plafond)
+  useEffect(() => {
+    supabase.rpc('stats_app').then(({ data }) => {
+      const row = (data as StatsApp[] | null)?.[0]
+      if (row) setStatsApp(row)
+    })
+  }, [])
+
   useEffect(() => {
     if (!mapContainer.current) return
     const map = new mapboxgl.Map({
@@ -323,6 +353,11 @@ export default function Home() {
   }
 
   const evenementsFiltres = evenements.filter(filtreActif)
+
+  // BUG-LIMIT1000-1 Phase A — Liste découplée de la Carte (sauf override recherche/date explicite)
+  const evenementsListeFiltres = (recherche || dateDebut || dateFin)
+    ? evenementsFiltres
+    : evenementsListe.filter(filtreActif)
 
   const preClusterParLieu = (events: typeof evenementsFiltres): GeoJSON.Feature[] => {
     const groupes = new Map<string, typeof evenementsFiltres>()
@@ -624,7 +659,7 @@ export default function Home() {
     const now = new Date()
     const aujourd_hui = new Date().toISOString().split('T')[0]
     const dejaVus = new Map<string, Evenement>()
-    const evenementsDedupliques = evenements
+    const evenementsDedupliques = evenementsListe
       .filter(ev => ev.statut === 'approuve')
       .reduce<Evenement[]>((acc, ev) => {
         if (!ev.parent_id) { acc.push(ev); return acc }
@@ -663,7 +698,7 @@ export default function Home() {
       .sort((a, b) => b.score - a.score)
       .slice(0, 6)
       .map(s => s.ev)
-  }, [evenements, userVille, favorisCounts, commCounts])
+  }, [evenementsListe, userVille, favorisCounts, commCounts])
 
   // Top villes — calculé à partir des événements chargés
   const topVilles = useMemo<TopVille[]>(() => {
@@ -683,14 +718,6 @@ export default function Home() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
   }, [evenements])
-
-  const nbPays = useMemo(() =>
-    new Set(evenements.map((e: Evenement) => e.pays).filter(Boolean)).size
-  , [evenements])
-
-  const nbVilles = useMemo(() =>
-    new Set(evenements.map((e: Evenement) => e.ville).filter(Boolean)).size
-  , [evenements])
 
   // Pin spécial "À la une" — mis à jour quand le carrousel change
   useEffect(() => {
@@ -1239,13 +1266,13 @@ export default function Home() {
                 </div>
                 <div>
                   <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
-                    {nbVilles}+
+                    {statsApp.villes}+
                   </p>
                   <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>villes</p>
                 </div>
                 <div>
                   <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
-                    {nbPays}+
+                    {statsApp.pays}+
                   </p>
                   <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>pays</p>
                 </div>
@@ -1331,7 +1358,7 @@ export default function Home() {
             </div>
           )}
 
-          {evenementsFiltres.length === 0 && (
+          {evenementsListeFiltres.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 16px 24px' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
               <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>Aucun événement trouvé</p>
@@ -1359,7 +1386,7 @@ export default function Home() {
 
           {/* ── Grille UX4 ── */}
           <div className="lotbo-grid-evenements">
-            {evenementsFiltres.map(ev => (
+            {evenementsListeFiltres.map(ev => (
               <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" onClick={() => trackEventClick(ev)}>
                 <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
                 <div className="card-body">
