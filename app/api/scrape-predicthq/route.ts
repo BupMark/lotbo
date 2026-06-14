@@ -35,6 +35,10 @@ const ZONES = [
   { label: 'Dakar',       country: 'SN', within: '100km@14.7167,-17.4677'},
   { label: 'Abidjan',     country: 'CI', within: '100km@5.3600,-4.0083'  },
   { label: 'Lagos',       country: 'NG', within: '100km@6.5244,3.3792'   },
+  { label: 'Mexico City', country: 'MX', within: '100km@19.4326,-99.1332' },
+  { label: 'Guadalajara', country: 'MX', within: '100km@20.6597,-103.3496'},
+  { label: 'Buenos Aires',country: 'AR', within: '100km@-34.6037,-58.3816'},
+  { label: 'Bogota',      country: 'CO', within: '100km@4.7110,-74.0721'  },
 ]
 
 const CATEGORIES_ACTIVES = [
