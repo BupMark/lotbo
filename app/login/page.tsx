@@ -17,6 +17,7 @@ export default function Login() {
   const [loading, setLoading]                   = useState(false)
   const [loadingGoogle, setLoadingGoogle]       = useState(false)
   const [loadingFacebook, setLoadingFacebook]   = useState(false)
+  const [loadingApple, setLoadingApple]         = useState(false)
   const [message, setMessage]                   = useState('')
   const [messageType, setMessageType]           = useState<'erreur' | 'succes'>('erreur')
   const [emailEnvoye, setEmailEnvoye]           = useState(false)
@@ -107,6 +108,18 @@ export default function Login() {
       },
     })
     if (error) { setMessage('Erreur Facebook : ' + error.message); setMessageType('erreur'); setLoadingFacebook(false) }
+  }
+
+  // ── Apple OAuth ────────────────────────────────── 4.8 App Store
+  const handleApple = async () => {
+    setLoadingApple(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(getRedirect())}`,
+      },
+    })
+    if (error) { setMessage('Erreur Apple : ' + error.message); setMessageType('erreur'); setLoadingApple(false) }
   }
 
   // ── Connexion email ────────────────────────────────────────────────────────
@@ -320,7 +333,7 @@ export default function Login() {
         </div>
 
         {/* ── Bouton Google ── */}
-        <button type="button" onClick={handleGoogle} disabled={loadingGoogle || loadingFacebook}
+        <button type="button" onClick={handleGoogle} disabled={loadingGoogle || loadingFacebook || loadingApple}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '12px 16px', background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: '#1A1410', cursor: loadingGoogle ? 'not-allowed' : 'pointer', marginBottom: 10, opacity: loadingGoogle ? 0.7 : 1, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
         >
           {loadingGoogle ? <span style={{ color: '#8C5A40' }}>Redirection vers Google...</span> : (
@@ -337,7 +350,7 @@ export default function Login() {
         </button>
 
         {/* ── Bouton Facebook ── */}
-        <button type="button" onClick={handleFacebook} disabled={loadingGoogle || loadingFacebook}
+        <button type="button" onClick={handleFacebook} disabled={loadingGoogle || loadingFacebook || loadingApple}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '12px 16px', background: '#1877F2', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: 'white', cursor: loadingFacebook ? 'not-allowed' : 'pointer', marginBottom: 16, opacity: loadingFacebook ? 0.7 : 1 }}
         >
           {loadingFacebook ? <span>Redirection vers Facebook...</span> : (
@@ -346,6 +359,25 @@ export default function Login() {
                 <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.792-4.697 4.533-4.697 1.313 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
               </svg>
               {mode === 'connexion' ? 'Continuer avec Facebook' : 'S\'inscrire avec Facebook'}
+            </>
+          )}
+        </button>
+
+        {/* ── Bouton Apple ── */}
+        <button type="button" onClick={handleApple} disabled={loadingGoogle || loadingFacebook || loadingApple}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            width: '100%', padding: '12px 16px', background: 'black', border: 'none',
+            borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: 'white',
+            cursor: loadingApple ? 'not-allowed' : 'pointer', marginBottom: 16,
+            opacity: loadingApple ? 0.7 : 1 }}
+        >
+          {loadingApple ? <span>Redirection vers Apple...</span> : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.05 12.536c-.029-2.1 1.715-3.107 1.793-3.155-.978-1.43-2.5-1.628-3.043-1.65-1.31-.133-2.557.766-3.222.766-.667 0-1.7-.748-2.797-.728-1.44.022-2.78.838-3.52 2.124-1.5 2.605-.385 6.464 1.07 8.59.71 1.04 1.555 2.205 2.665 2.165 1.07-.04 1.473-.69 2.766-.69 1.29 0 1.654.69 2.78.668 1.15-.02 1.878-1.045 2.586-2.085.815-1.2 1.15-2.365 1.168-2.42-.026-.012-2.24-.86-2.265-3.42z"/>
+                <path d="M14.918 5.094c.59-.715.99-1.71.88-2.7-.85.034-1.88.567-2.49 1.28-.55.63-1.03 1.64-.9 2.605.94.073 1.91-.477 2.51-1.185z"/>
+              </svg>
+              {mode === 'connexion' ? 'Continuer avec Apple' : 'S\'inscrire avec Apple'}
             </>
           )}
         </button>
