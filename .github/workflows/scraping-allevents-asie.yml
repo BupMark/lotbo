@@ -1,0 +1,51 @@
+name: Scraping Asie du Sud — AllEvents
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # 04h00 UTC tous les jours
+  workflow_dispatch:
+
+jobs:
+  scrape-allevents-asie:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import AllEvents — Mumbai
+        run: |
+          curl -s "https://app.lotbo.app/api/import-allevents-asie?zone=mumbai" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import AllEvents — New Delhi
+        run: |
+          curl -s "https://app.lotbo.app/api/import-allevents-asie?zone=new-delhi" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import AllEvents — Bangalore
+        run: |
+          curl -s "https://app.lotbo.app/api/import-allevents-asie?zone=bangalore" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import AllEvents — Goa
+        run: |
+          curl -s "https://app.lotbo.app/api/import-allevents-asie?zone=goa" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import AllEvents — Colombo
+        run: |
+          curl -s "https://app.lotbo.app/api/import-allevents-asie?zone=colombo" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import AllEvents — Kathmandu
+        run: |
+          curl -s "https://app.lotbo.app/api/import-allevents-asie?zone=kathmandu" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
