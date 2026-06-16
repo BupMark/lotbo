@@ -44,6 +44,14 @@ const ZONES: Record<string, { url: string; villeFallback: string; paysFallback: 
   'guadalajara':  { url: 'https://www.eventbrite.com/d/mexico--guadalajara/events/',                     villeFallback: 'Guadalajara',       paysFallback: 'Mexique' },
   'buenos-aires': { url: 'https://www.eventbrite.com/d/argentina--buenos-aires/events/',                villeFallback: 'Buenos Aires',       paysFallback: 'Argentine' },
   'bogota':       { url: 'https://www.eventbrite.com/d/colombia--bogota/events/',                       villeFallback: 'Bogotá',             paysFallback: 'Colombie' },
+  'toronto':       { url: 'https://www.eventbrite.com/d/canada--toronto/events/',           villeFallback: 'Toronto',       paysFallback: 'Canada' },
+  'vancouver':     { url: 'https://www.eventbrite.com/d/canada--vancouver/events/',         villeFallback: 'Vancouver',     paysFallback: 'Canada' },
+  'lima':          { url: 'https://www.eventbrite.com/d/peru--lima/events/',                villeFallback: 'Lima',          paysFallback: 'Pérou' },
+  'santiago':      { url: 'https://www.eventbrite.com/d/chile--santiago/events/',           villeFallback: 'Santiago',      paysFallback: 'Chili' },
+  'sao-paulo':     { url: 'https://www.eventbrite.com/d/brazil--sao-paulo/events/',         villeFallback: 'São Paulo',     paysFallback: 'Brésil' },
+  'rio-de-janeiro':{ url: 'https://www.eventbrite.com/d/brazil--rio-de-janeiro/events/',   villeFallback: 'Rio de Janeiro',paysFallback: 'Brésil' },
+  'medellin':      { url: 'https://www.eventbrite.com/d/colombia--medellin/events/',        villeFallback: 'Medellín',      paysFallback: 'Colombie' },
+  'montevideo':    { url: 'https://www.eventbrite.com/d/uruguay--montevideo/events/',       villeFallback: 'Montevideo',    paysFallback: 'Uruguay' },
 }
 
 const MAX_PAGES = 3

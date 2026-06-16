@@ -30,6 +30,13 @@ const VILLE_MAP: Record<string, string> = {
   'ciudad de mexico':  'Ciudad de México',
   'ciudad de méxico':  'Ciudad de México',
   'cdmx':              'Ciudad de México',
+  'sao paulo':         'São Paulo',
+  'são paulo':         'São Paulo',
+  'rio de janeiro':    'Rio de Janeiro',
+  'medellin':          'Medellín',
+  'medellín':          'Medellín',
+  'santiago':          'Santiago',
+  'montevideo':        'Montevideo',
 }
 
 function strip(s: string): string {
@@ -102,6 +109,27 @@ const CODE_PAYS: Record<string, string> = {
   'CO':                              'Colombie',
   'Colombia':                        'Colombie',
   'Colombie':                        'Colombie',
+  // LATAM v2
+  'PE':                              'Pérou',
+  'Peru':                            'Pérou',
+  'Pérou':                           'Pérou',
+  'CL':                              'Chili',
+  'Chile':                           'Chili',
+  'Chili':                           'Chili',
+  'BR':                              'Brésil',
+  'Brazil':                          'Brésil',
+  'Brésil':                          'Brésil',
+  'UY':                              'Uruguay',
+  'Uruguay':                         'Uruguay',
+  // Asie du Sud
+  'IN':                              'Inde',
+  'India':                           'Inde',
+  'Inde':                            'Inde',
+  'LK':                              'Sri Lanka',
+  'Sri Lanka':                       'Sri Lanka',
+  'NP':                              'Népal',
+  'Nepal':                           'Népal',
+  'Népal':                           'Népal',
 }
 
 export function codeVersNomPays(v: string): string {
