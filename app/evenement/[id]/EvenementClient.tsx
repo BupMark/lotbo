@@ -549,6 +549,7 @@ export default function EvenementPage() {
   const [claimLoading, setClaimLoading]                 = useState(false)
   const [roleOrg, setRoleOrg]                           = useState<string | null>(null)
   const [isDesktop, setIsDesktop]                        = useState(false)
+  const [showNavMenu, setShowNavMenu] = useState(false)
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -821,6 +822,7 @@ if (data?.parent_id) {
   const urlWhatsapp   = 'https://wa.me/?text=' + encodeURIComponent(texteWhatsapp)
   const urlFacebook   = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)
   const urlGoogleMaps = 'https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude
+  const urlAppleMaps = 'https://maps.apple.com/?daddr=' + ev.latitude + ',' + ev.longitude
   const periodeAffichee = afficherPeriode(ev)
   const estMultiJours   = ev.date_fin && ev.date_fin !== ev.date
   const enLigne         = estEnLigne(ev.lieu || '')
@@ -1381,11 +1383,38 @@ if (data?.parent_id) {
             </p>
           )}
           {ev.organisateur && <p style={{ color: '#8C5A40', fontSize: 15 }}>👤 <span style={{ color: '#1A1410' }}>{ev.organisateur}</span></p>}
-          {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
-            <a href={urlGoogleMaps} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}>
-              <span style={{ fontSize: 20 }}>🧭</span>S'y rendre · Ouvrir dans Google Maps
-            </a>
-          )}
+         {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
+  <div style={{ position: 'relative', marginBottom: 24 }}>
+    <button
+      onClick={() => setShowNavMenu(v => !v)}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}
+    >
+      <span style={{ fontSize: 20 }}>🧭</span>
+      S'y rendre
+      <span style={{ fontSize: 12, color: '#8C5A40', marginLeft: 4 }}>{showNavMenu ? '▲' : '▼'}</span>
+    </button>
+    {showNavMenu && (
+      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, marginTop: 4, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+        
+          href={urlGoogleMaps}
+          target="_blank"
+          onClick={() => setShowNavMenu(false)}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', borderBottom: '1px solid #E8E0D0' }}
+        >
+          <span style={{ fontSize: 20 }}>🗺️</span> Google Maps
+        </a>
+        
+          href={urlAppleMaps}
+          target="_blank"
+          onClick={() => setShowNavMenu(false)}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}
+        >
+          <span style={{ fontSize: 20 }}>🍎</span> Plans
+        </a>
+      </div>
+    )}
+  </div>
+)}
           {enLigne && ev.lien && (
             <a href={ev.lien} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(45,158,107,0.1)', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#2D9E6B', fontSize: 14, fontWeight: 'bold' }}>
               <span style={{ fontSize: 20 }}>🌐</span>Rejoindre l'événement en ligne →

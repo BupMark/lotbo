@@ -126,5 +126,8 @@
     "referralCount": "{n} moun enskri ak lyen ou",
     "referralPoints": "{n} pwen ou genyen grasa parenaj",
     "referralWhatsApp": "Pataje sou WhatsApp"
+  },
+  "navigate": {
+    "apple": "Kat"
   }
 }

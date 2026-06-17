@@ -126,5 +126,8 @@
     "referralCount": "{n} personne(s) inscrite(s) via ton lien",
     "referralPoints": "{n} points gagnés via parrainage",
     "referralWhatsApp": "Partager sur WhatsApp"
+  },
+  "navigate": {
+    "apple": "Plans"
   }
 }

@@ -126,5 +126,8 @@
     "referralCount": "{n} person(s) registered via your link",
     "referralPoints": "{n} points earned via referral",
     "referralWhatsApp": "Share on WhatsApp"
+  },
+  "navigate": {
+    "apple": "Maps"
   }
 }
