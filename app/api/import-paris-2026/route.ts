@@ -189,7 +189,11 @@ const EVENEMENTS_PARIS_2026: EvenementParis[] = [
   },
 ]
 
-export async function GET() {
+export async function GET(request: Request) {
+  const secret = request.headers.get('x-internal-secret')
+  if (secret !== process.env.INTERNAL_API_SECRET) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
   // ── Instanciation DANS la fonction — jamais au niveau racine ──
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

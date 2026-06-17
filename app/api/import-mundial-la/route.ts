@@ -346,7 +346,11 @@ const EVENEMENTS_LA_MUNDIAL: EvenementMundial[] = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
-export async function GET() {
+export async function GET(request: Request) {
+  const secret = request.headers.get('x-internal-secret')
+  if (secret !== process.env.INTERNAL_API_SECRET) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
