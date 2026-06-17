@@ -1395,25 +1395,23 @@ if (data?.parent_id) {
     </button>
     {showNavMenu && (
       <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, marginTop: 4, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
-        
-          href={urlGoogleMaps}
-          target="_blank"
-          onClick={() => setShowNavMenu(false)}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', borderBottom: '1px solid #E8E0D0' }}
-        >
-          <span style={{ fontSize: 20 }}>🗺️</span> Google Maps
-        </a>
-        
-          href={urlAppleMaps}
-          target="_blank"
-          onClick={() => setShowNavMenu(false)}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}
-        >
-          <span style={{ fontSize: 20 }}>🍎</span> Plans
-        </a>
-      </div>
-    )}
-  </div>
+          
+            href={urlGoogleMaps}
+            target="_blank"
+            onClick={() => setShowNavMenu(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', borderBottom: '1px solid #E8E0D0' }}
+          >
+            <span style={{ fontSize: 20 }}>🗺️</span> Google Maps
+          </a>
+          
+            href={urlAppleMaps}
+            target="_blank"
+            onClick={() => setShowNavMenu(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}
+          >
+            <span style={{ fontSize: 20 }}>🍎</span> Plans
+          </a>
+        </div>
 )}
           {enLigne && ev.lien && (
             <a href={ev.lien} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(45,158,107,0.1)', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#2D9E6B', fontSize: 14, fontWeight: 'bold' }}>
