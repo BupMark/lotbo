@@ -48,7 +48,6 @@ async function accepterInvitation(userId: string, token: string) {
 
     if (invRow.statut !== 'en_attente' || new Date(invRow.expire_le) < new Date()) return
 
-    // Vérifier si déjà membre
     const { data: existing } = await supabaseAdmin
       .from('organisation_membres')
       .select('role')
@@ -76,6 +75,45 @@ async function accepterInvitation(userId: string, token: string) {
   }
 }
 
+// ── Helper partagé : créer profil + badge + redirect ─────────────────────────
+async function traiterSession(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string,
+  userEmail: string,
+  invitation: string | null,
+  redirect: string
+) {
+  const { data: profil } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .single()
+
+  if (!profil) {
+    const { data: userData } = await supabase.auth.getUser()
+    const nom =
+      userData.user?.user_metadata?.full_name ||
+      userData.user?.user_metadata?.name ||
+      userData.user?.email?.split('@')[0] ||
+      'Membre LOTBO'
+
+    await supabase.from('profiles').upsert({
+      id: userId, nom, role: 'membre', created_at: new Date().toISOString(),
+    })
+
+    if (userEmail) await attribuerBadgeSupporter(supabase, userId, userEmail)
+  } else {
+    if (userEmail) await attribuerBadgeSupporter(supabase, userId, userEmail)
+  }
+
+  if (invitation) {
+    await accepterInvitation(userId, invitation)
+  }
+
+  return NextResponse.redirect(`https://app.lotbo.app${redirect}`)
+}
+
+// ── GET — Google, Facebook, flux PKCE standard ────────────────────────────────
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
 
@@ -109,39 +147,64 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error || !data.user) {
-    console.error('[Auth] ❌ exchangeCodeForSession:', error)
+    console.error('[Auth GET] ❌ exchangeCodeForSession:', error)
     return NextResponse.redirect('https://app.lotbo.app/login?error=auth')
   }
 
-  const userEmail = data.user.email || ''
+  return traiterSession(supabase, data.user.id, data.user.email || '', invitation, redirect)
+}
 
-  const { data: profil } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('id', data.user.id)
-    .single()
+// ── POST — Apple Sign In (iPad + flux form_post) ──────────────────────────────
+export async function POST(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const redirect   = searchParams.get('redirect') || '/'
+  const invitation = searchParams.get('invitation')
 
-  // ── Nouveau profil ─────────────────────────────────────────────────────────
-  if (!profil) {
-    const nom =
-      data.user.user_metadata?.full_name ||
-      data.user.user_metadata?.name ||
-      data.user.email?.split('@')[0] ||
-      'Membre LOTBO'
+  let code: string | null = null
 
-    await supabase.from('profiles').upsert({
-      id: data.user.id, nom, role: 'membre', created_at: new Date().toISOString(),
-    })
-
-    if (userEmail) await attribuerBadgeSupporter(supabase, data.user.id, userEmail)
-  } else {
-    if (userEmail) await attribuerBadgeSupporter(supabase, data.user.id, userEmail)
+  try {
+    const body = await request.formData()
+    code = body.get('code') as string | null
+  } catch {
+    // Fallback : essayer JSON
+    try {
+      const json = await request.json()
+      code = json?.code || null
+    } catch {
+      code = null
+    }
   }
 
-  // ── Accepter invitation si token présent dans l'URL ───────────────────────
-  if (invitation) {
-    await accepterInvitation(data.user.id, invitation)
+  if (!code) {
+    console.error('[Auth Apple POST] ❌ Pas de code reçu')
+    return NextResponse.redirect('https://app.lotbo.app/login?error=auth')
   }
 
-  return NextResponse.redirect(`https://app.lotbo.app${redirect}`)
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          } catch (error) {
+            console.error('[Cookies] ❌ Erreur setAll:', error)
+          }
+        },
+      },
+    }
+  )
+
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error || !data.user) {
+    console.error('[Auth Apple POST] ❌ exchangeCodeForSession:', error)
+    return NextResponse.redirect('https://app.lotbo.app/login?error=auth')
+  }
+
+  return traiterSession(supabase, data.user.id, data.user.email || '', invitation, redirect)
 }
