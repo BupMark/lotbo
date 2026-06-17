@@ -148,6 +148,10 @@ function parseEvents(html: string): EventData[] {
 }
 
 export async function GET(request: Request) {
+  const secret = request.headers.get('x-internal-secret')
+  if (secret !== process.env.INTERNAL_API_SECRET) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
   const { searchParams } = new URL(request.url)
   const zoneKey = searchParams.get('zone')
   if (!zoneKey || !ZONES[zoneKey]) {

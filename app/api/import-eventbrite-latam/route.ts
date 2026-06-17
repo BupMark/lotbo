@@ -50,7 +50,7 @@ const ZONES: Record<string, { url: string; villeFallback: string; paysFallback: 
   'santiago':      { url: 'https://www.eventbrite.com/d/chile--santiago/events/',           villeFallback: 'Santiago',      paysFallback: 'Chili' },
   'sao-paulo':     { url: 'https://www.eventbrite.com/d/brazil--sao-paulo/events/',         villeFallback: 'São Paulo',     paysFallback: 'Brésil' },
   'rio-de-janeiro':{ url: 'https://www.eventbrite.com/d/brazil--rio-de-janeiro/events/',   villeFallback: 'Rio de Janeiro',paysFallback: 'Brésil' },
-  'medellin':      { url: 'https://www.eventbrite.com/d/colombia--medellin/events/',        villeFallback: 'Medellín',      paysFallback: 'Colombie' },
+  'medellin':      { url: 'https://www.eventbrite.com/d/colombia--medell%C3%ADn/events/',   villeFallback: 'Medellín',      paysFallback: 'Colombie' },
   'montevideo':    { url: 'https://www.eventbrite.com/d/uruguay--montevideo/events/',       villeFallback: 'Montevideo',    paysFallback: 'Uruguay' },
 }
 
@@ -180,6 +180,10 @@ function parseEvents(html: string): EventData[] {
 }
 
 export async function GET(request: Request) {
+  const secret = request.headers.get('x-internal-secret')
+  if (secret !== process.env.INTERNAL_API_SECRET) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
   const { searchParams } = new URL(request.url)
   const zoneKey = searchParams.get('zone')
 
