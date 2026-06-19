@@ -129,5 +129,8 @@
   },
   "navigate": {
     "apple": "Mapas"
+  },
+  "map": {
+    "viewFullEvent": "Ver evento completo"
   }
 }

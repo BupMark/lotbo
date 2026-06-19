@@ -369,6 +369,20 @@ export default function Home() {
       if (!groupes.has(key)) groupes.set(key, [])
       groupes.get(key)!.push(ev)
     }
+    // FEAT-PIN-MULTIEVENT-1 — Tri des événements par lieu : date ASC → heure ASC → created_at ASC
+    for (const [, evs] of groupes) {
+      evs.sort((a, b) => {
+        const dateA = a.date_debut || a.date || ''
+        const dateB = b.date_debut || b.date || ''
+        if (dateA !== dateB) return dateA.localeCompare(dateB)
+        const heureA = a.heure_debut || ''
+        const heureB = b.heure_debut || ''
+        if (heureA !== heureB) return heureA.localeCompare(heureB)
+        const createdA = a.created_at || ''
+        const createdB = b.created_at || ''
+        return createdA.localeCompare(createdB)
+      })
+    }
     const features: GeoJSON.Feature[] = []
     for (const [, evs] of groupes) {
       const premier = evs[0]
@@ -555,20 +569,83 @@ export default function Home() {
         const props = e.features[0].properties
         if (!props) return
         const ids: string[] = JSON.parse(props.ids || '[]')
-        const titres: string[] = JSON.parse(props.titres || '[]')
         const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
-        const listHTML = titres.map((titre, i) =>
-          `<a href="/evenement/${ids[i]}" style="display:block;padding:6px 0;border-bottom:1px solid rgba(247,242,232,0.15);font-size:12px;text-decoration:none;color:#F7F2E8;">${titre}</a>`
-        ).join('')
-        new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup' })
+
+        const evList = ids
+          .map(id => evenementsFiltresRef.current.find(item => item.id === id))
+          .filter((ev): ev is NonNullable<typeof ev> => ev != null)
+        if (!evList.length) return
+
+        let currentIndex = 0
+        const total = evList.length
+        const nomLieu = props.nom_lieu || props.lieu || ''
+        const uid = Date.now()
+
+        const formatDate = (ev: (typeof evList)[number]) => {
+          const debut = ev.date_debut || ev.date || ''
+          if (ev.date_fin && ev.date_fin !== ev.date && ev.date_fin !== ev.date_debut)
+            return `${new Date(debut).toLocaleDateString('fr-FR')} → ${new Date(ev.date_fin).toLocaleDateString('fr-FR')}`
+          return debut ? new Date(debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+        }
+
+        const slideHTML = (idx: number) => {
+          const ev = evList[idx]
+          const imageUrl = ev.image_url || getEventImage(null, ev.categorie)
+          const dateStr = formatDate(ev)
+          return `
+            ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:110px;object-fit:cover;display:block;" crossorigin="anonymous"/>` : ''}
+            <div style="padding:10px 12px;">
+              <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#F7F2E8;line-height:1.3;">${ev.titre}</p>
+              ${ev.lieu ? `<p style="font-size:11px;color:rgba(247,242,232,0.65);margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
+              ${dateStr ? `<p style="font-size:11px;color:rgba(247,242,232,0.65);margin:0 0 6px;">📅 ${dateStr}</p>` : ''}
+              ${ev.categorie ? `<span style="display:inline-block;margin-bottom:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;background:rgba(200,67,26,0.15);color:#C8431A;">${ev.categorie}</span>` : ''}
+              <a href="/evenement/${ev.id}" style="display:block;text-align:center;padding:7px 0;background:#C8431A;color:#F7F2E8;border-radius:8px;font-size:12px;font-weight:bold;text-decoration:none;">Voir la fiche complète</a>
+            </div>
+          `
+        }
+
+        new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup', maxWidth: 'none' })
           .setLngLat(coords)
           .setHTML(`
-            <div style="padding:10px 12px;max-height:240px;overflow-y:auto;background:#1A1410;border-radius:12px;">
-              <p style="font-weight:bold;font-size:13px;margin:0 0 8px;color:#C8431A;">📍 ${props.nom_lieu || props.lieu} · ${props.count} événements</p>
-              ${listHTML}
+            <div style="width:240px;background:#1A1410;border-radius:12px;overflow:hidden;user-select:none;" id="lp-${uid}">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid rgba(247,242,232,0.1);">
+                <p style="font-size:11px;font-weight:bold;color:#C8431A;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">📍 ${nomLieu}</p>
+                <span id="lp-counter-${uid}" style="font-size:11px;color:rgba(247,242,232,0.5);white-space:nowrap;margin-left:6px;">1 / ${total}</span>
+              </div>
+              <div id="lp-slide-${uid}">${slideHTML(0)}</div>
+              <div style="display:flex;justify-content:space-between;padding:6px 12px;border-top:1px solid rgba(247,242,232,0.1);">
+                <button id="lp-prev-${uid}" style="background:rgba(247,242,232,0.08);border:none;color:#F7F2E8;font-size:18px;width:36px;height:32px;border-radius:8px;cursor:pointer;">‹</button>
+                <button id="lp-next-${uid}" style="background:rgba(247,242,232,0.08);border:none;color:#F7F2E8;font-size:18px;width:36px;height:32px;border-radius:8px;cursor:pointer;">›</button>
+              </div>
             </div>
           `)
           .addTo(map)
+
+        const update = () => {
+          const slide = document.getElementById(`lp-slide-${uid}`)
+          const counter = document.getElementById(`lp-counter-${uid}`)
+          if (slide) slide.innerHTML = slideHTML(currentIndex)
+          if (counter) counter.textContent = `${currentIndex + 1} / ${total}`
+        }
+
+        setTimeout(() => {
+          const prev = document.getElementById(`lp-prev-${uid}`)
+          const next = document.getElementById(`lp-next-${uid}`)
+          const container = document.getElementById(`lp-${uid}`)
+          if (prev) prev.addEventListener('click', () => { currentIndex = (currentIndex - 1 + total) % total; update() })
+          if (next) next.addEventListener('click', () => { currentIndex = (currentIndex + 1) % total; update() })
+          if (container) {
+            let touchStartX = 0
+            container.addEventListener('touchstart', (te) => { touchStartX = te.touches[0].clientX }, { passive: true })
+            container.addEventListener('touchend', (te) => {
+              const dx = te.changedTouches[0].clientX - touchStartX
+              if (Math.abs(dx) > 40) {
+                currentIndex = dx < 0 ? (currentIndex + 1) % total : (currentIndex - 1 + total) % total
+                update()
+              }
+            }, { passive: true })
+          }
+        }, 0)
       })
 
       const handlePointClick = (e: mapboxgl.MapLayerMouseEvent) => {

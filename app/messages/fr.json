@@ -129,5 +129,8 @@
   },
   "navigate": {
     "apple": "Plans"
+  },
+  "map": {
+    "viewFullEvent": "Voir la fiche complète"
   }
 }
