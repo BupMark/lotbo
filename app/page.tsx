@@ -63,20 +63,26 @@ interface StatsApp {
 
 const CATEGORIES = ['Toutes', 'Festival', 'Musique', 'Art', 'Sport', 'Gastronomie', 'Culture', 'Conference', 'Autre']
 
-function formatDate(dateStr: string): string {
+const LOCALE_MAP: Record<Langue, string> = { fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-BR', ht: 'fr-FR' }
+const MOIS_HT = ['janv', 'fevr', 'mas', 'avr', 'me', 'jen', 'jiyè', 'out', 'sept', 'okt', 'nov', 'des']
+
+function formatDate(dateStr: string, langue: Langue): string {
   if (!dateStr) return dateStr
   const parts = dateStr.split('-')
   if (parts.length !== 3) return dateStr
   const [year, month, day] = parts
-  const mois = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
-  return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
+  if (langue === 'ht') {
+    return `${parseInt(day)} ${MOIS_HT[parseInt(month) - 1]} ${year}`
+  }
+  const d = new Date(`${dateStr}T00:00:00`)
+  return d.toLocaleDateString(LOCALE_MAP[langue], { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-function afficherPeriode(ev: Pick<Evenement, 'date' | 'date_fin'>): string {
+function afficherPeriode(ev: Pick<Evenement, 'date' | 'date_fin'>, langue: Langue): string {
   if (ev.date_fin && ev.date_fin !== ev.date) {
-    return `${formatDate(ev.date)} → ${formatDate(ev.date_fin)}`
+    return `${formatDate(ev.date, langue)} → ${formatDate(ev.date_fin, langue)}`
   }
-  return formatDate(ev.date) || ev.date || ''
+  return formatDate(ev.date, langue) || ev.date || ''
 }
 
 function estEnCours(ev: Evenement, now: Date): boolean {
@@ -1393,7 +1399,7 @@ export default function Home() {
                       <div style={{ position: 'absolute', bottom: 36, left: 14, right: 14 }}>
                         <p style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 17, marginBottom: 4, lineHeight: 1.3 }}>{ev.titre}</p>
                         <p style={{ color: 'rgba(247,242,232,0.8)', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                        <p style={{ color: 'rgba(247,242,232,0.8)', fontSize: 12 }}>📅 {afficherPeriode(ev)}</p>
+                        <p style={{ color: 'rgba(247,242,232,0.8)', fontSize: 12 }}>📅 {afficherPeriode(ev, langue)}</p>
                       </div>
                     </a>
                   ))}
@@ -1428,7 +1434,7 @@ export default function Home() {
                     <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
                       <p style={{ color: '#F7F2E8', fontWeight: 'bold', fontSize: 15, marginBottom: 4, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>{ev.titre}</p>
                       <p style={{ color: 'rgba(247,242,232,0.75)', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                      <p style={{ color: 'rgba(247,242,232,0.75)', fontSize: 12 }}>📅 {afficherPeriode(ev)}</p>
+                      <p style={{ color: 'rgba(247,242,232,0.75)', fontSize: 12 }}>📅 {afficherPeriode(ev, langue)}</p>
                     </div>
                   </a>
                 ))}
@@ -1470,7 +1476,7 @@ export default function Home() {
                 <div className="card-body">
                   <p className="card-titre">{ev.titre}</p>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {afficherPeriode(ev)}</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {afficherPeriode(ev, langue)}</p>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{ev.categorie}</span>
                     {ev.date_fin && ev.date_fin !== ev.date && (
@@ -1555,7 +1561,7 @@ export default function Home() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p className="sidebar-aune-titre">{ev.titre}</p>
                         <p className="sidebar-aune-meta">📍 {ev.lieu}</p>
-                        <p className="sidebar-aune-meta">📅 {afficherPeriode(ev)}</p>
+                        <p className="sidebar-aune-meta">📅 {afficherPeriode(ev, langue)}</p>
                       </div>
                     </a>
                   ))}
@@ -1738,7 +1744,7 @@ export default function Home() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 14, marginBottom: 3 }}>{ev.titre}</p>
                       <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
-                      <p style={{ color: '#8C5A40', fontSize: 12, paddingBottom: 24 }}>📅 {afficherPeriode(ev)}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12, paddingBottom: 24 }}>📅 {afficherPeriode(ev, langue)}</p>
                     </div>
                     <button
                       onClick={e2 => toggleFavori(e2, ev.id)} disabled={togglingFavori === ev.id}
