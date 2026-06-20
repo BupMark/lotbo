@@ -3,7 +3,16 @@
     "ajouter": "+ Ajouter",
     "profil": "Mon profil",
     "deconnexion": "Déconnexion",
-    "community": "Ensemble"
+    "community": "Ensemble",
+    "langue": "Langue",
+    "seConnecter": "Se connecter",
+    "recevoirEvenements": "Recevoir les événements",
+    "panelAdmin": "Panel admin",
+    "classement": "Classement",
+    "aPropos": "À propos",
+    "confidentialite": "Confidentialité",
+    "aide": "Aide",
+    "cgu": "CGU"
   },
   "carte": {
     "recherche": "Ville, pays ou événement...",

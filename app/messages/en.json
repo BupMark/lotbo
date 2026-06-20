@@ -3,7 +3,16 @@
     "ajouter": "+ Add",
     "profil": "My profile",
     "deconnexion": "Sign out",
-    "community": "Together"
+    "community": "Together",
+    "langue": "Language",
+    "seConnecter": "Log in",
+    "recevoirEvenements": "Get event updates",
+    "panelAdmin": "Admin panel",
+    "classement": "Leaderboard",
+    "aPropos": "About",
+    "confidentialite": "Privacy",
+    "aide": "Help",
+    "cgu": "Terms"
   },
   "carte": {
     "recherche": "City, country or event...",

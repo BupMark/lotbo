@@ -3,7 +3,16 @@
     "ajouter": "+ Agregar",
     "profil": "Mi perfil",
     "deconnexion": "Cerrar sesión",
-    "community": "Juntos"
+    "community": "Juntos",
+    "langue": "Idioma",
+    "seConnecter": "Iniciar sesión",
+    "recevoirEvenements": "Recibir eventos",
+    "panelAdmin": "Panel de administración",
+    "classement": "Clasificación",
+    "aPropos": "Acerca de",
+    "confidentialite": "Privacidad",
+    "aide": "Ayuda",
+    "cgu": "Términos"
   },
   "carte": {
     "recherche": "Ciudad, país o evento...",
