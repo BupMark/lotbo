@@ -14,7 +14,20 @@
     "gratuit": "Gratis",
     "payant": "Peye",
     "liste": "Lis",
-    "carte": "Kat"
+    "carte": "Kat",
+    "filtres": "Filtè",
+    "categorie": "Kategori",
+    "acces": "Aksè",
+    "prix": "Pri",
+    "periode": "Peryòd",
+    "aujourdhui": "Jodi a",
+    "cetteSemaine": "Semèn sa a",
+    "ceMois": "Mwa sa a",
+    "ceWeekend": "Wikenn sa a",
+    "du": "Soti",
+    "au": "Rive",
+    "reinitialiser": "Reyajiste",
+    "appliquer": "Aplike filtè yo"
   },
   "evenement": {
     "voir": "Wè paj la →",

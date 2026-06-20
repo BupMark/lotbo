@@ -14,7 +14,20 @@
     "gratuit": "Free",
     "payant": "Paid",
     "liste": "List",
-    "carte": "Map"
+    "carte": "Map",
+    "filtres": "Filters",
+    "categorie": "Category",
+    "acces": "Access",
+    "prix": "Price",
+    "periode": "Period",
+    "aujourdhui": "Today",
+    "cetteSemaine": "This week",
+    "ceMois": "This month",
+    "ceWeekend": "This weekend",
+    "du": "From",
+    "au": "To",
+    "reinitialiser": "Reset",
+    "appliquer": "Apply filters"
   },
   "evenement": {
     "voir": "View page →",

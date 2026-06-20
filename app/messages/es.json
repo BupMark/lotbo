@@ -14,7 +14,20 @@
     "gratuit": "Gratis",
     "payant": "De pago",
     "liste": "Lista",
-    "carte": "Mapa"
+    "carte": "Mapa",
+    "filtres": "Filtros",
+    "categorie": "Categoría",
+    "acces": "Acceso",
+    "prix": "Precio",
+    "periode": "Período",
+    "aujourdhui": "Hoy",
+    "cetteSemaine": "Esta semana",
+    "ceMois": "Este mes",
+    "ceWeekend": "Este fin de semana",
+    "du": "Desde",
+    "au": "Hasta",
+    "reinitialiser": "Restablecer",
+    "appliquer": "Aplicar filtros"
   },
   "evenement": {
     "voir": "Ver página →",

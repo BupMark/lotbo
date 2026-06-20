@@ -14,7 +14,20 @@
     "gratuit": "Gratuit",
     "payant": "Payant",
     "liste": "Liste",
-    "carte": "Carte"
+    "carte": "Carte",
+    "filtres": "Filtres",
+    "categorie": "Catégorie",
+    "acces": "Accès",
+    "prix": "Prix",
+    "periode": "Période",
+    "aujourdhui": "Aujourd'hui",
+    "cetteSemaine": "Cette semaine",
+    "ceMois": "Ce mois",
+    "ceWeekend": "Ce week-end",
+    "du": "Du",
+    "au": "Au",
+    "reinitialiser": "Réinitialiser",
+    "appliquer": "Appliquer les filtres"
   },
   "evenement": {
     "voir": "Voir la page →",
