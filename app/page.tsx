@@ -1628,16 +1628,16 @@ export default function Home() {
         <>
           <div onClick={() => setFavoriTooltipId(null)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
           <div style={{ position: 'fixed', bottom: 72, left: 16, right: 16, zIndex: 45, background: '#1A1410', borderRadius: 14, padding: '16px', boxShadow: '0 4px 24px rgba(26,20,16,0.3)' }}>
-            <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>Connectez-vous pour sauvegarder</p>
-            <p style={{ color: 'rgba(247,242,232,0.65)', fontSize: 12, marginBottom: 14 }}>Retrouvez vos événements favoris dans votre profil.</p>
+            <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>{t.carte.connecteToiTitre}</p>
+            <p style={{ color: 'rgba(247,242,232,0.65)', fontSize: 12, marginBottom: 14 }}>{t.carte.connecteToiDesc}</p>
             <div style={{ display: 'flex', gap: 10 }}>
               <a href="/login" onClick={() => setFavoriTooltipId(null)}
                 style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: '#F7F2E8', border: 'none', borderRadius: 999, padding: '9px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
-                Se connecter
+                {t.nav.seConnecter}
               </a>
               <a href="/login?mode=inscription" onClick={() => setFavoriTooltipId(null)}
                 style={{ flex: 1, background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 999, padding: '9px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
-                Créer un compte
+                {t.carte.creerCompte}
               </a>
             </div>
           </div>
@@ -1650,11 +1650,11 @@ export default function Home() {
       {mode === 'liste' && inviteVisible && !user && (
         <div style={{ position: 'fixed', bottom: 64, left: 0, right: 0, zIndex: 18, background: '#1A1410', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 -2px 16px rgba(26,20,16,0.2)' }}>
           <p style={{ color: '#F7F2E8', fontSize: 13, flex: 1, lineHeight: 1.4 }}>
-            Sauvegardez vos événements favoris 🎉
+            {t.carte.sauvegardezFavoris}
           </p>
           <a href="/login?mode=inscription"
             style={{ background: '#C8431A', color: '#F7F2E8', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            Créer un compte
+            {t.carte.creerCompte}
           </a>
           <button onClick={dismissInvite}
             style={{ background: 'none', border: 'none', color: 'rgba(247,242,232,0.5)', fontSize: 18, cursor: 'pointer', padding: '0 4px', flexShrink: 0, lineHeight: 1 }}
