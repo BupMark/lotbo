@@ -1136,7 +1136,7 @@ export default function Home() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Langue</p>
+              <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{t.nav.langue}</p>
               <select value={langue} onChange={e => setLangue(e.target.value as Langue)} style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', border: '1px solid #2a2a2a', borderRadius: 10, padding: '10px 12px', fontSize: 14, cursor: 'pointer', outline: 'none', width: '100%' }}>
                 {Object.entries(langues).map(([code, info]) => (
                   <option key={code} value={code}>{info.drapeau} {String((info as Record<string, unknown>).nom ?? code)}</option>
@@ -1149,26 +1149,26 @@ export default function Home() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {!user ? (
                 <>
-                  <a href="/login" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(200,67,26,0.12)', color: '#C8431A', textDecoration: 'none', fontSize: 14, fontWeight: 'bold' }}>🔑 Se connecter</a>
-                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>🔔 Recevoir les événements</a>
+                  <a href="/login" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(200,67,26,0.12)', color: '#C8431A', textDecoration: 'none', fontSize: 14, fontWeight: 'bold' }}>{`🔑 ${t.nav.seConnecter}`}</a>
+                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>{`🔔 ${t.nav.recevoirEvenements}`}</a>
                 </>
               ) : (
                 <>
-                  <a href="/profil" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>👤 Mon profil</a>
-                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>🔔 Recevoir les événements</a>
-                  {isAdmin && <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#D4A820', textDecoration: 'none', fontSize: 14 }}>⚙️ Panel admin</a>}
-                  <a href="/classement" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>🏆 Classement</a>
-                  <a href="/organisations" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>🏢 Organisations</a>
-                  <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>ℹ️ À propos</a>
-                  <button onClick={async () => { await supabase.auth.signOut(); setUser(null); setDrawerOuvert(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', border: 'none', fontSize: 14, cursor: 'pointer', textAlign: 'left', width: '100%' }}>🚪 Déconnexion</button>
+                  <a href="/profil" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>{`👤 ${t.nav.profil}`}</a>
+                  <a href="/inscription" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>{`🔔 ${t.nav.recevoirEvenements}`}</a>
+                  {isAdmin && <a href="/admin" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#D4A820', textDecoration: 'none', fontSize: 14 }}>{`⚙️ ${t.nav.panelAdmin}`}</a>}
+                  <a href="/classement" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>{`🏆 ${t.nav.classement}`}</a>
+                  <a href="/organisations" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>{`🏢 ${t.organisations.titre}`}</a>
+                  <a href="/apropos" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#F7F2E8', textDecoration: 'none', fontSize: 14 }}>{`ℹ️ ${t.nav.aPropos}`}</a>
+                  <button onClick={async () => { await supabase.auth.signOut(); setUser(null); setDrawerOuvert(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', border: 'none', fontSize: 14, cursor: 'pointer', textAlign: 'left', width: '100%' }}>{`🚪 ${t.nav.deconnexion}`}</button>
                 </>
               )}
             </div>
 
             <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-              <a href="/politique-confidentialite" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', textDecoration: 'none', fontSize: 13 }}>🔒 Confidentialité</a>
-              <a href="/aide" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', textDecoration: 'none', fontSize: 13 }}>❓ Aide</a>
-              <a href="/cgu" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', textDecoration: 'none', fontSize: 13 }}>📄 CGU</a>
+              <a href="/politique-confidentialite" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', textDecoration: 'none', fontSize: 13 }}>{`🔒 ${t.nav.confidentialite}`}</a>
+              <a href="/aide" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', textDecoration: 'none', fontSize: 13 }}>{`❓ ${t.nav.aide}`}</a>
+              <a href="/cgu" onClick={() => setDrawerOuvert(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', color: '#8C5A40', textDecoration: 'none', fontSize: 13 }}>{`📄 ${t.nav.cgu}`}</a>
               <p style={{ color: '#2a2a2a', fontSize: 11, textAlign: 'center', marginTop: 12 }}>Lotbo v1.0 · né en Haïti 🇭🇹</p>
             </div>
           </div>
