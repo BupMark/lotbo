@@ -44,7 +44,11 @@
     "surtitre": "LOTBO · Tout evènman yo",
     "tagline": "Tout evènman yo, yon sèl kote.",
     "villes": "vil",
-    "pays": "peyi"
+    "pays": "peyi",
+    "connecteToiTitre": "Konekte pou sove",
+    "connecteToiDesc": "Jwenn evènman favori ou yo nan pwofil ou.",
+    "creerCompte": "Kreye yon kont",
+    "sauvegardezFavoris": "Sove evènman favori ou yo 🎉"
   },
   "evenement": {
     "voir": "Wè paj la →",

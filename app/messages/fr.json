@@ -44,7 +44,11 @@
     "surtitre": "LOTBO · Tous les événements",
     "tagline": "Tous les événements, un seul endroit.",
     "villes": "villes",
-    "pays": "pays"
+    "pays": "pays",
+    "connecteToiTitre": "Connectez-vous pour sauvegarder",
+    "connecteToiDesc": "Retrouvez vos événements favoris dans votre profil.",
+    "creerCompte": "Créer un compte",
+    "sauvegardezFavoris": "Sauvegardez vos événements favoris 🎉"
   },
   "evenement": {
     "voir": "Voir la page →",
