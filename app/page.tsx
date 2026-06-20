@@ -1439,14 +1439,14 @@ export default function Home() {
           {evenementsListeFiltres.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 16px 24px' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-              <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>Aucun événement trouvé</p>
-              <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>Aucun événement ne correspond à tes filtres actuels.</p>
+              <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>{t.carte.aucunResultat}</p>
+              <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>{t.carte.aucunResultatDesc}</p>
               <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '10px 24px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', marginBottom: 24 }}>
-                Réinitialiser les filtres
+                {t.carte.reinitialiser}
               </button>
               {evenements.length > 0 && (
                 <div style={{ textAlign: 'left' }}>
-                  <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>Tu pourrais aimer</p>
+                  <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>{t.carte.tuPourraisAimer}</p>
                   {evenements.slice(0, 3).map(ev => (
                     <a href={'/evenement/' + ev.id} key={ev.id} className="lotbo-event-card" style={{ marginBottom: 10 }}>
                       <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} className="card-image" onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = FALLBACK_IMAGES[ev.categorie]; if (fb && img.src !== fb) img.src = fb }} />
@@ -1518,9 +1518,9 @@ export default function Home() {
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10, background: 'white', borderRadius: 16, padding: '24px 20px', boxShadow: '0 8px 32px rgba(26,20,16,0.18)', textAlign: 'center', maxWidth: 280, width: 'calc(100% - 40px)' }}>
               <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ position: 'absolute', top: 10, right: 12, background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>✕</button>
               <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
-              <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Aucun événement trouvé</p>
-              <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Aucun événement ne correspond à tes filtres actuels.</p>
-              <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>Réinitialiser les filtres</button>
+              <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>{t.carte.aucunResultat}</p>
+              <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>{t.carte.aucunResultatDesc}</p>
+              <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>{t.carte.reinitialiser}</button>
             </div>
           )}
         </div>
