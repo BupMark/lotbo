@@ -27,7 +27,10 @@
     "du": "Desde",
     "au": "Hasta",
     "reinitialiser": "Restablecer",
-    "appliquer": "Aplicar filtros"
+    "appliquer": "Aplicar filtros",
+    "aucunResultat": "No se encontraron eventos",
+    "aucunResultatDesc": "Ningún evento coincide con tus filtros actuales.",
+    "tuPourraisAimer": "Podría gustarte"
   },
   "evenement": {
     "voir": "Ver página →",

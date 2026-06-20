@@ -27,7 +27,10 @@
     "du": "From",
     "au": "To",
     "reinitialiser": "Reset",
-    "appliquer": "Apply filters"
+    "appliquer": "Apply filters",
+    "aucunResultat": "No events found",
+    "aucunResultatDesc": "No events match your current filters.",
+    "tuPourraisAimer": "You might like"
   },
   "evenement": {
     "voir": "View page →",

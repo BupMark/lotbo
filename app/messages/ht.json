@@ -27,7 +27,10 @@
     "du": "Soti",
     "au": "Rive",
     "reinitialiser": "Reyajiste",
-    "appliquer": "Aplike filtè yo"
+    "appliquer": "Aplike filtè yo",
+    "aucunResultat": "Pa gen okenn evènman",
+    "aucunResultatDesc": "Pa gen okenn evènman ki koresponn ak filtè ou yo.",
+    "tuPourraisAimer": "Ou ka renmen"
   },
   "evenement": {
     "voir": "Wè paj la →",
