@@ -1192,7 +1192,7 @@ export default function Home() {
           </div>
 
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
-            <a href="/apropos" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>À propos</a>
+            <a href="/apropos" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>{t.nav.aPropos}</a>
             <div className="lotbo-langue-desktop">
               <select value={langue} onChange={e => setLangue(e.target.value as Langue)} style={{ background: '#E8E0D0', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none' }}>
                 {Object.entries(langues).map(([code, info]) => (
@@ -1207,11 +1207,11 @@ export default function Home() {
                   <a href="/profil" style={{ background: '#1A1410', color: '#F7F2E8', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>{t.nav.profil}</a>
                 </>
               ) : (
-                <a href="/login" style={{ background: '#1A1410', color: '#F7F2E8', border: 'none', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>Connexion</a>
+                <a href="/login" style={{ background: '#1A1410', color: '#F7F2E8', border: 'none', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>{t.nav.connexion}</a>
               )}
             </div>
             <NotifCloche userId={user?.id} />
-            <a href="/ajouter" className="lotbo-ajouter-header" style={{ background: '#C8431A', color: 'white', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>+ Ajouter</a>
+            <a href="/ajouter" className="lotbo-ajouter-header" style={{ background: '#C8431A', color: 'white', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>{t.nav.ajouter}</a>
           </div>
         </div>
 
