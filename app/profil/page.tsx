@@ -76,6 +76,10 @@ function ProfilInner() {
   const [languePreference, setLanguePreference]     = useState<string>('fr')
   const [savingParams, setSavingParams]             = useState(false)
   const [paramsSaved, setParamsSaved]               = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -202,6 +206,40 @@ function ProfilInner() {
     setSavingBirthday(false)
     setBirthdaySaved(true)
     setTimeout(() => setBirthdaySaved(false), 3000)
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'SUPPRIMER' || !user) return
+    setDeletingAccount(true)
+    setDeleteError(null)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setDeleteError("Session expirée. Reconnecte-toi puis réessaie.")
+        setDeletingAccount(false)
+        return
+      }
+      const res = await fetch('/api/compte/supprimer', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        if (json.error === 'SEUL_ADMIN_ORGANISATION') {
+          setDeleteError("Tu es le seul administrateur d'une organisation. Transfère la propriété ou supprime l'organisation avant de supprimer ton compte.")
+        } else {
+          setDeleteError("Une erreur est survenue. Réessaie ou contacte le support.")
+        }
+        setDeletingAccount(false)
+        return
+      }
+      await supabase.auth.signOut()
+      router.push('/')
+    } catch (err) {
+      setDeleteError("Une erreur est survenue. Réessaie ou contacte le support.")
+      setDeletingAccount(false)
+    }
   }
 
   const statutLabel = (statut: string) => {
@@ -805,6 +843,20 @@ function ProfilInner() {
                   </div>
                 </div>
 
+                {/* ⚠️ Zone de danger */}
+                <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid rgba(180,40,40,0.3)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#b42828', marginBottom: 8 }}>⚠️ Zone de danger</h3>
+                  <p style={{ fontSize: 13, color: '#8C5A40', marginBottom: 16 }}>
+                    La suppression de ton compte est définitive. Tes données personnelles seront supprimées. Tes événements déjà approuvés et publiés resteront visibles, mais ton nom n'y sera plus associé.
+                  </p>
+                  <button
+                    onClick={() => { setShowDeleteModal(true); setDeleteConfirmText(''); setDeleteError(null) }}
+                    style={{ background: 'rgba(180,40,40,0.1)', color: '#b42828', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    Supprimer mon compte
+                  </button>
+                </div>
+
               </div>
             )}
 
@@ -849,6 +901,39 @@ function ProfilInner() {
           points={profile?.points_total || 0}
           onClose={() => setBadgeSelectionne(null)}
         />
+      )}
+      {showDeleteModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,20,16,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: 24, maxWidth: 420, width: '100%', boxSizing: 'border-box' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#b42828', marginBottom: 12 }}>Supprimer définitivement ton compte ?</h3>
+            <p style={{ fontSize: 13, color: '#8C5A40', marginBottom: 16 }}>
+              Cette action est irréversible. Pour confirmer, tape <strong>SUPPRIMER</strong> ci-dessous.
+            </p>
+            <input
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder="SUPPRIMER"
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, marginBottom: 12, outline: 'none' }}
+            />
+            {deleteError && <p style={{ color: '#b42828', fontSize: 12, marginBottom: 12 }}>{deleteError}</p>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deletingAccount}
+                style={{ flex: 1, background: '#F0EBE3', color: '#1A1410', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== 'SUPPRIMER' || deletingAccount}
+                style={{ flex: 1, background: deleteConfirmText === 'SUPPRIMER' ? '#b42828' : '#e0c0c0', color: 'white', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 'bold', cursor: deleteConfirmText === 'SUPPRIMER' ? 'pointer' : 'not-allowed' }}
+              >
+                {deletingAccount ? 'Suppression...' : 'Supprimer définitivement'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   )
