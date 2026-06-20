@@ -1248,55 +1248,55 @@ export default function Home() {
       {filtresOuverts && (
         <div style={{ position: 'absolute', top: headerHeight, left: 12, right: 12, zIndex: 30, background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: 'calc(100dvh - 220px)', overflowY: 'auto', boxShadow: '0 4px 24px rgba(26,20,16,0.12)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <p style={{ color: '#8C5A40', fontSize: 12, fontWeight: 'bold' }}>Filtres</p>
+            <p style={{ color: '#8C5A40', fontSize: 12, fontWeight: 'bold' }}>{t.carte.filtres}</p>
             <button onClick={() => setFiltresOuverts(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 20, lineHeight: 1, padding: '2px 6px', borderRadius: 6 }} aria-label="Fermer les filtres">✕</button>
           </div>
           <div>
-            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Catégorie</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t.carte.categorie}</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {CATEGORIES.map(cat => <button key={cat} onClick={() => setCategorie(cat)} style={btnStyle(categorie === cat)}>{cat}</button>)}
             </div>
           </div>
           <div>
-            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Accès</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t.carte.acces}</p>
             <div style={{ display: 'flex', gap: 6 }}>
               {['tous', 'public', 'prive'].map(a => <button key={a} onClick={() => setAcces(a)} style={btnStyle(acces === a)}>{a === 'tous' ? t.carte.tous : a === 'public' ? t.carte.public : t.carte.prive}</button>)}
             </div>
           </div>
           <div>
-            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Prix</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t.carte.prix}</p>
             <div style={{ display: 'flex', gap: 6 }}>
               {['tous', 'gratuit', 'payant'].map(p => <button key={p} onClick={() => setPrix(p)} style={btnStyle(prix === p)}>{p === 'tous' ? t.carte.tous : p === 'gratuit' ? t.carte.gratuit : t.carte.payant}</button>)}
             </div>
           </div>
           <div>
-            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Période</p>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t.carte.periode}</p>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
               {[
-                { label: "Aujourd'hui", fn: () => { const d = new Date().toISOString().split('T')[0]; setDateDebut(d); setDateFin(d) }, check: () => { const d = new Date().toISOString().split('T')[0]; return dateDebut === d && dateFin === d } },
-                { label: 'Cette semaine', fn: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); const fin = new Date(debut); fin.setDate(debut.getDate() + 6); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) }, check: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); return dateDebut === debut.toISOString().split('T')[0] } },
-                { label: 'Ce mois', fn: () => { const d = new Date(); const debut = new Date(d.getFullYear(), d.getMonth(), 1); const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) }, check: () => { const d = new Date(); return dateDebut === new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0] } },
-                { label: 'Ce week-end', fn: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); const dim = new Date(sam); dim.setDate(sam.getDate() + 1); setDateDebut(sam.toISOString().split('T')[0]); setDateFin(dim.toISOString().split('T')[0]) }, check: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); return dateDebut === sam.toISOString().split('T')[0] } },
-                { label: '🗺️ Paris · Juil 2026', fn: () => { setDateDebut('2026-07-18'); setDateFin('2026-07-27'); setRecherche('Paris') }, check: () => dateDebut === '2026-07-18' && dateFin === '2026-07-27' },
+                { id: 'aujourdhui', label: t.carte.aujourdhui, fn: () => { const d = new Date().toISOString().split('T')[0]; setDateDebut(d); setDateFin(d) }, check: () => { const d = new Date().toISOString().split('T')[0]; return dateDebut === d && dateFin === d } },
+                { id: 'cetteSemaine', label: t.carte.cetteSemaine, fn: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); const fin = new Date(debut); fin.setDate(debut.getDate() + 6); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) }, check: () => { const d = new Date(); const debut = new Date(d); debut.setDate(d.getDate() - d.getDay() + 1); return dateDebut === debut.toISOString().split('T')[0] } },
+                { id: 'ceMois', label: t.carte.ceMois, fn: () => { const d = new Date(); const debut = new Date(d.getFullYear(), d.getMonth(), 1); const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0); setDateDebut(debut.toISOString().split('T')[0]); setDateFin(fin.toISOString().split('T')[0]) }, check: () => { const d = new Date(); return dateDebut === new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0] } },
+                { id: 'ceWeekend', label: t.carte.ceWeekend, fn: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); const dim = new Date(sam); dim.setDate(sam.getDate() + 1); setDateDebut(sam.toISOString().split('T')[0]); setDateFin(dim.toISOString().split('T')[0]) }, check: () => { const d = new Date(); const sam = new Date(d); sam.setDate(d.getDate() + (6 - d.getDay())); return dateDebut === sam.toISOString().split('T')[0] } },
+                { id: 'paris2026', label: '🗺️ Paris · Juil 2026', fn: () => { setDateDebut('2026-07-18'); setDateFin('2026-07-27'); setRecherche('Paris') }, check: () => dateDebut === '2026-07-18' && dateFin === '2026-07-27' },
               ].map(p => (
-                <button key={p.label} onClick={p.fn} style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: p.check() ? 'none' : '1px solid #E8E0D0', cursor: 'pointer', whiteSpace: 'nowrap', background: p.check() ? '#C8431A' : '#F7F2E8', color: p.check() ? 'white' : '#8C5A40' }}>{p.label}</button>
+                <button key={p.id} onClick={p.fn} style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: p.check() ? 'none' : '1px solid #E8E0D0', cursor: 'pointer', whiteSpace: 'nowrap', background: p.check() ? '#C8431A' : '#F7F2E8', color: p.check() ? 'white' : '#8C5A40' }}>{p.label}</button>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                <label style={{ color: '#8C5A40', fontSize: 10 }}>Du</label>
+                <label style={{ color: '#8C5A40', fontSize: 10 }}>{t.carte.du}</label>
                 <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, color: '#1A1410', fontSize: 13, padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%', colorScheme: 'light', minWidth: 0 }} />
               </div>
               <span style={{ color: '#8C5A40', fontSize: 14, marginTop: 14 }}>→</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                <label style={{ color: '#8C5A40', fontSize: 10 }}>Au</label>
+                <label style={{ color: '#8C5A40', fontSize: 10 }}>{t.carte.au}</label>
                 <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, color: '#1A1410', fontSize: 13, padding: '6px 10px', outline: 'none', cursor: 'pointer', width: '100%', colorScheme: 'light', minWidth: 0 }} />
               </div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 999, padding: '10px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold' }}>Réinitialiser</button>
-            <button onClick={() => setFiltresOuverts(false)} style={{ flex: 2, background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '10px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold' }}>Appliquer les filtres</button>
+            <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 999, padding: '10px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold' }}>{t.carte.reinitialiser}</button>
+            <button onClick={() => setFiltresOuverts(false)} style={{ flex: 2, background: '#C8431A', color: 'white', border: 'none', borderRadius: 999, padding: '10px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold' }}>{t.carte.appliquer}</button>
           </div>
         </div>
       )}
