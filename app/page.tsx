@@ -40,6 +40,7 @@ interface Evenement {
   mis_en_avant?: boolean
   mis_en_avant_ville?: string | null
   mis_en_avant_jusqu_au?: string | null
+  created_at?: string
 }
 
 interface UserMeta {
