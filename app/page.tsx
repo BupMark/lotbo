@@ -600,7 +600,7 @@ export default function Home() {
               ${ev.lieu ? `<p style="font-size:11px;color:rgba(247,242,232,0.65);margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
               ${dateStr ? `<p style="font-size:11px;color:rgba(247,242,232,0.65);margin:0 0 6px;">📅 ${dateStr}</p>` : ''}
               ${ev.categorie ? `<span style="display:inline-block;margin-bottom:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;background:rgba(200,67,26,0.15);color:#C8431A;">${ev.categorie}</span>` : ''}
-              <a href="/evenement/${ev.id}" style="display:block;text-align:center;padding:7px 0;background:#C8431A;color:#F7F2E8;border-radius:8px;font-size:12px;font-weight:bold;text-decoration:none;">Voir la fiche complète</a>
+              <a href="/evenement/${ev.id}" style="display:block;text-align:center;padding:7px 0;background:#C8431A;color:#F7F2E8;border-radius:8px;font-size:12px;font-weight:bold;text-decoration:none;">${t.map.viewFullEvent}</a>
             </div>
           `
         }
