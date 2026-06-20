@@ -40,7 +40,11 @@
     "appliquer": "Aplike filtè yo",
     "aucunResultat": "Pa gen okenn evènman",
     "aucunResultatDesc": "Pa gen okenn evènman ki koresponn ak filtè ou yo.",
-    "tuPourraisAimer": "Ou ka renmen"
+    "tuPourraisAimer": "Ou ka renmen",
+    "surtitre": "LOTBO · Tout evènman yo",
+    "tagline": "Tout evènman yo, yon sèl kote.",
+    "villes": "vil",
+    "pays": "peyi"
   },
   "evenement": {
     "voir": "Wè paj la →",

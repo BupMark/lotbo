@@ -40,7 +40,11 @@
     "appliquer": "Apply filters",
     "aucunResultat": "No events found",
     "aucunResultatDesc": "No events match your current filters.",
-    "tuPourraisAimer": "You might like"
+    "tuPourraisAimer": "You might like",
+    "surtitre": "LOTBO · All Events",
+    "tagline": "All events, one place.",
+    "villes": "cities",
+    "pays": "countries"
   },
   "evenement": {
     "voir": "View page →",

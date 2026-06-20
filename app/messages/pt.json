@@ -40,7 +40,11 @@
     "appliquer": "Aplicar filtros",
     "aucunResultat": "Nenhum evento encontrado",
     "aucunResultatDesc": "Nenhum evento corresponde aos seus filtros atuais.",
-    "tuPourraisAimer": "Você pode gostar"
+    "tuPourraisAimer": "Você pode gostar",
+    "surtitre": "LOTBO · Todos os eventos",
+    "tagline": "Todos os eventos, um só lugar.",
+    "villes": "cidades",
+    "pays": "países"
   },
   "evenement": {
     "voir": "Ver página →",
