@@ -805,7 +805,7 @@ export default function Home() {
     const el = document.createElement('div')
     el.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer'
     el.innerHTML =
-      '<div style="background:#C8431A;color:white;font-size:9px;font-weight:bold;padding:2px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(200,67,26,0.5);margin-bottom:3px">🔥 À la une</div>' +
+      `<div style="background:#C8431A;color:white;font-size:9px;font-weight:bold;padding:2px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(200,67,26,0.5);margin-bottom:3px">🔥 ${t.sidebar.alune}</div>` +
       '<div style="width:22px;height:22px;background:#C8431A;border:3px solid white;border-radius:50%;box-shadow:0 3px 10px rgba(200,67,26,0.6)"></div>'
     aLaUneMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([ev.longitude, ev.latitude])
@@ -1381,7 +1381,7 @@ export default function Home() {
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,20,16,0.93) 0%, rgba(26,20,16,0.25) 55%, transparent 100%)' }} />
                       <div style={{ position: 'absolute', top: 12, left: 12 }}>
                         <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
-                          {ev.mis_en_avant ? '📌 À la une' : '🔥 À la une'}
+                          {ev.mis_en_avant ? `📌 ${t.sidebar.alune}` : `🔥 ${t.sidebar.alune}`}
                         </span>
                       </div>
                       <button onClick={(e) => toggleFavori(e, ev.id)} disabled={togglingFavori === ev.id} aria-label={favoris.has(ev.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
@@ -1416,7 +1416,7 @@ export default function Home() {
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,20,16,0.93) 0%, rgba(26,20,16,0.2) 55%, transparent 100%)' }} />
                     <div style={{ position: 'absolute', top: 12, left: 12 }}>
                       <span style={{ background: '#C8431A', color: '#F7F2E8', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
-                        {ev.mis_en_avant ? '📌 À la une' : '🔥 À la une'}
+                        {ev.mis_en_avant ? `📌 ${t.sidebar.alune}` : `🔥 ${t.sidebar.alune}`}
                       </span>
                     </div>
                     <button onClick={(e) => toggleFavori(e, ev.id)} disabled={togglingFavori === ev.id} aria-label={favoris.has(ev.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
