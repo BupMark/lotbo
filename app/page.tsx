@@ -1326,33 +1326,33 @@ export default function Home() {
             }} />
             <div style={{ position: 'relative', zIndex: 1 }}>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 6, letterSpacing: 2, textTransform: 'uppercase' }}>
-                LOTBO · Tous les événements
+                {t.carte.surtitre}
               </p>
               <h2 style={{
                 fontSize: 24, fontWeight: 'bold',
                 fontFamily: 'serif', fontStyle: 'italic',
                 color: 'white', marginBottom: 16, lineHeight: 1.2,
               }}>
-                Tous les événements,<br/>un seul endroit.
+                {t.carte.tagline}
               </h2>
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                 <div>
                   <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
                     {(totalEvenementsBase || evenements.length).toLocaleString()}+
                   </p>
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>événements</p>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>{t.sidebar.evenements}</p>
                 </div>
                 <div>
                   <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
                     {statsApp.villes}+
                   </p>
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>villes</p>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>{t.carte.villes}</p>
                 </div>
                 <div>
                   <p style={{ color: '#C8431A', fontSize: 22, fontWeight: 'bold', lineHeight: 1 }}>
                     {statsApp.pays}+
                   </p>
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>pays</p>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>{t.carte.pays}</p>
                 </div>
               </div>
             </div>
