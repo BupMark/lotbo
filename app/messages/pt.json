@@ -137,7 +137,11 @@
     "palier_1an": "Um ano. Obrigado por estares cá desde o início.",
     "palier_2ans": "Construtor da primeira hora",
     "palier_5ans": "Lenda viva do LOTBO",
-    "anciennete": "Antiguidade"
+    "anciennete": "Antiguidade",
+    "titre": "🎂 Aniversário",
+    "enregistrement": "Salvando...",
+    "enregistrer": "Salvar",
+    "dateEnregistree": "✓ Data salva"
   },
   "dashboard": {
     "title": "Painel — Pesquisadores de campo",
@@ -166,5 +170,107 @@
   },
   "map": {
     "viewFullEvent": "Ver evento completo"
+  },
+  "profil": {
+    "header": {
+      "retourCarte": "← Mapa",
+      "admin": "⚙️ Admin",
+      "deconnexion": "Sair",
+      "chargement": "Carregando..."
+    },
+    "roles": {
+      "administrateur": "⚙️ Administrador",
+      "ambassadeur": "🤝 Embaixador",
+      "organisateur": "🎪 Organizador",
+      "contributeurTerrain": "⭐ Contribuidor de campo",
+      "engage": "⭐ Engajado",
+      "membre": "👤 Membro",
+      "membreLotbo": "👤 Membro LOTBO"
+    },
+    "badgesRoles": {
+      "admin": "⚙️ Admin",
+      "contributeurTerrain": "⭐ Contribuidor de campo",
+      "engage": "⭐ Engajado",
+      "ambassadeur": "🤝 Embaixador",
+      "organisateur": "🎪 Organizador"
+    },
+    "organisation": {
+      "creer": "🏢 Criar uma organização"
+    },
+    "stats": {
+      "total": "Total",
+      "approuves": "Aprovados",
+      "enAttente": "Pendentes",
+      "pays": "Países"
+    },
+    "parrainage": {
+      "titre": "🔗 Indicação",
+      "tonLien": "Seu link de indicação",
+      "copierLien": "📋 Copiar link",
+      "copie": "✓ Copiado!",
+      "whatsapp": "💬 WhatsApp",
+      "personneInscrite": "pessoa",
+      "personnesInscrites": "pessoas",
+      "inscrite": "cadastrada",
+      "inscrites": "cadastradas",
+      "ptsParrainage": "pts via indicações",
+      "messageWhatsApp": "Junte-se ao LOTBO — todos os eventos, em um só lugar 🌍"
+    },
+    "onglets": {
+      "evenements": "📅 Eventos",
+      "badges": "🏅 Distintivos",
+      "favoris": "🔖 Favoritos",
+      "parametres": "⚙️ Configurações"
+    },
+    "evenements": {
+      "titre": "Meus eventos",
+      "ajouter": "+ Adicionar",
+      "videTitre": "Você ainda não enviou nenhum evento.",
+      "videBouton": "Enviar meu primeiro evento",
+      "voir": "Ver →",
+      "repere": "⭐ Identificado",
+      "statutApprouve": "✓ Aprovado",
+      "statutHorsLigne": "⊘ Offline",
+      "statutRejete": "✗ Rejeitado",
+      "statutEnAttente": "⏳ Pendente"
+    },
+    "favoris": {
+      "titre": "Meus favoritos",
+      "vide": "Nenhum evento salvo ainda.",
+      "explorer": "Explorar eventos"
+    },
+    "parametres": {
+      "infosPersoTitre": "👤 Informações pessoais",
+      "nomAffiche": "Nome exibido",
+      "email": "E-mail",
+      "emailNonModifiable": "O e-mail não pode ser alterado aqui",
+      "enregistrerNom": "Salvar nome",
+      "preferencesTitre": "🎛️ Preferências",
+      "genre": "Gênero",
+      "genreMasculin": "Masculino",
+      "genreFeminin": "Feminino",
+      "genreNeutre": "Neutro",
+      "genreNonPrecise": "Não especificado",
+      "afficherAnniversaire": "Mostrar meu aniversário",
+      "moisUniquement": "Apenas mês",
+      "anneeUniquement": "Apenas ano",
+      "dateComplete": "Data completa",
+      "languePreferee": "Idioma preferido",
+      "enregistrerPreferences": "Salvar preferências",
+      "preferencesEnregistrees": "✓ Preferências salvas",
+      "zoneDanger": "⚠️ Zona de perigo",
+      "zoneDangerTexte": "Excluir sua conta é permanente. Seus dados pessoais serão removidos. Seus eventos já aprovados e publicados continuarão visíveis, mas seu nome não estará mais associado a eles.",
+      "supprimerCompte": "Excluir minha conta"
+    },
+    "modalSuppression": {
+      "titre": "Excluir sua conta permanentemente?",
+      "texte": "Esta ação é irreversível. Digite SUPPRIMER abaixo para confirmar.",
+      "annuler": "Cancelar",
+      "confirmer": "Excluir permanentemente",
+      "suppression": "Excluindo...",
+      "erreurSession": "Sessão expirada. Faça login novamente e tente de novo.",
+      "erreurSeulAdmin": "Você é o único administrador de uma organização. Transfira a propriedade ou exclua a organização antes de excluir sua conta.",
+      "erreurGenerale": "Algo deu errado. Tente novamente ou entre em contato com o suporte."
+    }
   }
 }

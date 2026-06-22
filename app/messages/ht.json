@@ -137,7 +137,11 @@
     "palier_1an": "Yon ane. Mèsi pou yo la depi kòmansman.",
     "palier_2ans": "Batisè premye lè a",
     "palier_5ans": "Lejann vivan LOTBO",
-    "anciennete": "Lontan"
+    "anciennete": "Lontan",
+    "titre": "🎂 Anivèsè",
+    "enregistrement": "L'ap anrejistre...",
+    "enregistrer": "Anrejistre",
+    "dateEnregistree": "✓ Dat la anrejistre"
   },
   "dashboard": {
     "title": "Tablo de bò — Ankètè yo",
@@ -166,5 +170,107 @@
   },
   "map": {
     "viewFullEvent": "Gade fich konplè"
+  },
+  "profil": {
+    "header": {
+      "retourCarte": "← Kat la",
+      "admin": "⚙️ Admin",
+      "deconnexion": "Dekonekte",
+      "chargement": "L'ap chaje..."
+    },
+    "roles": {
+      "administrateur": "⚙️ Administratè",
+      "ambassadeur": "🤝 Anbasadè",
+      "organisateur": "🎪 Òganizatè",
+      "contributeurTerrain": "⭐ Kontribitè Teren",
+      "engage": "⭐ Angaje",
+      "membre": "👤 Manm",
+      "membreLotbo": "👤 Manm LOTBO"
+    },
+    "badgesRoles": {
+      "admin": "⚙️ Admin",
+      "contributeurTerrain": "⭐ Kontribitè Teren",
+      "engage": "⭐ Angaje",
+      "ambassadeur": "🤝 Anbasadè",
+      "organisateur": "🎪 Òganizatè"
+    },
+    "organisation": {
+      "creer": "🏢 Kreye yon òganizasyon"
+    },
+    "stats": {
+      "total": "Total",
+      "approuves": "Apwouve",
+      "enAttente": "K'ap tann",
+      "pays": "Peyi"
+    },
+    "parrainage": {
+      "titre": "🔗 Parennaj",
+      "tonLien": "Lyen parennaj ou",
+      "copierLien": "📋 Kopye lyen an",
+      "copie": "✓ Kopye!",
+      "whatsapp": "💬 WhatsApp",
+      "personneInscrite": "moun",
+      "personnesInscrites": "moun",
+      "inscrite": "enskri",
+      "inscrites": "enskri",
+      "ptsParrainage": "pwen pa parennaj",
+      "messageWhatsApp": "Vin jwenn LOTBO — tout evènman yo, nan yon sèl kote 🌍"
+    },
+    "onglets": {
+      "evenements": "📅 Evènman",
+      "badges": "🏅 Badj",
+      "favoris": "🔖 Favori",
+      "parametres": "⚙️ Paramèt"
+    },
+    "evenements": {
+      "titre": "Evènman mwen yo",
+      "ajouter": "+ Ajoute",
+      "videTitre": "Ou poko soumèt okenn evènman.",
+      "videBouton": "Soumèt premye evènman ou",
+      "voir": "Gade →",
+      "repere": "⭐ Repere",
+      "statutApprouve": "✓ Apwouve",
+      "statutHorsLigne": "⊘ San entènèt",
+      "statutRejete": "✗ Rejte",
+      "statutEnAttente": "⏳ K'ap tann"
+    },
+    "favoris": {
+      "titre": "Favori mwen yo",
+      "vide": "Pa gen okenn evènman ki sove toujou.",
+      "explorer": "Eksplore evènman yo"
+    },
+    "parametres": {
+      "infosPersoTitre": "👤 Enfòmasyon pèsonèl",
+      "nomAffiche": "Non ki afiche",
+      "email": "Imèl",
+      "emailNonModifiable": "Imèl la pa ka modifye isit la",
+      "enregistrerNom": "Anrejistre non an",
+      "preferencesTitre": "🎛️ Preferans",
+      "genre": "Sèks",
+      "genreMasculin": "Gason",
+      "genreFeminin": "Fi",
+      "genreNeutre": "Net",
+      "genreNonPrecise": "Pa presize",
+      "afficherAnniversaire": "Montre anivèsè mwen",
+      "moisUniquement": "Mwa sèlman",
+      "anneeUniquement": "Ane sèlman",
+      "dateComplete": "Dat konplè",
+      "languePreferee": "Lang ou pi pito",
+      "enregistrerPreferences": "Anrejistre preferans yo",
+      "preferencesEnregistrees": "✓ Preferans anrejistre",
+      "zoneDanger": "⚠️ Zòn danje",
+      "zoneDangerTexte": "Efase kont ou se definitif. Done pèsonèl ou yo ap efase. Evènman ou yo ki deja apwouve epi pibliye ap rete vizib, men non ou p ap asosye ak yo ankò.",
+      "supprimerCompte": "Efase kont mwen"
+    },
+    "modalSuppression": {
+      "titre": "Efase kont ou definitivman?",
+      "texte": "Aksyon sa a pa ka anile. Pou konfime, tape SUPPRIMER anba a.",
+      "annuler": "Anile",
+      "confirmer": "Efase definitivman",
+      "suppression": "L'ap efase...",
+      "erreurSession": "Sesyon ou ekspire. Rekonekte epi eseye ankò.",
+      "erreurSeulAdmin": "Ou se sèl administratè yon òganizasyon. Transfere pwopriyete a oswa efase òganizasyon an anvan ou efase kont ou.",
+      "erreurGenerale": "Gen yon bagay ki mal pase. Eseye ankò oswa kontakte sipò."
+    }
   }
 }

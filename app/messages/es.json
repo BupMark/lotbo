@@ -137,7 +137,11 @@
     "palier_1an": "Un año. Gracias por estar desde el principio.",
     "palier_2ans": "Constructor de la primera hora",
     "palier_5ans": "Leyenda viva de LOTBO",
-    "anciennete": "Antigüedad"
+    "anciennete": "Antigüedad",
+    "titre": "🎂 Cumpleaños",
+    "enregistrement": "Guardando...",
+    "enregistrer": "Guardar",
+    "dateEnregistree": "✓ Fecha guardada"
   },
   "dashboard": {
     "title": "Panel de control — Encuestadores",
@@ -166,5 +170,107 @@
   },
   "map": {
     "viewFullEvent": "Ver evento completo"
+  },
+  "profil": {
+    "header": {
+      "retourCarte": "← Mapa",
+      "admin": "⚙️ Admin",
+      "deconnexion": "Cerrar sesión",
+      "chargement": "Cargando..."
+    },
+    "roles": {
+      "administrateur": "⚙️ Administrador",
+      "ambassadeur": "🤝 Embajador",
+      "organisateur": "🎪 Organizador",
+      "contributeurTerrain": "⭐ Contribuidor de campo",
+      "engage": "⭐ Comprometido",
+      "membre": "👤 Miembro",
+      "membreLotbo": "👤 Miembro LOTBO"
+    },
+    "badgesRoles": {
+      "admin": "⚙️ Admin",
+      "contributeurTerrain": "⭐ Contribuidor de campo",
+      "engage": "⭐ Comprometido",
+      "ambassadeur": "🤝 Embajador",
+      "organisateur": "🎪 Organizador"
+    },
+    "organisation": {
+      "creer": "🏢 Crear una organización"
+    },
+    "stats": {
+      "total": "Total",
+      "approuves": "Aprobados",
+      "enAttente": "Pendientes",
+      "pays": "Países"
+    },
+    "parrainage": {
+      "titre": "🔗 Referidos",
+      "tonLien": "Tu enlace de referido",
+      "copierLien": "📋 Copiar enlace",
+      "copie": "✓ ¡Copiado!",
+      "whatsapp": "💬 WhatsApp",
+      "personneInscrite": "persona",
+      "personnesInscrites": "personas",
+      "inscrite": "registrada",
+      "inscrites": "registradas",
+      "ptsParrainage": "pts por referidos",
+      "messageWhatsApp": "Únete a LOTBO — todos los eventos, en un solo lugar 🌍"
+    },
+    "onglets": {
+      "evenements": "📅 Eventos",
+      "badges": "🏅 Insignias",
+      "favoris": "🔖 Favoritos",
+      "parametres": "⚙️ Ajustes"
+    },
+    "evenements": {
+      "titre": "Mis eventos",
+      "ajouter": "+ Agregar",
+      "videTitre": "Aún no has enviado ningún evento.",
+      "videBouton": "Enviar mi primer evento",
+      "voir": "Ver →",
+      "repere": "⭐ Detectado",
+      "statutApprouve": "✓ Aprobado",
+      "statutHorsLigne": "⊘ Fuera de línea",
+      "statutRejete": "✗ Rechazado",
+      "statutEnAttente": "⏳ Pendiente"
+    },
+    "favoris": {
+      "titre": "Mis favoritos",
+      "vide": "Aún no tienes eventos guardados.",
+      "explorer": "Explorar eventos"
+    },
+    "parametres": {
+      "infosPersoTitre": "👤 Información personal",
+      "nomAffiche": "Nombre mostrado",
+      "email": "Correo electrónico",
+      "emailNonModifiable": "El correo no se puede modificar aquí",
+      "enregistrerNom": "Guardar nombre",
+      "preferencesTitre": "🎛️ Preferencias",
+      "genre": "Género",
+      "genreMasculin": "Masculino",
+      "genreFeminin": "Femenino",
+      "genreNeutre": "Neutro",
+      "genreNonPrecise": "No especificado",
+      "afficherAnniversaire": "Mostrar mi cumpleaños",
+      "moisUniquement": "Solo mes",
+      "anneeUniquement": "Solo año",
+      "dateComplete": "Fecha completa",
+      "languePreferee": "Idioma preferido",
+      "enregistrerPreferences": "Guardar preferencias",
+      "preferencesEnregistrees": "✓ Preferencias guardadas",
+      "zoneDanger": "⚠️ Zona de peligro",
+      "zoneDangerTexte": "Eliminar tu cuenta es permanente. Tus datos personales serán eliminados. Tus eventos ya aprobados y publicados seguirán visibles, pero tu nombre ya no estará asociado a ellos.",
+      "supprimerCompte": "Eliminar mi cuenta"
+    },
+    "modalSuppression": {
+      "titre": "¿Eliminar tu cuenta permanentemente?",
+      "texte": "Esta acción es irreversible. Escribe SUPPRIMER abajo para confirmar.",
+      "annuler": "Cancelar",
+      "confirmer": "Eliminar permanentemente",
+      "suppression": "Eliminando...",
+      "erreurSession": "Sesión expirada. Vuelve a iniciar sesión e inténtalo de nuevo.",
+      "erreurSeulAdmin": "Eres el único administrador de una organización. Transfiere la propiedad o elimina la organización antes de eliminar tu cuenta.",
+      "erreurGenerale": "Algo salió mal. Inténtalo de nuevo o contacta con soporte."
+    }
   }
 }

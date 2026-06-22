@@ -137,7 +137,11 @@
     "palier_1an": "One year. Thank you for being here from the start.",
     "palier_2ans": "Early builder",
     "palier_5ans": "Living legend of LOTBO",
-    "anciennete": "Membership"
+    "anciennete": "Membership",
+    "titre": "🎂 Birthday",
+    "enregistrement": "Saving...",
+    "enregistrer": "Save",
+    "dateEnregistree": "✓ Date saved"
   },
   "dashboard": {
     "title": "Dashboard — Field surveyors",
@@ -166,5 +170,107 @@
   },
   "map": {
     "viewFullEvent": "View full event"
+  },
+  "profil": {
+    "header": {
+      "retourCarte": "← Map",
+      "admin": "⚙️ Admin",
+      "deconnexion": "Sign out",
+      "chargement": "Loading..."
+    },
+    "roles": {
+      "administrateur": "⚙️ Administrator",
+      "ambassadeur": "🤝 Ambassador",
+      "organisateur": "🎪 Organizer",
+      "contributeurTerrain": "⭐ Field Contributor",
+      "engage": "⭐ Engaged",
+      "membre": "👤 Member",
+      "membreLotbo": "👤 LOTBO Member"
+    },
+    "badgesRoles": {
+      "admin": "⚙️ Admin",
+      "contributeurTerrain": "⭐ Field Contributor",
+      "engage": "⭐ Engaged",
+      "ambassadeur": "🤝 Ambassador",
+      "organisateur": "🎪 Organizer"
+    },
+    "organisation": {
+      "creer": "🏢 Create an organization"
+    },
+    "stats": {
+      "total": "Total",
+      "approuves": "Approved",
+      "enAttente": "Pending",
+      "pays": "Countries"
+    },
+    "parrainage": {
+      "titre": "🔗 Referral",
+      "tonLien": "Your referral link",
+      "copierLien": "📋 Copy link",
+      "copie": "✓ Copied!",
+      "whatsapp": "💬 WhatsApp",
+      "personneInscrite": "person",
+      "personnesInscrites": "people",
+      "inscrite": "signed up",
+      "inscrites": "signed up",
+      "ptsParrainage": "pts via referrals",
+      "messageWhatsApp": "Join LOTBO — all events, one place 🌍"
+    },
+    "onglets": {
+      "evenements": "📅 Events",
+      "badges": "🏅 Badges",
+      "favoris": "🔖 Favorites",
+      "parametres": "⚙️ Settings"
+    },
+    "evenements": {
+      "titre": "My events",
+      "ajouter": "+ Add",
+      "videTitre": "You haven't submitted an event yet.",
+      "videBouton": "Submit my first event",
+      "voir": "View →",
+      "repere": "⭐ Spotted",
+      "statutApprouve": "✓ Approved",
+      "statutHorsLigne": "⊘ Offline",
+      "statutRejete": "✗ Rejected",
+      "statutEnAttente": "⏳ Pending"
+    },
+    "favoris": {
+      "titre": "My favorites",
+      "vide": "No saved events yet.",
+      "explorer": "Explore events"
+    },
+    "parametres": {
+      "infosPersoTitre": "👤 Personal information",
+      "nomAffiche": "Display name",
+      "email": "Email",
+      "emailNonModifiable": "Email can't be changed here",
+      "enregistrerNom": "Save name",
+      "preferencesTitre": "🎛️ Preferences",
+      "genre": "Gender",
+      "genreMasculin": "Male",
+      "genreFeminin": "Female",
+      "genreNeutre": "Other",
+      "genreNonPrecise": "Not specified",
+      "afficherAnniversaire": "Show my birthday",
+      "moisUniquement": "Month only",
+      "anneeUniquement": "Year only",
+      "dateComplete": "Full date",
+      "languePreferee": "Preferred language",
+      "enregistrerPreferences": "Save preferences",
+      "preferencesEnregistrees": "✓ Preferences saved",
+      "zoneDanger": "⚠️ Danger zone",
+      "zoneDangerTexte": "Deleting your account is permanent. Your personal data will be removed. Your already-approved and published events will remain visible, but your name will no longer be associated with them.",
+      "supprimerCompte": "Delete my account"
+    },
+    "modalSuppression": {
+      "titre": "Permanently delete your account?",
+      "texte": "This action is irreversible. Type SUPPRIMER below to confirm.",
+      "annuler": "Cancel",
+      "confirmer": "Delete permanently",
+      "suppression": "Deleting...",
+      "erreurSession": "Session expired. Please sign in again and retry.",
+      "erreurSeulAdmin": "You're the only administrator of an organization. Transfer ownership or delete the organization before deleting your account.",
+      "erreurGenerale": "Something went wrong. Please try again or contact support."
+    }
   }
 }

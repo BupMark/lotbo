@@ -137,7 +137,11 @@
     "palier_1an": "Un an. Merci d'être là depuis le début.",
     "palier_2ans": "Bâtisseur de la première heure",
     "palier_5ans": "Légende vivante de LOTBO",
-    "anciennete": "Ancienneté"
+    "anciennete": "Ancienneté",
+    "titre": "🎂 Anniversaire",
+    "enregistrement": "Enregistrement...",
+    "enregistrer": "Enregistrer",
+    "dateEnregistree": "✓ Date enregistrée"
   },
   "dashboard": {
     "title": "Tableau de bord — Enquêteurs",
@@ -166,5 +170,107 @@
   },
   "map": {
     "viewFullEvent": "Voir la fiche complète"
+  },
+  "profil": {
+    "header": {
+      "retourCarte": "← Carte",
+      "admin": "⚙️ Admin",
+      "deconnexion": "Déconnexion",
+      "chargement": "Chargement..."
+    },
+    "roles": {
+      "administrateur": "⚙️ Administrateur",
+      "ambassadeur": "🤝 Ambassadeur",
+      "organisateur": "🎪 Organisateur",
+      "contributeurTerrain": "⭐ Contributeur Terrain",
+      "engage": "⭐ Engagé",
+      "membre": "👤 Membre",
+      "membreLotbo": "👤 Membre LOTBO"
+    },
+    "badgesRoles": {
+      "admin": "⚙️ Admin",
+      "contributeurTerrain": "⭐ Contributeur Terrain",
+      "engage": "⭐ Engagé",
+      "ambassadeur": "🤝 Ambassadeur",
+      "organisateur": "🎪 Organisateur"
+    },
+    "organisation": {
+      "creer": "🏢 Créer une organisation"
+    },
+    "stats": {
+      "total": "Total",
+      "approuves": "Approuvés",
+      "enAttente": "En attente",
+      "pays": "Pays"
+    },
+    "parrainage": {
+      "titre": "🔗 Parrainage",
+      "tonLien": "Ton lien de parrainage",
+      "copierLien": "📋 Copier le lien",
+      "copie": "✓ Copié !",
+      "whatsapp": "💬 WhatsApp",
+      "personneInscrite": "personne",
+      "personnesInscrites": "personnes",
+      "inscrite": "inscrite",
+      "inscrites": "inscrites",
+      "ptsParrainage": "pts via parrainage",
+      "messageWhatsApp": "Rejoins LOTBO — tous les événements, un seul endroit 🌍"
+    },
+    "onglets": {
+      "evenements": "📅 Événements",
+      "badges": "🏅 Badges",
+      "favoris": "🔖 Favoris",
+      "parametres": "⚙️ Paramètres"
+    },
+    "evenements": {
+      "titre": "Mes événements",
+      "ajouter": "+ Ajouter",
+      "videTitre": "Tu n'as pas encore soumis d'événement.",
+      "videBouton": "Soumettre mon premier événement",
+      "voir": "Voir →",
+      "repere": "⭐ Repéré",
+      "statutApprouve": "✓ Approuvé",
+      "statutHorsLigne": "⊘ Hors ligne",
+      "statutRejete": "✗ Rejeté",
+      "statutEnAttente": "⏳ En attente"
+    },
+    "favoris": {
+      "titre": "Mes favoris",
+      "vide": "Aucun événement sauvegardé pour l'instant.",
+      "explorer": "Explorer les événements"
+    },
+    "parametres": {
+      "infosPersoTitre": "👤 Informations personnelles",
+      "nomAffiche": "Nom affiché",
+      "email": "Email",
+      "emailNonModifiable": "L'email ne peut pas être modifié ici",
+      "enregistrerNom": "Enregistrer le nom",
+      "preferencesTitre": "🎛️ Préférences",
+      "genre": "Genre",
+      "genreMasculin": "Masculin",
+      "genreFeminin": "Féminin",
+      "genreNeutre": "Neutre",
+      "genreNonPrecise": "Non précisé",
+      "afficherAnniversaire": "Afficher mon anniversaire",
+      "moisUniquement": "Mois uniquement",
+      "anneeUniquement": "Année uniquement",
+      "dateComplete": "Date complète",
+      "languePreferee": "Langue préférée",
+      "enregistrerPreferences": "Enregistrer les préférences",
+      "preferencesEnregistrees": "✓ Préférences enregistrées",
+      "zoneDanger": "⚠️ Zone de danger",
+      "zoneDangerTexte": "La suppression de ton compte est définitive. Tes données personnelles seront supprimées. Tes événements déjà approuvés et publiés resteront visibles, mais ton nom n'y sera plus associé.",
+      "supprimerCompte": "Supprimer mon compte"
+    },
+    "modalSuppression": {
+      "titre": "Supprimer définitivement ton compte ?",
+      "texte": "Cette action est irréversible. Pour confirmer, tape SUPPRIMER ci-dessous.",
+      "annuler": "Annuler",
+      "confirmer": "Supprimer définitivement",
+      "suppression": "Suppression...",
+      "erreurSession": "Session expirée. Reconnecte-toi puis réessaie.",
+      "erreurSeulAdmin": "Tu es le seul administrateur d'une organisation. Transfère la propriété ou supprime l'organisation avant de supprimer ton compte.",
+      "erreurGenerale": "Une erreur est survenue. Réessaie ou contacte le support."
+    }
   }
 }
