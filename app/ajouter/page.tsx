@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { normaliserVille, normaliserPays } from '../../lib/normalisation'
 import { track } from '../../lib/amplitude'
+import { type Langue, getTraductions } from '../../lib/i18n'
 
 import dynamicImport from 'next/dynamic'
 const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
@@ -45,87 +46,6 @@ function detecterNouveauBadge(avant: number, apres: number, badges: Badge[]): Ba
   if (badgeApres.id !== badgeAvant.id) return badgeApres
   return null
 }
-
-// ── Traductions F10 ───────────────────────────────────────────────────────────
-const T_IMAGE = {
-  fr: {
-    titre:             'Votre événement serait plus beau avec une image.',
-    stat:              'Les événements avec photo attirent 3× plus de visiteurs.',
-    suggestions:       'Choisissez parmi nos suggestions :',
-    ajouter:           '+ Ajouter ma propre image',
-    continuer:         'Continuer sans image →',
-    credit:            'Photo par',
-    chargement:        'Chargement des suggestions…',
-    selectionnee:      '✓ Image sélectionnée',
-    scanAffiche:       'Scanner ou importer une affiche',
-    scanAnalyse:       'Analyse en cours...',
-    scanVerifier:      'Vérifie et complète les informations avant de publier',
-    scanErreurLecture: "On n'a pas pu lire l'affiche. Tu peux remplir le formulaire manuellement.",
-    scanErreurService: 'Service temporairement indisponible. Réessaie dans quelques instants.',
-  },
-  en: {
-    titre:             'Your event would look even better with a photo.',
-    stat:              'Events with photos attract 3× more visitors.',
-    suggestions:       'Choose from our suggestions:',
-    ajouter:           '+ Add my own image',
-    continuer:         'Continue without image →',
-    credit:            'Photo by',
-    chargement:        'Loading suggestions…',
-    selectionnee:      '✓ Image selected',
-    scanAffiche:       'Scan or import a poster',
-    scanAnalyse:       'Analyzing...',
-    scanVerifier:      'Check and complete the information before publishing',
-    scanErreurLecture: "We couldn't read the poster. You can fill in the form manually.",
-    scanErreurService: 'Service temporarily unavailable. Please try again in a moment.',
-  },
-  es: {
-    titre:             'Tu evento se vería mucho mejor con una imagen.',
-    stat:              'Los eventos con foto atraen 3× más visitantes.',
-    suggestions:       'Elige entre nuestras sugerencias:',
-    ajouter:           '+ Agregar mi propia imagen',
-    continuer:         'Continuar sin imagen →',
-    credit:            'Foto por',
-    chargement:        'Cargando sugerencias…',
-    selectionnee:      '✓ Imagen seleccionada',
-    scanAffiche:       'Escanear o importar un cartel',
-    scanAnalyse:       'Analizando...',
-    scanVerifier:      'Verifica y completa la información antes de publicar',
-    scanErreurLecture: 'No pudimos leer el cartel. Puedes rellenar el formulario manualmente.',
-    scanErreurService: 'Servicio temporalmente no disponible. Inténtalo de nuevo en un momento.',
-  },
-  pt: {
-    titre:             'O seu evento ficaria ainda mais bonito com uma imagem.',
-    stat:              'Eventos com foto atraem 3× mais visitantes.',
-    suggestions:       'Escolha entre as nossas sugestões:',
-    ajouter:           '+ Adicionar minha própria imagem',
-    continuer:         'Continuar sem imagem →',
-    credit:            'Foto por',
-    chargement:        'A carregar sugestões…',
-    selectionnee:      '✓ Imagem selecionada',
-    scanAffiche:       'Escanear ou importar um cartaz',
-    scanAnalyse:       'A analisar...',
-    scanVerifier:      'Verifique e complete as informações antes de publicar',
-    scanErreurLecture: 'Não conseguimos ler o cartaz. Pode preencher o formulário manualmente.',
-    scanErreurService: 'Serviço temporariamente indisponível. Tente novamente em instantes.',
-  },
-  ht: {
-    titre:             'Evènman ou a ta pi bèl ak yon imaj.',
-    stat:              'Evènman ki gen foto jwenn 3× plis vizitè.',
-    suggestions:       'Chwazi youn nan sijèsyon nou yo:',
-    ajouter:           '+ Ajoute pwòp imaj ou',
-    continuer:         'Kontinye san imaj →',
-    credit:            'Foto pa',
-    chargement:        'Ap chaje sijèsyon…',
-    selectionnee:      '✓ Imaj chwazi',
-    scanAffiche:       'Skane oswa enpòte yon afich',
-    scanAnalyse:       'Ap analize...',
-    scanVerifier:      'Verifye epi konplete enfòmasyon yo anvan ou pibliye',
-    scanErreurLecture: 'Nou pa t kapab li afich la. Ou ka ranpli fòmilè a manyèlman.',
-    scanErreurService: 'Sèvis la pa disponib kounye a. Eseye ankò nan kèk segond.',
-  },
-}
-
-type Locale = keyof typeof T_IMAGE
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 const EVENT_TYPES = [
@@ -356,7 +276,7 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte }:
 
 // ── F10 — Bloc incitatif image ────────────────────────────────────────────────
 function BlocIncitatiImage({
-  locale,
+  t,
   titre,
   categorie,
   onSelectUnsplash,
@@ -364,7 +284,7 @@ function BlocIncitatiImage({
   onSkip,
   imageDejaSelectionnee,
 }: {
-  locale: Locale
+  t: Record<string, string>
   titre: string
   categorie: string
   onSelectUnsplash: (photo: UnsplashPhoto) => void
@@ -372,7 +292,6 @@ function BlocIncitatiImage({
   onSkip: () => void
   imageDejaSelectionnee: boolean
 }) {
-  const t = T_IMAGE[locale]
   const [photos, setPhotos]         = useState<UnsplashPhoto[]>([])
   const [loading, setLoading]       = useState(false)
   const [selected, setSelected]     = useState<string | null>(null)
@@ -534,15 +453,8 @@ export default function AjouterEvenement() {
   const [scanMultiSelected, setScanMultiSelected]     = useState<Set<number>>(new Set())
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
-  const locale: Locale = (() => {
-    if (typeof window === 'undefined') return 'fr'
-    const l = navigator.language.slice(0, 2)
-    if (l === 'en') return 'en'
-    if (l === 'es') return 'es'
-    if (l === 'pt') return 'pt'
-    if (l === 'ht') return 'ht'
-    return 'fr'
-  })()
+  const [langue, setLangue] = useState<Langue>('fr')
+  const t = getTraductions(langue)
 
   const [selectedType, setSelectedType]       = useState<number | null>(null)
   const [selectedThemes, setSelectedThemes]   = useState<number[]>([])
@@ -673,7 +585,7 @@ export default function AjouterEvenement() {
     const texteRecherche = `${d.categorie || ''} ${d.titre || ''}`.toLowerCase()
     for (const [key, val] of Object.entries(CATEGORIE_MAP)) {
       if (texteRecherche.includes(key)) {
-        const typeMatch = EVENT_TYPES.find(t => t.nom === val)
+        const typeMatch = EVENT_TYPES.find(et => et.nom === val)
         if (typeMatch) setSelectedType(typeMatch.id)
         break
       }
@@ -712,7 +624,7 @@ export default function AjouterEvenement() {
       }
     }
     setFilledByScan(true)
-    setScanMessage({ type: 'verifier', texte: `📋 Événement ${index + 1}/${total} — Vérifie et complète avant de publier` })
+    setScanMessage({ type: 'verifier', texte: `📋 ${t.ajouter.scanVerifier}` })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -747,7 +659,7 @@ export default function AjouterEvenement() {
 
           const d = json.data || {}
           if (Object.keys(d).length === 0) {
-            setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurLecture || "On n'a pas pu lire l'affiche." })
+            setScanMessage({ type: 'erreur', texte: t.ajouter.image.scanErreurLecture })
           } else {
             let categorieDetectee: string | null = null
             const texteRecherche = `${d.categorie || ''} ${d.titre || ''}`.toLowerCase()
@@ -778,7 +690,7 @@ export default function AjouterEvenement() {
 
             // Mapping catégorie → event_type_id
             if (categorieDetectee) {
-              const typeMatch = EVENT_TYPES.find(t => t.nom === categorieDetectee)
+              const typeMatch = EVENT_TYPES.find(et => et.nom === categorieDetectee)
               if (typeMatch) setSelectedType(typeMatch.id)
             }
 
@@ -804,7 +716,7 @@ export default function AjouterEvenement() {
               } catch { /* géocodage silencieux */ }
             }
 
-            setScanMessage({ type: 'verifier', texte: T_IMAGE[locale].scanVerifier || 'Vérifie et complète les informations avant de publier.' })
+            setScanMessage({ type: 'verifier', texte: t.ajouter.image.scanVerifier })
             setFilledByScan(true)
 
             // FEAT-SCAN-RECURRENT-1 — Pré-remplissage récurrence depuis Scan & Publie
@@ -829,13 +741,13 @@ export default function AjouterEvenement() {
             }
           }
         } catch {
-          setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurService || 'Service temporairement indisponible.' })
+          setScanMessage({ type: 'erreur', texte: t.ajouter.image.scanErreurService })
         }
         setScanLoading(false)
       }
       reader.readAsDataURL(file)
     } catch {
-      setScanMessage({ type: 'erreur', texte: T_IMAGE[locale].scanErreurService || 'Service temporairement indisponible.' })
+      setScanMessage({ type: 'erreur', texte: t.ajouter.image.scanErreurService })
       setScanLoading(false)
     }
     e.target.value = ''
@@ -927,16 +839,16 @@ export default function AjouterEvenement() {
   }
 
   const toggleTheme = (id: number) => {
-    setSelectedThemes(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
+    setSelectedThemes(prev => prev.includes(id) ? prev.filter(th => th !== id) : [...prev, id])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedType) { alert("Choisis un type d'événement."); return }
-    if (multiJours && form.date_fin && form.date_fin < form.date) { alert('La date de fin doit être après la date de début.'); return }
-    if (!coordsPin) { alert("Recherche et place le pin sur la carte pour localiser l'événement."); return }
-    if (!pinConfirme) { alert("Confirme l'emplacement du pin sur la carte."); return }
-    if (visibilite === 'discret' && (!codeAcces || codeAcces.length < 4)) { alert("Le code d'accès doit contenir au moins 4 chiffres."); return }
+    if (!selectedType) { alert(t.ajouter.erreurType); return }
+    if (multiJours && form.date_fin && form.date_fin < form.date) { alert(t.ajouter.erreurDateFin); return }
+    if (!coordsPin) { alert(t.ajouter.erreurPin); return }
+    if (!pinConfirme) { alert(t.ajouter.erreurPinConfirme); return }
+    if (visibilite === 'discret' && (!codeAcces || codeAcces.length < 4)) { alert(t.ajouter.erreurCode); return }
     setLoading(true)
 
     let image_url: string | null = null
@@ -955,7 +867,7 @@ export default function AjouterEvenement() {
     }
 
     const { data: { session } } = await supabase.auth.getSession()
-    const categorieNom = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
+    const categorieNom = EVENT_TYPES.find(et => et.id === selectedType)?.nom || ''
     const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
     const nomResolu = profile?.nom
       || session?.user?.user_metadata?.full_name
@@ -1150,23 +1062,23 @@ export default function AjouterEvenement() {
         <div style={{ maxWidth: 480, width: '100%' }}>
           <div style={{ textAlign: 'center', fontSize: 52, marginBottom: 20 }}>{isContrib ? '⭐' : '🎪'}</div>
           <h2 style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 }}>
-            {isContrib ? `Félicitations pour ta ${ordinal} contribution !` : `Événement soumis avec succès !`}
+            {isContrib ? `${t.ajouter.succes.contributeur} ${ordinal} ${t.ajouter.succes.contributeurSuite}` : t.ajouter.succes.organisateur}
           </h2>
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
             <p style={{ color: '#F7F2E8', fontSize: 14, lineHeight: 1.7 }}>
-              {isContrib ? `Tu viens de contribuer à un projet communautaire mondial né en Haïti. Chaque événement ajouté connecte des gens autour de moments qui comptent. Continue comme ça — la communauté te voit ! 🌍` : `Ton événement est en cours de validation par notre équipe. Tu seras notifié dès qu'il sera approuvé et visible sur la carte. Merci de faire vibrer ta communauté ! 🎉`}
+              {isContrib ? t.ajouter.succes.messageContrib : t.ajouter.succes.messageOrga}
             </p>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <span style={{ background: isContrib ? 'rgba(212,168,32,0.15)' : 'rgba(200,67,26,0.15)', color: isContrib ? '#D4A820' : '#C8431A', padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>
-              {isContrib ? `⭐ Contributeur · ${ordinal} contribution` : `🎪 Organisateur · ${ordinal} événement`}
+              {isContrib ? `${t.ajouter.succes.roleContrib} ${ordinal} ${t.ajouter.succes.contribution}` : `${t.ajouter.succes.roleOrga} ${ordinal} ${t.ajouter.succes.contribution}`}
             </span>
           </div>
           {succesData?.nouveauBadge && !showBadgePopup && (
             <div style={{ background: 'rgba(212,168,32,0.08)', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 28 }}>{succesData.nouveauBadge.emoji}</span>
               <div>
-                <p style={{ color: '#D4A820', fontSize: 12, fontWeight: 'bold' }}>Badge débloqué !</p>
+                <p style={{ color: '#D4A820', fontSize: 12, fontWeight: 'bold' }}>{t.ajouter.succes.badgeDebloque}</p>
                 <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>{succesData.nouveauBadge.label}</p>
               </div>
             </div>
@@ -1202,7 +1114,7 @@ export default function AjouterEvenement() {
     )
   }
 
-  const categorieNomSelectionnee = EVENT_TYPES.find(t => t.id === selectedType)?.nom || ''
+  const categorieNomSelectionnee = EVENT_TYPES.find(et => et.id === selectedType)?.nom || ''
   const imageConfirmee           = !!(image || imageUnsplash)
 
   // ── Formulaire ────────────────────────────────────────────────────────────
@@ -1304,7 +1216,7 @@ export default function AjouterEvenement() {
                 onClick={() => setScanMultiSelectMode(false)}
                 style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}
               >
-                Annuler
+                {t.ajouter.annuler}
               </button>
               <button
                 disabled={scanMultiSelected.size === 0}
@@ -1322,7 +1234,7 @@ export default function AjouterEvenement() {
                   fontSize: 13, fontWeight: 'bold', cursor: scanMultiSelected.size === 0 ? 'not-allowed' : 'pointer'
                 }}
               >
-                Continuer avec {scanMultiSelected.size} événement{scanMultiSelected.size > 1 ? 's' : ''} →
+                {String(t.ajouter.continuerAvec).replace('{n}', String(scanMultiSelected.size)).replace('{s}', scanMultiSelected.size > 1 ? 's' : '')}
               </button>
             </div>
           </div>
@@ -1347,8 +1259,8 @@ export default function AjouterEvenement() {
           )}
 
           <div>
-            <label style={labelStyle}>Titre de l'événement *</label>
-            <input name="titre" value={form.titre} placeholder="Ex: Livres en Folie 2026" onChange={handleChange} style={inputStyle} required />
+            <label style={labelStyle}>{t.ajouter.titre}</label>
+            <input name="titre" value={form.titre} placeholder={t.ajouter.placeholderTitre} onChange={handleChange} style={inputStyle} required />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1359,8 +1271,8 @@ export default function AjouterEvenement() {
               >
                 <span style={{ fontSize: 28, flexShrink: 0 }}>🎪</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>C'est mon événement</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12 }}>Je suis l'organisateur</p>
+                  <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>{t.ajouter.roleOrganisateur}</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12 }}>{t.ajouter.roleOrganisateurDesc}</p>
                 </div>
                 {soumisEnTantQue === 'organisateur' && <span style={{ color: '#C8431A', fontSize: 18, flexShrink: 0 }}>✓</span>}
               </button>
@@ -1371,46 +1283,46 @@ export default function AjouterEvenement() {
               >
                 <span style={{ fontSize: 28, flexShrink: 0 }}>⭐</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>Je l'ai repéré</p>
-                  <p style={{ color: '#8C5A40', fontSize: 12 }}>J'ai vu cette info et je la partage</p>
+                  <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>{t.ajouter.roleContributeur}</p>
+                  <p style={{ color: '#8C5A40', fontSize: 12 }}>{t.ajouter.roleContributeurDesc}</p>
                 </div>
                 {soumisEnTantQue === 'contributeur' && <span style={{ color: '#D4A820', fontSize: 18, flexShrink: 0 }}>✓</span>}
               </button>
             </div>
 
           <div>
-            <label style={labelStyle}>Organisateur</label>
-            <input name="organisateur" value={form.organisateur} onChange={handleChange} placeholder="Ex: Barreau de Petit-Goâve..." style={inputStyle} />
+            <label style={labelStyle}>{t.ajouter.organisateur}</label>
+            <input name="organisateur" value={form.organisateur} onChange={handleChange} placeholder={t.ajouter.placeholderOrganisateur} style={inputStyle} />
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Ville *</label>
-              <input name="ville" value={form.ville} placeholder="Ex: Pétion-Ville" onChange={handleChange} style={inputStyle} required />
+              <label style={labelStyle}>{t.ajouter.ville}</label>
+              <input name="ville" value={form.ville} placeholder={t.ajouter.placeholderVille} onChange={handleChange} style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Pays *</label>
-              <input name="pays" value={form.pays} placeholder="Ex: Haïti" onChange={handleChange} style={inputStyle} required />
+              <label style={labelStyle}>{t.ajouter.pays}</label>
+              <input name="pays" value={form.pays} placeholder={t.ajouter.placeholderPays} onChange={handleChange} style={inputStyle} required />
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Nom du lieu *</label>
-            <input name="nom_lieu" value={form.nom_lieu} placeholder="Ex: El Rancho Convention Center" onChange={handleChange} style={inputStyle} required autoComplete="off" />
-            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>Nom exact du bâtiment, salle ou espace</p>
+            <label style={labelStyle}>{t.ajouter.nomLieu}</label>
+            <input name="nom_lieu" value={form.nom_lieu} placeholder={t.ajouter.placeholderNomLieu} onChange={handleChange} style={inputStyle} required autoComplete="off" />
+            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>{t.ajouter.aideLieu}</p>
           </div>
 
           <div>
-            <label style={labelStyle}>Adresse <span style={{ color: '#8C5A40' }}>(optionnel)</span></label>
-            <input name="adresse" value={form.adresse} placeholder="Ex: Rue Républicaine, Carrefour..." onChange={handleChange} style={inputStyle} />
-            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>Numéro, rue, quartier — pour aider les participants</p>
+            <label style={labelStyle}>{t.ajouter.adresse} <span style={{ color: '#8C5A40' }}>{t.ajouter.adresseOptionnel}</span></label>
+            <input name="adresse" value={form.adresse} placeholder={t.ajouter.placeholderAdresse} onChange={handleChange} style={inputStyle} />
+            <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>{t.ajouter.aideAdresse}</p>
           </div>
 
           <div>
-            <label style={labelStyle}>📍 Localisation sur la carte *</label>
-            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8 }}>Recherche la ville ou le lieu pour placer le pin, puis ajuste-le en le glissant</p>
+            <label style={labelStyle}>{t.ajouter.localisation}</label>
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 8 }}>{t.ajouter.aideLocalisation}</p>
             <div style={{ position: 'relative' }} ref={suggestionsRef}>
-              <input value={rechercheTexte} onChange={handleRechercheChange} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder="Recherche : Pétion-Ville, El Rancho..." style={{ ...inputStyle, border: pinConfirme ? '1px solid #2D9E6B' : coordsPin ? '1px solid #D4A820' : '1px solid #E8E0D0' }} autoComplete="off" />
+              <input value={rechercheTexte} onChange={handleRechercheChange} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder={t.ajouter.placeholderRecherche} style={{ ...inputStyle, border: pinConfirme ? '1px solid #2D9E6B' : coordsPin ? '1px solid #D4A820' : '1px solid #E8E0D0' }} autoComplete="off" />
               {pinConfirme && <span style={{ position: 'absolute', right: 14, top: 14, color: '#2D9E6B', fontSize: 16 }}>✓</span>}
               {showSuggestions && suggestions.length > 0 && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, marginTop: 4, background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
@@ -1432,13 +1344,13 @@ export default function AjouterEvenement() {
                 <div style={{ marginTop: 10 }}>
                   {!pinConfirme ? (
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button type="button" onClick={() => setPinConfirme(true)} style={{ flex: 2, background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>✓ Confirmer cet emplacement</button>
-                      <button type="button" onClick={() => { setCoordsPin(null); setPinConfirme(false); setRechercheTexte('') }} style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 8, padding: '10px 12px', fontSize: 13, cursor: 'pointer' }}>Réinitialiser</button>
+                      <button type="button" onClick={() => setPinConfirme(true)} style={{ flex: 2, background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>{t.ajouter.confirmerEmplacement}</button>
+                      <button type="button" onClick={() => { setCoordsPin(null); setPinConfirme(false); setRechercheTexte('') }} style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 8, padding: '10px 12px', fontSize: 13, cursor: 'pointer' }}>{t.ajouter.reinitialiser}</button>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ color: '#2D9E6B', fontSize: 13, fontWeight: 'bold' }}>✓ Emplacement confirmé</span>
-                      <button type="button" onClick={() => setPinConfirme(false)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}>Modifier</button>
+                      <span style={{ color: '#2D9E6B', fontSize: 13, fontWeight: 'bold' }}>{t.ajouter.emplacementConfirme}</span>
+                      <button type="button" onClick={() => setPinConfirme(false)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}>{t.ajouter.modifier}</button>
                     </div>
                   )}
                 </div>
@@ -1449,18 +1361,18 @@ export default function AjouterEvenement() {
           <div>
             <button type="button" onClick={() => { setMultiJours(!multiJours); if (multiJours) setForm(f => ({ ...f, date_fin: '' })) }} style={{ display: 'flex', alignItems: 'center', gap: 10, background: multiJours ? 'rgba(200,67,26,0.12)' : 'white', border: multiJours ? '1px solid #C8431A' : '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: multiJours ? '#1A1410' : '#8C5A40', fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left' }}>
               <span style={{ fontSize: 16 }}>{multiJours ? '✅' : '☐'}</span>
-              <span>Événement sur plusieurs jours</span>
+              <span>{t.ajouter.multiJours}</span>
             </button>
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>{multiJours ? 'Date de début *' : 'Date *'}</label>
+              <label style={labelStyle}>{multiJours ? t.ajouter.dateDebut : t.ajouter.date}</label>
               <input type="date" name="date" value={form.date} onChange={handleChange} style={inputStyle} required />
             </div>
             {multiJours && (
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Date de fin *</label>
+                <label style={labelStyle}>{t.ajouter.dateFin}</label>
                 <input type="date" name="date_fin" value={form.date_fin} min={form.date || undefined} onChange={handleChange} style={inputStyle} required={multiJours} />
               </div>
             )}
@@ -1480,14 +1392,14 @@ export default function AjouterEvenement() {
               style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#C8431A' }}
             />
             <label htmlFor="toute-journee" style={{ fontSize: 14, color: '#1A1410', cursor: 'pointer' }}>
-              Toute la journée
+              {t.ajouter.touteJournee}
             </label>
           </div>
 
           {!touteJournee && (
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Heure de début</label>
+              <label style={labelStyle}>{t.ajouter.heureDebut}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <select
                   value={form.heure_debut.split(':')[0] || ''}
@@ -1520,7 +1432,7 @@ export default function AjouterEvenement() {
               </div>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Heure de fin <span style={{ color: '#8C5A40' }}>(optionnel)</span></label>
+              <label style={labelStyle}>{t.ajouter.heureFin} <span style={{ color: '#8C5A40' }}>{t.ajouter.heureFinOptionnel}</span></label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <select
                   value={form.heure_fin.split(':')[0] || ''}
@@ -1568,12 +1480,12 @@ export default function AjouterEvenement() {
                   <label style={labelStyle}>Fréquence</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                     {[
-                      { key: 'quotidien',    label: 'Tous les jours' },
-                      { key: 'hebdomadaire', label: 'Toutes les semaines' },
-                      { key: 'mensuel',      label: 'Tous les mois' },
-                      { key: 'annuel',       label: 'Tous les ans' },
-                    ].map(t => (
-                      <button key={t.key} type="button" onClick={() => setTypeRecurrence(t.key as typeof typeRecurrence)} style={{ padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: typeRecurrence === t.key ? '#C8431A' : 'rgba(255,255,255,0.6)', color: typeRecurrence === t.key ? 'white' : '#8C5A40' }}>{t.label}</button>
+                      { key: 'quotidien',    label: t.ajouter.recurrence.quotidien },
+                      { key: 'hebdomadaire', label: t.ajouter.recurrence.hebdomadaire },
+                      { key: 'mensuel',      label: t.ajouter.recurrence.mensuel },
+                      { key: 'annuel',       label: t.ajouter.recurrence.annuel },
+                    ].map(opt => (
+                      <button key={opt.key} type="button" onClick={() => setTypeRecurrence(opt.key as typeof typeRecurrence)} style={{ padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: typeRecurrence === opt.key ? '#C8431A' : 'rgba(255,255,255,0.6)', color: typeRecurrence === opt.key ? 'white' : '#8C5A40' }}>{opt.label}</button>
                     ))}
                   </div>
                 </div>
@@ -1597,8 +1509,8 @@ export default function AjouterEvenement() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 10 }}>
                     {[
                       { key: 'sans_fin',    label: 'Sans fin' },
-                      { key: 'date',        label: "Jusqu'à une date" },
-                      { key: 'occurrences', label: 'Après X fois' },
+                      { key: 'date',        label: t.ajouter.recurrence.finDate },
+                      { key: 'occurrences', label: t.ajouter.recurrence.finOccurrences },
                     ].map(f => (
                       <button key={f.key} type="button" onClick={() => setFinRecurrenceType(f.key as typeof finRecurrenceType)} style={{ padding: '7px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: finRecurrenceType === f.key ? '#1A1410' : 'rgba(255,255,255,0.6)', color: finRecurrenceType === f.key ? '#F7F2E8' : '#8C5A40' }}>{f.label}</button>
                     ))}
@@ -1609,7 +1521,7 @@ export default function AjouterEvenement() {
                   {finRecurrenceType === 'occurrences' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
                       <input type="number" min={2} max={52} value={finRecurrenceNb} onChange={e => setFinRecurrenceNb(parseInt(e.target.value))} style={{ ...inputStyle, width: 80 }} />
-                      <span style={{ color: '#8C5A40', fontSize: 13 }}>occurrences</span>
+                      <span style={{ color: '#8C5A40', fontSize: 13 }}>{t.ajouter.recurrence.occurrences}</span>
                     </div>
                   )}
                 </div>
@@ -1618,29 +1530,29 @@ export default function AjouterEvenement() {
           </div>
 
           <div>
-            <label style={labelStyle}>Fuseau horaire <span style={{ color: '#8C5A40', marginLeft: 4 }}>(heure locale du lieu)</span></label>
+            <label style={labelStyle}>{t.ajouter.fuseau} <span style={{ color: '#8C5A40', marginLeft: 4 }}>{t.ajouter.aideFuseau}</span></label>
             <select name="fuseau_organisateur" value={form.fuseau_organisateur} onChange={handleChange} style={inputStyle}>
               {FUSEAUX.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
 
           <div>
-            <label style={labelStyle}>Type d'événement *</label>
+            <label style={labelStyle}>{t.ajouter.type}</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
               {EVENT_TYPES.map(type => (
                 <button key={type.id} type="button" onClick={() => setSelectedType(type.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, fontSize: 13, textAlign: 'left', cursor: 'pointer', background: selectedType === type.id ? 'rgba(200,67,26,0.15)' : 'white', border: selectedType === type.id ? '1px solid #C8431A' : '1px solid #E8E0D0', color: selectedType === type.id ? '#1A1410' : '#8C5A40' }}>
-                  <span>{type.icone}</span><span>{type.nom}</span>
+                  <span>{type.icone}</span><span>{(t.ajouter.typesItems as Record<string,string>)[String(type.id)] || type.nom}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Thèmes <span style={{ color: '#8C5A40' }}>(plusieurs possible)</span></label>
+            <label style={labelStyle}>{t.ajouter.themesLabel} <span style={{ color: '#8C5A40' }}>{t.ajouter.themesAide}</span></label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
               {EVENT_THEMES.map(theme => (
                 <button key={theme.id} type="button" onClick={() => toggleTheme(theme.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer', background: selectedThemes.includes(theme.id) ? 'rgba(200,67,26,0.15)' : 'white', border: selectedThemes.includes(theme.id) ? '1px solid #C8431A' : '1px solid #E8E0D0', color: selectedThemes.includes(theme.id) ? '#1A1410' : '#8C5A40' }}>
-                  <span>{theme.icone}</span><span>{theme.nom}</span>
+                  <span>{theme.icone}</span><span>{(t.ajouter.themesItems as Record<string,string>)[String(theme.id)] || theme.nom}</span>
                 </button>
               ))}
             </div>
@@ -1648,41 +1560,41 @@ export default function AjouterEvenement() {
 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Accès</label>
+              <label style={labelStyle}>{t.ajouter.acces}</label>
               <select name="acces" value={form.acces} onChange={handleChange} style={inputStyle}>
-                <option value="public">Public</option>
-                <option value="prive">Privé</option>
+                <option value="public">{t.ajouter.accesPublic}</option>
+                <option value="prive">{t.ajouter.accesPrive}</option>
               </select>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Prix</label>
+              <label style={labelStyle}>{t.ajouter.prix}</label>
               <select name="prix" value={form.prix} onChange={handleChange} style={inputStyle}>
-                <option value="gratuit">Gratuit</option>
-                <option value="payant">Payant</option>
+                <option value="gratuit">{t.ajouter.prixGratuit}</option>
+                <option value="payant">{t.ajouter.prixPayant}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Description</label>
-            <textarea name="description" value={form.description} placeholder="Décris l'événement..." onChange={handleChange} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
+            <label style={labelStyle}>{t.ajouter.description}</label>
+            <textarea name="description" value={form.description} placeholder={t.ajouter.placeholderDescription} onChange={handleChange} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
           <div>
-            <label style={labelStyle}>Lien pour plus de détails (optionnel)</label>
+            <label style={labelStyle}>{t.ajouter.lien}</label>
             <input name="lien" value={form.lien} placeholder="https://" onChange={handleChange} style={inputStyle} />
           </div>
 
           {/* ── F10 — Section image avec bloc incitatif ── */}
           <div ref={imageSectionRef}>
             <label style={labelStyle}>
-              Photo de l'événement
-              <span style={{ color: '#8C5A40', marginLeft: 6 }}>(optionnel)</span>
+              {t.ajouter.photo}
+              <span style={{ color: '#8C5A40', marginLeft: 6 }}>{t.ajouter.photoOptionnel}</span>
             </label>
 
             {showImageBloc && !imageConfirmee && !imageBlocIgnore && (
               <BlocIncitatiImage
-                locale={locale}
+                t={t.ajouter.image as Record<string, string>}
                 titre={form.titre}
                 categorie={categorieNomSelectionnee}
                 imageDejaSelectionnee={imageConfirmee}
@@ -1705,8 +1617,8 @@ export default function AjouterEvenement() {
               <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '2px solid #2D9E6B', marginTop: 8 }}>
                 <img src={imageUnsplash.thumb} alt="suggestion" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Photo par {imageUnsplash.author}</p>
-                  <button type="button" onClick={() => { setImageUnsplash(null); setShowImageBloc(true) }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}>Changer</button>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>{t.ajouter.photoCredit} {imageUnsplash.author}</p>
+                  <button type="button" onClick={() => { setImageUnsplash(null); setShowImageBloc(true) }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}>{t.ajouter.photoChanger}</button>
                 </div>
               </div>
             )}
@@ -1731,34 +1643,34 @@ export default function AjouterEvenement() {
             {image && (
               <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold' }}>✓ {image.name}</span>
-                <button type="button" onClick={() => setImage(null)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}>Supprimer</button>
+                <button type="button" onClick={() => setImage(null)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}>{t.ajouter.photoSupprimer}</button>
               </div>
             )}
           </div>
 
           <div>
-            <label style={labelStyle}>Visibilité de l'événement</label>
+            <label style={labelStyle}>{t.ajouter.visibilite}</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
               {VISIBILITES.map(v => (
                 <button key={v.value} type="button" onClick={() => setVisibilite(v.value as 'public' | 'discret' | 'prive')} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: visibilite === v.value ? v.bg : 'white', border: visibilite === v.value ? `1px solid ${v.border}` : '1px solid #E8E0D0' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 2, border: visibilite === v.value ? `2px solid ${v.color}` : '2px solid #E8E0D0', background: visibilite === v.value ? v.color : 'transparent' }} />
                   <div>
-                    <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>{v.label}</p>
-                    <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>{v.description}</p>
+                    <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>{(t.ajouter.visibilites as Record<string,string>)[v.value + '_label'] || v.label}</p>
+                    <p style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>{(t.ajouter.visibilites as Record<string,string>)[v.value + '_desc'] || v.description}</p>
                   </div>
                 </button>
               ))}
             </div>
             {visibilite === 'discret' && (
               <div style={{ marginTop: 12 }}>
-                <label style={{ ...labelStyle, color: '#D4A820' }}>Code d'accès (4-6 chiffres) *</label>
-                <input type="text" inputMode="numeric" maxLength={6} value={codeAcces} onChange={e => setCodeAcces(e.target.value.replace(/\D/g, ''))} placeholder="Ex: 1234" style={{ ...inputStyle, border: '1px solid rgba(212,168,32,0.4)', letterSpacing: 8, fontSize: 18 }} />
-                <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>Ce code sera demandé aux visiteurs pour révéler l'adresse exacte.</p>
+                <label style={{ ...labelStyle, color: '#D4A820' }}>{t.ajouter.codeAcces}</label>
+                <input type="text" inputMode="numeric" maxLength={6} value={codeAcces} onChange={e => setCodeAcces(e.target.value.replace(/\D/g, ''))} placeholder={t.ajouter.placeholderCode} style={{ ...inputStyle, border: '1px solid rgba(212,168,32,0.4)', letterSpacing: 8, fontSize: 18 }} />
+                <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>{t.ajouter.aideCode}</p>
               </div>
             )}
             {visibilite === 'prive' && (
               <div style={{ marginTop: 12, background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 10, padding: '12px 14px' }}>
-                <p style={{ color: '#C8431A', fontSize: 13, lineHeight: 1.6 }}>🫧 Un lien secret unique sera généré après soumission.</p>
+                <p style={{ color: '#C8431A', fontSize: 13, lineHeight: 1.6 }}>{t.ajouter.lienSecret}</p>
               </div>
             )}
           </div>
@@ -1766,20 +1678,20 @@ export default function AjouterEvenement() {
           {mesOrgs.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 'bold', color: '#1A1410', marginBottom: 6 }}>
-                🏢 Organisation (optionnel)
+                {t.ajouter.organisation}
               </label>
               <select
                 value={orgSelectionnee}
                 onChange={e => setOrgSelectionnee(e.target.value)}
                 style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#1A1410', outline: 'none' }}
               >
-                <option value="">— Aucune organisation —</option>
+                <option value="">{t.ajouter.aucuneOrganisation}</option>
                 {mesOrgs.map(org => (
                   <option key={org.id} value={org.id}>{org.nom}</option>
                 ))}
               </select>
               <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>
-                Cet événement apparaîtra sur la page de l'organisation
+                {t.ajouter.aideOrganisation}
               </p>
             </div>
           )}
@@ -1791,21 +1703,21 @@ export default function AjouterEvenement() {
                 const nextIndex = scanMultiIndex + 1
                 setScanMultiIndex(nextIndex)
                 await chargerEvenementScan(scanMultiEvents, nextIndex, scanMultiTotal)
-                setScanMessage({ type: 'verifier', texte: `📋 Événement ${nextIndex + 1}/${scanMultiTotal} — Vérifie et complète avant de soumettre` })
+                setScanMessage({ type: 'verifier', texte: `📋 ${t.ajouter.scanVerifier}` })
               }}
               style={{ width: '100%', background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', marginBottom: 8 }}
             >
-              ⏭ Passer cet événement ({scanMultiIndex + 2}/{scanMultiTotal})
+              {String(t.ajouter.passerEvenement).replace('{a}', String(scanMultiIndex + 2)).replace('{b}', String(scanMultiTotal))}
             </button>
           )}
           <button type="submit" disabled={loading} style={{ background: loading ? '#8C5A40' : '#C8431A', color: '#F7F2E8', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8 }}>
             {loading
-              ? 'Publication en cours...'
+              ? t.ajouter.publication
               : scanMultiTotal > 1 && scanMultiIndex < scanMultiTotal - 1
-                ? `Soumettre et passer au suivant (${scanMultiIndex + 2}/${scanMultiTotal}) →`
+                ? String(t.ajouter.soumettreSuivant).replace('{a}', String(scanMultiIndex + 2)).replace('{b}', String(scanMultiTotal))
                 : scanMultiTotal > 1 && scanMultiIndex === scanMultiTotal - 1
-                  ? 'Soumettre le dernier événement ✓'
-                  : "Soumettre l'événement"
+                  ? t.ajouter.soumettreDernier
+                  : t.ajouter.publier
             }
           </button>
 
