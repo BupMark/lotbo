@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import CarteBadge from '../../components/CarteBadge'
 import { calculerNiveau } from '../../lib/points'
 import { identifyUser } from '../../lib/amplitude'
+import { type Langue, getTraductions } from '../../lib/i18n'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -81,6 +82,8 @@ function ProfilInner() {
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
+  const [langue, setLangue] = useState<Langue>('fr')
+  const t = getTraductions(langue)
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
     check()
@@ -216,7 +219,7 @@ function ProfilInner() {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) {
-        setDeleteError("Session expirée. Reconnecte-toi puis réessaie.")
+        setDeleteError(t.profil.modalSuppression.erreurSession)
         setDeletingAccount(false)
         return
       }
@@ -227,9 +230,9 @@ function ProfilInner() {
       const json = await res.json()
       if (!res.ok) {
         if (json.error === 'SEUL_ADMIN_ORGANISATION') {
-          setDeleteError("Tu es le seul administrateur d'une organisation. Transfère la propriété ou supprime l'organisation avant de supprimer ton compte.")
+          setDeleteError(t.profil.modalSuppression.erreurSeulAdmin)
         } else {
-          setDeleteError("Une erreur est survenue. Réessaie ou contacte le support.")
+          setDeleteError(t.profil.modalSuppression.erreurGenerale)
         }
         setDeletingAccount(false)
         return
@@ -237,24 +240,24 @@ function ProfilInner() {
       await supabase.auth.signOut()
       router.push('/')
     } catch (err) {
-      setDeleteError("Une erreur est survenue. Réessaie ou contacte le support.")
+      setDeleteError(t.profil.modalSuppression.erreurGenerale)
       setDeletingAccount(false)
     }
   }
 
   const statutLabel = (statut: string) => {
     switch (statut) {
-      case 'approuve': return { label: '✓ Approuvé', bg: 'rgba(200,67,26,0.15)', color: '#C8431A' }
-      case 'hors_ligne': return { label: '⊘ Hors ligne', bg: 'rgba(100,100,100,0.15)', color: '#888' }
-      case 'rejete': return { label: '✗ Rejeté', bg: 'rgba(180,40,40,0.2)', color: '#e57373' }
-      case 'en_attente': return { label: '⏳ En attente', bg: 'rgba(212,168,32,0.15)', color: '#D4A820' }
+      case 'approuve': return { label: t.profil.evenements.statutApprouve, bg: 'rgba(200,67,26,0.15)', color: '#C8431A' }
+      case 'hors_ligne': return { label: t.profil.evenements.statutHorsLigne, bg: 'rgba(100,100,100,0.15)', color: '#888' }
+      case 'rejete': return { label: t.profil.evenements.statutRejete, bg: 'rgba(180,40,40,0.2)', color: '#e57373' }
+      case 'en_attente': return { label: t.profil.evenements.statutEnAttente, bg: 'rgba(212,168,32,0.15)', color: '#D4A820' }
       default: return { label: statut, bg: 'rgba(26,20,16,0.06)', color: '#8C5A40' }
     }
   }
 
   if (loading) return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8' }} className="flex items-center justify-center">
-      <p style={{ color: '#8C5A40' }}>Chargement...</p>
+      <p style={{ color: '#8C5A40' }}>{t.profil.header.chargement}</p>
     </main>
   )
 
@@ -298,9 +301,9 @@ function ProfilInner() {
             <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Carte</a>
-            {isAdmin && <a href="/admin" style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>⚙️ Admin</a>}
-            <button onClick={handleLogout} style={{ background: 'rgba(180,40,40,0.15)', color: '#e57373', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 999, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>Déconnexion</button>
+            <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>{t.profil.header.retourCarte}</a>
+            {isAdmin && <a href="/admin" style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>{t.profil.header.admin}</a>}
+            <button onClick={handleLogout} style={{ background: 'rgba(180,40,40,0.15)', color: '#e57373', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 999, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>{t.profil.header.deconnexion}</button>
           </div>
         </div>
 
@@ -352,22 +355,22 @@ function ProfilInner() {
                   )}
                   <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 4 }}>{user?.email?.replace(/(.{2}).*(@.*)/, '$1***$2')}</p>
                   <p style={{ color: '#8C5A40', fontSize: 13 }}>
-                    {profile?.role === 'admin' ? '⚙️ Administrateur'
-                      : profile?.role === 'ambassadeur' ? '🤝 Ambassadeur'
-                      : profile?.role === 'organisateur' ? '🎪 Organisateur'
-                      : profile?.role === 'contributeur_terrain' ? '⭐ Contributeur Terrain'
-                      : profile?.role === 'contributeur' ? '⭐ Engagé'
-                      : profile?.role === 'membre' ? '👤 Membre'
-                      : '👤 Membre LOTBO'}
+                    {profile?.role === 'admin' ? t.profil.roles.administrateur
+                      : profile?.role === 'ambassadeur' ? t.profil.roles.ambassadeur
+                      : profile?.role === 'organisateur' ? t.profil.roles.organisateur
+                      : profile?.role === 'contributeur_terrain' ? t.profil.roles.contributeurTerrain
+                      : profile?.role === 'contributeur' ? t.profil.roles.engage
+                      : profile?.role === 'membre' ? t.profil.roles.membre
+                      : t.profil.roles.membreLotbo}
                   </p>
 
                   {/* Badges rôles */}
                   <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                    {isAdmin && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⚙️ Admin</span>}
-                    {(rolesActifs.includes('contributeur_terrain')) && <span style={{ background: 'rgba(200,160,32,0.15)', color: '#C8A020', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Contributeur Terrain</span>}
-                    {(rolesActifs.includes('contributeur') && !rolesActifs.includes('contributeur_terrain')) && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>⭐ Engagé</span>}
-                    {rolesActifs.includes('ambassadeur') && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🤝 Ambassadeur</span>}
-                    {(rolesActifs.includes('organisateur') || nbOrga > 0) && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>🎪 Organisateur</span>}
+                    {isAdmin && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.admin}</span>}
+                    {(rolesActifs.includes('contributeur_terrain')) && <span style={{ background: 'rgba(200,160,32,0.15)', color: '#C8A020', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.contributeurTerrain}</span>}
+                    {(rolesActifs.includes('contributeur') && !rolesActifs.includes('contributeur_terrain')) && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.engage}</span>}
+                    {rolesActifs.includes('ambassadeur') && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.ambassadeur}</span>}
+                    {(rolesActifs.includes('organisateur') || nbOrga > 0) && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.organisateur}</span>}
                     {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {badgeContribActuel.label}</span>}
                   </div>
                 </div>
@@ -386,7 +389,7 @@ function ProfilInner() {
                       textDecoration: 'none',
                     }}
                   >
-                    🏢 Créer une organisation
+                    {t.profil.organisation.creer}
                   </a>
                 </div>
               )}
@@ -394,10 +397,10 @@ function ProfilInner() {
               {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {[
-                  { val: nbTotal, label: 'Total', color: '#1A1410', bg: 'rgba(26,20,16,0.04)' },
-                  { val: nbApprouves, label: 'Approuvés', color: '#C8431A', bg: 'rgba(200,67,26,0.08)' },
-                  { val: nbEnAttente, label: 'En attente', color: '#D4A820', bg: 'rgba(212,168,32,0.08)' },
-                  { val: paysCouverts, label: 'Pays', color: '#2D9E6B', bg: 'rgba(45,158,107,0.08)' },
+                  { val: nbTotal, label: t.profil.stats.total, color: '#1A1410', bg: 'rgba(26,20,16,0.04)' },
+                  { val: nbApprouves, label: t.profil.stats.approuves, color: '#C8431A', bg: 'rgba(200,67,26,0.08)' },
+                  { val: nbEnAttente, label: t.profil.stats.enAttente, color: '#D4A820', bg: 'rgba(212,168,32,0.08)' },
+                  { val: paysCouverts, label: t.profil.stats.pays, color: '#2D9E6B', bg: 'rgba(45,158,107,0.08)' },
                 ].map(s => (
                   <div key={s.label} style={{ background: s.bg, borderRadius: 10, padding: '12px 8px', textAlign: 'center' }}>
                     <p style={{ fontSize: 20, fontWeight: 'bold', color: s.color }}>{s.val}</p>
@@ -409,10 +412,10 @@ function ProfilInner() {
 
             {/* 🎂 Anniversaire */}
             <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 24 }}>
-              <h3 style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', marginBottom: 12 }}>🎂 Anniversaire</h3>
+              <h3 style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', marginBottom: 12 }}>{t.anniversaire.titre}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div>
-                  <label style={{ color: '#8C5A40', fontSize: 12, display: 'block', marginBottom: 4 }}>Date de naissance</label>
+                  <label style={{ color: '#8C5A40', fontSize: 12, display: 'block', marginBottom: 4 }}>{t.anniversaire.date_naissance}</label>
                   <input
                     type="date"
                     value={dateNaissance}
@@ -427,18 +430,18 @@ function ProfilInner() {
                     onChange={e => setAnniversairePublic(e.target.checked)}
                     style={{ accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
                   />
-                  <span style={{ color: '#8C5A40', fontSize: 12 }}>Afficher dans l'espace communautaire</span>
+                  <span style={{ color: '#8C5A40', fontSize: 12 }}>{t.anniversaire.anniversaire_public}</span>
                 </label>
                 <button
                   onClick={handleSaveBirthday}
                   disabled={savingBirthday}
                   style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', opacity: savingBirthday ? 0.7 : 1 }}
                 >
-                  {savingBirthday ? 'Enregistrement...' : 'Enregistrer'}
+                  {savingBirthday ? t.anniversaire.enregistrement : t.anniversaire.enregistrer}
                 </button>
                 {birthdaySaved && (
                   <p style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold', marginTop: 6 }}>
-                    ✓ Date enregistrée
+                    {t.anniversaire.dateEnregistree}
                   </p>
                 )}
               </div>
@@ -447,10 +450,10 @@ function ProfilInner() {
             {/* 🔗 Parrainage */}
             {profile?.referral_code && (
               <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 24 }}>
-                <h3 style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', marginBottom: 12 }}>🔗 Parrainage</h3>
+                <h3 style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', marginBottom: 12 }}>{t.profil.parrainage.titre}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div>
-                    <label style={{ color: '#8C5A40', fontSize: 12, display: 'block', marginBottom: 4 }}>Ton lien de parrainage</label>
+                    <label style={{ color: '#8C5A40', fontSize: 12, display: 'block', marginBottom: 4 }}>{t.profil.parrainage.tonLien}</label>
                     <div style={{ background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#1A1410', wordBreak: 'break-all' }}>
                       {`https://app.lotbo.app/login?mode=inscription&ref=${profile.referral_code}`}
                     </div>
@@ -464,25 +467,25 @@ function ProfilInner() {
                       }}
                       style={{ flex: 1, background: lienCopie ? 'rgba(45,158,107,0.15)' : 'rgba(200,67,26,0.08)', color: lienCopie ? '#2D9E6B' : '#C8431A', border: `1px solid ${lienCopie ? 'rgba(45,158,107,0.3)' : 'rgba(200,67,26,0.25)'}`, borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
                     >
-                      {lienCopie ? '✓ Copié !' : '📋 Copier le lien'}
+                      {lienCopie ? t.profil.parrainage.copie : t.profil.parrainage.copierLien}
                     </button>
                     <a
-                      href={`https://wa.me/?text=${encodeURIComponent('Rejoins LOTBO — tous les événements, un seul endroit 🌍 https://app.lotbo.app/login?mode=inscription&ref=' + profile.referral_code)}`}
+                      href={`https://wa.me/?text=${encodeURIComponent(t.profil.parrainage.messageWhatsApp + ' https://app.lotbo.app/login?mode=inscription&ref=' + profile.referral_code)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.3)', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}
                     >
-                      <span>💬</span> WhatsApp
+                      {t.profil.parrainage.whatsapp}
                     </a>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                     <div style={{ flex: 1, background: 'rgba(200,67,26,0.06)', borderRadius: 8, padding: '10px', textAlign: 'center' }}>
                       <p style={{ fontSize: 18, fontWeight: 'bold', color: '#C8431A' }}>{nbFilleuls}</p>
-                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 2 }}>personne{nbFilleuls > 1 ? 's' : ''} inscrite{nbFilleuls > 1 ? 's' : ''}</p>
+                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 2 }}>{nbFilleuls > 1 ? t.profil.parrainage.personnesInscrites : t.profil.parrainage.personneInscrite} {nbFilleuls > 1 ? t.profil.parrainage.inscrites : t.profil.parrainage.inscrite}</p>
                     </div>
                     <div style={{ flex: 1, background: 'rgba(212,168,32,0.06)', borderRadius: 8, padding: '10px', textAlign: 'center' }}>
                       <p style={{ fontSize: 18, fontWeight: 'bold', color: '#D4A820' }}>{pointsReferral}</p>
-                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 2 }}>pts via parrainage</p>
+                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 2 }}>{t.profil.parrainage.ptsParrainage}</p>
                     </div>
                   </div>
                 </div>
@@ -496,10 +499,10 @@ function ProfilInner() {
             {/* Onglets */}
             <div style={{ display: 'flex', gap: 4, marginBottom: 20, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {[
-                { id: 'evenements', label: '📅 Événements' },
-                { id: 'badges', label: '🏅 Badges' },
-                { id: 'favoris', label: '🔖 Favoris' },
-                { id: 'parametres', label: '⚙️ Paramètres' },
+                { id: 'evenements', label: t.profil.onglets.evenements },
+                { id: 'badges', label: t.profil.onglets.badges },
+                { id: 'favoris', label: t.profil.onglets.favoris },
+                { id: 'parametres', label: t.profil.onglets.parametres },
               ].map(o => (
                 <button key={o.id} onClick={() => setOnglet(o.id as any)} style={{
                   flex: 'none', minWidth: 80, whiteSpace: 'nowrap', padding: '10px', borderRadius: 10, fontSize: 11, fontWeight: 'bold', cursor: 'pointer',
@@ -514,15 +517,15 @@ function ProfilInner() {
             {onglet === 'evenements' && (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410' }}>Mes événements</h2>
-                  <a href="/ajouter" style={{ background: '#C8431A', color: '#F7F2E8', padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>+ Ajouter</a>
+                  <h2 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410' }}>{t.profil.evenements.titre}</h2>
+                  <a href="/ajouter" style={{ background: '#C8431A', color: '#F7F2E8', padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>{t.profil.evenements.ajouter}</a>
                 </div>
 
                 {evenements.length === 0 ? (
                   <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 48, textAlign: 'center' }}>
-                    <p style={{ color: '#8C5A40', marginBottom: 20, fontSize: 14 }}>Tu n'as pas encore soumis d'événement.</p>
+                    <p style={{ color: '#8C5A40', marginBottom: 20, fontSize: 14 }}>{t.profil.evenements.videTitre}</p>
                     <a href="/ajouter" style={{ background: '#C8431A', color: '#F7F2E8', padding: '12px 24px', borderRadius: 999, fontSize: 14, fontWeight: 'bold', textDecoration: 'none' }}>
-                      Soumettre mon premier événement
+                      {t.profil.evenements.videBouton}
                     </a>
                   </div>
                 ) : (
@@ -539,10 +542,10 @@ function ProfilInner() {
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                               <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>{ev.categorie}</span>
                               <span style={{ background: s.bg, color: s.color, padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>{s.label}</span>
-                              {ev.soumis_en_tant_que === 'contributeur' && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>⭐ Repéré</span>}
+                              {ev.soumis_en_tant_que === 'contributeur' && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>{t.profil.evenements.repere}</span>}
                             </div>
                           </div>
-                          <a href={'/evenement/' + ev.id} style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', flexShrink: 0, padding: '4px 8px' }}>Voir →</a>
+                          <a href={'/evenement/' + ev.id} style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', flexShrink: 0, padding: '4px 8px' }}>{t.profil.evenements.voir}</a>
                         </div>
                       )
                     })}
@@ -747,42 +750,42 @@ function ProfilInner() {
 
                 {/* Infos perso */}
                 <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid #E8E0D0' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>👤 Informations personnelles</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>{t.profil.parametres.infosPersoTitre}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div>
-                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Nom affiché</label>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 4 }}>{t.profil.parametres.nomAffiche}</label>
                       <input value={nomInput} onChange={e => setNomInput(e.target.value)}
                         style={{ width: '100%', background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#1A1410', outline: 'none' }} />
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Email</label>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 4 }}>{t.profil.parametres.email}</label>
                       <input value={user?.email || ''} disabled
                         style={{ width: '100%', background: '#F0EBE3', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#8C5A40', outline: 'none', cursor: 'not-allowed' }} />
-                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 4 }}>L&apos;email ne peut pas être modifié ici</p>
+                      <p style={{ fontSize: 11, color: '#8C5A40', marginTop: 4 }}>{t.profil.parametres.emailNonModifiable}</p>
                     </div>
                     <button onClick={async () => {
                       if (!user?.id || !nomInput.trim()) return
                       await supabase.from('profiles').update({ nom: nomInput.trim(), updated_at: new Date().toISOString() }).eq('id', user.id)
                     }} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>
-                      Enregistrer le nom
+                      {t.profil.parametres.enregistrerNom}
                     </button>
                   </div>
                 </div>
 
                 {/* Préférences */}
                 <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid #E8E0D0' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>🎛️ Préférences</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>{t.profil.parametres.preferencesTitre}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
                     {/* Genre */}
                     <div>
-                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>Genre</label>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>{t.profil.parametres.genre}</label>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         {[
-                          { val: 'masculin', label: 'Masculin' },
-                          { val: 'feminin', label: 'Féminin' },
-                          { val: 'neutre', label: 'Neutre' },
-                          { val: 'non_precise', label: 'Non précisé' },
+                          { val: 'masculin', label: t.profil.parametres.genreMasculin },
+                          { val: 'feminin', label: t.profil.parametres.genreFeminin },
+                          { val: 'neutre', label: t.profil.parametres.genreNeutre },
+                          { val: 'non_precise', label: t.profil.parametres.genreNonPrecise },
                         ].map(g => (
                           <button key={g.val} onClick={() => setGenre(g.val)}
                             style={{ padding: '7px 14px', borderRadius: 999, fontSize: 13, border: 'none', cursor: 'pointer', background: genre === g.val ? '#C8431A' : '#F0EBE3', color: genre === g.val ? 'white' : '#8C5A40', fontWeight: genre === g.val ? 'bold' : 'normal' }}>
@@ -794,7 +797,7 @@ function ProfilInner() {
 
                     {/* Visibilité anniversaire */}
                     <div>
-                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>Afficher mon anniversaire</label>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>{t.profil.parametres.afficherAnniversaire}</label>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {[
                           { val: 'mois', label: 'Mois uniquement (15 mai)' },
@@ -803,7 +806,7 @@ function ProfilInner() {
                         ].map(v => (
                           <button key={v.val} onClick={() => setAnniversaireVisibilite(v.val)}
                             style={{ padding: '7px 14px', borderRadius: 999, fontSize: 12, border: 'none', cursor: 'pointer', background: anniversaireVisibilite === v.val ? '#C8431A' : '#F0EBE3', color: anniversaireVisibilite === v.val ? 'white' : '#8C5A40' }}>
-                            {v.val === 'mois' ? 'Mois uniquement' : v.val === 'annee' ? 'Année uniquement' : 'Date complète'}
+                            {v.val === 'mois' ? t.profil.parametres.moisUniquement : v.val === 'annee' ? t.profil.parametres.anneeUniquement : t.profil.parametres.dateComplete}
                           </button>
                         ))}
                       </div>
@@ -811,7 +814,7 @@ function ProfilInner() {
 
                     {/* Langue */}
                     <div>
-                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>Langue préférée</label>
+                      <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>{t.profil.parametres.languePreferee}</label>
                       <select value={languePreference} onChange={e => setLanguePreference(e.target.value)}
                         style={{ width: '100%', background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#1A1410', outline: 'none' }}>
                         <option value="fr">🇫🇷 Français</option>
@@ -837,23 +840,23 @@ function ProfilInner() {
                       setTimeout(() => setParamsSaved(false), 3000)
                     }} disabled={savingParams}
                       style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}>
-                      {savingParams ? 'Enregistrement...' : 'Enregistrer les préférences'}
+                      {savingParams ? t.anniversaire.enregistrement : t.profil.parametres.enregistrerPreferences}
                     </button>
-                    {paramsSaved && <p style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>✓ Préférences enregistrées</p>}
+                    {paramsSaved && <p style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{t.profil.parametres.preferencesEnregistrees}</p>}
                   </div>
                 </div>
 
                 {/* ⚠️ Zone de danger */}
                 <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid rgba(180,40,40,0.3)' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#b42828', marginBottom: 8 }}>⚠️ Zone de danger</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#b42828', marginBottom: 8 }}>{t.profil.parametres.zoneDanger}</h3>
                   <p style={{ fontSize: 13, color: '#8C5A40', marginBottom: 16 }}>
-                    La suppression de ton compte est définitive. Tes données personnelles seront supprimées. Tes événements déjà approuvés et publiés resteront visibles, mais ton nom n'y sera plus associé.
+                    {t.profil.parametres.zoneDangerTexte}
                   </p>
                   <button
                     onClick={() => { setShowDeleteModal(true); setDeleteConfirmText(''); setDeleteError(null) }}
                     style={{ background: 'rgba(180,40,40,0.1)', color: '#b42828', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}
                   >
-                    Supprimer mon compte
+                    {t.profil.parametres.supprimerCompte}
                   </button>
                 </div>
 
@@ -863,12 +866,12 @@ function ProfilInner() {
             {/* ── Onglet Favoris ── */}
             {onglet === 'favoris' && (
               <div>
-                <h2 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>Mes favoris</h2>
+                <h2 style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1410', marginBottom: 16 }}>{t.profil.favoris.titre}</h2>
                 {favorisEvs.length === 0 ? (
                   <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 48, textAlign: 'center' }}>
                     <p style={{ fontSize: 32, marginBottom: 12 }}>🔖</p>
-                    <p style={{ color: '#8C5A40', fontSize: 14 }}>Aucun événement sauvegardé pour l'instant.</p>
-                    <a href="/" style={{ display: 'inline-block', marginTop: 20, background: '#C8431A', color: 'white', borderRadius: 999, padding: '10px 24px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Explorer les événements</a>
+                    <p style={{ color: '#8C5A40', fontSize: 14 }}>{t.profil.favoris.vide}</p>
+                    <a href="/" style={{ display: 'inline-block', marginTop: 20, background: '#C8431A', color: 'white', borderRadius: 999, padding: '10px 24px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>{t.profil.favoris.explorer}</a>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -881,7 +884,7 @@ function ProfilInner() {
                           <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 8 }}>📅 {ev.date}</p>
                           <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>{ev.categorie}</span>
                         </div>
-                        <a href={'/evenement/' + ev.id} style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', flexShrink: 0, padding: '4px 8px' }}>Voir →</a>
+                        <a href={'/evenement/' + ev.id} style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', flexShrink: 0, padding: '4px 8px' }}>{t.profil.evenements.voir}</a>
                       </div>
                     ))}
                   </div>
@@ -905,9 +908,9 @@ function ProfilInner() {
       {showDeleteModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,20,16,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
           <div style={{ background: 'white', borderRadius: 16, padding: 24, maxWidth: 420, width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#b42828', marginBottom: 12 }}>Supprimer définitivement ton compte ?</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#b42828', marginBottom: 12 }}>{t.profil.modalSuppression.titre}</h3>
             <p style={{ fontSize: 13, color: '#8C5A40', marginBottom: 16 }}>
-              Cette action est irréversible. Pour confirmer, tape <strong>SUPPRIMER</strong> ci-dessous.
+              {t.profil.modalSuppression.texte}
             </p>
             <input
               value={deleteConfirmText}
@@ -922,14 +925,14 @@ function ProfilInner() {
                 disabled={deletingAccount}
                 style={{ flex: 1, background: '#F0EBE3', color: '#1A1410', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}
               >
-                Annuler
+                {t.profil.modalSuppression.annuler}
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteConfirmText !== 'SUPPRIMER' || deletingAccount}
                 style={{ flex: 1, background: deleteConfirmText === 'SUPPRIMER' ? '#b42828' : '#e0c0c0', color: 'white', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 'bold', cursor: deleteConfirmText === 'SUPPRIMER' ? 'pointer' : 'not-allowed' }}
               >
-                {deletingAccount ? 'Suppression...' : 'Supprimer définitivement'}
+                {deletingAccount ? t.profil.modalSuppression.suppression : t.profil.modalSuppression.confirmer}
               </button>
             </div>
           </div>
