@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.lotbo.app.twa",
+        "sha256_cert_fingerprints": ["57:A1:9D:ED:86:B2:81:9F:96:41:53:1B:C3:53:B2:B9:E2:C5:B1:2C:DE:20:E6:1D:5F:EA:01:D5:1D:CD:E1:97"]
+      }
+    }]
