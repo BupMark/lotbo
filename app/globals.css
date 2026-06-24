@@ -211,6 +211,11 @@ body {
   .lotbo-btn-filtres {
     display: none;
   }
+
+  /* Hamburger caché sur desktop — forcer display none */
+  .lotbo-hamburger {
+    display: none !important;
+  }
 }
 .lotbo-grid-evenements {
   display: grid;
