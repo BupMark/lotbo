@@ -463,6 +463,10 @@ export default function AjouterEvenement() {
   const [codeAcces, setCodeAcces]             = useState('')
   const [soumisEnTantQue, setSoumisEnTantQue] = useState<'organisateur' | 'contributeur'>('contributeur')
   const [aDoubleRole, setADoubleRole]         = useState(false)
+  const [showCharteOrga, setShowCharteOrga]         = useState(false)
+  const [charteOrgaAcceptee, setCharteOrgaAcceptee] = useState(false)
+  const [scanConsentOk, setScanConsentOk]           = useState(false)
+  const [pendingSubmit, setPendingSubmit]           = useState(false)
 
   // F8 — Récurrence
   const [touteJournee, setTouteJournee]           = useState(false)
@@ -868,7 +872,7 @@ export default function AjouterEvenement() {
 
     const { data: { session } } = await supabase.auth.getSession()
     const categorieNom = EVENT_TYPES.find(et => et.id === selectedType)?.nom || ''
-    const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, nom').eq('id', session?.user?.id || '').single()
+    const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, charte_organisateur, nom').eq('id', session?.user?.id || '').single()
     const nomResolu = profile?.nom
       || session?.user?.user_metadata?.full_name
       || session?.user?.user_metadata?.name
@@ -886,6 +890,36 @@ export default function AjouterEvenement() {
     const peutPublierDirectement = rolesActifs.some(r => ['contributeur_terrain', 'admin'].includes(r))
     if (estContributeur && profile?.charte_acceptee) setADoubleRole(true)
     const choix           = soumisEnTantQue
+
+    // FEAT-ONBOARDING-CONSENT-2 — Charte organisateur
+    if (choix === 'organisateur' && !profile?.charte_organisateur && !pendingSubmit) {
+      setPendingSubmit(true)
+      setShowCharteOrga(true)
+      setLoading(false)
+      return
+    }
+
+    // FEAT-ONBOARDING-CONSENT-2 — Scan & Publie confirmation
+    if (filledByScan && !scanConsentOk && !pendingSubmit) {
+      setPendingSubmit(true)
+      setShowCharteOrga(true)
+      setLoading(false)
+      return
+    }
+
+    // Reset pendingSubmit pour les soumissions suivantes
+    setPendingSubmit(false)
+    setScanConsentOk(false)
+
+    // Sauvegarder charte organisateur si première fois
+    if (choix === 'organisateur' && !profile?.charte_organisateur && session?.user?.id) {
+      const now = new Date().toISOString()
+      supabase.from('profiles').update({
+        charte_organisateur:    true,
+        charte_organisateur_at: now,
+      }).eq('id', session.user.id).then(() => {})
+    }
+
     const statutInsertion = peutPublierDirectement ? 'approuve' : 'en_attente'
     const lieuAffiche     = form.nom_lieu
       ? `${form.nom_lieu}${form.ville ? ', ' + form.ville : ''}`
@@ -1116,6 +1150,115 @@ export default function AjouterEvenement() {
 
   const categorieNomSelectionnee = EVENT_TYPES.find(et => et.id === selectedType)?.nom || ''
   const imageConfirmee           = !!(image || imageUnsplash)
+
+  // ── Modale Charte Organisateur (Niveau 2) ──────────────────────────────
+  if (showCharteOrga) {
+    const isOrga  = soumisEnTantQue === 'organisateur'
+    const isScan  = filledByScan
+    const needOrga = isOrga && !charteOrgaAcceptee
+
+    return (
+      <main style={{ minHeight: '100dvh', background: '#F7F2E8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+        <div style={{ width: '100%', maxWidth: 420 }}>
+
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: 32, fontWeight: 'bold' }}>
+              <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
+            </div>
+          </div>
+
+          <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, overflow: 'hidden' }}>
+
+            {needOrga && (
+              <div style={{ padding: '20px 20px 16px' }}>
+                <p style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>
+                  🎪 Charte des organisateurs
+                </p>
+                <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>
+                  En tant qu&apos;organisateur sur LOTBO, tu t&apos;engages à publier des événements réels,
+                  à ne pas induire la communauté en erreur, et à respecter les droits de propriété intellectuelle.
+                </p>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={charteOrgaAcceptee}
+                    onChange={e => setCharteOrgaAcceptee(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>
+                    J&apos;ai lu et j&apos;accepte la{' '}
+                    <a href="/charte-organisateurs" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>
+                      Charte des organisateurs
+                    </a>
+                    {' '}<span style={{ color: '#C8431A' }}>*</span>
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {isScan && (
+              <div style={{ padding: needOrga ? '0 20px 16px' : '20px 20px 16px', borderTop: needOrga ? '1px solid #F0E8DC' : 'none' }}>
+                {needOrga && <div style={{ height: 12 }} />}
+                <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 8 }}>
+                  📸 Confirmation Scan & Publie
+                </p>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={scanConsentOk}
+                    onChange={e => setScanConsentOk(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>
+                    Je confirme que ce contenu ne contient pas de données personnelles d&apos;autrui
+                    (nom, téléphone, email, photo identifiable d&apos;une personne).
+                    {' '}<span style={{ color: '#C8431A' }}>*</span>
+                  </span>
+                </label>
+              </div>
+            )}
+
+            <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                onClick={async () => {
+                  const orgaOk  = !isOrga || charteOrgaAcceptee
+                  const scanOk  = !isScan || scanConsentOk
+                  if (!orgaOk || !scanOk) return
+                  setShowCharteOrga(false)
+                  setLoading(true)
+                  await handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+                }}
+                disabled={
+                  (isOrga && !charteOrgaAcceptee) ||
+                  (isScan && !scanConsentOk)
+                }
+                style={{
+                  width: '100%',
+                  background: ((isOrga && !charteOrgaAcceptee) || (isScan && !scanConsentOk)) ? '#E8E0D0' : '#C8431A',
+                  color: ((isOrga && !charteOrgaAcceptee) || (isScan && !scanConsentOk)) ? '#8C5A40' : 'white',
+                  fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none',
+                  fontSize: 15, cursor: ((isOrga && !charteOrgaAcceptee) || (isScan && !scanConsentOk)) ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Publier mon événement →
+              </button>
+              <button
+                onClick={() => { setShowCharteOrga(false); setPendingSubmit(false); setScanConsentOk(false) }}
+                style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', padding: '8px' }}
+              >
+                ← Retour au formulaire
+              </button>
+            </div>
+
+          </div>
+
+          <p style={{ color: '#8C5A40', fontSize: 11, textAlign: 'center', marginTop: 12 }}>
+            Ces engagements s&apos;appliquent à chaque publication sur LOTBO.
+          </p>
+        </div>
+      </main>
+    )
+  }
 
   // ── Formulaire ────────────────────────────────────────────────────────────
   return (
