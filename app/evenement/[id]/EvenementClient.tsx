@@ -631,7 +631,7 @@ export default function EvenementPage() {
       setIsConnected(!!session?.user)
       if (session?.user?.id) {
         const { data: profil } = await supabase
-          .from('profiles').select('id, nom, photo_url').eq('id', session.user.id).single()
+          .from('profiles').select('id, nom, photo_url, charte_contributeur').eq('id', session.user.id).single()
         if (profil) {
           setUserProfile({
             id: profil.id,
@@ -1261,7 +1261,14 @@ export default function EvenementPage() {
                 <span style={{ fontSize: 14 }}>⚠️</span><span>Signaler</span>
               </button>
               {userProfile && (
-                <button onClick={() => { setPropositionForm({ champ_modifie: 'titre', ancienne_valeur: ev?.titre || '', nouvelle_valeur: '' }); setPropositionModal(true) }}
+                <button onClick={() => {
+                    if (!(userProfile as any)?.charte_contributeur) {
+                      window.location.href = `/contributeur/charte?redirect=/evenement/${ev.id}`
+                      return
+                    }
+                    setPropositionForm({ champ_modifie: 'titre', ancienne_valeur: ev?.titre || '', nouvelle_valeur: '' })
+                    setPropositionModal(true)
+                  }}
                   style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'white', border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px 12px', cursor: 'pointer', color: '#555', fontSize: 12, whiteSpace: 'nowrap' }}>
                   <span style={{ fontSize: 14 }}>✏️</span><span>Corriger</span>
                 </button>
