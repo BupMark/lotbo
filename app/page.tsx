@@ -11,6 +11,7 @@ import { getEventImage, FALLBACK_IMAGES } from '../lib/fallbackImages'
 import NotifCloche from '../components/NotifCloche'
 import { track } from '../lib/amplitude'
 import { attributerPoints } from '../lib/points'
+import { useLangue } from '../lib/useLangue'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -126,7 +127,7 @@ export default function Home() {
   const [user, setUser]                     = useState<UserMeta | null>(null)
   const [recherche, setRecherche]           = useState('')
   const [mode, setMode]                     = useState<'carte' | 'liste'>('carte')
-  const [langue, setLangue]                 = useState<Langue>('fr')
+  const { langue, setLangue } = useLangue()
   const [dateDebut, setDateDebut]           = useState('')
   const [dateFin, setDateFin]               = useState('')
   const [filtresOuverts, setFiltresOuverts] = useState(false)

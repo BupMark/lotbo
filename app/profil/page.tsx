@@ -10,6 +10,7 @@ import CarteBadge from '../../components/CarteBadge'
 import { calculerNiveau } from '../../lib/points'
 import { identifyUser } from '../../lib/amplitude'
 import { type Langue, getTraductions } from '../../lib/i18n'
+import { useLangue } from '../../lib/useLangue'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -74,7 +75,6 @@ function ProfilInner() {
   const [birthdaySaved, setBirthdaySaved]   = useState(false)
   const [genre, setGenre]                           = useState<string>('non_precise')
   const [anniversaireVisibilite, setAnniversaireVisibilite] = useState<string>('mois')
-  const [languePreference, setLanguePreference]     = useState<string>('fr')
   const [savingParams, setSavingParams]             = useState(false)
   const [paramsSaved, setParamsSaved]               = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -82,7 +82,7 @@ function ProfilInner() {
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
-  const [langue, setLangue] = useState<Langue>('fr')
+  const { langue, setLangue } = useLangue()
   const t = getTraductions(langue)
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -134,7 +134,6 @@ function ProfilInner() {
       setAnniversairePublic(prof?.anniversaire_public ?? false)
       if (prof?.genre) setGenre(prof.genre)
       if (prof?.anniversaire_visibilite) setAnniversaireVisibilite(prof.anniversaire_visibilite)
-      if (prof?.langue_preference) setLanguePreference(prof.langue_preference)
 
       const { data: evs } = await supabase
         .from('evenements')
@@ -815,7 +814,7 @@ function ProfilInner() {
                     {/* Langue */}
                     <div>
                       <label style={{ fontSize: 12, color: '#8C5A40', display: 'block', marginBottom: 8 }}>{t.profil.parametres.languePreferee}</label>
-                      <select value={languePreference} onChange={e => setLanguePreference(e.target.value)}
+                      <select value={langue} onChange={e => setLangue(e.target.value as Langue)}
                         style={{ width: '100%', background: '#F7F2E8', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#1A1410', outline: 'none' }}>
                         <option value="fr">🇫🇷 Français</option>
                         <option value="en">🇬🇧 English</option>
@@ -832,7 +831,7 @@ function ProfilInner() {
                       await supabase.from('profiles').update({
                         genre,
                         anniversaire_visibilite: anniversaireVisibilite,
-                        langue_preference: languePreference,
+                        langue_preference: langue,
                         updated_at: new Date().toISOString(),
                       }).eq('id', user.id)
                       setSavingParams(false)

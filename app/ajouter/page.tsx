@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { normaliserVille, normaliserPays } from '../../lib/normalisation'
 import { track } from '../../lib/amplitude'
 import { type Langue, getTraductions } from '../../lib/i18n'
+import { useLangue } from '../../lib/useLangue'
 
 import dynamicImport from 'next/dynamic'
 const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
@@ -453,7 +454,7 @@ export default function AjouterEvenement() {
   const [scanMultiSelected, setScanMultiSelected]     = useState<Set<number>>(new Set())
   const imageSectionRef                       = useRef<HTMLDivElement>(null)
 
-  const [langue, setLangue] = useState<Langue>('fr')
+  const { langue, setLangue } = useLangue()
   const t = getTraductions(langue)
 
   const [selectedType, setSelectedType]       = useState<number | null>(null)
