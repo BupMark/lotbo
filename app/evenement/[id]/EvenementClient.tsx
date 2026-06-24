@@ -527,6 +527,7 @@ export default function EvenementPage() {
   const [roleOrg, setRoleOrg]                           = useState<string | null>(null)
   const [isDesktop, setIsDesktop]                       = useState(false)
   const [showNavMenu, setShowNavMenu]                   = useState(false)
+  const [showCalMenu, setShowCalMenu]                   = useState(false)
 
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
@@ -759,6 +760,84 @@ export default function EvenementPage() {
   const urlFacebook   = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlEvenement)
   const urlGoogleMaps = 'https://www.google.com/maps/dir/?api=1&destination=' + ev.latitude + ',' + ev.longitude
   const urlAppleMaps  = 'https://maps.apple.com/?daddr=' + ev.latitude + ',' + ev.longitude
+
+  // FEAT-CALENDAR-ADD-1 — Helpers calendrier
+  const buildCalendarDates = () => {
+    const fuseau = ev.fuseau_organisateur || 'UTC'
+    const dateStr = ev.date || ''
+    const dateFinStr = ev.date_fin || dateStr
+    const heureDebut = ev.heure_debut || '00:00'
+    const heureFin = ev.heure_fin || heureDebut
+
+    const toUTC = (date: string, heure: string, tz: string): string => {
+      try {
+        const iso = `${date}T${heure}:00`
+        const d = new Date(iso)
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz,
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false,
+        })
+        const parts = formatter.formatToParts(d)
+        const get = (type: string) => parts.find(p => p.type === type)?.value || '00'
+        const localDate = new Date(`${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}`)
+        const diff = d.getTime() - localDate.getTime()
+        const utc = new Date(d.getTime() + diff)
+        return utc.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+      } catch {
+        return `${date.replace(/-/g, '')}T${heure.replace(':', '')}00Z`
+      }
+    }
+
+    const dtStart = toUTC(dateStr, heureDebut, fuseau)
+    const dtEnd   = toUTC(dateFinStr, heureFin, fuseau)
+    return { dtStart, dtEnd }
+  }
+
+  const urlGoogleCalendar = (() => {
+    const { dtStart, dtEnd } = buildCalendarDates()
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text:   ev.titre || '',
+      dates:  `${dtStart}/${dtEnd}`,
+      details: ev.description || '',
+      location: ev.lieu || '',
+    })
+    return `https://calendar.google.com/calendar/render?${params.toString()}`
+  })()
+
+  const genererICS = () => {
+    const { dtStart, dtEnd } = buildCalendarDates()
+    const escape = (s: string) => (s || '').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;')
+    const uid = `${ev.id || Date.now()}@lotbo.app`
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//LOTBO//FR',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTSTART:${dtStart}`,
+      `DTEND:${dtEnd}`,
+      `SUMMARY:${escape(ev.titre)}`,
+      `DESCRIPTION:${escape(ev.description || '')}`,
+      `LOCATION:${escape(ev.lieu || '')}`,
+      `URL:https://app.lotbo.app/evenement/${ev.id}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n')
+
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `${(ev.titre || 'evenement').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.ics`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
   const periodeAffichee = afficherPeriode(ev)
   const estMultiJours   = ev.date_fin && ev.date_fin !== ev.date
   const enLigne         = estEnLigne(ev.lieu || '')
@@ -1160,35 +1239,67 @@ export default function EvenementPage() {
 
             {/* ── FEAT-MAPS-NAVIGATE-1 — Bouton S'y rendre avec choix Google Maps / Apple Plans ── */}
             {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
-              <div style={{ position: 'relative', marginBottom: 24 }}>
-                <button
-                  onClick={() => setShowNavMenu(v => !v)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}
-                >
-                  <span style={{ fontSize: 20 }}>🧭</span>
-                  {"S'y rendre"}
-                  <span style={{ fontSize: 12, color: '#8C5A40', marginLeft: 4 }}>{showNavMenu ? '▲' : '▼'}</span>
-                </button>
-                {showNavMenu && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, marginTop: 4, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
-                    <a
-                      href={urlGoogleMaps}
-                      target="_blank"
-                      onClick={() => setShowNavMenu(false)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', borderBottom: '1px solid #E8E0D0' }}
-                    >
-                      <span style={{ fontSize: 20 }}>🗺️</span> Google Maps
-                    </a>
-                    <a
-                      href={urlAppleMaps}
-                      target="_blank"
-                      onClick={() => setShowNavMenu(false)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}
-                    >
-                      <span style={{ fontSize: 20 }}>🍎</span> Plans
-                    </a>
-                  </div>
-                )}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <button
+                    onClick={() => setShowNavMenu(v => !v)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    <span style={{ fontSize: 20 }}>🧭</span>
+                    {"S'y rendre"}
+                    <span style={{ fontSize: 12, color: '#8C5A40', marginLeft: 4 }}>{showNavMenu ? '▲' : '▼'}</span>
+                  </button>
+                  {showNavMenu && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, marginTop: 4, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+                      <a
+                        href={urlGoogleMaps}
+                        target="_blank"
+                        onClick={() => setShowNavMenu(false)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', borderBottom: '1px solid #E8E0D0' }}
+                      >
+                        <span style={{ fontSize: 20 }}>🗺️</span> Google Maps
+                      </a>
+                      <a
+                        href={urlAppleMaps}
+                        target="_blank"
+                        onClick={() => setShowNavMenu(false)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold' }}
+                      >
+                        <span style={{ fontSize: 20 }}>🍎</span> Plans
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bouton Ajouter au calendrier */}
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <button
+                    onClick={() => setShowCalMenu(v => !v)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    <span style={{ fontSize: 20 }}>📅</span>
+                    <span style={{ display: 'none' }} className="cal-label">Calendrier</span>
+                    <span style={{ fontSize: 12, color: '#8C5A40', marginLeft: 4 }}>{showCalMenu ? '▲' : '▼'}</span>
+                  </button>
+                  {showCalMenu && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, marginTop: 4, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+                      <a
+                        href={urlGoogleCalendar}
+                        target="_blank"
+                        onClick={() => setShowCalMenu(false)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', borderBottom: '1px solid #E8E0D0' }}
+                      >
+                        <span style={{ fontSize: 20 }}>📅</span> Google Calendar
+                      </a>
+                      <button
+                        onClick={() => { genererICS(); setShowCalMenu(false) }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: 'none', border: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                      >
+                        <span style={{ fontSize: 20 }}>📥</span> Apple / Outlook (.ics)
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
