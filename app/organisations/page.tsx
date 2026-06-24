@@ -209,7 +209,7 @@ export default function PageOrganisations() {
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: isDesktop ? 16 : 14, maxWidth: 500, marginBottom: 24 }}>
               Découvrez les organisations qui font vivre les événements sur LOTBO.
             </p>
-            <div style={{ display: 'flex', gap: isDesktop ? 32 : 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: isDesktop ? 32 : 16, flexWrap: 'wrap', marginBottom: 24 }}>
               <div>
                 <p style={{ color: '#C8431A', fontSize: isDesktop ? 28 : 22, fontWeight: 'bold' }}>{orgs.length}</p>
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>organisations actives</p>
@@ -227,6 +227,9 @@ export default function PageOrganisations() {
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>membres suiveurs</p>
               </div>
             </div>
+            <a href="/organisation/creer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#C8431A', color: 'white', padding: '10px 20px', borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
+              + Créer une organisation
+            </a>
           </div>
         </div>
 
