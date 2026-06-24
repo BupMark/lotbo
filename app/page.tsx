@@ -1201,8 +1201,8 @@ export default function Home() {
 
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
             <a href="/apropos" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>{t.nav.aPropos}</a>
-            <a href="/classement" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>🏆 {t.nav.classement}</a>
-            <a href="/organisations" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>🏢 {t.organisations.titre}</a>
+            <a href="/classement" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap', background: '#E8E0D0', borderRadius: 999, padding: '5px 10px' }}>{t.nav.classement}</a>
+            <a href="/organisations" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap', background: '#E8E0D0', borderRadius: 999, padding: '5px 10px' }}>{t.organisations.titre}</a>
             <div className="lotbo-langue-desktop">
               <select value={langue} onChange={e => setLangue(e.target.value as Langue)} style={{ background: '#E8E0D0', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none' }}>
                 {Object.entries(langues).map(([code, info]) => (
