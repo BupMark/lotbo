@@ -1200,7 +1200,7 @@ export default function Home() {
           </div>
 
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
-            <a href="/apropos" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>{t.nav.aPropos}</a>
+            <a href="/apropos" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap', background: '#E8E0D0', borderRadius: 999, padding: '5px 10px' }}>{t.nav.aPropos}</a>
             <a href="/classement" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap', background: '#E8E0D0', borderRadius: 999, padding: '5px 10px' }}>{t.nav.classement}</a>
             <a href="/organisations" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap', background: '#E8E0D0', borderRadius: 999, padding: '5px 10px' }}>{t.organisations.titre}</a>
             <div className="lotbo-langue-desktop">
