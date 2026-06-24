@@ -85,7 +85,7 @@ async function traiterSession(
 ) {
   const { data: profil } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, onboarding_complete, consent_cgu')
     .eq('id', userId)
     .single()
 
@@ -108,6 +108,17 @@ async function traiterSession(
 
   if (invitation) {
     await accepterInvitation(userId, invitation)
+  }
+
+  // FEAT-ONBOARDING-CONSENT-1 — Interstitiel OAuth si consentement absent
+  const consentementAbsent =
+    !profil?.consent_cgu ||
+    !profil?.onboarding_complete
+
+  if (consentementAbsent) {
+    return NextResponse.redirect(
+      `https://app.lotbo.app/consent?redirect=${encodeURIComponent(redirect)}`
+    )
   }
 
   return NextResponse.redirect(`https://app.lotbo.app${redirect}`)

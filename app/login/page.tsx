@@ -5,6 +5,8 @@ import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 import { track } from '../../lib/amplitude'
 
+const CGU_VERSION = 'v2-23juin2026'
+
 export default function Login() {
   const router = useRouter()
   const [mode, setMode]                         = useState<'connexion' | 'inscription'>('connexion')
@@ -12,7 +14,10 @@ export default function Login() {
   const [password, setPassword]                 = useState('')
   const [prenom, setPrenom]                     = useState('')
   const [accepteCGU, setAccepteCGU]             = useState(false)
+  const [accepteCharte, setAccepteCharte]       = useState(false)
   const [newsletter, setNewsletter]             = useState(false)
+  const [alertes, setAlertes]                   = useState(false)
+  const [analyticsConsent, setAnalyticsConsent] = useState(true)
   const [showPassword, setShowPassword]         = useState(false)
   const [loading, setLoading]                   = useState(false)
   const [loadingGoogle, setLoadingGoogle]       = useState(false)
@@ -26,13 +31,17 @@ export default function Login() {
 
   const resetForm = () => {
     setMessage(''); setEmail(''); setPassword(''); setPrenom('')
-    setAccepteCGU(false); setNewsletter(false); setEmailEnvoye(false)
+    setAccepteCGU(false); setAccepteCharte(false); setNewsletter(false)
+    setAlertes(false); setAnalyticsConsent(true); setEmailEnvoye(false)
   }
 
   const getRedirect = () => {
     const params = new URLSearchParams(window.location.search)
     return params.get('redirect') || '/'
   }
+
+  // Formulaire valide si les deux cases obligatoires sont cochées
+  const formulaireValide = accepteCGU && accepteCharte
 
   // ── Lire les params URL ────────────────────────────────────────────────────
   useEffect(() => {
@@ -44,9 +53,7 @@ export default function Login() {
       setInvitationToken(inv)
       localStorage.setItem('lotbo_invitation_token', inv)
     }
-    if (modeParam === 'inscription') {
-      setMode('inscription')
-    }
+    if (modeParam === 'inscription') setMode('inscription')
     const ref = p.get('ref')
     if (ref) localStorage.setItem('lotbo_ref_code', ref)
   }, [])
@@ -85,9 +92,39 @@ export default function Login() {
     localStorage.removeItem('lotbo_invitation_token')
   }
 
+  // ── Sauvegarder les consentements dans profiles ────────────────────────────
+  const sauvegarderConsentements = async (
+    userId: string,
+    opts: {
+      cgu: boolean
+      charte_membres: boolean
+      newsletter: boolean
+      alertes: boolean
+      analytics: boolean
+      provider: string
+    }
+  ) => {
+    const now = new Date().toISOString()
+    await supabase.from('profiles').update({
+      consent_cgu:          opts.cgu,
+      consent_cgu_at:       opts.cgu ? now : null,
+      consent_cgu_version:  opts.cgu ? CGU_VERSION : null,
+      charte_membres:       opts.charte_membres,
+      charte_membres_at:    opts.charte_membres ? now : null,
+      consent_newsletter:   opts.newsletter,
+      consent_alertes:      opts.alertes,
+      consent_analytics:    opts.analytics,
+      auth_provider:        opts.provider,
+      onboarding_complete:  true,
+    }).eq('id', userId)
+  }
+
   // ── Google OAuth ───────────────────────────────────────────────────────────
   const handleGoogle = async () => {
     setLoadingGoogle(true)
+    // Stocker les prefs OAuth dans sessionStorage pour les récupérer après callback
+    // (l'interstitiel OAuth dans /consent lira ces valeurs)
+    sessionStorage.setItem('lotbo_oauth_provider', 'google')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -101,6 +138,7 @@ export default function Login() {
   // ── Facebook OAuth ─────────────────────────────────────────────────────────
   const handleFacebook = async () => {
     setLoadingFacebook(true)
+    sessionStorage.setItem('lotbo_oauth_provider', 'facebook')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
@@ -113,6 +151,7 @@ export default function Login() {
   // ── Apple OAuth ────────────────────────────────── 4.8 App Store
   const handleApple = async () => {
     setLoadingApple(true)
+    sessionStorage.setItem('lotbo_oauth_provider', 'apple')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
@@ -140,7 +179,6 @@ export default function Login() {
       setMessage(error.message.includes('Anonymous') ? t.anonymous : error.message.includes('Invalid') ? t.invalid : t.default)
       setMessageType('erreur'); return
     }
-    // Accepter invitation en attente si présente
     if (data.session) await accepterInvitationSiPresente(data.session.access_token)
     track('user_logged_in', { user_id: data.session?.user?.id })
     const role = data.session?.user?.user_metadata?.role
@@ -153,7 +191,8 @@ export default function Login() {
     e.preventDefault()
     if (!prenom.trim())      { setMessage('Entre ton prénom pour continuer.'); setMessageType('erreur'); return }
     if (password.length < 6) { setMessage('Le mot de passe doit contenir au moins 6 caractères.'); setMessageType('erreur'); return }
-    if (!accepteCGU)         { setMessage("Tu dois accepter les conditions d'utilisation pour continuer."); setMessageType('erreur'); return }
+    if (!accepteCGU)         { setMessage("Tu dois accepter les CGU et la politique de confidentialité pour continuer."); setMessageType('erreur'); return }
+    if (!accepteCharte)      { setMessage("Tu dois accepter la charte des membres pour continuer."); setMessageType('erreur'); return }
     setLoading(true); setMessage('')
 
     const invParam = invitationToken ? `&invitation=${invitationToken}` : ''
@@ -167,12 +206,24 @@ export default function Login() {
     if (error) { setLoading(false); setMessage('Erreur : ' + error.message); setMessageType('erreur'); return }
 
     if (data.user) {
-      // Créer le profil
+      const now = new Date().toISOString()
+
+      // Créer le profil avec consentements horodatés
       await supabase.from('profiles').upsert({
-        id:         data.user.id,
-        nom:        prenom.trim(),
-        role:       'membre',
-        created_at: new Date().toISOString(),
+        id:                   data.user.id,
+        nom:                  prenom.trim(),
+        role:                 'membre',
+        auth_provider:        'email',
+        consent_cgu:          true,
+        consent_cgu_at:       now,
+        consent_cgu_version:  CGU_VERSION,
+        charte_membres:       true,
+        charte_membres_at:    now,
+        consent_newsletter:   newsletter,
+        consent_alertes:      alertes,
+        consent_analytics:    analyticsConsent,
+        onboarding_complete:  true,
+        created_at:           now,
       })
 
       // Résolution du parrain
@@ -210,16 +261,13 @@ export default function Login() {
           .eq('email', email.toLowerCase().trim())
           .eq('badge_attribue', false)
           .single()
-
         if (supporter) {
           await supabase.from('profiles').update({ badge: supporter.palier }).eq('id', data.user.id)
           await supabase.from('supporters').update({ badge_attribue: true, user_id: data.user.id }).eq('id', supporter.id)
         }
-      } catch {
-        // Pas de supporter trouvé — normal pour la plupart des inscriptions
-      }
+      } catch {}
 
-      // Newsletter optionnelle
+      // Newsletter si opt-in
       if (newsletter) {
         try { await supabase.from('abonnements').upsert([{ email }], { onConflict: 'email' }) } catch {}
       }
@@ -228,8 +276,21 @@ export default function Login() {
       if (data.session) await accepterInvitationSiPresente(data.session.access_token)
     }
 
-    track('user_signed_up', { user_id: data.user?.id })
+    track('user_signed_up', { user_id: data.user?.id, provider: 'email' })
     setLoading(false); setEmailInscription(email); setEmailEnvoye(true)
+  }
+
+  const inputStyle = {
+    background: 'white', border: '1px solid #E8E0D0', borderRadius: 10,
+    padding: '12px 16px', color: '#1A1410', fontSize: 14, outline: 'none', width: '100%',
+  }
+
+  const checkboxRowStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+  }
+
+  const checkboxLabelStyle: React.CSSProperties = {
+    color: '#8C5A40', fontSize: 12, lineHeight: 1.5,
   }
 
   // ── Renvoi email ───────────────────────────────────────────────────────────
@@ -237,11 +298,6 @@ export default function Login() {
     setLoading(true)
     await supabase.auth.resend({ type: 'signup', email: emailInscription })
     setLoading(false); setMessage('Email renvoyé !'); setMessageType('succes')
-  }
-
-  const inputStyle = {
-    background: 'white', border: '1px solid #E8E0D0', borderRadius: 10,
-    padding: '12px 16px', color: '#1A1410', fontSize: 14, outline: 'none', width: '100%',
   }
 
   // ── Écran post-inscription ─────────────────────────────────────────────────
@@ -306,10 +362,12 @@ export default function Login() {
 
         {/* Sélecteur mode */}
         <div style={{ display: 'flex', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 4, marginBottom: 20, gap: 4 }}>
-          <button type="button" onClick={() => { setMode('connexion'); resetForm() }} style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 14, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'connexion' ? '#C8431A' : 'transparent', color: mode === 'connexion' ? 'white' : '#8C5A40' }}>
+          <button type="button" onClick={() => { setMode('connexion'); resetForm() }}
+            style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 14, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'connexion' ? '#C8431A' : 'transparent', color: mode === 'connexion' ? 'white' : '#8C5A40' }}>
             J&apos;ai un compte
           </button>
-          <button type="button" onClick={() => { setMode('inscription'); resetForm() }} style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 14, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'inscription' ? '#C8431A' : 'transparent', color: mode === 'inscription' ? 'white' : '#8C5A40' }}>
+          <button type="button" onClick={() => { setMode('inscription'); resetForm() }}
+            style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 14, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'inscription' ? '#C8431A' : 'transparent', color: mode === 'inscription' ? 'white' : '#8C5A40' }}>
             Créer un compte
           </button>
         </div>
@@ -328,14 +386,15 @@ export default function Login() {
             {mode === 'connexion' ? 'Bon retour ! 👋' : 'Rejoins LOTBO 🌍'}
           </h1>
           <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.6 }}>
-            {mode === 'connexion' ? 'Connecte-toi pour accéder à ton espace.' : 'Crée ton compte gratuitement et rejoins la communauté mondiale.'}
+            {mode === 'connexion'
+              ? 'Connecte-toi pour accéder à ton espace.'
+              : 'Crée ton compte gratuitement et rejoins la communauté mondiale.'}
           </p>
         </div>
 
         {/* ── Bouton Google ── */}
         <button type="button" onClick={handleGoogle} disabled={loadingGoogle || loadingFacebook || loadingApple}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '12px 16px', background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: '#1A1410', cursor: loadingGoogle ? 'not-allowed' : 'pointer', marginBottom: 10, opacity: loadingGoogle ? 0.7 : 1, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
-        >
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '12px 16px', background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: '#1A1410', cursor: loadingGoogle ? 'not-allowed' : 'pointer', marginBottom: 10, opacity: loadingGoogle ? 0.7 : 1, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           {loadingGoogle ? <span style={{ color: '#8C5A40' }}>Redirection vers Google...</span> : (
             <>
               <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -351,8 +410,7 @@ export default function Login() {
 
         {/* ── Bouton Facebook ── */}
         <button type="button" onClick={handleFacebook} disabled={loadingGoogle || loadingFacebook || loadingApple}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '12px 16px', background: '#1877F2', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: 'white', cursor: loadingFacebook ? 'not-allowed' : 'pointer', marginBottom: 16, opacity: loadingFacebook ? 0.7 : 1 }}
-        >
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '12px 16px', background: '#1877F2', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: 'white', cursor: loadingFacebook ? 'not-allowed' : 'pointer', marginBottom: 10, opacity: loadingFacebook ? 0.7 : 1 }}>
           {loadingFacebook ? <span>Redirection vers Facebook...</span> : (
             <>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
@@ -365,12 +423,7 @@ export default function Login() {
 
         {/* ── Bouton Apple ── */}
         <button type="button" onClick={handleApple} disabled={loadingGoogle || loadingFacebook || loadingApple}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            width: '100%', padding: '12px 16px', background: 'black', border: 'none',
-            borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: 'white',
-            cursor: loadingApple ? 'not-allowed' : 'pointer', marginBottom: 16,
-            opacity: loadingApple ? 0.7 : 1 }}
-        >
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '12px 16px', background: 'black', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold', color: 'white', cursor: loadingApple ? 'not-allowed' : 'pointer', marginBottom: 16, opacity: loadingApple ? 0.7 : 1 }}>
           {loadingApple ? <span>Redirection vers Apple...</span> : (
             <>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
@@ -390,7 +443,7 @@ export default function Login() {
         </div>
 
         {/* Formulaire email */}
-        <form onSubmit={e => e.preventDefault()} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <form onSubmit={e => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
           {mode === 'inscription' && (
             <input type="text" placeholder="Ton prénom *" value={prenom} onChange={e => setPrenom(e.target.value)} style={inputStyle} required />
@@ -399,44 +452,131 @@ export default function Login() {
           <input type="email" placeholder="Ton email *" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} required />
 
           <div style={{ position: 'relative' }}>
-            <input type={showPassword ? 'text' : 'password'} placeholder={mode === 'inscription' ? 'Crée un mot de passe (6 car. min.) *' : 'Ton mot de passe'} value={password} onChange={e => setPassword(e.target.value)} style={{ ...inputStyle, paddingRight: 48 }} required />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8C5A40', fontSize: 18, lineHeight: 1 }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder={mode === 'inscription' ? 'Crée un mot de passe (6 car. min.) *' : 'Ton mot de passe'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={{ ...inputStyle, paddingRight: 48 }}
+              required
+            />
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+              style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8C5A40', fontSize: 18, lineHeight: 1 }}>
               {showPassword ? '🙈' : '👁'}
             </button>
           </div>
 
+          {/* ── Bloc consentements — mode inscription uniquement ── */}
           {mode === 'inscription' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '16px' }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                <input type="checkbox" checked={accepteCGU} onChange={e => setAccepteCGU(e.target.checked)} style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }} />
-                <span style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>
-                  J&apos;accepte les{' '}
-                  <a href="/cgu" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>conditions d&apos;utilisation</a>
-                  {' '}et la{' '}
-                  <a href="/politique-confidentialite" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>politique de confidentialité</a>
-                  {' '}<span style={{ color: '#C8431A' }}>*</span>
-                </span>
-              </label>
-              <div style={{ height: 1, background: '#E8E0D0' }} />
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                <input type="checkbox" checked={newsletter} onChange={e => setNewsletter(e.target.checked)} style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }} />
-                <span style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>Je souhaite recevoir la newsletter LOTBO. <span style={{ opacity: 0.6 }}>(optionnel)</span></span>
-              </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, overflow: 'hidden', marginTop: 4 }}>
+
+              {/* Section obligatoire */}
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid #F0E8DC' }}>
+                <p style={{ color: '#1A1410', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.5 }}>
+                  Requis
+                </p>
+
+                {/* CGU + Confidentialité */}
+                <label style={checkboxRowStyle}>
+                  <input
+                    type="checkbox"
+                    checked={accepteCGU}
+                    onChange={e => setAccepteCGU(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={checkboxLabelStyle}>
+                    J&apos;accepte les{' '}
+                    <a href="/cgu" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>CGU</a>
+                    {' '}et la{' '}
+                    <a href="/politique-confidentialite" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>Politique de confidentialité</a>
+                    {' '}<span style={{ color: '#C8431A' }}>*</span>
+                  </span>
+                </label>
+
+                {/* Charte membres */}
+                <label style={{ ...checkboxRowStyle, marginTop: 10 }}>
+                  <input
+                    type="checkbox"
+                    checked={accepteCharte}
+                    onChange={e => setAccepteCharte(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={checkboxLabelStyle}>
+                    J&apos;accepte la{' '}
+                    <a href="/charte-membres" target="_blank" style={{ color: '#C8431A', textDecoration: 'underline' }}>Charte des membres</a>
+                    {' '}<span style={{ color: '#C8431A' }}>*</span>
+                  </span>
+                </label>
+              </div>
+
+              {/* Section optionnelle */}
+              <div style={{ padding: '14px 16px' }}>
+                <p style={{ color: '#1A1410', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.5 }}>
+                  Facultatif
+                </p>
+
+                {/* Newsletter */}
+                <label style={checkboxRowStyle}>
+                  <input
+                    type="checkbox"
+                    checked={newsletter}
+                    onChange={e => setNewsletter(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={checkboxLabelStyle}>Recevoir la newsletter LOTBO</span>
+                </label>
+
+                {/* Alertes */}
+                <label style={{ ...checkboxRowStyle, marginTop: 10 }}>
+                  <input
+                    type="checkbox"
+                    checked={alertes}
+                    onChange={e => setAlertes(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={checkboxLabelStyle}>Recevoir des alertes sur mes favoris</span>
+                </label>
+
+                {/* Analytics — pré-coché, opt-out */}
+                <label style={{ ...checkboxRowStyle, marginTop: 10 }}>
+                  <input
+                    type="checkbox"
+                    checked={analyticsConsent}
+                    onChange={e => setAnalyticsConsent(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={checkboxLabelStyle}>
+                    Analytics anonymisés pour améliorer LOTBO{' '}
+                    <span style={{ opacity: 0.6 }}>(pré-coché, aucun identifiant personnel)</span>
+                  </span>
+                </label>
+              </div>
             </div>
           )}
 
+          {/* Message erreur / succès */}
           {message && (
             <p style={{ color: messageType === 'succes' ? '#2D9E6B' : '#C8431A', fontSize: 13, textAlign: 'center', background: messageType === 'succes' ? 'rgba(45,158,107,0.08)' : 'rgba(200,67,26,0.08)', padding: '10px 14px', borderRadius: 8, lineHeight: 1.5 }}>
               {message}
             </p>
           )}
 
+          {/* ── Bouton principal ── */}
           {mode === 'connexion' ? (
-            <button type="button" onClick={handleLogin} disabled={loading} style={{ background: loading ? '#8C5A40' : '#C8431A', color: 'white', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 4 }}>
+            <button type="button" onClick={handleLogin} disabled={loading}
+              style={{ background: loading ? '#8C5A40' : '#C8431A', color: 'white', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', marginTop: 4 }}>
               {loading ? 'Connexion...' : 'Se connecter →'}
             </button>
           ) : (
-            <button onClick={handleSignup} disabled={loading || !accepteCGU} style={{ background: loading ? '#8C5A40' : !accepteCGU ? '#E8E0D0' : '#C8431A', color: !accepteCGU ? '#8C5A40' : 'white', fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none', fontSize: 15, cursor: loading || !accepteCGU ? 'not-allowed' : 'pointer', marginTop: 4 }}>
+            <button
+              onClick={handleSignup}
+              disabled={loading || !formulaireValide}
+              style={{
+                background: loading ? '#8C5A40' : !formulaireValide ? '#E8E0D0' : '#C8431A',
+                color: !formulaireValide ? '#8C5A40' : 'white',
+                fontWeight: 'bold', padding: '14px', borderRadius: 10, border: 'none',
+                fontSize: 15, cursor: loading || !formulaireValide ? 'not-allowed' : 'pointer', marginTop: 4,
+              }}>
               {loading ? 'Création du compte...' : 'Créer mon compte →'}
             </button>
           )}
@@ -444,16 +584,24 @@ export default function Login() {
           <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', marginTop: 4 }}>
             {mode === 'connexion' ? (
               <>Pas encore de compte ?{' '}
-                <button type="button" onClick={() => { setMode('inscription'); resetForm() }} style={{ background: 'none', border: 'none', color: '#C8431A', fontWeight: 'bold', cursor: 'pointer', fontSize: 13, padding: 0 }}>Créer un compte</button>
+                <button type="button" onClick={() => { setMode('inscription'); resetForm() }}
+                  style={{ background: 'none', border: 'none', color: '#C8431A', fontWeight: 'bold', cursor: 'pointer', fontSize: 13, padding: 0 }}>
+                  Créer un compte
+                </button>
               </>
             ) : (
               <>Déjà un compte ?{' '}
-                <button type="button" onClick={() => { setMode('connexion'); resetForm() }} style={{ background: 'none', border: 'none', color: '#C8431A', fontWeight: 'bold', cursor: 'pointer', fontSize: 13, padding: 0 }}>Se connecter</button>
+                <button type="button" onClick={() => { setMode('connexion'); resetForm() }}
+                  style={{ background: 'none', border: 'none', color: '#C8431A', fontWeight: 'bold', cursor: 'pointer', fontSize: 13, padding: 0 }}>
+                  Se connecter
+                </button>
               </>
             )}
           </p>
 
-          <a href="/" style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', textDecoration: 'none', marginTop: 4 }}>← Retour à la carte</a>
+          <a href="/" style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', textDecoration: 'none', marginTop: 4 }}>
+            ← Retour à la carte
+          </a>
 
         </form>
       </div>

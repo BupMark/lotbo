@@ -98,7 +98,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id, consent_analytics')
         .eq('id', data.session.user.id)
         .single()
       // roles_actifs optionnel — requiert migration DB
@@ -123,7 +123,7 @@ function ProfilInner() {
         points_total:  pointsReel,
         niveau:        niveauReel,
       })
-      identifyUser(data.session.user.id, {
+      identifyUser(data.session.user.id, prof?.consent_analytics ?? true, {
         role:         prof?.role,
         niveau:       niveauReel,
         points_total: pointsReel,
