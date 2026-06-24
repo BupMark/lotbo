@@ -77,6 +77,9 @@ function ProfilInner() {
   const [anniversaireVisibilite, setAnniversaireVisibilite] = useState<string>('mois')
   const [savingParams, setSavingParams]             = useState(false)
   const [paramsSaved, setParamsSaved]               = useState(false)
+  const [consentNewsletter, setConsentNewsletter] = useState(false)
+  const [consentAlertes, setConsentAlertes]       = useState(false)
+  const [consentPush, setConsentPush]             = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
@@ -98,7 +101,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id, consent_analytics')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id, consent_analytics, consent_newsletter, consent_alertes, consent_push')
         .eq('id', data.session.user.id)
         .single()
       // roles_actifs optionnel — requiert migration DB
@@ -134,6 +137,9 @@ function ProfilInner() {
       setAnniversairePublic(prof?.anniversaire_public ?? false)
       if (prof?.genre) setGenre(prof.genre)
       if (prof?.anniversaire_visibilite) setAnniversaireVisibilite(prof.anniversaire_visibilite)
+      setConsentNewsletter(prof?.consent_newsletter ?? false)
+      setConsentAlertes(prof?.consent_alertes ?? false)
+      setConsentPush(prof?.consent_push ?? false)
 
       const { data: evs } = await supabase
         .from('evenements')
@@ -832,6 +838,9 @@ function ProfilInner() {
                         genre,
                         anniversaire_visibilite: anniversaireVisibilite,
                         langue_preference: langue,
+                        consent_newsletter: consentNewsletter,
+                        consent_alertes:    consentAlertes,
+                        consent_push:       consentPush,
                         updated_at: new Date().toISOString(),
                       }).eq('id', user.id)
                       setSavingParams(false)
@@ -842,6 +851,85 @@ function ProfilInner() {
                       {savingParams ? t.anniversaire.enregistrement : t.profil.parametres.enregistrerPreferences}
                     </button>
                     {paramsSaved && <p style={{ color: '#2D9E6B', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{t.profil.parametres.preferencesEnregistrees}</p>}
+                  </div>
+                </div>
+
+                {/* Confidentialité */}
+                <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid #E8E0D0' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 4 }}>🔒 Confidentialité</h3>
+                  <p style={{ fontSize: 12, color: '#8C5A40', marginBottom: 16, lineHeight: 1.5 }}>
+                    Contrôle ce que les autres membres peuvent voir de ton profil.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={profile?.anniversaire_public ?? false}
+                        onChange={async e => {
+                          if (!user?.id) return
+                          await supabase.from('profiles').update({ anniversaire_public: e.target.checked, updated_at: new Date().toISOString() }).eq('id', user.id)
+                          setProfile((p: any) => p ? { ...p, anniversaire_public: e.target.checked } : p)
+                        }}
+                        style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                      />
+                      <span style={{ fontSize: 13, color: '#1A1410', lineHeight: 1.5 }}>
+                        Afficher mon anniversaire sur mon profil public
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Notifications */}
+                <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid #E8E0D0' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#1A1410', marginBottom: 4 }}>🔔 Notifications</h3>
+                  <p style={{ fontSize: 12, color: '#8C5A40', marginBottom: 16, lineHeight: 1.5 }}>
+                    Choisis ce que LOTBO peut t&apos;envoyer.
+                    Les modifications sont sauvegardées avec tes préférences.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                    {[
+                      { key: 'newsletter', label: 'Newsletter LOTBO',    desc: 'Actualités et nouveautés de la plateforme', checked: consentNewsletter, set: setConsentNewsletter },
+                      { key: 'alertes',    label: 'Alertes favoris',     desc: 'Rappels sur tes événements favoris',        checked: consentAlertes,    set: setConsentAlertes },
+                      { key: 'push',       label: 'Notifications push',  desc: 'Alertes sur ton appareil',                 checked: consentPush,       set: setConsentPush },
+                    ].map(item => (
+                      <label key={item.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={e => item.set(e.target.checked)}
+                          style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                        />
+                        <div>
+                          <p style={{ fontSize: 13, color: '#1A1410', fontWeight: 'bold', lineHeight: 1.4 }}>{item.label}</p>
+                          <p style={{ fontSize: 11, color: '#8C5A40', lineHeight: 1.4 }}>{item.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+
+                    <div style={{ height: 1, background: '#F0E8DC' }} />
+
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={profile?.consent_analytics ?? true}
+                        onChange={async e => {
+                          if (!user?.id) return
+                          await supabase.from('profiles').update({ consent_analytics: e.target.checked, updated_at: new Date().toISOString() }).eq('id', user.id)
+                          setProfile((p: any) => p ? { ...p, consent_analytics: e.target.checked } : p)
+                          if (!e.target.checked) {
+                            const { resetAmplitudeUser } = await import('../../lib/amplitude')
+                            resetAmplitudeUser()
+                          }
+                        }}
+                        style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                      />
+                      <div>
+                        <p style={{ fontSize: 13, color: '#1A1410', fontWeight: 'bold', lineHeight: 1.4 }}>Analytics anonymisés</p>
+                        <p style={{ fontSize: 11, color: '#8C5A40', lineHeight: 1.4 }}>Aide à améliorer LOTBO · aucun identifiant personnel</p>
+                      </div>
+                    </label>
+
                   </div>
                 </div>
 
