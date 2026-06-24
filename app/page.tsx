@@ -132,6 +132,7 @@ export default function Home() {
   const [dateFin, setDateFin]               = useState('')
   const [filtresOuverts, setFiltresOuverts] = useState(false)
   const [drawerOuvert, setDrawerOuvert]     = useState(false)
+  const [showDesktopMenu, setShowDesktopMenu] = useState(false)
   const [favoris, setFavoris]               = useState<Set<string>>(new Set())
   const [togglingFavori, setTogglingFavori] = useState<string | null>(null)
   const [userVille, setUserVille]           = useState<string>('')
@@ -1200,6 +1201,8 @@ export default function Home() {
 
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
             <a href="/apropos" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>{t.nav.aPropos}</a>
+            <a href="/classement" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>🏆 {t.nav.classement}</a>
+            <a href="/organisations" className="lotbo-mode-header" style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}>🏢 {t.organisations.titre}</a>
             <div className="lotbo-langue-desktop">
               <select value={langue} onChange={e => setLangue(e.target.value as Langue)} style={{ background: '#E8E0D0', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '5px 8px', fontSize: 12, cursor: 'pointer', outline: 'none' }}>
                 {Object.entries(langues).map(([code, info]) => (
@@ -1211,7 +1214,27 @@ export default function Home() {
               {user ? (
                 <>
                   {isAdmin && <a href="/admin" style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>⚙️</a>}
-                  <a href="/profil" style={{ background: '#1A1410', color: '#F7F2E8', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>{t.nav.profil}</a>
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => setShowDesktopMenu(v => !v)}
+                      style={{ background: '#1A1410', color: '#F7F2E8', border: 'none', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                    >
+                      {t.nav.profil} <span style={{ fontSize: 10, opacity: 0.7 }}>▾</span>
+                    </button>
+                    {showDesktopMenu && (
+                      <>
+                        <div onClick={() => setShowDesktopMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 98 }} />
+                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 99, marginTop: 6, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.10)', minWidth: 160 }}>
+                          <a href="/profil" onClick={() => setShowDesktopMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 13, fontWeight: 'bold', borderBottom: '1px solid #F0E8DC' }}>
+                            👤 {t.nav.profil}
+                          </a>
+                          <button onClick={async () => { await supabase.auth.signOut(); setUser(null); setShowDesktopMenu(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+                            🚪 {t.nav.deconnexion}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </>
               ) : (
                 <a href="/login" style={{ background: '#1A1410', color: '#F7F2E8', border: 'none', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>{t.nav.connexion}</a>
