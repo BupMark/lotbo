@@ -406,5 +406,29 @@
       "erreurSeulAdmin": "You're the only administrator of an organization. Transfer ownership or delete the organization before deleting your account.",
       "erreurGenerale": "Something went wrong. Please try again or contact support."
     }
+  },
+  "consent": {
+    "requis": "Required",
+    "facultatif": "Optional",
+    "cgu_label": "I accept the <cgu>Terms of Use</cgu> and the <confidentialite>Privacy Policy</confidentialite>",
+    "cgu_required": "*",
+    "charte_membres_label": "I accept the <charte>Member Charter</charte>",
+    "charte_membres_required": "*",
+    "newsletter_label": "Receive the LOTBO newsletter",
+    "alertes_label": "Receive alerts about my favorites",
+    "analytics_label": "Anonymous analytics to improve LOTBO",
+    "analytics_hint": "(pre-checked, no personal identifier)",
+    "btn_creer": "Create my account →",
+    "btn_creer_loading": "Creating account...",
+    "btn_cest_parti": "Let's go →",
+    "btn_loading": "Saving...",
+    "preferences_modifiables": "These preferences can be changed at any time in your profile.",
+    "interstitiel_titre": "Welcome {prenom} 🌍",
+    "interstitiel_titre_sans_prenom": "Welcome to LOTBO 🌍",
+    "interstitiel_sous_titre": "You joined LOTBO via {provider}. Before you start, please read and accept our commitments.",
+    "erreur_session": "Session expired. Please log in again.",
+    "erreur_generique": "An error occurred. Please try again.",
+    "erreur_cgu": "You must accept the Terms of Use and Privacy Policy to continue.",
+    "erreur_charte": "You must accept the Member Charter to continue."
   }
 }

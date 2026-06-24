@@ -406,5 +406,29 @@
       "erreurSeulAdmin": "Você é o único administrador de uma organização. Transfira a propriedade ou exclua a organização antes de excluir sua conta.",
       "erreurGenerale": "Algo deu errado. Tente novamente ou entre em contato com o suporte."
     }
+  },
+  "consent": {
+    "requis": "Obrigatório",
+    "facultatif": "Opcional",
+    "cgu_label": "Aceito os <cgu>Termos de uso</cgu> e a <confidentialite>Política de privacidade</confidentialite>",
+    "cgu_required": "*",
+    "charte_membres_label": "Aceito a <charte>Carta dos membros</charte>",
+    "charte_membres_required": "*",
+    "newsletter_label": "Receber a newsletter da LOTBO",
+    "alertes_label": "Receber alertas sobre os meus favoritos",
+    "analytics_label": "Análises anónimas para melhorar a LOTBO",
+    "analytics_hint": "(pré-selecionado, sem identificador pessoal)",
+    "btn_creer": "Criar a minha conta →",
+    "btn_creer_loading": "A criar conta...",
+    "btn_cest_parti": "Vamos lá →",
+    "btn_loading": "A guardar...",
+    "preferences_modifiables": "Estas preferências podem ser alteradas a qualquer momento no teu perfil.",
+    "interstitiel_titre": "Bem-vindo/a {prenom} 🌍",
+    "interstitiel_titre_sans_prenom": "Bem-vindo/a à LOTBO 🌍",
+    "interstitiel_sous_titre": "Juntaste-te à LOTBO via {provider}. Antes de começar, lê e aceita os nossos compromissos.",
+    "erreur_session": "Sessão expirada. Por favor, inicia sessão novamente.",
+    "erreur_generique": "Ocorreu um erro. Tenta novamente.",
+    "erreur_cgu": "Deves aceitar os Termos de uso e a Política de privacidade para continuar.",
+    "erreur_charte": "Deves aceitar a Carta dos membros para continuar."
   }
 }

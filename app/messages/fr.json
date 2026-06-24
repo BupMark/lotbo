@@ -406,5 +406,29 @@
       "erreurSeulAdmin": "Tu es le seul administrateur d'une organisation. Transfère la propriété ou supprime l'organisation avant de supprimer ton compte.",
       "erreurGenerale": "Une erreur est survenue. Réessaie ou contacte le support."
     }
+  },
+  "consent": {
+    "requis": "Requis",
+    "facultatif": "Facultatif",
+    "cgu_label": "J'accepte les <cgu>CGU</cgu> et la <confidentialite>Politique de confidentialité</confidentialite>",
+    "cgu_required": "*",
+    "charte_membres_label": "J'accepte la <charte>Charte des membres</charte>",
+    "charte_membres_required": "*",
+    "newsletter_label": "Recevoir la newsletter LOTBO",
+    "alertes_label": "Recevoir des alertes sur mes favoris",
+    "analytics_label": "Analytics anonymisés pour améliorer LOTBO",
+    "analytics_hint": "(pré-coché, aucun identifiant personnel)",
+    "btn_creer": "Créer mon compte →",
+    "btn_creer_loading": "Création du compte...",
+    "btn_cest_parti": "C'est parti →",
+    "btn_loading": "Enregistrement...",
+    "preferences_modifiables": "Ces préférences sont modifiables à tout moment dans ton profil.",
+    "interstitiel_titre": "Bienvenue {prenom} 🌍",
+    "interstitiel_titre_sans_prenom": "Bienvenue sur LOTBO 🌍",
+    "interstitiel_sous_titre": "Tu as rejoint LOTBO via {provider}. Avant de commencer, lis et accepte nos engagements.",
+    "erreur_session": "Session expirée. Merci de te reconnecter.",
+    "erreur_generique": "Une erreur est survenue. Réessaie.",
+    "erreur_cgu": "Tu dois accepter les CGU et la politique de confidentialité pour continuer.",
+    "erreur_charte": "Tu dois accepter la charte des membres pour continuer."
   }
 }

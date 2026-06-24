@@ -406,5 +406,29 @@
       "erreurSeulAdmin": "Ou se sèl administratè yon òganizasyon. Transfere pwopriyete a oswa efase òganizasyon an anvan ou efase kont ou.",
       "erreurGenerale": "Gen yon bagay ki mal pase. Eseye ankò oswa kontakte sipò."
     }
+  },
+  "consent": {
+    "requis": "Obligatwa",
+    "facultatif": "Opsyonèl",
+    "cgu_label": "Mwen aksepte <cgu>Kondisyon itilizasyon</cgu> yo ak <confidentialite>Politik konfidansyalite</confidentialite> a",
+    "cgu_required": "*",
+    "charte_membres_label": "Mwen aksepte <charte>Charte manm</charte> yo",
+    "charte_membres_required": "*",
+    "newsletter_label": "Resevwa bilten LOTBO a",
+    "alertes_label": "Resevwa alèt sou bagay mwen renmen yo",
+    "analytics_label": "Analitik anonim pou amelyore LOTBO",
+    "analytics_hint": "(pre-koche, pa gen idantifyan pèsonèl)",
+    "btn_creer": "Kreye kont mwen →",
+    "btn_creer_loading": "N ap kreye kont...",
+    "btn_cest_parti": "Ann ale →",
+    "btn_loading": "N ap anrejistre...",
+    "preferences_modifiables": "Ou ka chanje preferans sa yo nenpòt ki lè nan pwofil ou.",
+    "interstitiel_titre": "Byenvini {prenom} 🌍",
+    "interstitiel_titre_sans_prenom": "Byenvini sou LOTBO 🌍",
+    "interstitiel_sous_titre": "Ou te rantre nan LOTBO via {provider}. Anvan ou kòmanse, li epi aksepte angajman nou yo.",
+    "erreur_session": "Sesyon ekspire. Tanpri konekte ankò.",
+    "erreur_generique": "Yon erè rive. Eseye ankò.",
+    "erreur_cgu": "Ou dwe aksepte Kondisyon itilizasyon yo ak Politik konfidansyalite a pou kontinye.",
+    "erreur_charte": "Ou dwe aksepte Charte manm yo pou kontinye."
   }
 }
