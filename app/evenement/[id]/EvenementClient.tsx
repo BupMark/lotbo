@@ -1277,8 +1277,8 @@ export default function EvenementPage() {
                     onClick={() => setShowCalMenu(v => !v)}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}
                   >
-                    <span style={{ fontSize: 20 }}>📅</span>
-                    <span style={{ display: 'none' }} className="cal-label">Calendrier</span>
+                    <span style={{ fontSize: 16 }}>📅</span>
+                    <span style={{ fontSize: 14 }}>Calendrier</span>
                     <span style={{ fontSize: 12, color: '#8C5A40', marginLeft: 4 }}>{showCalMenu ? '▲' : '▼'}</span>
                   </button>
                   {showCalMenu && (
