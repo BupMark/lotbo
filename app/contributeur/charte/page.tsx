@@ -32,13 +32,33 @@ export default function CharteContributeur() {
     setLoading(true)
 
     // Upsert profil avec charte acceptée
+    const now = new Date().toISOString()
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
       role: 'contributeur',
-      charte_acceptee: true,
-      charte_acceptee_le: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      charte_acceptee:       true,
+      charte_acceptee_le:    now,
+      charte_contributeur:   true,
+      charte_contributeur_at: now,
+      onboarding_role:       'contributeur',
+      updated_at:            now,
     })
+
+    // Promouvoir dans roles_actifs si pas déjà présent
+    if (!error) {
+      const { data: raRow } = await supabase
+        .from('profiles')
+        .select('roles_actifs')
+        .eq('id', user.id)
+        .single()
+      const rolesActifs: string[] = (raRow as any)?.roles_actifs || []
+      if (!rolesActifs.includes('contributeur')) {
+        await supabase.from('profiles').update({
+          roles_actifs: [...rolesActifs, 'contributeur'],
+          updated_at: now,
+        }).eq('id', user.id)
+      }
+    }
 
     setLoading(false)
     if (!error) {
