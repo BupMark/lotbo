@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import CookieBanner from "../components/CookieBanner";
+import AnalyticsBanner from "../components/AnalyticsBanner";
 import Preloader from "../components/Preloader";
 import TabBarGlobal from "../components/TabBarGlobal";
 import { Analytics } from "@vercel/analytics/react";
@@ -39,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
- <meta name="google-site-verification" content="8wSKUg7KlocohGadZaoocuZIJiMhGtwWUtf8UNwzais" />
+        <meta name="google-site-verification" content="8wSKUg7KlocohGadZaoocuZIJiMhGtwWUtf8UNwzais" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#C8431A" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -55,6 +56,7 @@ export default function RootLayout({
         {children}
         <TabBarGlobal />
         <CookieBanner />
+        <AnalyticsBanner />
         <Analytics />
         <AmplitudeInit />
         {/* ── Enregistrement Service Worker PWA ─────────────────────────── */}
@@ -63,7 +65,7 @@ export default function RootLayout({
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  // navigator.serviceWorker.register('/sw.js')
+                  navigator.serviceWorker.register('/sw.js')
                     .then(function(reg) {
                       console.log('SW enregistré:', reg.scope);
                     })
