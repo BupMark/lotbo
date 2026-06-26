@@ -430,5 +430,27 @@
     "erreur_generique": "Ocurrió un error. Inténtalo de nuevo.",
     "erreur_cgu": "Debes aceptar los Términos de uso y la Política de privacidad para continuar.",
     "erreur_charte": "Debes aceptar la Carta de miembros para continuar."
+  },
+  "scan": {
+    "rgpd": {
+      "warning_title": "⚠️ Verifica antes de publicar",
+      "masked_notice": "Los datos de contacto han sido enmascarados automáticamente.",
+      "remove_title": "Eliminar",
+      "keep_title": "OK conservar",
+      "remove_list": [
+        "Número de teléfono personal",
+        "Email personal",
+        "Dirección personal"
+      ],
+      "keep_list": [
+        "Nombre del evento",
+        "Lugar público",
+        "Fecha y hora",
+        "Precio",
+        "Sitio web oficial",
+        "Página oficial de Facebook/Instagram"
+      ],
+      "checkbox_label": "Confirmo que este cartel no contiene datos personales (número de teléfono personal, email personal) o que he eliminado esta información antes de enviar."
+    }
   }
 }

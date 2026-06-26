@@ -430,5 +430,27 @@
     "erreur_generique": "Ocorreu um erro. Tenta novamente.",
     "erreur_cgu": "Deves aceitar os Termos de uso e a Política de privacidade para continuar.",
     "erreur_charte": "Deves aceitar a Carta dos membros para continuar."
+  },
+  "scan": {
+    "rgpd": {
+      "warning_title": "⚠️ Verifica antes de publicar",
+      "masked_notice": "Os dados de contacto foram automaticamente mascarados.",
+      "remove_title": "Remover",
+      "keep_title": "OK manter",
+      "remove_list": [
+        "Número de telemóvel pessoal",
+        "Email pessoal",
+        "Morada pessoal"
+      ],
+      "keep_list": [
+        "Nome do evento",
+        "Local público",
+        "Data e hora",
+        "Preço",
+        "Site oficial",
+        "Página oficial Facebook/Instagram"
+      ],
+      "checkbox_label": "Confirmo que este cartaz não contém dados pessoais (número de telemóvel pessoal, email pessoal) ou que removi essas informações antes de submeter."
+    }
   }
 }

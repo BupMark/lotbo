@@ -430,5 +430,27 @@
     "erreur_generique": "Yon erè rive. Eseye ankò.",
     "erreur_cgu": "Ou dwe aksepte Kondisyon itilizasyon yo ak Politik konfidansyalite a pou kontinye.",
     "erreur_charte": "Ou dwe aksepte Charte manm yo pou kontinye."
+  },
+  "scan": {
+    "rgpd": {
+      "warning_title": "⚠️ Verifye anvan ou pibliye",
+      "masked_notice": "Done kontak yo te kache otomatikman.",
+      "remove_title": "Retire",
+      "keep_title": "OK pou kenbe",
+      "remove_list": [
+        "Nimewo telefòn pèsonèl",
+        "Imèl pèsonèl",
+        "Adrès pèsonèl"
+      ],
+      "keep_list": [
+        "Non evènman an",
+        "Kote piblik la",
+        "Dat ak lè",
+        "Pri",
+        "Sit ofisyèl",
+        "Paj ofisyèl Facebook/Instagram"
+      ],
+      "checkbox_label": "Mwen konfime ke afich sa a pa gen done pèsonèl (nimewo telefòn pèsonèl, imèl pèsonèl) oswa mwen te retire enfòmasyon sa yo anvan mwen soumèt."
+    }
   }
 }

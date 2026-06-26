@@ -430,5 +430,27 @@
     "erreur_generique": "An error occurred. Please try again.",
     "erreur_cgu": "You must accept the Terms of Use and Privacy Policy to continue.",
     "erreur_charte": "You must accept the Member Charter to continue."
+  },
+  "scan": {
+    "rgpd": {
+      "warning_title": "⚠️ Check before publishing",
+      "masked_notice": "Contact data has been automatically masked.",
+      "remove_title": "Remove",
+      "keep_title": "OK to keep",
+      "remove_list": [
+        "Personal phone number",
+        "Personal email",
+        "Personal address"
+      ],
+      "keep_list": [
+        "Event name",
+        "Public venue",
+        "Date and time",
+        "Price",
+        "Official website",
+        "Official Facebook/Instagram page"
+      ],
+      "checkbox_label": "I confirm that this flyer does not contain personal data (personal phone number, personal email) or that I have removed this information before submitting."
+    }
   }
 }

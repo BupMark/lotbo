@@ -430,5 +430,27 @@
     "erreur_generique": "Une erreur est survenue. Réessaie.",
     "erreur_cgu": "Tu dois accepter les CGU et la politique de confidentialité pour continuer.",
     "erreur_charte": "Tu dois accepter la charte des membres pour continuer."
+  },
+  "scan": {
+    "rgpd": {
+      "warning_title": "⚠️ Vérifie avant de publier",
+      "masked_notice": "Des données de contact ont été automatiquement masquées.",
+      "remove_title": "À retirer",
+      "keep_title": "OK à conserver",
+      "remove_list": [
+        "Numéro de téléphone personnel",
+        "Email personnel",
+        "Adresse personnelle"
+      ],
+      "keep_list": [
+        "Nom de l'événement",
+        "Lieu public",
+        "Date et heure",
+        "Prix",
+        "Site web officiel",
+        "Page Facebook/Instagram officielle"
+      ],
+      "checkbox_label": "Je confirme que cette affiche ne contient pas de données personnelles (numéro de téléphone personnel, email personnel) ou que j'ai supprimé ces informations avant de soumettre."
+    }
   }
 }
