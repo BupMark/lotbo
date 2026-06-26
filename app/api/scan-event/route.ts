@@ -34,6 +34,27 @@ export async function POST(request: Request) {
                 type: 'text',
                 text: `Tu es un assistant qui extrait les informations d'événements depuis des affiches, flyers ou calendriers.
 
+RÈGLE RGPD OBLIGATOIRE — Protection des données personnelles :
+Après extraction du texte de l'image, analyse le contenu extrait et :
+
+1. Détecte les données personnelles de contact potentielles :
+   - Numéros de téléphone (formats internationaux variés : +509, 09, 07, etc.)
+   - Adresses email personnelles (ex: jean.dupont@gmail.com)
+   - Adresses postales personnelles
+
+2. Pour chaque donnée détectée :
+   - Masque-la dans les champs texte avec [CONTACT MASQUÉ]
+   - Signale-la dans le champ "donnees_masquees"
+
+3. Distingue :
+   - Email/téléphone personnel → MASQUER
+   - Site web officiel d'un événement ou organisation → CONSERVER dans lien_officiel
+   - Page réseau social officielle (Facebook, Instagram) → CONSERVER dans lien_officiel
+   - Numéro de téléphone d'un lieu public (restaurant, salle de spectacle) → CONSERVER
+   - Email institutionnel d'une organisation → CONSERVER
+
+4. En cas de doute → MASQUER. Principe : protection par défaut.
+
 Analyse cette image et détermine si elle contient UN ou PLUSIEURS événements DISTINCTS.
 
 RÈGLE CRITIQUE — Distinguer event multi-jours vs events distincts :
@@ -43,40 +64,37 @@ RÈGLE CRITIQUE — Distinguer event multi-jours vs events distincts :
 - Un programme/calendrier avec des activités DIFFÉRENTES à des dates différentes = mode "multi"
 - Si tu hésites entre single et multi → choisis TOUJOURS single
 
-Si UN seul événement (ou event multi-jours ou récurrent), retourne :
+Retourne UNIQUEMENT ce JSON :
 {
-  "mode": "single",
-  "events": [{ ...champs habituels... }]
-}
-
-Si PLUSIEURS événements DISTINCTS avec titres différents, retourne :
-{
-  "mode": "multi",
+  "mode": "single" | "multi",
+  "alerte_rgpd": boolean,
+  "donnees_masquees": [
+    {
+      "type": "telephone" | "email" | "adresse",
+      "position": string
+    }
+  ],
   "events": [
-    { ...champs event 1... },
-    { ...champs event 2... }
+    {
+      "titre": string | null,
+      "organisateur": string | null,
+      "date_debut": string | null,
+      "date_fin": string | null,
+      "heure_debut": string | null,
+      "heure_fin": string | null,
+      "lieu": string | null,
+      "adresse": string | null,
+      "ville": string | null,
+      "pays": string | null,
+      "description": string | null,
+      "categorie": string | null,
+      "prix": "gratuit" | "payant" | null,
+      "lien_officiel": string | null,
+      "est_recurrent": boolean,
+      "type_recurrence": "quotidien" | "hebdomadaire" | "mensuel" | "annuel" | null,
+      "jours_semaine": string[] | null
+    }
   ]
-}
-
-Chaque événement dans le tableau "events" contient :
-{
-  "titre": string | null,
-  "organisateur": string | null,
-  "date_debut": string | null,
-  "date_fin": string | null,
-  "heure_debut": string | null,
-  "heure_fin": string | null,
-  "lieu": string | null,
-  "adresse": string | null,
-  "ville": string | null,
-  "pays": string | null,
-  "description": string | null,
-  "categorie": string | null,
-  "prix": "gratuit" | "payant" | null,
-  "lien_officiel": string | null,
-  "est_recurrent": boolean,
-  "type_recurrence": "quotidien" | "hebdomadaire" | "mensuel" | "annuel" | null,
-  "jours_semaine": string[] | null
 }
 
 Instructions :
@@ -86,6 +104,7 @@ Instructions :
 - Pour "lieu" : nom exact du bâtiment ou espace
 - Si plusieurs événements partagent le même lieu/organisateur, répète l'info dans chaque événement
 - Maximum 20 événements par document
+- alerte_rgpd: true si au moins une donnée a été masquée, false sinon
 - Réponds UNIQUEMENT avec le JSON — aucun texte autour`,
               },
             ],
@@ -109,15 +128,17 @@ Instructions :
       const events: unknown[] = parsed.events || []
       const firstEvent = events[0] as Record<string, unknown> | undefined
       return NextResponse.json({
-        success: true,
-        mode: parsed.mode || 'single',
-        data: firstEvent || parsed,
+        success:         true,
+        mode:            parsed.mode || 'single',
+        alerte_rgpd:     parsed.alerte_rgpd ?? false,
+        donnees_masquees: parsed.donnees_masquees ?? [],
+        data:            firstEvent || parsed,
         events,
         occurrences_max: firstEvent && firstEvent.est_recurrent && !firstEvent.date_fin ? 5 : null,
       })
     } catch {
       console.error('[scan-event] JSON parse error:', text)
-      return NextResponse.json({ success: true, mode: 'single', data: {}, events: [], occurrences_max: null })
+      return NextResponse.json({ success: true, mode: 'single', alerte_rgpd: false, donnees_masquees: [], data: {}, events: [], occurrences_max: null })
     }
 
   } catch (err: unknown) {

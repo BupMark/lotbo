@@ -447,6 +447,7 @@ export default function AjouterEvenement() {
   const [scanLoading, setScanLoading]         = useState(false)
   const [scanMessage, setScanMessage]         = useState<{ type: 'verifier' | 'erreur'; texte: string } | null>(null)
   const [filledByScan, setFilledByScan]       = useState(false)
+  const [alerteRgpd, setAlerteRgpd]           = useState(false)
   const [scanMultiEvents, setScanMultiEvents]         = useState<ScanEvent[]>([])
   const [scanMultiIndex, setScanMultiIndex]           = useState(0)
   const [scanMultiTotal, setScanMultiTotal]           = useState(0)
@@ -629,6 +630,7 @@ export default function AjouterEvenement() {
       }
     }
     setFilledByScan(true)
+    setAlerteRgpd(false)
     setScanMessage({ type: 'verifier', texte: `📋 ${t.ajouter.scanVerifier}` })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -651,6 +653,8 @@ export default function AjouterEvenement() {
           })
           if (!res.ok) throw new Error('service')
           const json = await res.json()
+          if (json.alerte_rgpd) setAlerteRgpd(true)
+          else setAlerteRgpd(false)
 
           // Gestion multi-événements
           if (json.mode === 'multi' && json.events && json.events.length > 1) {
@@ -1211,8 +1215,9 @@ export default function AjouterEvenement() {
                     style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
                   />
                   <span style={{ color: '#8C5A40', fontSize: 12, lineHeight: 1.5 }}>
-                    Je confirme que ce contenu ne contient pas de données personnelles d&apos;autrui
-                    (nom, téléphone, email, photo identifiable d&apos;une personne).
+                    Je confirme que cette affiche ne contient pas de données personnelles
+                    (numéro de téléphone personnel, email personnel) ou que j&apos;ai supprimé
+                    ces informations avant de soumettre.
                     {' '}<span style={{ color: '#C8431A' }}>*</span>
                   </span>
                 </label>
@@ -1304,6 +1309,38 @@ export default function AjouterEvenement() {
               color: scanMessage.type === 'verifier' ? '#2D9E6B' : '#C8431A',
             }}>
               {scanMessage.type === 'verifier' ? '✅ ' : '⚠️ '}{scanMessage.texte}
+            </div>
+          )}
+          {filledByScan && (
+            <div style={{
+              borderRadius: 12,
+              border: alerteRgpd ? '1px solid rgba(200,67,26,0.5)' : '1px solid rgba(212,168,32,0.4)',
+              background: alerteRgpd ? 'rgba(200,67,26,0.06)' : 'rgba(212,168,32,0.06)',
+              padding: '14px 16px',
+              marginTop: 8,
+            }}>
+              <p style={{ fontWeight: 'bold', fontSize: 13, color: alerteRgpd ? '#C8431A' : '#D4A820', marginBottom: 8 }}>
+                ⚠️ Vérifie avant de publier
+              </p>
+              {alerteRgpd && (
+                <p style={{ fontSize: 12, color: '#C8431A', marginBottom: 8, fontWeight: 'bold' }}>
+                  Des données de contact ont été automatiquement masquées.
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <p style={{ fontSize: 11, color: '#8C5A40', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>À retirer</p>
+                  {['Numéro de téléphone personnel', 'Email personnel', 'Adresse personnelle'].map(item => (
+                    <p key={item} style={{ fontSize: 12, color: '#C8431A', marginBottom: 2 }}>✗ {item}</p>
+                  ))}
+                </div>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <p style={{ fontSize: 11, color: '#8C5A40', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>OK à conserver</p>
+                  {["Nom de l'événement", 'Lieu public', 'Date et heure', 'Prix', 'Site web officiel', 'Page Facebook/Instagram officielle'].map(item => (
+                    <p key={item} style={{ fontSize: 12, color: '#2D9E6B', marginBottom: 2 }}>✓ {item}</p>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
           <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
