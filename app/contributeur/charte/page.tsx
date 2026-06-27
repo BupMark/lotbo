@@ -167,7 +167,16 @@ export default function CharteContributeur() {
           <div style={{ height: 1, background: '#E8E0D0' }} />
 
           <section>
-            <h2 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>5. Droits LOTBO</h2>
+            <h2 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>5. Transfert de propriété</h2>
+            <p style={{ color: '#8C5A40', fontSize: 14, lineHeight: 1.7 }}>
+              Si l&apos;organisateur réel d&apos;un événement que tu as soumis en réclame la propriété et fournit des preuves suffisantes, la propriété lui est transférée. Tu reçois une notification. Suite à ce transfert, le droit de réclamation sur cet événement appartient désormais exclusivement à l&apos;organisateur — tu ne peux plus formuler de nouvelle réclamation valide sur ce même événement. Tes points de gamification sont conservés.
+            </p>
+          </section>
+
+          <div style={{ height: 1, background: '#E8E0D0' }} />
+
+          <section>
+            <h2 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>6. Droits LOTBO</h2>
             <p style={{ color: '#8C5A40', fontSize: 14, lineHeight: 1.7 }}>
               LOTBO se réserve le droit de modifier, masquer ou supprimer tout événement sans préavis, et de révoquer le statut Contributeur à tout moment en cas de non-respect de cette charte.
             </p>

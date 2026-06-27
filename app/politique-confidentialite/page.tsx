@@ -52,6 +52,8 @@ const PARTENAIRES = [
   { nom: "Vercel", role: "Hébergement et déploiement", lien: "https://vercel.com/legal/privacy-policy" },
   { nom: "Brevo", role: "Envoi d'emails et newsletter", lien: "https://www.brevo.com/legal/privacypolicy/" },
   { nom: "Mapbox", role: "Cartographie interactive", lien: "https://www.mapbox.com/legal/privacy" },
+  { nom: "Amplitude", role: "Analytiques anonymisées", lien: "https://amplitude.com/privacy" },
+  { nom: "Anthropic", role: "Traitement IA des images (Scan & Publie, côté serveur uniquement)", lien: "https://www.anthropic.com/privacy" },
 ]
 
 const CONSERVATION = [
@@ -135,7 +137,7 @@ export default function PolitiqueConfidentialite() {
             Politique de confidentialité
           </h1>
           <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.6 }}>
-            Dernière mise à jour : <strong style={{ color: '#F7F2E8' }}>11 mai 2026</strong>
+            Dernière mise à jour : <strong style={{ color: '#F7F2E8' }}>23 juin 2026</strong>
             <br />
             Cette politique décrit comment <strong style={{ color: '#F7F2E8' }}>Lotbo</strong>,
             un produit de <strong style={{ color: '#F7F2E8' }}>Bup Mark Ltd</strong>{' '}
@@ -175,7 +177,7 @@ export default function PolitiqueConfidentialite() {
             </div>
             <p style={s.body}>
               Pour toute question relative à vos données, contactez-nous à{' '}
-              <a href="mailto:lotbo@bup-mark.com" style={{ color: '#C8431A' }}>lotbo@bup-mark.com</a>.
+              <a href="mailto:privacy@lotbo.app" style={{ color: '#C8431A' }}>privacy@lotbo.app</a>.
             </p>
           </div>
           <div style={s.divider} />
@@ -286,7 +288,7 @@ export default function PolitiqueConfidentialite() {
             </ul>
             <p style={s.body}>
               Pour exercer ces droits, contactez-nous à{' '}
-              <a href="mailto:lotbo@bup-mark.com" style={{ color: '#C8431A' }}>lotbo@bup-mark.com</a>.
+              <a href="mailto:privacy@lotbo.app" style={{ color: '#C8431A' }}>privacy@lotbo.app</a>.
               Nous répondons dans un délai de 30 jours.
             </p>
           </div>
@@ -356,13 +358,13 @@ export default function PolitiqueConfidentialite() {
           <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 16 }}>
             Bup Mark Ltd · Office 12, Initial Business Centre, Manchester M40 8WN, UK
           </p>
-          <a href="mailto:lotbo@bup-mark.com" style={{
+          <a href="mailto:privacy@lotbo.app" style={{
             background: '#C8431A', color: '#F7F2E8',
             padding: '12px 24px', borderRadius: 10,
             fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
             display: 'inline-block',
           }}>
-            lotbo@bup-mark.com
+            privacy@lotbo.app
           </a>
         </div>
 

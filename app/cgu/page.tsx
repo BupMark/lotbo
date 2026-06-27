@@ -91,18 +91,10 @@ const SECTIONS = [
     contenu: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <p style={s.body}>
-          Tout utilisateur peut soumettre un événement. En soumettant un événement, vous déclarez et garantissez que :
+          En soumettant du contenu, le contributeur déclare que les informations fournies sont exactes et vérifiables, confirme que le contenu ne contient pas de données personnelles d&apos;autrui sans consentement, garantit que les images soumises sont libres de droits ou lui appartiennent, accepte d&apos;être seul responsable du contenu qu&apos;il publie, et reconnaît que LOTBO peut rejeter, corriger ou supprimer toute soumission sans justification.
         </p>
-        <ul style={s.list}>
-          <li style={s.body}>Les informations fournies sont exactes, complètes et à jour</li>
-          <li style={s.body}>Vous êtes autorisé à publier cet événement</li>
-          <li style={s.body}>Le contenu ne viole aucun droit de tiers (droits d&apos;auteur, marques, vie privée)</li>
-          <li style={s.body}>L&apos;événement est réel et n&apos;est pas du spam ou du contenu frauduleux</li>
-          <li style={s.body}>Vous acceptez que Lotbo modère et puisse rejeter ou supprimer votre soumission</li>
-        </ul>
         <p style={s.body}>
-          Bup Mark Ltd se réserve le droit de refuser ou supprimer tout événement sans justification,
-          notamment en cas de contenu inapproprié, inexact, illégal ou contraire aux valeurs de la plateforme.
+          Lors de la soumission via Scan &amp; Publie, un écran de confirmation est affiché avant toute validation, rappelant l&apos;interdiction de publier des données personnelles d&apos;autrui.
         </p>
       </div>
     )
@@ -120,6 +112,7 @@ const SECTIONS = [
           <li style={s.body}>Portant atteinte à la vie privée ou aux droits de tiers</li>
           <li style={s.body}>Constituant du spam, de la publicité non sollicitée ou du phishing</li>
           <li style={s.body}>Contenant des logiciels malveillants ou du code nuisible</li>
+          <li style={s.body}>Contenant des données personnelles d&apos;autrui sans consentement explicite</li>
         </ul>
       </div>
     )
@@ -130,9 +123,9 @@ const SECTIONS = [
     contenu: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <p style={s.body}>
-          La marque <strong style={{ color: '#F7F2E8' }}>Lotbo</strong>, le logo, le design
+          Le nom <strong style={{ color: '#F7F2E8' }}>LOTBO</strong>, le logo, le design
           et l&apos;ensemble du contenu éditorial de la plateforme sont la propriété exclusive
-          de Bup Mark Ltd et sont protégés par les lois sur la propriété intellectuelle.
+          de Bup Mark Ltd. Bup Mark Ltd se réserve tous les droits sur ces éléments.
         </p>
         <p style={s.body}>
           En soumettant du contenu (texte, photos, descriptions), vous accordez à Bup Mark Ltd
@@ -259,7 +252,7 @@ export default function CGU() {
             Conditions Générales d&apos;Utilisation
           </h1>
           <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.6 }}>
-            Dernière mise à jour : <strong style={{ color: '#F7F2E8' }}>11 mai 2026</strong>
+            Dernière mise à jour : <strong style={{ color: '#F7F2E8' }}>23 juin 2026</strong>
             <br />
             Ces conditions régissent l&apos;utilisation de la plateforme{' '}
             <strong style={{ color: '#F7F2E8' }}>Lotbo</strong>, un produit de{' '}
