@@ -80,6 +80,12 @@ function ProfilInner() {
   const [consentNewsletter, setConsentNewsletter] = useState(false)
   const [consentAlertes, setConsentAlertes]       = useState(false)
   const [consentPush, setConsentPush]             = useState(false)
+  const [notifNouveauxEvenements, setNotifNouveauxEvenements] = useState(true)
+  const [notifCommentaires, setNotifCommentaires]             = useState(true)
+  const [notifCorrections, setNotifCorrections]               = useState(true)
+  const [notifOrganisation, setNotifOrganisation]             = useState(true)
+  const [notifScanPublie, setNotifScanPublie]                 = useState(true)
+  const [notifEvenementModifie, setNotifEvenementModifie]     = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [suppressionDemandeeAt, setSuppressionDemandeeAt] = useState<string | null>(null)
   const [annulantSuppression, setAnnulantSuppression] = useState(false)
@@ -103,7 +109,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id, consent_analytics, consent_newsletter, consent_alertes, consent_push, suppression_demandee_at')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id, consent_analytics, consent_newsletter, consent_alertes, consent_push, suppression_demandee_at, notif_nouveaux_evenements, notif_commentaires, notif_corrections, notif_organisation, notif_scan_publie, notif_evenement_modifie')
         .eq('id', data.session.user.id)
         .single()
       // roles_actifs optionnel — requiert migration DB
@@ -143,6 +149,12 @@ function ProfilInner() {
       setSuppressionDemandeeAt(prof?.suppression_demandee_at ?? null)
       setConsentAlertes(prof?.consent_alertes ?? false)
       setConsentPush(prof?.consent_push ?? false)
+      setNotifNouveauxEvenements(prof?.notif_nouveaux_evenements ?? true)
+      setNotifCommentaires(prof?.notif_commentaires ?? true)
+      setNotifCorrections(prof?.notif_corrections ?? true)
+      setNotifOrganisation(prof?.notif_organisation ?? true)
+      setNotifScanPublie(prof?.notif_scan_publie ?? true)
+      setNotifEvenementModifie(prof?.notif_evenement_modifie ?? true)
 
       const { data: evs } = await supabase
         .from('evenements')
@@ -849,6 +861,12 @@ function ProfilInner() {
                         consent_newsletter: consentNewsletter,
                         consent_alertes:    consentAlertes,
                         consent_push:       consentPush,
+                        notif_nouveaux_evenements: notifNouveauxEvenements,
+                        notif_commentaires:        notifCommentaires,
+                        notif_corrections:         notifCorrections,
+                        notif_organisation:        notifOrganisation,
+                        notif_scan_publie:         notifScanPublie,
+                        notif_evenement_modifie:   notifEvenementModifie,
                         updated_at: new Date().toISOString(),
                       }).eq('id', user.id)
                       setSavingParams(false)
@@ -897,9 +915,15 @@ function ProfilInner() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                     {[
-                      { key: 'newsletter', label: 'Newsletter LOTBO',    desc: 'Actualités et nouveautés de la plateforme', checked: consentNewsletter, set: setConsentNewsletter },
-                      { key: 'alertes',    label: 'Alertes favoris',     desc: 'Rappels sur tes événements favoris',        checked: consentAlertes,    set: setConsentAlertes },
-                      { key: 'push',       label: 'Notifications push',  desc: 'Alertes sur ton appareil',                 checked: consentPush,       set: setConsentPush },
+                      { key: 'newsletter',           label: t.profil.notifications.newsletter,         desc: t.profil.notifications.newsletterDesc,         checked: consentNewsletter,       set: setConsentNewsletter },
+                      { key: 'alertes',              label: t.profil.notifications.alertes,            desc: t.profil.notifications.alertesDesc,            checked: consentAlertes,          set: setConsentAlertes },
+                      { key: 'push',                 label: t.profil.notifications.push,               desc: t.profil.notifications.pushDesc,               checked: consentPush,             set: setConsentPush },
+                      { key: 'nouveaux_evenements',  label: t.profil.notifications.nouveauxEvenements, desc: t.profil.notifications.nouveauxEvenementsDesc, checked: notifNouveauxEvenements, set: setNotifNouveauxEvenements },
+                      { key: 'commentaires',         label: t.profil.notifications.commentaires,       desc: t.profil.notifications.commentairesDesc,       checked: notifCommentaires,       set: setNotifCommentaires },
+                      { key: 'corrections',          label: t.profil.notifications.corrections,        desc: t.profil.notifications.correctionsDesc,        checked: notifCorrections,        set: setNotifCorrections },
+                      { key: 'organisation',         label: t.profil.notifications.organisation,       desc: t.profil.notifications.organisationDesc,       checked: notifOrganisation,       set: setNotifOrganisation },
+                      { key: 'scan_publie',          label: t.profil.notifications.scanPublie,         desc: t.profil.notifications.scanPublieDesc,         checked: notifScanPublie,         set: setNotifScanPublie },
+                      { key: 'evenement_modifie',    label: t.profil.notifications.evenementModifie,   desc: t.profil.notifications.evenementModifieDesc,   checked: notifEvenementModifie,   set: setNotifEvenementModifie },
                     ].map(item => (
                       <label key={item.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                         <input
