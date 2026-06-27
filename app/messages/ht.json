@@ -291,14 +291,6 @@
     "toLabel": "Jiska",
     "accessDenied": "Aksè refize — wòl pa ase."
   },
-  "referral": {
-    "referralTitle": "Parenaj",
-    "referralLink": "Lyen parenaj ou",
-    "referralCopy": "Kopye lyen",
-    "referralCount": "{n} moun enskri ak lyen ou",
-    "referralPoints": "{n} pwen ou genyen grasa parenaj",
-    "referralWhatsApp": "Pataje sou WhatsApp"
-  },
   "navigate": {
     "apple": "Kat"
   },
