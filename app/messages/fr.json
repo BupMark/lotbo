@@ -405,6 +405,26 @@
       "erreurSession": "Session expirée. Reconnecte-toi puis réessaie.",
       "erreurSeulAdmin": "Tu es le seul administrateur d'une organisation. Transfère la propriété ou supprime l'organisation avant de supprimer ton compte.",
       "erreurGenerale": "Une erreur est survenue. Réessaie ou contacte le support."
+    },
+    "notifications": {
+      "newsletter": "Newsletter LOTBO",
+      "newsletterDesc": "Actualités et nouveautés de la plateforme",
+      "alertes": "Alertes favoris",
+      "alertesDesc": "Rappels sur tes événements favoris",
+      "push": "Notifications push",
+      "pushDesc": "Alertes sur ton appareil",
+      "nouveauxEvenements": "Nouveaux événements",
+      "nouveauxEvenementsDesc": "Nouveaux événements dans tes villes suivies",
+      "commentaires": "Commentaires",
+      "commentairesDesc": "Réponses à tes commentaires",
+      "corrections": "Corrections validées",
+      "correctionsDesc": "Tes corrections acceptées par l'équipe",
+      "organisation": "Organisation",
+      "organisationDesc": "Activité dans tes organisations",
+      "scanPublie": "Scan & Publie",
+      "scanPublieDesc": "Résultat de tes soumissions Scan & Publie",
+      "evenementModifie": "Modifications d'événements",
+      "evenementModifieDesc": "Changements sur tes événements favoris"
     }
   },
   "consent": {

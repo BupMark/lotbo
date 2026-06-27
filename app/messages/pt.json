@@ -405,6 +405,26 @@
       "erreurSession": "Sessão expirada. Faça login novamente e tente de novo.",
       "erreurSeulAdmin": "Você é o único administrador de uma organização. Transfira a propriedade ou exclua a organização antes de excluir sua conta.",
       "erreurGenerale": "Algo deu errado. Tente novamente ou entre em contato com o suporte."
+    },
+    "notifications": {
+      "newsletter": "Newsletter LOTBO",
+      "newsletterDesc": "Novidades e atualizações da plataforma",
+      "alertes": "Alertas de favoritos",
+      "alertesDesc": "Lembretes sobre seus eventos favoritos",
+      "push": "Notificações push",
+      "pushDesc": "Alertas no seu dispositivo",
+      "nouveauxEvenements": "Novos eventos",
+      "nouveauxEvenementsDesc": "Novos eventos nas suas cidades seguidas",
+      "commentaires": "Comentários",
+      "commentairesDesc": "Respostas aos seus comentários",
+      "corrections": "Correções validadas",
+      "correctionsDesc": "Suas correções aceitas pela equipe",
+      "organisation": "Organização",
+      "organisationDesc": "Atividade nas suas organizações",
+      "scanPublie": "Escanear e Publicar",
+      "scanPublieDesc": "Resultados dos seus envios de Escanear e Publicar",
+      "evenementModifie": "Modificações de eventos",
+      "evenementModifieDesc": "Alterações nos seus eventos favoritos"
     }
   },
   "consent": {

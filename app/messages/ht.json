@@ -405,6 +405,26 @@
       "erreurSession": "Sesyon ou ekspire. Rekonekte epi eseye ankò.",
       "erreurSeulAdmin": "Ou se sèl administratè yon òganizasyon. Transfere pwopriyete a oswa efase òganizasyon an anvan ou efase kont ou.",
       "erreurGenerale": "Gen yon bagay ki mal pase. Eseye ankò oswa kontakte sipò."
+    },
+    "notifications": {
+      "newsletter": "Bilten LOTBO",
+      "newsletterDesc": "Nouvèl ak aktyalite platfòm nan",
+      "alertes": "Alèt favori",
+      "alertesDesc": "Rapèl sou evènman favori ou yo",
+      "push": "Notifikasyon push",
+      "pushDesc": "Alèt sou aparèy ou",
+      "nouveauxEvenements": "Nouvo evènman",
+      "nouveauxEvenementsDesc": "Nouvo evènman nan vil ou swiv yo",
+      "commentaires": "Kòmantè",
+      "commentairesDesc": "Repons sou kòmantè ou yo",
+      "corrections": "Koreksyon valide",
+      "correctionsDesc": "Koreksyon ou yo ekip la aksepte",
+      "organisation": "Òganizasyon",
+      "organisationDesc": "Aktivite nan òganizasyon ou yo",
+      "scanPublie": "Scan & Pibliye",
+      "scanPublieDesc": "Rezilta soumisyon Scan & Pibliye ou yo",
+      "evenementModifie": "Chanjman evènman",
+      "evenementModifieDesc": "Chanjman sou evènman favori ou yo"
     }
   },
   "consent": {

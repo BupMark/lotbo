@@ -405,6 +405,26 @@
       "erreurSession": "Session expired. Please sign in again and retry.",
       "erreurSeulAdmin": "You're the only administrator of an organization. Transfer ownership or delete the organization before deleting your account.",
       "erreurGenerale": "Something went wrong. Please try again or contact support."
+    },
+    "notifications": {
+      "newsletter": "LOTBO Newsletter",
+      "newsletterDesc": "Platform news and updates",
+      "alertes": "Favourite alerts",
+      "alertesDesc": "Reminders about your favourite events",
+      "push": "Push notifications",
+      "pushDesc": "Alerts on your device",
+      "nouveauxEvenements": "New events",
+      "nouveauxEvenementsDesc": "New events in your followed cities",
+      "commentaires": "Comments",
+      "commentairesDesc": "Replies to your comments",
+      "corrections": "Validated corrections",
+      "correctionsDesc": "Your corrections accepted by the team",
+      "organisation": "Organization",
+      "organisationDesc": "Activity in your organizations",
+      "scanPublie": "Scan & Publish",
+      "scanPublieDesc": "Results of your Scan & Publish submissions",
+      "evenementModifie": "Event modifications",
+      "evenementModifieDesc": "Changes on your favorite events"
     }
   },
   "consent": {
