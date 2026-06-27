@@ -100,7 +100,7 @@ const ORGANISATEURS = [
   },
   {
     q: "Combien de temps pour que mon événement soit publié ?",
-    a: "Notre équipe examine les soumissions manuellement. Le délai est généralement de quelques heures à 24h selon le volume. Vérifie si ton événement apparaît sur la carte — ou contacte-nous à lotbo@bup-mark.com si tu n'as pas de nouvelles après 48h.",
+    a: "Notre équipe examine les soumissions manuellement. Le délai est généralement de quelques heures à 24h selon le volume. Vérifie si ton événement apparaît sur la carte — ou contacte-nous à hello@lotbo.app si tu n'as pas de nouvelles après 48h.",
   },
   {
     q: "Mon événement a été refusé — pourquoi ?",
@@ -171,7 +171,7 @@ const GENERAL = [
   },
   {
     q: "Comment contacter l'équipe Lotbo ?",
-    a: "Envoie un email à lotbo@bup-mark.com — nous répondons dans les 48h ouvrées. Pour les questions légales ou relatives à tes données personnelles, consulte notre Politique de confidentialité et nos CGU.",
+    a: "Envoie un email à hello@lotbo.app — nous répondons dans les 48h ouvrées. Pour les questions légales ou relatives à tes données personnelles, consulte notre Politique de confidentialité et nos CGU.",
   },
 ]
 
@@ -384,13 +384,13 @@ export default function Aide() {
               <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
                 Notre équipe répond dans les 48h ouvrées.
               </p>
-              <a href="mailto:lotbo@bup-mark.com" style={{
+              <a href="mailto:hello@lotbo.app" style={{
                 background: '#C8431A', color: '#F7F2E8',
                 padding: '13px 28px', borderRadius: 10,
                 fontSize: 14, fontWeight: 'bold', textDecoration: 'none',
                 display: 'inline-block', marginBottom: 16,
               }}>
-                lotbo@bup-mark.com
+                hello@lotbo.app
               </a>
               <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 8 }}>
                 <a href="/politique-confidentialite" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>Confidentialité</a>
