@@ -81,6 +81,8 @@ function ProfilInner() {
   const [consentAlertes, setConsentAlertes]       = useState(false)
   const [consentPush, setConsentPush]             = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [suppressionDemandeeAt, setSuppressionDemandeeAt] = useState<string | null>(null)
+  const [annulantSuppression, setAnnulantSuppression] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -101,7 +103,7 @@ function ProfilInner() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id, consent_analytics, consent_newsletter, consent_alertes, consent_push')
+        .select('role, charte_acceptee, points_total, points_utilisateur, points_organisateur, niveau, nom, photo_url, date_naissance, anniversaire_public, genre, anniversaire_visibilite, langue_preference, referral_code, parrain_id, consent_analytics, consent_newsletter, consent_alertes, consent_push, suppression_demandee_at')
         .eq('id', data.session.user.id)
         .single()
       // roles_actifs optionnel — requiert migration DB
@@ -138,6 +140,7 @@ function ProfilInner() {
       if (prof?.genre) setGenre(prof.genre)
       if (prof?.anniversaire_visibilite) setAnniversaireVisibilite(prof.anniversaire_visibilite)
       setConsentNewsletter(prof?.consent_newsletter ?? false)
+      setSuppressionDemandeeAt(prof?.suppression_demandee_at ?? null)
       setConsentAlertes(prof?.consent_alertes ?? false)
       setConsentPush(prof?.consent_push ?? false)
 
@@ -242,8 +245,13 @@ function ProfilInner() {
         setDeletingAccount(false)
         return
       }
-      await supabase.auth.signOut()
-      router.push('/')
+      if (json.mode === 'soft_delete') {
+        setSuppressionDemandeeAt(new Date().toISOString())
+        setDeleteConfirmText('')
+      } else {
+        await supabase.auth.signOut()
+        router.push('/')
+      }
     } catch (err) {
       setDeleteError(t.profil.modalSuppression.erreurGenerale)
       setDeletingAccount(false)
@@ -932,6 +940,36 @@ function ProfilInner() {
 
                   </div>
                 </div>
+
+                {suppressionDemandeeAt && (
+                  <div style={{ background: 'rgba(180,40,40,0.08)', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 16, padding: 20 }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 'bold', color: '#b42828', marginBottom: 8 }}>
+                      ⏳ Suppression de compte en cours
+                    </h3>
+                    <p style={{ fontSize: 13, color: '#8C5A40', lineHeight: 1.6, marginBottom: 16 }}>
+                      Votre demande de suppression a été enregistrée le{' '}
+                      {new Date(suppressionDemandeeAt).toLocaleDateString('fr-FR')}.
+                      Votre compte sera définitivement supprimé le{' '}
+                      {new Date(new Date(suppressionDemandeeAt).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')}.
+                    </p>
+                    <button
+                      onClick={async () => {
+                        setAnnulantSuppression(true)
+                        const { data: { session } } = await supabase.auth.getSession()
+                        const res = await fetch('/api/compte/annuler-suppression', {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${session?.access_token}` },
+                        })
+                        if (res.ok) setSuppressionDemandeeAt(null)
+                        setAnnulantSuppression(false)
+                      }}
+                      disabled={annulantSuppression}
+                      style={{ background: 'white', border: '1px solid #b42828', color: '#b42828', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                      {annulantSuppression ? 'Annulation...' : '↩ Annuler la suppression'}
+                    </button>
+                  </div>
+                )}
 
                 {/* ⚠️ Zone de danger */}
                 <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid rgba(180,40,40,0.3)' }}>
