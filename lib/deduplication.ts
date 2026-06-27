@@ -115,3 +115,17 @@ export async function verifierDoublon(
 
   return { estDoublon: false }
 }
+
+export async function estSourceBloquee(
+  supabase: SupabaseClient,
+  source: string,
+  source_id: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('suppression_sources_bloquees')
+    .select('id')
+    .eq('source', source)
+    .eq('source_id', source_id)
+    .maybeSingle()
+  return !!data
+}

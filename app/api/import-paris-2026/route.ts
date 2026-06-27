@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { estSourceBloquee } from '../../../lib/deduplication'
 
 // Coordonnées GPS des lieux parisiens — précision niveau bâtiment
 const LIEUX_PARIS: Record<string, { latitude: number; longitude: number; adresse: string; ville: string; pays: string }> = {
@@ -207,6 +208,10 @@ export async function GET(request: Request) {
   try {
     for (const evt of EVENEMENTS_PARIS_2026) {
       // 1. Déduplication via source_id
+      // T-1 — Filtre anti-réimport suppression
+      const bloquee = await estSourceBloquee(supabase, 'paris_2026', evt.source_id)
+      if (bloquee) { skipped++; continue }
+
       const { data: existing } = await supabase
         .from('evenements')
         .select('id')

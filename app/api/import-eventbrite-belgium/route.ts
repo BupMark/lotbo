@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { verifierDoublon } from '../../../lib/deduplication'
+import { verifierDoublon, estSourceBloquee } from '../../../lib/deduplication'
 
 const CATEGORIE_MAP: Record<string, string> = {
   'music':              'Concert / Spectacle',
@@ -198,6 +198,10 @@ export async function GET(request: Request) {
         const sourceId = `eventbrite-${ev.eid}`
 
         // Anti-doublon même source
+        // T-1 — Filtre anti-réimport suppression
+        const bloquee = await estSourceBloquee(supabase, 'eventbrite', sourceId)
+        if (bloquee) { skipped++; continue }
+
         const { data: existing } = await supabase
           .from('evenements').select('id').eq('source_id', sourceId).maybeSingle()
         if (existing) { skipped++; continue }

@@ -9,6 +9,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { estSourceBloquee } from '../../../lib/deduplication'
 
 // Coordonnées GPS niveau bâtiment — Kansas City, MO
 const LIEUX_KC: Record<string, {
@@ -145,6 +146,10 @@ export async function GET(request: Request) {
 
   try {
     for (const evt of EVENEMENTS_KC_MUNDIAL) {
+      // T-1 — Filtre anti-réimport suppression
+      const bloquee = await estSourceBloquee(supabase, 'mundial_2026', evt.source_id)
+      if (bloquee) { skipped++; continue }
+
       const { data: existing } = await supabase
         .from('evenements')
         .select('id')

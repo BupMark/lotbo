@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { verifierDoublon } from '../../../lib/deduplication'
+import { verifierDoublon, estSourceBloquee } from '../../../lib/deduplication'
 import { normaliserVille } from '../../../lib/normalisation'
 
 const HEADERS = {
@@ -182,6 +182,11 @@ export async function GET(request: Request) {
       if (!ev.latitude || !ev.longitude) { skipped++; continue }
 
       const sourceId = `allevents-${ev.eid}`
+
+      // T-1 — Filtre anti-réimport suppression
+      const bloquee = await estSourceBloquee(supabase, 'allevents', sourceId)
+      if (bloquee) { skipped++; continue }
+
       const { data: existing } = await supabase
         .from('evenements').select('id').eq('source_id', sourceId).maybeSingle()
       if (existing) { skipped++; continue }
