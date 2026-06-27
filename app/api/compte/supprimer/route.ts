@@ -28,34 +28,53 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const { error: rpcError } = await supabaseAdmin.rpc('supprimer_compte_utilisateur', {
-      p_user_id: userId,
-    })
+    // T-1 — Vérification sole-admin avant de marquer la demande
+    // On appelle la RPC uniquement pour la vérification, pas pour supprimer
+    // On vérifie manuellement si l'utilisateur est seul admin d'une organisation
+    const { data: orgAdminRows } = await supabaseAdmin
+      .from('organisation_membres')
+      .select('org_id')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
 
-    if (rpcError) {
-      if (rpcError.message?.startsWith('SOLE_ADMIN_ORG:')) {
-        const orgId = rpcError.message.split(':')[1]?.trim()
+    for (const row of orgAdminRows || []) {
+      const { count } = await supabaseAdmin
+        .from('organisation_membres')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', row.org_id)
+        .eq('role', 'admin')
+        .neq('user_id', userId)
+
+      if ((count ?? 0) === 0) {
         return NextResponse.json(
           {
             error: 'SEUL_ADMIN_ORGANISATION',
-            orgId,
-            message: 'Vous êtes le seul administrateur d\'une organisation. Transférez la propriété ou supprimez l\'organisation avant de supprimer votre compte.',
+            orgId: row.org_id,
+            message: "Vous êtes le seul administrateur d'une organisation. Transférez la propriété ou supprimez l'organisation avant de supprimer votre compte.",
           },
           { status: 409 }
         )
       }
-      console.error('Erreur RPC suppression compte:', rpcError)
+    }
+
+    // T-1 Sujet A — Soft-delete : marquer la demande avec timestamp
+    // La suppression effective interviendra après 30 jours via CRON
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ suppression_demandee_at: new Date().toISOString() })
+      .eq('id', userId)
+
+    if (updateError) {
+      console.error('Erreur marquage suppression:', updateError)
       return NextResponse.json({ error: 'ERREUR_SUPPRESSION_DONNEES' }, { status: 500 })
     }
 
-    const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    return NextResponse.json({
+      success: true,
+      mode: 'soft_delete',
+      message: 'Votre demande de suppression a été enregistrée. Votre compte sera définitivement supprimé dans 30 jours.',
+    })
 
-    if (deleteAuthError) {
-      console.error('Erreur suppression Auth:', deleteAuthError)
-      return NextResponse.json({ error: 'ERREUR_SUPPRESSION_AUTH' }, { status: 500 })
-    }
-
-    return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Erreur inattendue suppression compte:', err)
     return NextResponse.json({ error: 'ERREUR_INATTENDUE' }, { status: 500 })

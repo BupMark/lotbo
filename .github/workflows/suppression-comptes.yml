@@ -1,0 +1,17 @@
+name: Suppression comptes — exécution après période de grâce 30 jours
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03h00 UTC chaque nuit
+  workflow_dispatch:
+
+jobs:
+  supprimer-comptes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déclencher la suppression effective des comptes en attente
+        run: |
+          curl -s -X POST \
+            "${{ secrets.NEXT_PUBLIC_APP_URL }}/api/cron/supprimer-comptes" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            -H "Content-Type: application/json"
