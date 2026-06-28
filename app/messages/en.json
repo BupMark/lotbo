@@ -417,6 +417,100 @@
       "scanPublieDesc": "Results of your Scan & Publish submissions",
       "evenementModifie": "Event modifications",
       "evenementModifieDesc": "Changes on your favorite events"
+    },
+    "badges": {
+      "titreEngage": "⭐ Contributor Badges",
+      "titreOrganisateur": "🎪 Organizer Badges",
+      "titreSpeciaux": "✨ Special Badges",
+      "prochainBadge": "Next badge",
+      "encoreContributions": "{n} more contribution",
+      "encoreContributionsPluriel": "{n} more contributions",
+      "encoreEvenements": "{n} more event",
+      "encoreEvenementsPluriel": "{n} more events",
+      "contributeur": {
+        "decouvreur": {
+          "label": "Explorer",
+          "desc": "1st contribution"
+        },
+        "actif": {
+          "label": "Active",
+          "desc": "5 contributions"
+        },
+        "engage": {
+          "label": "Engaged",
+          "desc": "10 contributions"
+        },
+        "top_contributeur": {
+          "label": "Top Contributor",
+          "desc": "25 contributions"
+        },
+        "elite": {
+          "label": "Elite",
+          "desc": "50 contributions"
+        },
+        "legende": {
+          "label": "LOTBO Legend",
+          "desc": "100 contributions"
+        }
+      },
+      "organisateur": {
+        "organisateur": {
+          "label": "Organizer",
+          "desc": "1st event"
+        },
+        "regulier": {
+          "label": "Regular",
+          "desc": "3 events"
+        },
+        "premium": {
+          "label": "Premium",
+          "desc": "10 events"
+        },
+        "vedette": {
+          "label": "Star",
+          "desc": "25 events"
+        },
+        "champion": {
+          "label": "Champion",
+          "desc": "50 events"
+        }
+      },
+      "anciennete": {
+        "mois1": {
+          "label": "1 month",
+          "message": "You are part of the adventure"
+        },
+        "mois3": {
+          "label": "3 months",
+          "message": "LOTBO grows with you"
+        },
+        "mois6": {
+          "label": "6 months",
+          "message": "6 months mapping the world"
+        },
+        "mois12": {
+          "label": "1 year",
+          "message": "One year. Thank you for being here from the start."
+        },
+        "mois24": {
+          "label": "2 years",
+          "message": "Builder from day one"
+        },
+        "mois60": {
+          "label": "5 years",
+          "message": "Living legend of LOTBO"
+        }
+      },
+      "speciaux": {
+        "pioneerScan": {
+          "label": "Scan & Publish Pioneer",
+          "desc": "First to use Scan & Publish"
+        },
+        "wikiContrib": {
+          "label": "Wiki Contributor",
+          "desc": "Wikimedia event on LOTBO"
+        }
+      }
     }
   },
   "consent": {

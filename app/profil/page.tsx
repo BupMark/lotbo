@@ -14,29 +14,29 @@ import { useLangue } from '../../lib/useLangue'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
-  { id: 'decouvreur', emoji: '🌱', label: 'Découvreur', seuil: 1, desc: '1re contribution' },
-  { id: 'actif', emoji: '🔥', label: 'Actif', seuil: 5, desc: '5 contributions' },
-  { id: 'contributeur', emoji: '⭐', label: 'Engagé', seuil: 10, desc: '10 contributions' },
-  { id: 'top_contributeur', emoji: '🏅', label: 'Top Contributeur', seuil: 25, desc: '25 contributions' },
-  { id: 'elite', emoji: '🥇', label: 'Élite', seuil: 50, desc: '50 contributions' },
-  { id: 'legende', emoji: '👑', label: 'Légende LOTBO', seuil: 100, desc: '100 contributions' },
+  { id: 'decouvreur',       emoji: '🌱', seuil: 1   },
+  { id: 'actif',            emoji: '🔥', seuil: 5   },
+  { id: 'contributeur',     emoji: '⭐', seuil: 10  },
+  { id: 'top_contributeur', emoji: '🏅', seuil: 25  },
+  { id: 'elite',            emoji: '🥇', seuil: 50  },
+  { id: 'legende',          emoji: '👑', seuil: 100 },
 ]
 
 const BADGES_ORGANISATEUR = [
-  { id: 'organisateur', emoji: '🎪', label: 'Organisateur', seuil: 1, desc: '1er événement' },
-  { id: 'regulier', emoji: '📅', label: 'Régulier', seuil: 3, desc: '3 événements' },
-  { id: 'premium', emoji: '💎', label: 'Premium', seuil: 10, desc: '10 événements' },
-  { id: 'vedette', emoji: '🌟', label: 'Vedette', seuil: 25, desc: '25 événements' },
-  { id: 'champion', emoji: '🏆', label: 'Champion', seuil: 50, desc: '50 événements' },
+  { id: 'organisateur', emoji: '🎪', seuil: 1  },
+  { id: 'regulier',     emoji: '📅', seuil: 3  },
+  { id: 'premium',      emoji: '💎', seuil: 10 },
+  { id: 'vedette',      emoji: '🌟', seuil: 25 },
+  { id: 'champion',     emoji: '🏆', seuil: 50 },
 ]
 
 const PALIERS_ANCIENNETE = [
-  { mois: 1,  badge: '🌱', label: '1 mois',  message: "Tu fais partie de l'aventure" },
-  { mois: 3,  badge: '🔥', label: '3 mois',  message: 'LOTBO grandit avec toi' },
-  { mois: 6,  badge: '⭐', label: '6 mois',  message: '6 mois à cartographier le monde' },
-  { mois: 12, badge: '🏅', label: '1 an',    message: "Un an. Merci d'être là depuis le début." },
-  { mois: 24, badge: '🥇', label: '2 ans',   message: 'Bâtisseur de la première heure' },
-  { mois: 60, badge: '👑', label: '5 ans',   message: 'Légende vivante de LOTBO' },
+  { id: 'mois1',  mois: 1,  badge: '🌱' },
+  { id: 'mois3',  mois: 3,  badge: '🔥' },
+  { id: 'mois6',  mois: 6,  badge: '⭐' },
+  { id: 'mois12', mois: 12, badge: '🏅' },
+  { id: 'mois24', mois: 24, badge: '🥇' },
+  { id: 'mois60', mois: 60, badge: '👑' },
 ]
 
 function getBadgeActuel(nb: number, badges: typeof BADGES_CONTRIBUTEUR) {
@@ -396,7 +396,7 @@ function ProfilInner() {
                     {(rolesActifs.includes('contributeur') && !rolesActifs.includes('contributeur_terrain')) && profile?.charte_acceptee && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.engage}</span>}
                     {rolesActifs.includes('ambassadeur') && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.ambassadeur}</span>}
                     {(rolesActifs.includes('organisateur') || nbOrga > 0) && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.organisateur}</span>}
-                    {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {badgeContribActuel.label}</span>}
+                    {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {t.profil.badges.contributeur[badgeContribActuel.id as keyof typeof t.profil.badges.contributeur]?.label ?? badgeContribActuel.id}</span>}
                   </div>
                 </div>
               </div>
@@ -606,7 +606,7 @@ function ProfilInner() {
 
                 {/* Badges contributeur */}
                 <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
-                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>⭐ Badges Engagé</h3>
+                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>{t.profil.badges.titreEngage}</h3>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{nbContrib} contribution{nbContrib > 1 ? 's' : ''} repérée{nbContrib > 1 ? 's' : ''}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                     {BADGES_CONTRIBUTEUR.map(b => {
@@ -619,10 +619,10 @@ function ProfilInner() {
                           border: obtenu ? '1px solid rgba(212,168,32,0.4)' : '1px solid #2a2a2a',
                           opacity: obtenu ? 1 : 0.4,
                         }}>
-                          <p style={{ color: obtenu ? '#D4A820' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{b.label}</p>
-<p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{b.desc}</p>
+                          <p style={{ color: obtenu ? '#D4A820' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.label ?? b.id}</p>
+<p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.desc ?? ''}</p>
 {obtenu && (
-                            <button onClick={() => setBadgeSelectionne(b)} style={{ background: 'rgba(200,67,26,0.12)', border: 'none', borderRadius: 6, padding: '3px 8px', color: '#C8431A', fontSize: 10, cursor: 'pointer', fontWeight: 'bold', marginTop: 2 }}>
+                            <button onClick={() => setBadgeSelectionne({ id: b.id, emoji: b.emoji, label: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.label ?? b.id, desc: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.desc ?? '' })} style={{ background: 'rgba(200,67,26,0.12)', border: 'none', borderRadius: 6, padding: '3px 8px', color: '#C8431A', fontSize: 10, cursor: 'pointer', fontWeight: 'bold', marginTop: 2 }}>
                               🎨
                             </button>
                           )}
@@ -633,7 +633,7 @@ function ProfilInner() {
                   {prochainBadgeContrib && (
                     <div style={{ marginTop: 16, background: 'rgba(212,168,32,0.06)', borderRadius: 10, padding: '12px 14px' }}>
                       <p style={{ color: '#D4A820', fontSize: 12, marginBottom: 6 }}>
-                        Prochain badge : {prochainBadgeContrib.emoji} {prochainBadgeContrib.label}
+                        {t.profil.badges.prochainBadge} : {prochainBadgeContrib.emoji} {t.profil.badges.contributeur[prochainBadgeContrib.id as keyof typeof t.profil.badges.contributeur]?.label ?? prochainBadgeContrib.id}
                       </p>
                       <div style={{ background: 'rgba(26,20,16,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
                         <div style={{
@@ -643,7 +643,7 @@ function ProfilInner() {
                         }} />
                       </div>
                       <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
-                        {nbContrib} / {prochainBadgeContrib.seuil} — encore {prochainBadgeContrib.seuil - nbContrib} contribution{prochainBadgeContrib.seuil - nbContrib > 1 ? 's' : ''}
+                        {nbContrib} / {prochainBadgeContrib.seuil} — {prochainBadgeContrib.seuil - nbContrib > 1 ? t.profil.badges.encoreContributionsPluriel.replace('{n}', String(prochainBadgeContrib.seuil - nbContrib)) : t.profil.badges.encoreContributions.replace('{n}', String(prochainBadgeContrib.seuil - nbContrib))}
                       </p>
                     </div>
                   )}
@@ -651,7 +651,7 @@ function ProfilInner() {
 
                 {/* Badges organisateur */}
                 <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
-                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>🎪 Badges Organisateur</h3>
+                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>{t.profil.badges.titreOrganisateur}</h3>
                   <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{nbApprouves} événement{nbApprouves > 1 ? 's' : ''} approuvé{nbApprouves > 1 ? 's' : ''}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                     {BADGES_ORGANISATEUR.map(b => {
@@ -665,8 +665,8 @@ function ProfilInner() {
                           opacity: obtenu ? 1 : 0.4,
                         }}>
                           <span style={{ fontSize: 28 }}>{b.emoji}</span>
-                          <p style={{ color: obtenu ? '#C8431A' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{b.label}</p>
-                          <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{b.desc}</p>
+                          <p style={{ color: obtenu ? '#C8431A' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.label ?? b.id}</p>
+                          <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.desc ?? ''}</p>
                         </div>
                       )
                     })}
@@ -674,7 +674,7 @@ function ProfilInner() {
                   {prochainBadgeOrga && (
                     <div style={{ marginTop: 16, background: 'rgba(200,67,26,0.06)', borderRadius: 10, padding: '12px 14px' }}>
                       <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 6 }}>
-                        Prochain badge : {prochainBadgeOrga.emoji} {prochainBadgeOrga.label}
+                        {t.profil.badges.prochainBadge} : {prochainBadgeOrga.emoji} {t.profil.badges.organisateur[prochainBadgeOrga.id as keyof typeof t.profil.badges.organisateur]?.label ?? prochainBadgeOrga.id}
                       </p>
                       <div style={{ background: 'rgba(26,20,16,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
                         <div style={{
@@ -684,7 +684,7 @@ function ProfilInner() {
                         }} />
                       </div>
                       <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
-                        {nbApprouves} / {prochainBadgeOrga.seuil} — encore {prochainBadgeOrga.seuil - nbApprouves} événement{prochainBadgeOrga.seuil - nbApprouves > 1 ? 's' : ''}
+                        {nbApprouves} / {prochainBadgeOrga.seuil} — {prochainBadgeOrga.seuil - nbApprouves > 1 ? t.profil.badges.encoreEvenementsPluriel.replace('{n}', String(prochainBadgeOrga.seuil - nbApprouves)) : t.profil.badges.encoreEvenements.replace('{n}', String(prochainBadgeOrga.seuil - nbApprouves))}
                       </p>
                     </div>
                   )}
@@ -693,10 +693,10 @@ function ProfilInner() {
                 {/* Badges spéciaux */}
                 {(hasPioneerScan || hasWikiBadge) && (
                   <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
-                    <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>✨ Badges Spéciaux</h3>
+                    <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 16 }}>{t.profil.badges.titreSpeciaux}</h3>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                       {hasPioneerScan && (() => {
-                        const b = { id: 'pioneer_scan', emoji: '📸', label: 'Pioneer Scan & Publie', desc: '1er scan publié' }
+                        const b = { id: 'pioneer_scan', emoji: '📸', label: t.profil.badges.speciaux.pioneerScan.label, desc: t.profil.badges.speciaux.pioneerScan.desc }
                         return (
                           <div key="pioneer_scan" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 16px', borderRadius: 12, minWidth: 80, background: 'rgba(212,168,32,0.12)', border: '1px solid rgba(212,168,32,0.4)' }}>
                             <span style={{ fontSize: 28 }}>{b.emoji}</span>
@@ -707,7 +707,7 @@ function ProfilInner() {
                         )
                       })()}
                       {hasWikiBadge && (() => {
-                        const b = { id: 'contributeur_wikimedia', emoji: '🌐', label: 'Contributeur Wikimedia', desc: 'Événement Wikimedia approuvé' }
+                        const b = { id: 'contributeur_wikimedia', emoji: '🌐', label: t.profil.badges.speciaux.wikiContrib.label, desc: t.profil.badges.speciaux.wikiContrib.desc }
                         return (
                           <div key="contributeur_wikimedia" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 16px', borderRadius: 12, minWidth: 80, background: 'rgba(45,158,107,0.12)', border: '1px solid rgba(45,158,107,0.4)' }}>
                             <span style={{ fontSize: 28 }}>{b.emoji}</span>
@@ -737,8 +737,8 @@ function ProfilInner() {
                           opacity: obtenu ? 1 : 0.4,
                         }}>
                           <span style={{ fontSize: 28 }}>{p.badge}</span>
-                          <p style={{ color: obtenu ? '#C8431A' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{p.label}</p>
-                          {obtenu && <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{p.message}</p>}
+                          <p style={{ color: obtenu ? '#C8431A' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{t.profil.badges.anciennete[p.id as keyof typeof t.profil.badges.anciennete]?.label ?? p.id}</p>
+                          {obtenu && <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{t.profil.badges.anciennete[p.id as keyof typeof t.profil.badges.anciennete]?.message ?? ''}</p>}
                         </div>
                       )
                     })}

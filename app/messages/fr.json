@@ -417,6 +417,100 @@
       "scanPublieDesc": "Résultat de tes soumissions Scan & Publie",
       "evenementModifie": "Modifications d'événements",
       "evenementModifieDesc": "Changements sur tes événements favoris"
+    },
+    "badges": {
+      "titreEngage": "⭐ Badges Engagé",
+      "titreOrganisateur": "🎪 Badges Organisateur",
+      "titreSpeciaux": "✨ Badges Spéciaux",
+      "prochainBadge": "Prochain badge",
+      "encoreContributions": "encore {n} contribution",
+      "encoreContributionsPluriel": "encore {n} contributions",
+      "encoreEvenements": "encore {n} événement",
+      "encoreEvenementsPluriel": "encore {n} événements",
+      "contributeur": {
+        "decouvreur": {
+          "label": "Découvreur",
+          "desc": "1re contribution"
+        },
+        "actif": {
+          "label": "Actif",
+          "desc": "5 contributions"
+        },
+        "engage": {
+          "label": "Engagé",
+          "desc": "10 contributions"
+        },
+        "top_contributeur": {
+          "label": "Top Contributeur",
+          "desc": "25 contributions"
+        },
+        "elite": {
+          "label": "Élite",
+          "desc": "50 contributions"
+        },
+        "legende": {
+          "label": "Légende LOTBO",
+          "desc": "100 contributions"
+        }
+      },
+      "organisateur": {
+        "organisateur": {
+          "label": "Organisateur",
+          "desc": "1er événement"
+        },
+        "regulier": {
+          "label": "Régulier",
+          "desc": "3 événements"
+        },
+        "premium": {
+          "label": "Premium",
+          "desc": "10 événements"
+        },
+        "vedette": {
+          "label": "Vedette",
+          "desc": "25 événements"
+        },
+        "champion": {
+          "label": "Champion",
+          "desc": "50 événements"
+        }
+      },
+      "anciennete": {
+        "mois1": {
+          "label": "1 mois",
+          "message": "Tu fais partie de l'aventure"
+        },
+        "mois3": {
+          "label": "3 mois",
+          "message": "LOTBO grandit avec toi"
+        },
+        "mois6": {
+          "label": "6 mois",
+          "message": "6 mois à cartographier le monde"
+        },
+        "mois12": {
+          "label": "1 an",
+          "message": "Un an. Merci d'être là depuis le début."
+        },
+        "mois24": {
+          "label": "2 ans",
+          "message": "Bâtisseur de la première heure"
+        },
+        "mois60": {
+          "label": "5 ans",
+          "message": "Légende vivante de LOTBO"
+        }
+      },
+      "speciaux": {
+        "pioneerScan": {
+          "label": "Pioneer Scan & Publie",
+          "desc": "Premier à utiliser Scan & Publie"
+        },
+        "wikiContrib": {
+          "label": "Contributeur Wiki",
+          "desc": "Événement Wikimedia sur LOTBO"
+        }
+      }
     }
   },
   "consent": {

@@ -417,6 +417,100 @@
       "scanPublieDesc": "Rezilta soumisyon Scan & Pibliye ou yo",
       "evenementModifie": "Chanjman evènman",
       "evenementModifieDesc": "Chanjman sou evènman favori ou yo"
+    },
+    "badges": {
+      "titreEngage": "⭐ Badj Kontribitè",
+      "titreOrganisateur": "🎪 Badj Òganizatè",
+      "titreSpeciaux": "✨ Badj Espesyal",
+      "prochainBadge": "Pwochen badj",
+      "encoreContributions": "ankò {n} kontribisyon",
+      "encoreContributionsPluriel": "ankò {n} kontribisyon",
+      "encoreEvenements": "ankò {n} evènman",
+      "encoreEvenementsPluriel": "ankò {n} evènman",
+      "contributeur": {
+        "decouvreur": {
+          "label": "Eksplorè",
+          "desc": "1ye kontribisyon"
+        },
+        "actif": {
+          "label": "Aktif",
+          "desc": "5 kontribisyon"
+        },
+        "engage": {
+          "label": "Angaje",
+          "desc": "10 kontribisyon"
+        },
+        "top_contributeur": {
+          "label": "Top Kontribitè",
+          "desc": "25 kontribisyon"
+        },
+        "elite": {
+          "label": "Elit",
+          "desc": "50 kontribisyon"
+        },
+        "legende": {
+          "label": "Lejann LOTBO",
+          "desc": "100 kontribisyon"
+        }
+      },
+      "organisateur": {
+        "organisateur": {
+          "label": "Òganizatè",
+          "desc": "1ye evènman"
+        },
+        "regulier": {
+          "label": "Regilye",
+          "desc": "3 evènman"
+        },
+        "premium": {
+          "label": "Premium",
+          "desc": "10 evènman"
+        },
+        "vedette": {
+          "label": "Vedèt",
+          "desc": "25 evènman"
+        },
+        "champion": {
+          "label": "Chanpyon",
+          "desc": "50 evènman"
+        }
+      },
+      "anciennete": {
+        "mois1": {
+          "label": "1 mwa",
+          "message": "Ou fè pati avanti a"
+        },
+        "mois3": {
+          "label": "3 mwa",
+          "message": "LOTBO grandi avèk ou"
+        },
+        "mois6": {
+          "label": "6 mwa",
+          "message": "6 mwa kap kartografye mond lan"
+        },
+        "mois12": {
+          "label": "1 an",
+          "message": "Yon an. Mèsi dèske ou la depi kòmansman."
+        },
+        "mois24": {
+          "label": "2 an",
+          "message": "Batisey depi premye jou a"
+        },
+        "mois60": {
+          "label": "5 an",
+          "message": "Lejann vivan LOTBO"
+        }
+      },
+      "speciaux": {
+        "pioneerScan": {
+          "label": "Pyonye Scan & Pibliye",
+          "desc": "Premye moun ki itilize Scan & Pibliye"
+        },
+        "wikiContrib": {
+          "label": "Kontribitè Wiki",
+          "desc": "Evènman Wikimedia sou LOTBO"
+        }
+      }
     }
   },
   "consent": {
