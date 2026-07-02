@@ -58,6 +58,8 @@ export default function PageOrganisation() {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [coverUrl, setCoverUrl]         = useState<string | null>(null)
   const [coverPosition, setCoverPosition] = useState<'top' | 'center' | 'bottom'>('center')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoUrl, setLogoUrl]           = useState<string | null>(null)
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -86,6 +88,7 @@ export default function PageOrganisation() {
 
   useEffect(() => {
     if (org?.cover_url) setCoverUrl(org.cover_url)
+    if (org?.logo_url) setLogoUrl(org.logo_url)
   }, [org])
 
   useEffect(() => {
@@ -120,8 +123,6 @@ export default function PageOrganisation() {
     }
 
     setOrg(orgData as Organisation)
-
-    const aujourd_hui = new Date().toISOString().split('T')[0]
 
     const [{ data: evData }, { count: followCount }] = await Promise.all([
       supabase
@@ -184,10 +185,40 @@ export default function PageOrganisation() {
         .update({ cover_url: publicUrl })
         .eq('id', org.id)
       setCoverUrl(publicUrl)
+      setOrg(prev => (prev ? { ...prev, cover_url: publicUrl } : prev))
     } catch (err) {
       console.error('Erreur upload cover:', err)
     } finally {
       setUploadingCover(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !org) return
+    setUploadingLogo(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${org.id}/logo.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('logos-organisations')
+        .upload(path, file, { upsert: true })
+      if (upErr) throw upErr
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos-organisations')
+        .getPublicUrl(path)
+      await supabase
+        .from('organisations')
+        .update({ logo_url: publicUrl })
+        .eq('id', org.id)
+      setLogoUrl(publicUrl)
+      setOrg(prev => (prev ? { ...prev, logo_url: publicUrl } : prev))
+    } catch (err) {
+      console.error('Erreur upload logo:', err)
+    } finally {
+      setUploadingLogo(false)
+      e.target.value = ''
     }
   }
 
@@ -217,47 +248,106 @@ export default function PageOrganisation() {
   if (!org) return null
 
   const isOwner = userId === org.owner_id || monRole === 'owner'
+  const peutGerer = isOwner || monRole === 'admin' || monRole === 'editeur'
+  const avatarSize = isDesktop ? 112 : 84
+  const coverHeight = isDesktop ? 220 : 140
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
 
-      {/* Cover photo — placeholder en attendant FEAT-ORG-COVER-1 */}
-      <div style={{
-        width: '100%',
-        height: isDesktop ? 220 : 140,
-        background: 'linear-gradient(135deg, #1A1410 0%, #2C1810 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Futur : cover_url de l'org ici */}
+      {/* Cover + logo — bloc unique, style Facebook (le logo chevauche le cover) */}
+      <div style={{ position: 'relative', marginBottom: avatarSize / 2 + 16 }}>
+
         <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: coverUrl ? `url(${coverUrl})` : 'url(https://images.unsplash.com/photo-1511578314322-379afb476865?w=1400&q=80)',
-          backgroundSize: 'cover', backgroundPosition: coverPosition,
-          opacity: coverUrl ? 0.85 : 0.2,
-        }} />
-        {/* Logo flottant sur le cover — desktop seulement */}
-        {isDesktop && org.logo_url && (
+          width: '100%',
+          height: coverHeight,
+          background: 'linear-gradient(135deg, #1A1410 0%, #2C1810 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
           <div style={{
-            position: 'absolute', bottom: 16, left: 24,
-            width: 96, height: 96, borderRadius: '50%',
-            border: '4px solid #F7F2E8',
-            overflow: 'hidden', background: 'white',
-            zIndex: 2,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            position: 'absolute', inset: 0,
+            backgroundImage: coverUrl ? `url(${coverUrl})` : 'url(https://images.unsplash.com/photo-1511578314322-379afb476865?w=1400&q=80)',
+            backgroundSize: 'cover', backgroundPosition: coverPosition,
+            opacity: coverUrl ? 0.85 : 0.2,
+          }} />
+
+          {isOwner && (
+            <label style={{
+              position: 'absolute', top: 12, right: 12, zIndex: 3,
+              width: 34, height: 34, borderRadius: '50%',
+              background: 'rgba(26,20,16,0.55)', backdropFilter: 'blur(4px)',
+              border: '1.5px solid rgba(247,242,232,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: uploadingCover ? 'default' : 'pointer', fontSize: 15,
+            }}>
+              {uploadingCover ? '⏳' : '🖼️'}
+              <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleUploadCover} disabled={uploadingCover} />
+            </label>
+          )}
+
+          {isOwner && coverUrl && (
+            <select
+              value={coverPosition}
+              onChange={e => setCoverPosition(e.target.value as 'top' | 'center' | 'bottom')}
+              style={{
+                position: 'absolute', top: 12, right: 54, zIndex: 3,
+                background: 'rgba(26,20,16,0.55)', backdropFilter: 'blur(4px)',
+                color: 'rgba(247,242,232,0.85)',
+                border: '1.5px solid rgba(247,242,232,0.4)',
+                borderRadius: 999, padding: '7px 10px',
+                fontSize: 11, cursor: 'pointer',
+              }}
+            >
+              <option value="top">Haut</option>
+              <option value="center">Centre</option>
+              <option value="bottom">Bas</option>
+            </select>
+          )}
+        </div>
+
+        {/* Avatar chevauchant le bas du cover — visible mobile + desktop */}
+        <div style={{
+          position: 'absolute', left: isDesktop ? 32 : 16, bottom: -avatarSize / 2,
+          width: avatarSize, height: avatarSize, zIndex: 4,
+        }}>
+          <div style={{
+            width: '100%', height: '100%', borderRadius: '50%',
+            border: '4px solid #F7F2E8', overflow: 'hidden',
+            background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <img src={org.logo_url} alt={org.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {logoUrl ? (
+              <img src={logoUrl} alt={org.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ fontSize: avatarSize * 0.32, fontWeight: 'bold', color: 'white', background: '#C8431A', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {getInitiales(org.nom)}
+              </span>
+            )}
           </div>
-        )}
+
+          {isOwner && (
+            <label style={{
+              position: 'absolute', bottom: 0, right: 0, zIndex: 5,
+              width: 30, height: 30, borderRadius: '50%',
+              background: '#C8431A', border: '2.5px solid #F7F2E8',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: uploadingLogo ? 'default' : 'pointer', fontSize: 13,
+            }}>
+              {uploadingLogo ? '⏳' : '📷'}
+              <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleUploadLogo} disabled={uploadingLogo} />
+            </label>
+          )}
+        </div>
       </div>
 
-      <div style={{ maxWidth: isDesktop ? 1100 : 640, margin: '0 auto', padding: isDesktop ? '48px 32px 80px' : '24px 16px 80px' }}>
+      <div style={{ maxWidth: isDesktop ? 1100 : 640, margin: '0 auto', padding: isDesktop ? '0 32px 80px' : '0 16px 80px' }}>
 
         <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'inline-block', marginBottom: 24 }}>
           ← Retour à la carte
         </a>
 
-        {(isOwner || canManage || monRole === 'admin' || monRole === 'editeur') && (
+        {peutGerer && (
           <div style={{
             display: 'flex', gap: 8, flexWrap: 'wrap',
             alignItems: 'center',
@@ -279,7 +369,7 @@ export default function PageOrganisation() {
                 ⚙️ Paramètres
               </a>
             )}
-            {(isOwner || monRole === 'admin' || monRole === 'editeur') && (
+            {peutGerer && (
               <a href="/ajouter" style={{
                 background: '#C8431A',
                 color: 'white',
@@ -290,36 +380,6 @@ export default function PageOrganisation() {
                 ➕ Ajouter un événement
               </a>
             )}
-            {isOwner && (
-              <label style={{
-                background: 'rgba(255,255,255,0.06)',
-                color: 'rgba(247,242,232,0.6)',
-                border: '1px dashed rgba(255,255,255,0.2)',
-                borderRadius: 999, padding: '7px 16px',
-                fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
-                marginLeft: 'auto',
-              }}>
-                {uploadingCover ? '⏳ Upload...' : '🖼️ Changer la cover'}
-                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleUploadCover} />
-              </label>
-            )}
-            {isOwner && coverUrl && (
-              <select
-                value={coverPosition}
-                onChange={e => setCoverPosition(e.target.value as 'top' | 'center' | 'bottom')}
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  color: 'rgba(247,242,232,0.6)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 999, padding: '7px 12px',
-                  fontSize: 12, cursor: 'pointer',
-                }}
-              >
-                <option value="top">Haut</option>
-                <option value="center">Centre</option>
-                <option value="bottom">Bas</option>
-              </select>
-            )}
           </div>
         )}
 
@@ -328,7 +388,6 @@ export default function PageOrganisation() {
           gridTemplateColumns: isDesktop ? '340px 1fr' : undefined,
           gap: isDesktop ? 32 : 0,
           alignItems: 'start',
-          marginTop: isDesktop ? 48 : 0,
         }}>
 
           {/* Colonne gauche — Infos org (sticky) */}
@@ -336,50 +395,30 @@ export default function PageOrganisation() {
 
             {/* Carte organisation */}
             <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
 
-                {/* Logo — masqué sur desktop car affiché sur le cover */}
-                {!isDesktop && (
-                  org.logo_url ? (
-                    <img src={org.logo_url} alt={org.nom} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #E8E0D0' }} />
-                  ) : (
-                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 26, fontWeight: 'bold', color: 'white' }}>
-                      {getInitiales(org.nom)}
-                    </div>
-                  )
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
+                <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>{org.nom}</h1>
+                {org.verified && (
+                  <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
+                    ✅ Organisation vérifiée
+                  </span>
                 )}
-                {isDesktop && !org.logo_url && (
-                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#C8431A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 26, fontWeight: 'bold', color: 'white' }}>
-                    {getInitiales(org.nom)}
-                  </div>
-                )}
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
-                    <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>{org.nom}</h1>
-                    {org.verified && (
-                      <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
-                        ✅ Organisation vérifiée
-                      </span>
-                    )}
-                  </div>
-                  {org.slogan && (
-                    <p style={{ color: '#8C5A40', fontSize: 13, fontStyle: 'italic', marginBottom: 6 }}>{org.slogan}</p>
-                  )}
-                  {(org.ville || org.pays) && (
-                    <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 6 }}>
-                      📍 {[org.ville, org.pays].filter(Boolean).join(', ')}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: 16 }}>
-                    <span style={{ color: '#8C5A40', fontSize: 12 }}>
-                      <strong style={{ color: '#1A1410' }}>{evenements.length}</strong> événements à venir
-                    </span>
-                    <span style={{ color: '#8C5A40', fontSize: 12 }}>
-                      <strong style={{ color: '#1A1410' }}>{nbFollowers}</strong> membres
-                    </span>
-                  </div>
-                </div>
+              </div>
+              {org.slogan && (
+                <p style={{ color: '#8C5A40', fontSize: 13, fontStyle: 'italic', marginBottom: 6 }}>{org.slogan}</p>
+              )}
+              {(org.ville || org.pays) && (
+                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 6 }}>
+                  📍 {[org.ville, org.pays].filter(Boolean).join(', ')}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                <span style={{ color: '#8C5A40', fontSize: 12 }}>
+                  <strong style={{ color: '#1A1410' }}>{evenements.length}</strong> événements à venir
+                </span>
+                <span style={{ color: '#8C5A40', fontSize: 12 }}>
+                  <strong style={{ color: '#1A1410' }}>{nbFollowers}</strong> membres
+                </span>
               </div>
 
               {org.description && (
@@ -388,7 +427,7 @@ export default function PageOrganisation() {
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {!isOwner && monRole !== 'admin' && monRole !== 'editeur' && (
+                {!peutGerer && (
                   <button
                     onClick={toggleSuivi}
                     disabled={suiviLoading}
@@ -442,7 +481,6 @@ export default function PageOrganisation() {
           {/* Colonne droite — Événements */}
           <div>
 
-            {/* Événements à venir */}
             <h2 style={{ fontSize: 11, fontWeight: 'bold', color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               Événements à venir
             </h2>
