@@ -170,7 +170,7 @@ function dessinerLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size:
 }
 
 interface Props {
-  evenement: { titre: string; lieu: string; date: string; date_fin?: string; image_url?: string }
+  evenement: { id: string; titre: string; lieu: string; date: string; date_fin?: string; image_url?: string }
   expression: string
   photoProfil?: string | null
   onClose: () => void
@@ -713,14 +713,14 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
       const file = new File([blob], 'lotbo-carte.png', { type: 'image/png' })
       try {
         if (typeof window !== 'undefined' && 'share' in navigator && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title: evenement.titre, text: texteExpression + ' · ' + evenement.titre, files: [file] })
+          await navigator.share({ title: evenement.titre, text: `${texteExpression} · ${evenement.titre} — Découvre l'événement sur LOTBO : ${urlEvent}`, files: [file] })
         } else { telecharger() }
       } catch { telecharger() }
     }, 'image/png')
   }
 
-  const urlEvent = typeof window !== 'undefined' ? window.location.href : ''
-  const textePartage = encodeURIComponent(`${texteExpression} · ${evenement.titre} — ${urlEvent}`)
+  const urlEvent = `https://app.lotbo.app/e/${evenement.id}?utm_source=share&utm_medium=carte&utm_campaign=je_serai_la`
+  const textePartage = encodeURIComponent(`${texteExpression} · ${evenement.titre} — Découvre l'événement sur LOTBO : ${urlEvent}`)
   const { W: cW, H: cH } = getDimensions()
   const aspectRatio = `${cW}/${cH}`
   const isPaysage = disposition === 'paysage'

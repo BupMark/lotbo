@@ -848,7 +848,7 @@ export default function EvenementPage() {
 
       {carteVisuelleouverte && (
         <CarteVisuelle
-          evenement={{ titre: ev.titre, lieu: ev.lieu, date: ev.date, date_fin: ev.date_fin ?? undefined, image_url: ev.image_url ?? undefined }}
+          evenement={{ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, date_fin: ev.date_fin ?? undefined, image_url: ev.image_url ?? undefined }}
           expression={expressionChoisie}
           onClose={() => setCarteVisuelleouverte(false)}
         />
