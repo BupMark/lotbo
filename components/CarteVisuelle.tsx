@@ -212,7 +212,10 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
   const photoFondPaysage = photoFond || photoProfil || evenement.image_url || null
 
+  const dejaInitialise = useRef(false)
   useEffect(() => {
+    if (dejaInitialise.current) return
+    dejaInitialise.current = true
     if (!evenement.image_url && !photoProfil) { setDisposition('centree'); return }
     if (evenement.image_url) {
       const img = new Image()
@@ -223,7 +226,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
       }
       img.src = evenement.image_url
     }
-  }, [evenement.image_url, photoProfil])
+  }, [evenement.image_url])
 
   useEffect(() => {
     if (etape !== 'carte') return
@@ -307,7 +310,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
     dessinerLogo(ctx, 60, 100, 46, textColor)
     const avatarX = W / 2, avatarY = 330, avatarR = 88
-    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoFond || photoProfil, initiales)
     ctx.font = 'bold 46px system-ui, sans-serif'
     ctx.fillStyle = exprColor; ctx.textAlign = 'center'
     ctx.fillText(texteExpression, W / 2, avatarY + avatarR + 70)
@@ -339,7 +342,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
     const exprColor = getExprColor(bg, false)
-    const photoSource = photoProfil || evenement.image_url || null
+    const photoSource = photoFond || photoProfil || evenement.image_url || null
     await dessinerZonePhotoAjustable(ctx, 0, 0, photoW, H, photoSource, '#C8431A', offsetX, offsetY, zoom)
     if (photoSource) { ctx.fillStyle = 'rgba(26,20,16,0.15)'; ctx.fillRect(0, 0, photoW, H) }
     ctx.fillStyle = bg; ctx.fillRect(photoW, 0, W - photoW, H)
@@ -416,7 +419,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     const bg = fondActif.bg
     const textColor = getTextColor(bg)
 
-    await dessinerZonePhotoAjustable(ctx, 0, 0, W, photoH, photoProfil || evenement.image_url || null, '#1A1410', offsetX, offsetY, zoom)
+    await dessinerZonePhotoAjustable(ctx, 0, 0, W, photoH, photoFond || photoProfil || evenement.image_url || null, '#1A1410', offsetX, offsetY, zoom)
 
     const grad = ctx.createLinearGradient(0, photoH * 0.5, 0, photoH)
     grad.addColorStop(0, 'rgba(26,20,16,0)')
@@ -467,7 +470,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
 
   // ── STORY IMMERSIVE ───────────────────────────────────────────────────────
   const dessinerStory = async (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    await dessinerZonePhotoAjustable(ctx, 0, 0, W, H, photoProfil || evenement.image_url || null, '#1A1410', offsetX, offsetY, zoom)
+    await dessinerZonePhotoAjustable(ctx, 0, 0, W, H, photoFond || photoProfil || evenement.image_url || null, '#1A1410', offsetX, offsetY, zoom)
 
     const grad = ctx.createLinearGradient(0, H * 0.35, 0, H)
     grad.addColorStop(0, 'rgba(26,20,16,0)')
@@ -544,7 +547,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ctx.fillText(texteExpression, 104, 230)
 
     const avatarX = W / 2, avatarY = 490, avatarR = 180
-    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoFond || photoProfil, initiales)
 
     ctx.font = 'bold 88px Georgia, serif'
     ctx.fillStyle = textColor
@@ -633,7 +636,7 @@ export default function CarteVisuelle({ evenement, expression: expressionInitial
     ctx.textAlign = 'left'
 
     const avatarX = 220, avatarY = H / 2 - 20, avatarR = 150
-    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoProfil, initiales)
+    await dessinerAvatar(ctx, avatarX, avatarY, avatarR, photoFond || photoProfil, initiales)
 
     ctx.font = 'bold 72px Georgia, serif'
     ctx.fillStyle = '#F7F2E8'
