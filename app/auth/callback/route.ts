@@ -75,6 +75,40 @@ async function accepterInvitation(userId: string, token: string) {
   }
 }
 
+// ── Helper : envoyer email de bienvenue ───────────────────────────────────────
+async function envoyerEmailBienvenue(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string,
+  email: string,
+  nom: string,
+  langue: string | null
+) {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notify-welcome`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.INTERNAL_API_SECRET!,
+      },
+      body: JSON.stringify({ email, nom, langue: langue || 'fr' }),
+    })
+
+    if (!res.ok) {
+      console.error('[Welcome] ❌ Envoi échoué:', await res.text())
+      return
+    }
+
+    await supabase
+      .from('profiles')
+      .update({ welcome_email_sent: true, welcome_email_sent_at: new Date().toISOString() })
+      .eq('id', userId)
+
+    console.log(`[Welcome] ✅ Email de bienvenue envoyé à ${email}`)
+  } catch (error) {
+    console.error('[Welcome] ❌ Erreur envoi bienvenue:', error)
+  }
+}
+
 // ── Helper partagé : créer profil + badge + redirect ─────────────────────────
 async function traiterSession(
   supabase: ReturnType<typeof createServerClient>,
@@ -85,7 +119,7 @@ async function traiterSession(
 ) {
   const { data: profil } = await supabase
     .from('profiles')
-    .select('id, onboarding_complete, consent_cgu')
+    .select('id, onboarding_complete, consent_cgu, welcome_email_sent, langue_preference, nom')
     .eq('id', userId)
     .single()
 
@@ -108,6 +142,17 @@ async function traiterSession(
 
   if (invitation) {
     await accepterInvitation(userId, invitation)
+  }
+
+  // FEAT-EMAIL-BIENVENUE-1 — envoi unique, peu importe le chemin d'inscription
+  if (userEmail && !profil?.welcome_email_sent) {
+    await envoyerEmailBienvenue(
+      supabase,
+      userId,
+      userEmail,
+      profil?.nom || 'Membre LOTBO',
+      profil?.langue_preference ?? null
+    )
   }
 
   // FEAT-ONBOARDING-CONSENT-1 — Interstitiel OAuth si consentement absent
