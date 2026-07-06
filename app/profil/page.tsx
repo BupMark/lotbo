@@ -519,7 +519,7 @@ function ProfilInner() {
           </div>
 
           {/* ── COLONNE DROITE — Onglets + Contenu ── */}
-          <div>
+          <div style={{ minWidth: 0 }}>
 
             {/* Onglets */}
             <div style={{ display: 'flex', gap: 4, marginBottom: 20, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -558,7 +558,7 @@ function ProfilInner() {
                     {evenements.map(ev => {
                       const s = statutLabel(ev.statut)
                       return (
-                        <div key={ev.id} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <a key={ev.id} href={'/evenement/' + ev.id} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-start', textDecoration: 'none', color: 'inherit' }}>
                           <img src={getEventImage(ev.image_url, ev.categorie)} alt={ev.titre} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={(e) => { if (ev.image_url) { (e.target as HTMLImageElement).style.display = 'none'; return; } const img = e.target as HTMLImageElement; const fb = getEventImage(null, ev.categorie); if (img.src !== fb) img.src = fb; else img.style.display = 'none' }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
@@ -570,8 +570,7 @@ function ProfilInner() {
                               {ev.soumis_en_tant_que === 'contributeur' && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>{t.profil.evenements.repere}</span>}
                             </div>
                           </div>
-                          <a href={'/evenement/' + ev.id} style={{ color: '#8C5A40', fontSize: 12, textDecoration: 'none', flexShrink: 0, padding: '4px 8px' }}>{t.profil.evenements.voir}</a>
-                        </div>
+                        </a>
                       )
                     })}
                   </div>
