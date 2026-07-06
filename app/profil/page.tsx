@@ -335,7 +335,7 @@ function ProfilInner() {
         {/* ── Layout 2 colonnes desktop ── */}
         <div style={{
           display: isDesktop ? 'grid' : 'block',
-          gridTemplateColumns: isDesktop ? '340px 1fr' : undefined,
+          gridTemplateColumns: isDesktop ? '340px minmax(0, 1fr)' : undefined,
           gap: isDesktop ? 32 : 0,
           alignItems: 'start',
         }}>
