@@ -540,11 +540,16 @@ export default function EvenementPage() {
             .catch(() => {})
         }
         if (data) {
+          const aujourd_hui = new Date().toISOString().split('T')[0]
           const { data: sims } = await supabase.from('evenements').select('*')
-            .eq('categorie', data.categorie).eq('statut', 'approuve').neq('id', id).limit(3)
+            .eq('categorie', data.categorie)
+            .eq('statut', 'approuve')
+            .neq('id', id)
+            .gte('date', aujourd_hui)
+            .order('date', { ascending: true })
+            .limit(3)
           setSimilaires((sims as Evenement[]) || [])
           if (data?.est_recurrent) {
-            const aujourd_hui = new Date().toISOString().split('T')[0]
             const { data: occ } = await supabase.from('evenements')
               .select('id, titre, date, heure_debut, statut')
               .eq('parent_id', data.id)
@@ -559,7 +564,10 @@ export default function EvenementPage() {
               .select('id, titre, lieu, date, categorie, image_url')
               .eq('id', data.parent_id)
               .single()
-            if (parent) setSimilaires([parent as Evenement])
+            if (parent) {
+              const autresSimilaires = ((sims as Evenement[]) || []).filter(s => s.id !== parent.id)
+              setSimilaires([parent as Evenement, ...autresSimilaires].slice(0, 3))
+            }
           }
           const { count } = await supabase.from('participations')
             .select('*', { count: 'exact', head: true }).eq('evenement_id', id)
