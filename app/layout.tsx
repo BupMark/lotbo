@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import CookieBanner from "../components/CookieBanner";
+import StoreBanner from "../components/StoreBanner";
 import AnalyticsBanner from "../components/AnalyticsBanner";
 import Preloader from "../components/Preloader";
 import TabBarGlobal from "../components/TabBarGlobal";
@@ -55,6 +56,7 @@ export default function RootLayout({
         <Preloader />
         {children}
         <TabBarGlobal />
+        <StoreBanner />
         <CookieBanner />
         <AnalyticsBanner />
         <Analytics />
