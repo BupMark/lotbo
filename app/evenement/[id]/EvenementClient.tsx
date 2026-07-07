@@ -31,16 +31,29 @@ function adresseIncomplete(ev: { latitude?: number | null; longitude?: number | 
   return !ev.latitude || !ev.longitude
 }
 
-function afficherHeureFuseau(heure: string, fuseauOrganisateur: string): string {
+function afficherHeureFuseau(heure: string, fuseauOrganisateur: string, dateEvenement?: string): string {
   if (!heure) return heure
   try {
     const [h, m] = heure.split(':').map(Number)
-    const now = new Date()
-    const dateRef = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), h, m))
-    const heureOrga = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: fuseauOrganisateur, hour12: false }).format(dateRef)
+    // heureOrga = la valeur saisie telle quelle, aucune conversion
+    // nécessaire puisque heure_debut est déjà l'heure locale de l'organisateur
+    const heureOrga = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+
     const fuseauVisiteur = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (fuseauVisiteur === fuseauOrganisateur) return heureOrga
-    const heureVisiteur = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: fuseauVisiteur, hour12: false }).format(dateRef)
+
+    // Convertir l'heure murale (fuseauOrganisateur) en instant UTC réel,
+    // en tenant compte de la date de l'événement (heure d'été le cas échéant)
+    const baseDate = dateEvenement ? new Date(dateEvenement + 'T00:00:00') : new Date()
+    const [year, month, day] = [baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate()]
+    const utcGuess = new Date(Date.UTC(year, month, day, h, m))
+    const tzString = utcGuess.toLocaleString('en-US', { timeZone: fuseauOrganisateur })
+    const tzDate = new Date(tzString)
+    const offset = utcGuess.getTime() - tzDate.getTime()
+    const instantReel = new Date(utcGuess.getTime() + offset)
+
+    const heureVisiteur = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: fuseauVisiteur, hour12: false }).format(instantReel)
+
     if (heureOrga === heureVisiteur) return heureOrga
     return `${heureOrga} (heure locale) · Chez vous : ${heureVisiteur}`
   } catch { return heure }
@@ -1238,8 +1251,8 @@ export default function EvenementPage() {
             {ev.heure_debut && (
               <p style={{ color: '#8C5A40', fontSize: 15 }}>
                 🕐 <span style={{ color: '#1A1410' }}>
-                  {afficherHeureFuseau(ev.heure_debut, ev.fuseau_organisateur || 'America/Port-au-Prince')}
-                  {ev.heure_fin ? ` → ${afficherHeureFuseau(ev.heure_fin, ev.fuseau_organisateur || 'America/Port-au-Prince')}` : ''}
+                  {afficherHeureFuseau(ev.heure_debut, ev.fuseau_organisateur || 'America/Port-au-Prince', ev.date)}
+                  {ev.heure_fin ? ` → ${afficherHeureFuseau(ev.heure_fin, ev.fuseau_organisateur || 'America/Port-au-Prince', ev.date)}` : ''}
                 </span>
               </p>
             )}
