@@ -321,6 +321,10 @@
       "organisateur": "🎪 Organizador",
       "enqueteurTerrain": "📍 Investigador de Campo"
     },
+    "enqueteur": {
+      "progressionCycle": "Progreso del ciclo",
+      "fichesTotalLabel": "envíos totales"
+    },
     "organisation": {
       "creer": "🏢 Crear una organización"
     },

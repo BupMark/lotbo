@@ -321,6 +321,10 @@
       "organisateur": "🎪 Organisateur",
       "enqueteurTerrain": "📍 Enquêteur Terrain"
     },
+    "enqueteur": {
+      "progressionCycle": "Progression du cycle",
+      "fichesTotalLabel": "fiches au total"
+    },
     "organisation": {
       "creer": "🏢 Créer une organisation"
     },

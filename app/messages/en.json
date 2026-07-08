@@ -321,6 +321,10 @@
       "organisateur": "🎪 Organizer",
       "enqueteurTerrain": "📍 Field Investigator"
     },
+    "enqueteur": {
+      "progressionCycle": "Cycle progress",
+      "fichesTotalLabel": "total submissions"
+    },
     "organisation": {
       "creer": "🏢 Create an organization"
     },

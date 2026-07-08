@@ -91,7 +91,7 @@ function ProfilInner() {
   const [annulantSuppression, setAnnulantSuppression] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
-  const [estEnqueteurActif, setEstEnqueteurActif] = useState(false)
+  const [enqueteurData, setEnqueteurData] = useState<{ ficheCycle: number, objectifFiches: number, ficheTotal: number } | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const { langue, setLangue } = useLangue()
@@ -119,11 +119,11 @@ function ProfilInner() {
 
       const { data: enqRow } = await supabase
         .from('enqueteurs')
-        .select('statut')
+        .select('fiches_cycle, objectif_fiches, fiches_total')
         .eq('user_id', data.session.user.id)
         .eq('statut', 'actif')
         .maybeSingle()
-      setEstEnqueteurActif(!!enqRow)
+      setEnqueteurData(enqRow ? { ficheCycle: enqRow.fiches_cycle, objectifFiches: enqRow.objectif_fiches, ficheTotal: enqRow.fiches_total } : null)
 
       // Points depuis DB uniquement — le recalcul depuis transactions appartient aux routes API (service role)
       const pointsReel = prof?.points_total || 0
@@ -406,8 +406,25 @@ function ProfilInner() {
                     {rolesActifs.includes('ambassadeur') && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.ambassadeur}</span>}
                     {(rolesActifs.includes('organisateur') || nbOrga > 0) && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.organisateur}</span>}
                     {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {t.profil.badges.contributeur[badgeContribActuel.id as keyof typeof t.profil.badges.contributeur]?.label ?? badgeContribActuel.id}</span>}
-                    {estEnqueteurActif && <span style={{ background: 'rgba(139,69,19,0.15)', color: '#8B4513', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.enqueteurTerrain}</span>}
+                    {!!enqueteurData && <span style={{ background: 'rgba(139,69,19,0.15)', color: '#8B4513', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.enqueteurTerrain}</span>}
                   </div>
+                  {enqueteurData && (
+                    <div style={{ marginTop: 16, background: 'rgba(139,69,19,0.06)', borderRadius: 10, padding: '12px 14px' }}>
+                      <p style={{ color: '#8B4513', fontSize: 12, marginBottom: 6 }}>
+                        {t.profil.enqueteur?.progressionCycle ?? 'Progression du cycle'} — {enqueteurData.ficheTotal} {t.profil.enqueteur?.fichesTotalLabel ?? 'fiches au total'}
+                      </p>
+                      <div style={{ background: 'rgba(26,20,16,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
+                        <div style={{
+                          background: '#8B4513', height: '100%', borderRadius: 999,
+                          width: `${Math.min(100, (enqueteurData.ficheCycle / enqueteurData.objectifFiches) * 100)}%`,
+                          transition: 'width 0.5s ease'
+                        }} />
+                      </div>
+                      <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
+                        {enqueteurData.ficheCycle} / {enqueteurData.objectifFiches}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
