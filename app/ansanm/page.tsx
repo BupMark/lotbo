@@ -10,12 +10,20 @@ interface Stats {
 
 export default function AnsanmPage() {
   const [stats, setStats] = useState<Stats | null>(null)
+  const [isDesktop, setIsDesktop] = useState(false)
 
   useEffect(() => {
     fetch('/api/stats')
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
   return (
@@ -29,7 +37,7 @@ export default function AnsanmPage() {
       padding: '40px 24px 96px',
       textAlign: 'center',
     }}>
-      <div style={{ maxWidth: 340, width: '100%' }}>
+      <div style={{ maxWidth: isDesktop ? 640 : 340, width: '100%' }}>
 
         <div style={{ fontSize: 48, marginBottom: 20 }}>🌍</div>
 
@@ -72,39 +80,25 @@ export default function AnsanmPage() {
               href="https://apps.apple.com/us/app/lotbo-local-events/id6779059022"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                flex: 1,
-                minWidth: 130,
-                textAlign: 'center',
-                background: '#1A1410',
-                color: '#F7F2E8',
-                borderRadius: 10,
-                padding: '10px 14px',
-                fontSize: 13,
-                fontWeight: 'bold',
-                textDecoration: 'none',
-              }}
+              style={{ flex: 1, minWidth: 130 }}
             >
-               App Store
+              <img
+                src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                alt="Télécharger sur l'App Store"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
             </a>
             <a
               href="https://play.google.com/store/apps/details?id=app.lotbo.app.twa"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                flex: 1,
-                minWidth: 130,
-                textAlign: 'center',
-                background: '#1A1410',
-                color: '#F7F2E8',
-                borderRadius: 10,
-                padding: '10px 14px',
-                fontSize: 13,
-                fontWeight: 'bold',
-                textDecoration: 'none',
-              }}
+              style={{ flex: 1, minWidth: 130 }}
             >
-              ▶ Google Play
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                alt="Disponible sur Google Play"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
             </a>
           </div>
         </div>
