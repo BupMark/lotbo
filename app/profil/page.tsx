@@ -91,6 +91,7 @@ function ProfilInner() {
   const [annulantSuppression, setAnnulantSuppression] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
+  const [estEnqueteurActif, setEstEnqueteurActif] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const { langue, setLangue } = useLangue()
@@ -115,6 +116,14 @@ function ProfilInner() {
       // roles_actifs optionnel — requiert migration DB
       const { data: raRow, error: raErr } = await supabase
         .from('profiles').select('roles_actifs').eq('id', data.session.user.id).single()
+
+      const { data: enqRow } = await supabase
+        .from('enqueteurs')
+        .select('statut')
+        .eq('user_id', data.session.user.id)
+        .eq('statut', 'actif')
+        .maybeSingle()
+      setEstEnqueteurActif(!!enqRow)
 
       // Points depuis DB uniquement — le recalcul depuis transactions appartient aux routes API (service role)
       const pointsReel = prof?.points_total || 0
@@ -397,6 +406,7 @@ function ProfilInner() {
                     {rolesActifs.includes('ambassadeur') && <span style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.ambassadeur}</span>}
                     {(rolesActifs.includes('organisateur') || nbOrga > 0) && <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.organisateur}</span>}
                     {badgeContribActuel && <span style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{badgeContribActuel.emoji} {t.profil.badges.contributeur[badgeContribActuel.id as keyof typeof t.profil.badges.contributeur]?.label ?? badgeContribActuel.id}</span>}
+                    {estEnqueteurActif && <span style={{ background: 'rgba(139,69,19,0.15)', color: '#8B4513', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>{t.profil.badgesRoles.enqueteurTerrain}</span>}
                   </div>
                 </div>
               </div>
