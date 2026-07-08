@@ -1,6 +1,23 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
+interface Stats {
+  total: number
+  villes: number
+  pays: number
+}
+
 export default function AnsanmPage() {
+  const [stats, setStats] = useState<Stats | null>(null)
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(() => {})
+  }, [])
+
   return (
     <main style={{
       minHeight: '100dvh',
@@ -27,6 +44,70 @@ export default function AnsanmPage() {
         }}>
           <span style={{ color: '#C8431A' }}>Ansanm</span> arrive.
         </h1>
+
+        <div style={{
+          background: 'white',
+          border: '1px solid #E8E0D0',
+          borderRadius: 16,
+          padding: '20px 24px',
+          textAlign: 'left',
+          marginBottom: 28,
+        }}>
+          <p style={{ fontSize: 14, color: '#1A1410', lineHeight: 1.6, marginBottom: 16 }}>
+            LOTBO est maintenant sur l'App Store et Google Play.{' '}
+            {stats ? (
+              <>
+                <strong style={{ color: '#C8431A' }}>{stats.total.toLocaleString('fr-FR')}</strong> événements ·{' '}
+                <strong style={{ color: '#C8431A' }}>{stats.villes.toLocaleString('fr-FR')}</strong> villes ·{' '}
+                <strong style={{ color: '#C8431A' }}>{stats.pays.toLocaleString('fr-FR')}</strong> pays.
+              </>
+            ) : (
+              'Chargement des statistiques…'
+            )}
+            {' '}Télécharge, partage, et ajoute les événements de ta ville. Ensemble, on couvre le monde. 🌍
+          </p>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a
+              href="https://apps.apple.com/us/app/lotbo-local-events/id6779059022"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1,
+                minWidth: 130,
+                textAlign: 'center',
+                background: '#1A1410',
+                color: '#F7F2E8',
+                borderRadius: 10,
+                padding: '10px 14px',
+                fontSize: 13,
+                fontWeight: 'bold',
+                textDecoration: 'none',
+              }}
+            >
+               App Store
+            </a>
+            <a
+              href="https://play.google.com/store/apps/details?id=app.lotbo.app.twa"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1,
+                minWidth: 130,
+                textAlign: 'center',
+                background: '#1A1410',
+                color: '#F7F2E8',
+                borderRadius: 10,
+                padding: '10px 14px',
+                fontSize: 13,
+                fontWeight: 'bold',
+                textDecoration: 'none',
+              }}
+            >
+              ▶ Google Play
+            </a>
+          </div>
+        </div>
 
         <p style={{
           fontSize: 14,
