@@ -3,6 +3,9 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.lotbo.app.twa",
-        "sha256_cert_fingerprints": ["57:A1:9D:ED:86:B2:81:9F:96:41:53:1B:C3:53:B2:B9:E2:C5:B1:2C:DE:20:E6:1D:5F:EA:01:D5:1D:CD:E1:97"]
+        "sha256_cert_fingerprints": [
+          "57:A1:9D:ED:86:B2:81:9F:96:41:53:1B:C3:53:B2:B9:E2:C5:B1:2C:DE:20:E6:1D:5F:EA:01:D5:1D:CD:E1:97",
+          "6C:7D:B2:15:9B:43:65:A9:AB:F5:60:FA:47:11:4A:DC:B9:6A:05:74:EF:F5:50:9D:C6:D4:71:C3:69:DD:62:49"
+        ]
       }
     }]
