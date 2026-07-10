@@ -982,6 +982,12 @@ export default function AjouterEvenement() {
       body: JSON.stringify({ titre: form.titre, lieu: lieuAffiche, date: form.date, categorie: categorieNom })
     }).catch(() => {})
 
+    fetch('/api/push-notify-admins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+      body: JSON.stringify({ titre: form.titre, lieu: lieuAffiche })
+    }).catch(() => {})
+
     // ── F8 — Générer les occurrences si récurrent ─────────────────────────────
     if (estRecurrent && !multiJours && inserted?.id) {
       fetch('/api/generer-occurrences', {
