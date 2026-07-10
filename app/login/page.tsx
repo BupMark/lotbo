@@ -313,9 +313,9 @@ export default function Login() {
           <div style={{ fontSize: 64, marginBottom: 20 }}>📬</div>
           <h1 style={{ color: '#1A1410', fontSize: 22, fontWeight: 'bold', marginBottom: 12 }}>Vérifie ta boîte mail</h1>
           <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: '24px 20px', marginBottom: 20, textAlign: 'left' }}>
-            <p style={{ color: '#1A1410', fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>On a envoyé un lien de confirmation à :</p>
+            <p style={{ color: '#1A1410', fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>Un email de confirmation t&apos;a été envoyé à :</p>
             <p style={{ color: '#C8431A', fontSize: 15, fontWeight: 'bold', marginBottom: 16, wordBreak: 'break-all' }}>{emailInscription}</p>
-            <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>Clique sur le lien dans l&apos;email pour activer ton compte. Tu seras automatiquement redirigé vers LOTBO.</p>
+            <p style={{ color: '#8C5A40', fontSize: 13, lineHeight: 1.7 }}>Clique sur le lien dans l&apos;email pour activer ton compte.</p>
           </div>
           {invitationToken && (
             <div style={{ background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.25)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, textAlign: 'left' }}>
