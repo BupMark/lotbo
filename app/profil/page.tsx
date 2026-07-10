@@ -978,7 +978,11 @@ function ProfilInner() {
                             await supabase.from('profiles').update({ consent_push: nouvelEtat }).eq('id', user.id)
                           }
                           if (nouvelEtat) {
-                            proposerPermission('Active les alertes pour ne rater aucun événement près de toi.')
+                            if (Notification.permission === 'granted') {
+                              await activerPermission()
+                            } else {
+                              proposerPermission('Active les alertes pour ne rater aucun événement près de toi.')
+                            }
                           }
                         }}
                         style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
