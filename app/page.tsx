@@ -12,6 +12,8 @@ import NotifCloche from '../components/NotifCloche'
 import { track } from '../lib/amplitude'
 import { attributerPoints } from '../lib/points'
 import { useLangue } from '../lib/useLangue'
+import { usePushPermission } from '../lib/usePushPermission'
+import PrePermissionModal from '../components/PrePermissionModal'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -135,6 +137,7 @@ export default function Home() {
   const [showDesktopMenu, setShowDesktopMenu] = useState(false)
   const [favoris, setFavoris]               = useState<Set<string>>(new Set())
   const [togglingFavori, setTogglingFavori] = useState<string | null>(null)
+  const { modalOuvert, contexteModal, proposerPermission, activerPermission, enregistrerRefusModal } = usePushPermission(user?.id ?? null)
   const [userVille, setUserVille]           = useState<string>('')
   const [favorisCounts, setFavorisCounts]   = useState<Record<string, number>>({})
   const [commCounts, setCommCounts]         = useState<Record<string, number>>({})
@@ -732,10 +735,14 @@ export default function Home() {
       setFavoris(prev => { const next = new Set(prev); next.delete(evenementId); return next })
       track('event_favorited', { event_id: evenementId, action: 'remove' })
     } else {
+      const estPremierFavori = favoris.size === 0
       await supabase.from('favoris').insert({ user_id: user.id, evenement_id: evenementId })
       setFavoris(prev => new Set([...prev, evenementId]))
       track('event_favorited', { event_id: evenementId, action: 'add' })
       attributerPoints({ user_id: user.id, action: 'favoris', evenement_id: evenementId, type_role: 'utilisateur' })
+      if (estPremierFavori) {
+        proposerPermission('Reçois un rappel avant tes événements favoris.')
+      }
     }
     setTogglingFavori(null)
   }
@@ -1786,6 +1793,14 @@ export default function Home() {
             </>
           )}
         </div>
+      )}
+
+      {modalOuvert && (
+        <PrePermissionModal
+          contexte={contexteModal}
+          onActiver={activerPermission}
+          onPasMaintenant={enregistrerRefusModal}
+        />
       )}
 
     </main>

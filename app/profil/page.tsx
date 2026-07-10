@@ -11,6 +11,8 @@ import { calculerNiveau } from '../../lib/points'
 import { identifyUser } from '../../lib/amplitude'
 import { type Langue, getTraductions } from '../../lib/i18n'
 import { useLangue } from '../../lib/useLangue'
+import { usePushPermission } from '../../lib/usePushPermission'
+import PrePermissionModal from '../../components/PrePermissionModal'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -80,6 +82,7 @@ function ProfilInner() {
   const [consentNewsletter, setConsentNewsletter] = useState(false)
   const [consentAlertes, setConsentAlertes]       = useState(false)
   const [consentPush, setConsentPush]             = useState(false)
+  const { modalOuvert, contexteModal, proposerPermission, activerPermission, enregistrerRefusModal } = usePushPermission(user?.id ?? null)
   const [notifNouveauxEvenements, setNotifNouveauxEvenements] = useState(true)
   const [notifCommentaires, setNotifCommentaires]             = useState(true)
   const [notifCorrections, setNotifCorrections]               = useState(true)
@@ -943,7 +946,6 @@ function ProfilInner() {
                     {[
                       { key: 'newsletter',           label: t.profil.notifications.newsletter,         desc: t.profil.notifications.newsletterDesc,         checked: consentNewsletter,       set: setConsentNewsletter },
                       { key: 'alertes',              label: t.profil.notifications.alertes,            desc: t.profil.notifications.alertesDesc,            checked: consentAlertes,          set: setConsentAlertes },
-                      { key: 'push',                 label: t.profil.notifications.push,               desc: t.profil.notifications.pushDesc,               checked: consentPush,             set: setConsentPush },
                       { key: 'nouveaux_evenements',  label: t.profil.notifications.nouveauxEvenements, desc: t.profil.notifications.nouveauxEvenementsDesc, checked: notifNouveauxEvenements, set: setNotifNouveauxEvenements },
                       { key: 'commentaires',         label: t.profil.notifications.commentaires,       desc: t.profil.notifications.commentairesDesc,       checked: notifCommentaires,       set: setNotifCommentaires },
                       { key: 'corrections',          label: t.profil.notifications.corrections,        desc: t.profil.notifications.correctionsDesc,        checked: notifCorrections,        set: setNotifCorrections },
@@ -964,6 +966,24 @@ function ProfilInner() {
                         </div>
                       </label>
                     ))}
+
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={consentPush}
+                        onChange={e => {
+                          setConsentPush(e.target.checked)
+                          if (e.target.checked) {
+                            proposerPermission('Active les alertes pour ne rater aucun événement près de toi.')
+                          }
+                        }}
+                        style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
+                      />
+                      <div>
+                        <p style={{ fontSize: 13, color: '#1A1410', fontWeight: 'bold', lineHeight: 1.4 }}>{t.profil.notifications.push}</p>
+                        <p style={{ fontSize: 11, color: '#8C5A40', lineHeight: 1.4 }}>{t.profil.notifications.pushDesc}</p>
+                      </div>
+                    </label>
 
                     <div style={{ height: 1, background: '#F0E8DC' }} />
 
@@ -1112,6 +1132,20 @@ function ProfilInner() {
             </div>
           </div>
         </div>
+      )}
+
+      {modalOuvert && (
+        <PrePermissionModal
+          contexte={contexteModal}
+          onActiver={async () => {
+            const result = await activerPermission()
+            if (result.statut !== 'accorde') setConsentPush(false)
+          }}
+          onPasMaintenant={() => {
+            enregistrerRefusModal()
+            setConsentPush(false)
+          }}
+        />
       )}
     </main>
   )
