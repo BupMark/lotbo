@@ -971,9 +971,13 @@ function ProfilInner() {
                       <input
                         type="checkbox"
                         checked={consentPush}
-                        onChange={e => {
-                          setConsentPush(e.target.checked)
-                          if (e.target.checked) {
+                        onChange={async e => {
+                          const nouvelEtat = e.target.checked
+                          setConsentPush(nouvelEtat)
+                          if (user?.id) {
+                            await supabase.from('profiles').update({ consent_push: nouvelEtat }).eq('id', user.id)
+                          }
+                          if (nouvelEtat) {
                             proposerPermission('Active les alertes pour ne rater aucun événement près de toi.')
                           }
                         }}
