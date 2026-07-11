@@ -1,0 +1,16 @@
+name: Import JDS Paris (Wikimania)
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route import-jds-paris
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/import-jds-paris"
