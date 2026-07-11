@@ -17,7 +17,7 @@ const CATEGORIE_MAP: Record<string, string> = {
   'science-tech':       'Conférence / Sommet',
   'business':           'Conférence / Sommet',
   'community':          'Célébration communautaire',
-  'social':             'Célébration communautaire',
+  'social':              'Célébration communautaire',
   'holiday':            'Célébration communautaire',
   'education':          'Formation / Séminaire',
   'health-wellness':    'Formation / Séminaire',
@@ -43,6 +43,8 @@ const ZONES: Record<string, { url: string; villeFallback: string; paysFallback: 
   'mexico-city':  { url: 'https://www.eventbrite.com/d/mexico--mexico-city--distrito-federal/events/', villeFallback: 'Ciudad de México', paysFallback: 'Mexique' },
   'guadalajara':  { url: 'https://www.eventbrite.com/d/mexico--guadalajara/events/',                     villeFallback: 'Guadalajara',       paysFallback: 'Mexique' },
   'buenos-aires': { url: 'https://www.eventbrite.com/d/argentina--buenos-aires/events/',                villeFallback: 'Buenos Aires',       paysFallback: 'Argentine' },
+  'mendoza':      { url: 'https://www.eventbrite.com/d/argentina--mendoza/events/',                    villeFallback: 'Mendoza',            paysFallback: 'Argentine' },
+  'cordoba':      { url: 'https://www.eventbrite.com/d/argentina--cordoba/events/',                    villeFallback: 'Córdoba',            paysFallback: 'Argentine' },
   'bogota':       { url: 'https://www.eventbrite.com/d/colombia--bogota/events/',                       villeFallback: 'Bogotá',             paysFallback: 'Colombie' },
   'toronto':       { url: 'https://www.eventbrite.com/d/canada--toronto/events/',           villeFallback: 'Toronto',       paysFallback: 'Canada' },
   'vancouver':     { url: 'https://www.eventbrite.com/d/canada--vancouver/events/',         villeFallback: 'Vancouver',     paysFallback: 'Canada' },
@@ -52,6 +54,12 @@ const ZONES: Record<string, { url: string; villeFallback: string; paysFallback: 
   'rio-de-janeiro':{ url: 'https://www.eventbrite.com/d/brazil--rio-de-janeiro/events/',   villeFallback: 'Rio de Janeiro',paysFallback: 'Brésil' },
   'medellin':      { url: 'https://www.eventbrite.com/d/colombia--medell%C3%ADn/events/',   villeFallback: 'Medellín',      paysFallback: 'Colombie' },
   'montevideo':    { url: 'https://www.eventbrite.com/d/uruguay--montevideo/events/',       villeFallback: 'Montevideo',    paysFallback: 'Uruguay' },
+  // SCRAPER-EVENTBRITE-DIASPORA — diaspora haïtienne, priorité haute
+  'montreal':      { url: 'https://www.eventbrite.com/d/canada--montreal/events/',          villeFallback: 'Montréal',      paysFallback: 'Canada' },
+  'quebec-city':   { url: 'https://www.eventbrite.com/d/canada--quebec-city/events/',       villeFallback: 'Québec',        paysFallback: 'Canada' },
+  'miami':         { url: 'https://www.eventbrite.com/d/fl--miami/events/',                 villeFallback: 'Miami',         paysFallback: 'USA' },
+  'new-york':      { url: 'https://www.eventbrite.com/d/ny--new-york/events/',              villeFallback: 'New York',      paysFallback: 'USA' },
+  'boston':        { url: 'https://www.eventbrite.com/d/ma--boston/events/',                villeFallback: 'Boston',        paysFallback: 'USA' },
 }
 
 const MAX_PAGES = 3

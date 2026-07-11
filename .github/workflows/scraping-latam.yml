@@ -98,3 +98,38 @@ jobs:
           curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=montevideo" \
             -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
             | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import Eventbrite — Montréal
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=montreal" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import Eventbrite — Québec
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=quebec-city" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import Eventbrite — Miami
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=miami" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import Eventbrite — New York
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=new-york" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
+      - name: Pause entre zones
+        run: sleep 10
+      - name: Import Eventbrite — Boston
+        run: |
+          curl -s "https://app.lotbo.app/api/import-eventbrite-latam?zone=boston" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
