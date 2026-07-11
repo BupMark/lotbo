@@ -1,0 +1,16 @@
+name: Scraping — Nuits d'Afrique
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03h00 UTC tous les jours
+  workflow_dispatch:
+
+jobs:
+  scrape-nuits-afrique:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import Nuits d'Afrique — Montréal
+        run: |
+          curl -s "https://app.lotbo.app/api/import-nuits-afrique" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            | head -c 500
