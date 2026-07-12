@@ -145,6 +145,29 @@ export async function POST(request: Request) {
       console.error('[AdminEngagement] Email confirmation échoué (non bloquant):', emailErr)
     }
 
+    // Notification Handgod — non bloquant
+    try {
+      await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'api-key': process.env.BREVO_API_KEY! },
+        body: JSON.stringify({
+          sender: { name: 'Lotbo', email: 'hello@lotbo.app' },
+          to: [{ email: 'handgod@lotbo.app', name: 'Handgod' }],
+          subject: `✅ Engagement signé — ${eng.nom_complet}`,
+          htmlContent: `
+            <h1 style="color:#C8431A;font-family:Georgia,serif;font-style:italic">Engagement signé</h1>
+            <p style="color:#1A1410;font-family:Arial,sans-serif"><strong>${eng.nom_complet}</strong> vient de soumettre son engagement LOTBO.</p>
+            <p style="color:#1A1410;font-family:Arial,sans-serif">Email : ${eng.email}<br/>Ville : ${eng.ville || '—'}<br/>Rôle assigné : ${eng.role_assigne}</p>
+            <p style="color:#1A1410;font-family:Arial,sans-serif">Fiche enquêteur créée automatiquement (statut actif). Il reste à activer son rôle admin manuellement :</p>
+            <p style="background:#F7F2E8;padding:10px 14px;border-radius:6px;font-family:monospace;font-size:12px;color:#1A1410">UPDATE profiles SET role = '${eng.role_assigne}' WHERE id = (SELECT id FROM auth.users WHERE email = '${eng.email}');</p>
+            <p style="color:#8C5A40;font-size:12px;margin-top:16px;font-family:Arial,sans-serif">Si aucun compte n'existe encore avec cet email, il faudra que la personne en crée un d'abord.</p>
+          `,
+        })
+      })
+    } catch (notifErr) {
+      console.error('[AdminEngagement] Notification Handgod échouée (non bloquant):', notifErr)
+    }
+
     return NextResponse.json({ success: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
