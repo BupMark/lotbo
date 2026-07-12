@@ -158,6 +158,10 @@ export default function PageConsentementEnqueteur() {
       c2: { fr: 'Je confirme que ma participation est entièrement volontaire, sans rémunération ni contrepartie financière, et ne constitue pas un contrat de travail.',
            ht: 'Mwen konfime patisipasyon mwen se volontè nèt, san salè ni kontreparti finansyè, epi li pa konstitye yon kontra travay.' },
       c3: { fr: 'Je déclare avoir 16 ans ou plus.', ht: 'Mwen deklare m gen 16 an oswa plis.' },
+      dureeConsentement: {
+        fr: "Ce consentement est valable pour une durée d'un an. Un email de renouvellement vous sera envoyé 30 jours avant expiration.",
+        ht: "Konsantman sa a valab pou yon ane. Yon imèl renouvèlman ap voye ba ou 30 jou anvan dat ekspirasyon an.",
+      },
     },
     signature: {
       titre: { fr: 'Tapez votre nom complet ci-dessous. Cette saisie vaut signature.', ht: 'Tape non konplè ou anba a. Antre sa a vale siyati.' },
@@ -304,6 +308,10 @@ export default function PageConsentementEnqueteur() {
               <input type="checkbox" checked={data.consentAge} onChange={e => maj({ consentAge: e.target.checked })} style={{ accentColor: '#C8431A', marginTop: 3, flexShrink: 0 }} />
               <span style={{ fontSize: 13, color: '#4A3830', lineHeight: 1.6 }}>{t.consentements.c3[langue]}</span>
             </label>
+
+            <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 16, lineHeight: 1.5 }}>
+              {t.consentements.dureeConsentement[langue]}
+            </p>
 
             <button style={styles.boutonPrincipal(troisConsentements)} disabled={!troisConsentements} onClick={() => setEtape(6)}>
               {t.boutons.suivant[langue]}
