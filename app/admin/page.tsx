@@ -1644,6 +1644,7 @@ export default function Admin() {
 
           const couleurRole = (r: string): { bg: string; color: string } => {
             if (r === 'admin')                return { bg: 'rgba(229,115,115,0.15)', color: '#e57373' }
+            if (r === 'admin_enqueteur')      return { bg: 'rgba(139,69,19,0.15)',   color: '#8B4513' }
             if (r === 'ambassadeur')          return { bg: 'rgba(45,158,107,0.15)',  color: '#2D9E6B' }
             if (r === 'organisateur')         return { bg: 'rgba(200,67,26,0.15)',   color: '#C8431A' }
             if (r === 'contributeur_terrain') return { bg: 'rgba(200,160,32,0.18)',  color: '#C8A020' }
@@ -1822,8 +1823,8 @@ export default function Admin() {
                                       textTransform: 'capitalize', outline: 'none',
                                     }}
                                   >
-                                    {['membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin'].map(r => (
-                                      <option key={r} value={r}>{r === 'contributeur_terrain' ? 'terrain' : r}</option>
+                                    {['membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin', 'admin_enqueteur'].map(r => (
+                                      <option key={r} value={r}>{r === 'contributeur_terrain' ? 'terrain' : r === 'admin_enqueteur' ? 'admin enquêteur' : r}</option>
                                     ))}
                                   </select>
                                 </td>
