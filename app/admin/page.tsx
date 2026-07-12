@@ -89,7 +89,7 @@ interface BadgeEnAttente {
 type FiltreStatut  = 'en_attente' | 'approuve' | 'en_cours' | 'rejete' | 'hors_ligne' | 'archive' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
 type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations' | 'candidatures'
-type FiltreRole    = 'tous' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
+type FiltreRole    = 'tous' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin' | 'admin_enqueteur'
 type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
 
 interface UserAdmin {
@@ -1640,7 +1640,7 @@ export default function Admin() {
             ONGLET UTILISATEURS — F2
         ══════════════════════════════════════════════════════════════ */}
         {onglet === 'utilisateurs' && (() => {
-          const ROLES: FiltreRole[] = ['tous', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin']
+          const ROLES: FiltreRole[] = ['tous', 'membre', 'contributeur', 'contributeur_terrain', 'organisateur', 'ambassadeur', 'admin', 'admin_enqueteur']
 
           const couleurRole = (r: string): { bg: string; color: string } => {
             if (r === 'admin')                return { bg: 'rgba(229,115,115,0.15)', color: '#e57373' }
@@ -1701,6 +1701,7 @@ export default function Admin() {
                   { label: 'Organisateurs',   valeur: statsRoles['organisateur'] || 0,                                              couleur: '#C8431A' },
                   { label: 'Ambassadeurs',    valeur: statsRoles['ambassadeur']  || 0,                                              couleur: '#2D9E6B' },
                   { label: 'Admins',          valeur: statsRoles['admin']        || 0,                                              couleur: '#e57373' },
+                  { label: 'Admin enq.',      valeur: statsRoles['admin_enqueteur'] || 0,                                           couleur: '#8B4513' },
                 ].map((c, i) => (
                   <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
                     <p style={{ fontSize: 24, fontWeight: 'bold', color: c.couleur, marginBottom: 3 }}>{c.valeur}</p>
@@ -1730,7 +1731,7 @@ export default function Admin() {
                             textTransform: 'capitalize',
                           }}
                         >
-                          {r === 'tous' ? 'Tous' : r === 'contributeur_terrain' ? 'terrain' : r}
+                          {r === 'tous' ? 'Tous' : r === 'contributeur_terrain' ? 'terrain' : r === 'admin_enqueteur' ? 'admin enq.' : r}
                         </button>
                       ))}
                     </div>
