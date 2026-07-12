@@ -1,0 +1,16 @@
+name: Renouvellement consentement annuel enquêteurs
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  renouvellement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route enqueteur-consent-annuel
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/enqueteur-consent-annuel"
