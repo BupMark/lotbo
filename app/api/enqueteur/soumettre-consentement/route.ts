@@ -77,6 +77,16 @@ export async function POST(request: Request) {
       console.error('[Consentement] Email confirmation échoué (non bloquant):', emailErr)
     }
 
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notify-nouvelle-candidature-enqueteur`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET! },
+        body: JSON.stringify({ nom_complet, ville, email }),
+      })
+    } catch (notifAdminErr) {
+      console.error('[Consentement] Notification admins échouée (non bloquant):', notifAdminErr)
+    }
+
     return NextResponse.json({ success: true, token })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
