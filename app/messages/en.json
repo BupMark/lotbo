@@ -323,7 +323,9 @@
     },
     "enqueteur": {
       "progressionCycle": "Cycle progress",
-      "fichesTotalLabel": "total submissions"
+      "fichesTotalLabel": "total submissions",
+      "candidatureEnAttente": "Your investigator application is under review.",
+      "candidatureValideeEnLiaison": "Your application is approved! Log back in to activate your badge."
     },
     "organisation": {
       "creer": "🏢 Create an organization"

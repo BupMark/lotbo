@@ -323,7 +323,9 @@
     },
     "enqueteur": {
       "progressionCycle": "Progression du cycle",
-      "fichesTotalLabel": "fiches au total"
+      "fichesTotalLabel": "fiches au total",
+      "candidatureEnAttente": "Ta candidature enquêteur est en cours d'examen.",
+      "candidatureValideeEnLiaison": "Ta candidature est validée ! Reconnecte-toi pour activer ton badge."
     },
     "organisation": {
       "creer": "🏢 Créer une organisation"

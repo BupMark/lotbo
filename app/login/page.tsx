@@ -180,6 +180,9 @@ export default function Login() {
       setMessageType('erreur'); return
     }
     if (data.session) await accepterInvitationSiPresente(data.session.access_token)
+    if (data.session) {
+      fetch('/api/enqueteur/lier-compte', { headers: { Authorization: `Bearer ${data.session.access_token}` } }).catch(() => {})
+    }
     track('user_logged_in', { user_id: data.session?.user?.id })
     const role = data.session?.user?.user_metadata?.role
     if (role === 'admin') window.location.href = '/admin'
@@ -274,6 +277,9 @@ export default function Login() {
 
       // Accepter invitation si session disponible (auto-confirm activé)
       if (data.session) await accepterInvitationSiPresente(data.session.access_token)
+      if (data.session) {
+        fetch('/api/enqueteur/lier-compte', { headers: { Authorization: `Bearer ${data.session.access_token}` } }).catch(() => {})
+      }
     }
 
     track('user_signed_up', { user_id: data.user?.id, provider: 'email' })

@@ -323,7 +323,9 @@
     },
     "enqueteur": {
       "progressionCycle": "Progresso do ciclo",
-      "fichesTotalLabel": "envios totais"
+      "fichesTotalLabel": "envios totais",
+      "candidatureEnAttente": "Sua candidatura de investigador está em análise.",
+      "candidatureValideeEnLiaison": "Sua candidatura foi aprovada! Faça login novamente para ativar seu emblema."
     },
     "organisation": {
       "creer": "🏢 Criar uma organização"

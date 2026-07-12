@@ -323,7 +323,9 @@
     },
     "enqueteur": {
       "progressionCycle": "Pwogresyon objektif la",
-      "fichesTotalLabel": "fich antou"
+      "fichesTotalLabel": "fich antou",
+      "candidatureEnAttente": "Kandidati ou pou vin ankètè ap egzamine kounye a.",
+      "candidatureValideeEnLiaison": "Kandidati ou aksepte ! Rekonekte pou aktive badj ou a."
     },
     "organisation": {
       "creer": "🏢 Kreye yon òganizasyon"

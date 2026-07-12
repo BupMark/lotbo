@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { lierEnqueteurSiEmailCorrespond } from '../../../lib/enqueteurLink'
 
 // ── Helper : attribuer badge supporter si email trouvé ────────────────────────
 async function attribuerBadgeSupporter(
@@ -153,6 +154,20 @@ async function traiterSession(
       profil?.nom || 'Membre LOTBO',
       profil?.langue_preference ?? null
     )
+  }
+
+  // FEAT-ENQUETEUR-LIAISON-COMPTE-1 — liaison automatique si candidature validée en attente
+  if (userEmail) {
+    try {
+      const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      )
+      await lierEnqueteurSiEmailCorrespond(admin, userId, userEmail)
+    } catch (linkErr) {
+      console.error('[EnqueteurLink] Erreur liaison (non bloquant):', linkErr)
+    }
   }
 
   // FEAT-ONBOARDING-CONSENT-1 — Interstitiel OAuth si consentement absent

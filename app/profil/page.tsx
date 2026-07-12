@@ -95,6 +95,7 @@ function ProfilInner() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [enqueteurData, setEnqueteurData] = useState<{ ficheCycle: number, objectifFiches: number, ficheTotal: number } | null>(null)
+  const [candidatureStatut, setCandidatureStatut] = useState<'en_attente' | 'valide' | 'rejete' | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const { langue, setLangue } = useLangue()
@@ -119,6 +120,17 @@ function ProfilInner() {
       // roles_actifs optionnel — requiert migration DB
       const { data: raRow, error: raErr } = await supabase
         .from('profiles').select('roles_actifs').eq('id', data.session.user.id).single()
+
+      // FEAT-ENQUETEUR-LIAISON-COMPTE-1 — tentative de liaison automatique (idempotent,
+      // best-effort) avant de charger les données enquêteur, pour rattraper une candidature
+      // validée après création de compte sans que la liaison ait eu lieu au signup/login.
+      try {
+        const liaisonRes = await fetch('/api/enqueteur/lier-compte', {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+        })
+        const liaison = await liaisonRes.json()
+        setCandidatureStatut(liaison.statutCandidature ?? null)
+      } catch { /* non bloquant */ }
 
       const { data: enqRow } = await supabase
         .from('enqueteurs')
@@ -425,6 +437,21 @@ function ProfilInner() {
                       </div>
                       <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
                         {enqueteurData.ficheCycle} / {enqueteurData.objectifFiches}
+                      </p>
+                    </div>
+                  )}
+                  {/* FEAT-ENQUETEUR-LIAISON-COMPTE-1 — message candidature, uniquement si pas encore actif */}
+                  {!enqueteurData && candidatureStatut === 'en_attente' && (
+                    <div style={{ marginTop: 16, background: 'rgba(139,69,19,0.06)', borderRadius: 10, padding: '12px 14px' }}>
+                      <p style={{ color: '#8B4513', fontSize: 12 }}>
+                        {t.profil.enqueteur?.candidatureEnAttente ?? "Ta candidature enquêteur est en cours d'examen."}
+                      </p>
+                    </div>
+                  )}
+                  {!enqueteurData && candidatureStatut === 'valide' && (
+                    <div style={{ marginTop: 16, background: 'rgba(45,158,107,0.08)', borderRadius: 10, padding: '12px 14px' }}>
+                      <p style={{ color: '#2D9E6B', fontSize: 12 }}>
+                        {t.profil.enqueteur?.candidatureValideeEnLiaison ?? 'Ta candidature est validée ! Reconnecte-toi pour activer ton badge.'}
                       </p>
                     </div>
                   )}
