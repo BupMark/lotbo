@@ -37,7 +37,8 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // ── Protection /admin ────────────────────────────────────────────────────
-  if (pathname.startsWith('/admin')) {
+  // /admin/engagement est un formulaire public sécurisé par token — pas de session requise
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/engagement')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -48,7 +49,7 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
     const role = profile?.role ?? user.user_metadata?.role
-    if (role !== 'admin') {
+    if (role !== 'admin' && role !== 'admin_enqueteur') {
       return NextResponse.redirect(new URL('/', request.url))
     }
   }
