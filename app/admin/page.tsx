@@ -364,6 +364,7 @@ export default function Admin() {
 
   // T-7 — Validation candidatures enquêteur
   const [accessToken,         setAccessToken]         = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const [candidatures,        setCandidatures]        = useState<EnqueteurCandidature[]>([])
   const [loadingCandidatures, setLoadingCandidatures]  = useState(false)
   const [traitementId,        setTraitementId]        = useState<string | null>(null)
@@ -398,10 +399,16 @@ export default function Admin() {
         .eq('id', data.session.user.id)
         .single()
       const role = prof?.role ?? data.session.user.user_metadata?.role
-      if (role !== 'admin') { router.push('/'); return }
+      if (role !== 'admin' && role !== 'admin_enqueteur') { router.push('/'); return }
       setUserEmail(data.session.user.email ?? '')
       setAccessToken(data.session.access_token)
-      chargerDonnees()
+      setUserRole(role)
+      if (role === 'admin_enqueteur') {
+        setOnglet('candidatures')
+        chargerCandidatures()
+      } else {
+        chargerDonnees()
+      }
     })
   }, [])
 
@@ -937,21 +944,23 @@ export default function Admin() {
 
         {/* ── Stats — counts exacts ─────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 16 }}>
-          {[
-            { label: 'Total',      valeur: countTotal,     couleur: '#1A1410', onClick: () => { setFiltreStatut('tous');       setOnglet('evenements') } },
-            { label: 'En attente', valeur: countEnAttente, couleur: '#D4A820', onClick: () => { setFiltreStatut('en_attente'); setOnglet('evenements') } },
-            { label: 'Approuvés',  valeur: countApprouves, couleur: '#2D9E6B', onClick: () => { setFiltreStatut('approuve');   setOnglet('evenements') } },
-            { label: 'Rejetés',    valeur: countRejetes,   couleur: '#e57373', onClick: () => { setFiltreStatut('rejete');     setOnglet('evenements') } },
-            { label: 'Membres',    valeur: countMembres,   couleur: '#4A90D9', onClick: () => { setOnglet('utilisateurs'); if (users.length === 0) chargerUtilisateurs() } },
-            { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A', onClick: () => setModalGeo('villes') },
-            { label: 'Pays',       valeur: countPays,      couleur: '#8C5A40', onClick: () => setModalGeo('pays') },
-            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40', onClick: () => setModalGeo('regions') },
-          ].map((c, i) => (
+          {([
+            { label: 'Total',      valeur: countTotal,     couleur: '#1A1410', onClick: () => { setFiltreStatut('tous');       setOnglet('evenements') }, public: true },
+            { label: 'En attente', valeur: countEnAttente, couleur: '#D4A820', onClick: () => { setFiltreStatut('en_attente'); setOnglet('evenements') }, public: false },
+            { label: 'Approuvés',  valeur: countApprouves, couleur: '#2D9E6B', onClick: () => { setFiltreStatut('approuve');   setOnglet('evenements') }, public: true },
+            { label: 'Rejetés',    valeur: countRejetes,   couleur: '#e57373', onClick: () => { setFiltreStatut('rejete');     setOnglet('evenements') }, public: false },
+            { label: 'Membres',    valeur: countMembres,   couleur: '#4A90D9', onClick: () => { setOnglet('utilisateurs'); if (users.length === 0) chargerUtilisateurs() }, public: false },
+            { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A', onClick: () => setModalGeo('villes'), public: true },
+            { label: 'Pays',       valeur: countPays,      couleur: '#8C5A40', onClick: () => setModalGeo('pays'), public: true },
+            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40', onClick: () => setModalGeo('regions'), public: true },
+          ] as Array<{ label: string; valeur: number; couleur: string; onClick: () => void; public: boolean }>)
+            .filter(c => userRole !== 'admin_enqueteur' || c.public)
+            .map((c, i) => (
             <button
               key={i}
               type="button"
-              onClick={c.onClick}
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center', cursor: 'pointer', width: '100%', transition: 'background 0.15s, transform 0.1s' }}
+              onClick={userRole === 'admin_enqueteur' && (c.label === 'Villes' || c.label === 'Pays' || c.label === 'Régions' || c.label === 'Total' || c.label === 'Approuvés') ? undefined : c.onClick}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 12px', textAlign: 'center', cursor: (userRole === 'admin_enqueteur' && (c.label === 'Villes' || c.label === 'Pays' || c.label === 'Régions' || c.label === 'Total' || c.label === 'Approuvés')) ? 'default' : 'pointer', width: '100%', transition: 'background 0.15s, transform 0.1s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)' }}
             >

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { makeAdminClient, verifierAdmin } from '../../../../../lib/adminAuth'
+import { makeAdminClient, verifierAdminOuEnqueteur } from '../../../../../lib/adminAuth'
 
 // POST { consentementId } — rejette une candidature : aucune fiche enqueteurs
 // n'est créée, la candidature est simplement marquée comme traitée.
 export async function POST(request: Request) {
-  const auth = await verifierAdmin(request)
+  const auth = await verifierAdminOuEnqueteur(request)
   if (!auth.ok) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   try {

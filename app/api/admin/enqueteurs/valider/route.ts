@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { makeAdminClient, verifierAdmin } from '../../../../../lib/adminAuth'
+import { makeAdminClient, verifierAdminOuEnqueteur } from '../../../../../lib/adminAuth'
 
 interface EnqueteurConsentementRow {
   id: string
@@ -32,7 +32,7 @@ function calculerNomAffichage(row: EnqueteurConsentementRow): string {
 // POST { consentementId } — valide une candidature : crée la fiche enqueteurs
 // publique et marque la candidature comme traitée.
 export async function POST(request: Request) {
-  const auth = await verifierAdmin(request)
+  const auth = await verifierAdminOuEnqueteur(request)
   if (!auth.ok) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   try {

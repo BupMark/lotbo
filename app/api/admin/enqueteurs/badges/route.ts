@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { makeAdminClient, verifierAdmin } from '../../../../../lib/adminAuth'
+import { makeAdminClient, verifierAdminOuEnqueteur } from '../../../../../lib/adminAuth'
 
 // GET — liste les enquêteurs ayant demandé un badge physique, pas encore envoyé
 export async function GET(request: Request) {
-  const auth = await verifierAdmin(request)
+  const auth = await verifierAdminOuEnqueteur(request)
   if (!auth.ok) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   try {
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
 // PATCH { id } — marque le badge physique comme envoyé
 export async function PATCH(request: Request) {
-  const auth = await verifierAdmin(request)
+  const auth = await verifierAdminOuEnqueteur(request)
   if (!auth.ok) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   try {
