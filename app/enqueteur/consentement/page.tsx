@@ -248,7 +248,14 @@ export default function PageConsentementEnqueteur() {
               style={styles.boutonPrincipal(!!data.typeAffichage && (data.typeAffichage !== 'username' || !!data.valeurAffichage))}
               disabled={!data.typeAffichage || (data.typeAffichage === 'username' && !data.valeurAffichage)}
               onClick={() => {
-                if (data.typeAffichage === 'vrai_nom') maj({ valeurAffichage: data.nomComplet })
+                if (data.typeAffichage === 'vrai_nom') {
+                  maj({ valeurAffichage: data.nomComplet })
+                } else if (data.typeAffichage === 'prenom_initiale') {
+                  const parts = data.nomComplet.trim().split(/\s+/)
+                  const prenom = parts[0] ?? data.nomComplet
+                  const initiale = parts.length > 1 ? parts[parts.length - 1][0]?.toUpperCase() : ''
+                  maj({ valeurAffichage: initiale ? `${prenom} ${initiale}.` : prenom })
+                }
                 setEtape(4)
               }}
             >
