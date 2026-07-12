@@ -60,9 +60,35 @@ interface Reclamation {
   profiles?: { nom: string | null } | null
 }
 
+interface EnqueteurCandidature {
+  id: string
+  nom_complet: string
+  ville: string
+  email: string
+  whatsapp: string | null
+  nom_affichage_type: string
+  nom_affichage_valeur: string | null
+  consent_publication: boolean
+  consent_volontariat: boolean
+  consent_age: boolean
+  consent_photo: boolean
+  photo_url: string | null
+  langue: string
+  signature_at: string
+  token_expire_at: string
+}
+
+interface BadgeEnAttente {
+  id: string
+  nom_affichage: string
+  ville: string
+  user_id: string | null
+  created_at: string
+}
+
 type FiltreStatut  = 'en_attente' | 'approuve' | 'en_cours' | 'rejete' | 'hors_ligne' | 'archive' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
-type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations'
+type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations' | 'candidatures'
 type FiltreRole    = 'tous' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin'
 type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
 
@@ -336,6 +362,14 @@ export default function Admin() {
   // Soumetteur — map profiles indexée par user_id
   const [profilesMap, setProfilesMap] = useState<Map<string, { nom: string | null; role: string | null }>>(new Map())
 
+  // T-7 — Validation candidatures enquêteur
+  const [accessToken,         setAccessToken]         = useState<string | null>(null)
+  const [candidatures,        setCandidatures]        = useState<EnqueteurCandidature[]>([])
+  const [loadingCandidatures, setLoadingCandidatures]  = useState(false)
+  const [traitementId,        setTraitementId]        = useState<string | null>(null)
+  const [badgesEnAttente,     setBadgesEnAttente]     = useState<BadgeEnAttente[]>([])
+  const [loadingBadges,       setLoadingBadges]       = useState(false)
+
   // F5 — Modal rejet
   const [modalRejet,    setModalRejet]    = useState<{ id: string; titre: string; userId: string | null } | null>(null)
   const [raisonRejet,   setRaisonRejet]   = useState('')
@@ -346,6 +380,14 @@ export default function Admin() {
     'Content-Type': 'application/json',
     'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
   }
+
+  // T-7 — Auth par session vérifiée serveur (pas de secret exposé au navigateur)
+  // Décision Conseiller Stratégique 11 juillet 2026 — voir SEC-ADMIN-ROUTES-1
+  // pour l'audit du pattern hi (secret NEXT_PUBLIC) sur les autres routes admin.
+  const hiAuth = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  })
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -358,6 +400,7 @@ export default function Admin() {
       const role = prof?.role ?? data.session.user.user_metadata?.role
       if (role !== 'admin') { router.push('/'); return }
       setUserEmail(data.session.user.email ?? '')
+      setAccessToken(data.session.access_token)
       chargerDonnees()
     })
   }, [])
@@ -499,6 +542,61 @@ export default function Admin() {
       }
     } catch { /* ignore */ }
     setLoadingUsers(false)
+  }
+
+  const chargerCandidatures = async () => {
+    setLoadingCandidatures(true)
+    try {
+      const res  = await fetch('/api/admin/enqueteurs/candidatures', { headers: hiAuth() })
+      const data = await res.json()
+      setCandidatures(data.candidatures || [])
+    } catch { /* ignore */ }
+    setLoadingCandidatures(false)
+
+    setLoadingBadges(true)
+    try {
+      const resB  = await fetch('/api/admin/enqueteurs/badges', { headers: hiAuth() })
+      const dataB = await resB.json()
+      setBadgesEnAttente(dataB.badges || [])
+    } catch { /* ignore */ }
+    setLoadingBadges(false)
+  }
+
+  const validerCandidature = async (c: EnqueteurCandidature) => {
+    if (!confirm(`Valider la candidature de ${c.nom_complet} ? Elle apparaîtra publiquement sur lotbo.app/enqueteurs.`)) return
+    setTraitementId(c.id)
+    try {
+      const res  = await fetch('/api/admin/enqueteurs/valider', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ consentementId: c.id }) })
+      const data = await res.json()
+      if (data.error) { alert('Erreur : ' + data.error); setTraitementId(null); return }
+      setCandidatures(prev => prev.filter(x => x.id !== c.id))
+    } catch {
+      alert('Erreur lors de la validation')
+    }
+    setTraitementId(null)
+  }
+
+  const rejeterCandidature = async (c: EnqueteurCandidature) => {
+    if (!confirm(`Rejeter la candidature de ${c.nom_complet} ?`)) return
+    setTraitementId(c.id)
+    try {
+      const res  = await fetch('/api/admin/enqueteurs/rejeter', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ consentementId: c.id }) })
+      const data = await res.json()
+      if (data.error) { alert('Erreur : ' + data.error); setTraitementId(null); return }
+      setCandidatures(prev => prev.filter(x => x.id !== c.id))
+    } catch {
+      alert('Erreur lors du rejet')
+    }
+    setTraitementId(null)
+  }
+
+  const marquerBadgeEnvoye = async (id: string) => {
+    setTraitementId(id)
+    try {
+      await fetch('/api/admin/enqueteurs/badges', { method: 'PATCH', headers: hiAuth(), body: JSON.stringify({ id }) })
+      setBadgesEnAttente(prev => prev.filter(b => b.id !== id))
+    } catch { /* ignore */ }
+    setTraitementId(null)
   }
 
   const changerRole = async (id: string, role: string) => {
@@ -876,6 +974,7 @@ export default function Admin() {
             { key: 'evenements',   label: 'Événements',   count: countTotal,                                                badge: true },
             { key: 'signalements', label: 'Signalements', count: signalements.length,                                       badge: true },
             { key: 'reclamations', label: '🔑 Claims', count: reclamations.filter(r => r.statut === 'en_attente').length, badge: true },
+            { key: 'candidatures', label: '📋 Enquêteurs', count: candidatures.length,                                      badge: true },
             { key: 'import',       label: '📥 Import',  count: statsImport.length,                                        badge: true },
             { key: 'utilisateurs', label: '👥 Users',   count: countMembres,                                              badge: true },
           ].map(tab => (
@@ -884,6 +983,7 @@ export default function Admin() {
               onClick={() => {
                 setOnglet(tab.key as Onglet)
                 if (tab.key === 'utilisateurs' && users.length === 0) chargerUtilisateurs()
+                if (tab.key === 'candidatures' && candidatures.length === 0 && !loadingCandidatures) chargerCandidatures()
               }}
               style={{
                 padding: '10px 16px', fontSize: 13, fontWeight: 'bold',
@@ -1288,6 +1388,109 @@ export default function Admin() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {onglet === 'candidatures' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32, marginBottom: 48 }}>
+            <div>
+              <h3 style={{ color: '#1A1410', fontSize: 15, fontWeight: 'bold', marginBottom: 12 }}>
+                📋 Candidatures en attente {candidatures.length > 0 && `(${candidatures.length})`}
+              </h3>
+              {loadingCandidatures ? (
+                <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40, fontStyle: 'italic' }}>Chargement…</p>
+              ) : candidatures.length === 0 ? (
+                <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucune candidature en attente.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {candidatures.map(c => {
+                    const busy = traitementId === c.id
+                    const tousConsentements = c.consent_publication && c.consent_volontariat && c.consent_age
+                    return (
+                      <div key={c.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 16, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                        {c.photo_url && (
+                          <img src={c.photo_url} alt={c.nom_complet} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                        )}
+                        <div style={{ flex: 1, minWidth: 200 }}>
+                          <h4 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>{c.nom_complet}</h4>
+                          <p style={{ color: '#8C5A40', fontSize: 12 }}>📍 {c.ville}</p>
+                          <p style={{ color: '#8C5A40', fontSize: 12 }}>✉️ {c.email}{c.whatsapp ? ` · 📱 ${c.whatsapp}` : ''}</p>
+                          <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
+                            Affichage : {c.nom_affichage_type === 'vrai_nom' ? 'Vrai nom' : c.nom_affichage_type === 'username' ? `Pseudo — ${c.nom_affichage_valeur || '(vide)'}` : `Prénom + initiale${c.nom_affichage_valeur ? ` — ${c.nom_affichage_valeur}` : ' (calculé à la validation)'}`}
+                          </p>
+                          <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, background: c.consent_publication ? 'rgba(45,158,107,0.15)' : 'rgba(180,40,40,0.15)', color: c.consent_publication ? '#2D9E6B' : '#e57373' }}>
+                              {c.consent_publication ? '✓' : '✗'} Publication
+                            </span>
+                            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, background: c.consent_volontariat ? 'rgba(45,158,107,0.15)' : 'rgba(180,40,40,0.15)', color: c.consent_volontariat ? '#2D9E6B' : '#e57373' }}>
+                              {c.consent_volontariat ? '✓' : '✗'} Volontariat
+                            </span>
+                            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, background: c.consent_age ? 'rgba(45,158,107,0.15)' : 'rgba(180,40,40,0.15)', color: c.consent_age ? '#2D9E6B' : '#e57373' }}>
+                              {c.consent_age ? '✓' : '✗'} Âge
+                            </span>
+                            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, background: c.consent_photo ? 'rgba(45,158,107,0.15)' : 'rgba(255,255,255,0.06)', color: c.consent_photo ? '#2D9E6B' : '#8C5A40' }}>
+                              {c.consent_photo ? '✓' : '—'} Photo
+                            </span>
+                          </div>
+                          <p style={{ color: '#555', fontSize: 10, marginTop: 6 }}>
+                            Soumis le {new Date(c.signature_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} · Langue {c.langue.toUpperCase()}
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, justifyContent: 'center' }}>
+                          <button
+                            onClick={() => validerCandidature(c)}
+                            disabled={busy || !tousConsentements}
+                            title={!tousConsentements ? 'Consentements obligatoires manquants' : ''}
+                            style={{ background: tousConsentements ? 'rgba(45,158,107,0.15)' : 'rgba(255,255,255,0.04)', color: tousConsentements ? '#2D9E6B' : '#555', padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: busy || !tousConsentements ? 'not-allowed' : 'pointer' }}
+                          >
+                            {busy ? '…' : '✓ Valider'}
+                          </button>
+                          <button
+                            onClick={() => rejeterCandidature(c)}
+                            disabled={busy}
+                            style={{ background: 'rgba(180,40,40,0.15)', color: '#e57373', padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: busy ? 'not-allowed' : 'pointer' }}
+                          >
+                            {busy ? '…' : '✗ Rejeter'}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h3 style={{ color: '#1A1410', fontSize: 15, fontWeight: 'bold', marginBottom: 12 }}>
+                🎖️ Badges physiques à envoyer {badgesEnAttente.length > 0 && `(${badgesEnAttente.length})`}
+              </h3>
+              {loadingBadges ? (
+                <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40, fontStyle: 'italic' }}>Chargement…</p>
+              ) : badgesEnAttente.length === 0 ? (
+                <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucune demande de badge en attente.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {badgesEnAttente.map(b => {
+                    const busy = traitementId === b.id
+                    return (
+                      <div key={b.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        <div>
+                          <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold' }}>{b.nom_affichage}</p>
+                          <p style={{ color: '#8C5A40', fontSize: 11 }}>📍 {b.ville}</p>
+                        </div>
+                        <button
+                          onClick={() => marquerBadgeEnvoye(b.id)}
+                          disabled={busy}
+                          style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: busy ? 'not-allowed' : 'pointer' }}
+                        >
+                          {busy ? '…' : '📦 Marquer envoyé'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
