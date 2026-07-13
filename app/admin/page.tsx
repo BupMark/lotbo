@@ -408,6 +408,7 @@ export default function Admin() {
       if (role === 'admin_enqueteur') {
         setOnglet('candidatures')
         chargerCandidatures()
+        setLoading(false)
       } else {
         chargerDonnees()
       }
