@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifierAdmin } from '../../../lib/adminAuth'
 
 // Migration requise (une seule fois via Supabase SQL editor) :
 // ALTER TABLE evenements ADD COLUMN IF NOT EXISTS raison_rejet TEXT;
 
-function verifierSecret(request: Request): boolean {
-  const secret = request.headers.get('x-internal-secret')
-  return secret === process.env.INTERNAL_API_SECRET
-}
-
 export async function POST(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierAdmin(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

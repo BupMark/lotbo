@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { calculerNiveau } from '../../../../lib/points'
-
-function verifierSecret(request: Request): boolean {
-  const secret = request.headers.get('x-internal-secret')
-  return secret === process.env.INTERNAL_API_SECRET
-}
+import { verifierAdmin } from '../../../../lib/adminAuth'
 
 
 function makeAdminClient() {
@@ -20,7 +14,8 @@ function makeAdminClient() {
 
 // GET — liste tous les utilisateurs (profiles + auth.users + comptes événements)
 export async function GET(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierAdmin(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
@@ -124,7 +119,8 @@ export async function GET(request: Request) {
 
 // POST — générer un magic link d'invitation pour un utilisateur
 export async function POST(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierAdmin(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
@@ -148,7 +144,8 @@ export async function POST(request: Request) {
 
 // PATCH — changer le rôle ou suspendre/réactiver un utilisateur
 export async function PATCH(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierAdmin(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
@@ -158,13 +155,7 @@ export async function PATCH(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 })
 
-    const cookieStore = await cookies()
-    const supabaseUser = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
-    )
-    const { data: { session } } = await supabaseUser.auth.getSession()
+    const adminUserId = acces.userId
 
     const admin = makeAdminClient()
 
@@ -190,7 +181,7 @@ export async function PATCH(request: Request) {
       // Non-bloquant : admin_logs peut ne pas exister
       try {
         await admin.from('admin_logs').insert([{
-          admin_id:    session?.user?.id ?? null,
+          admin_id:    adminUserId ?? null,
           user_id:     id,
           ancien_role,
           nouveau_role: role,

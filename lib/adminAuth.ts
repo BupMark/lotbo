@@ -10,6 +10,10 @@ export function makeAdminClient(): SupabaseClient {
 
 type VerifierAdminResult = { ok: true; userId: string } | { ok: false }
 
+// Rôles ayant accès complet au panel admin (hors rôles scopés comme admin_enqueteur).
+// Ajouter ici tout futur rôle admin à périmètre large (ex: admin_moderation, admin_finance).
+const ROLES_ADMIN_COMPLET = ['admin']
+
 // SEC-ADMIN-ROUTES-1 — vérifie le JWT de session Supabase (Authorization: Bearer)
 // et confirme le rôle admin côté serveur, plutôt que de faire confiance à un secret
 // exposé au navigateur (NEXT_PUBLIC_INTERNAL_API_SECRET, utilisé ailleurs).
@@ -27,7 +31,7 @@ export async function verifierAdmin(request: Request): Promise<VerifierAdminResu
     .select('role')
     .eq('id', user.id)
     .single()
-  if (prof?.role !== 'admin') return { ok: false }
+  if (!prof?.role || !ROLES_ADMIN_COMPLET.includes(prof.role)) return { ok: false }
 
   return { ok: true, userId: user.id }
 }

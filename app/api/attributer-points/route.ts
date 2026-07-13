@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { calculerNiveau } from '../../../lib/points'
+import { verifierAdmin } from '../../../lib/adminAuth'
 
 const POINTS: Record<string, number> = {
   'evenement_approuve': 10,
@@ -20,8 +21,8 @@ const POINTS: Record<string, number> = {
 }
 
 export async function POST(request: Request) {
-  const secret = request.headers.get('x-internal-secret')
-  if (secret !== process.env.INTERNAL_API_SECRET) {
+  const acces = await verifierAdmin(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

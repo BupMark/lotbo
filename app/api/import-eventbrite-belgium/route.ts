@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifierDoublon, estSourceBloquee } from '../../../lib/deduplication'
+import { verifierAdmin } from '../../../lib/adminAuth'
 
 const CATEGORIE_MAP: Record<string, string> = {
   'music':              'Concert / Spectacle',
@@ -159,8 +160,8 @@ function parseEvents(html: string): EventData[] {
 }
 
 export async function GET(request: Request) {
-  const secret = request.headers.get('x-internal-secret')
-  if (secret !== process.env.INTERNAL_API_SECRET) {
+  const acces = await verifierAdmin(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
   const supabase = createClient(

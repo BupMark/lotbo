@@ -347,6 +347,7 @@ export default function Admin() {
   const [statsImport,      setStatsImport]      = useState<{ source: string; nb: number; dernierImport: string | null }[]>([])
   const [repartitionPays,  setRepartitionPays]  = useState<{ pays: string; nb: number }[]>([])
   const [loadingImport,    setLoadingImport]     = useState(false)
+  const [loadingBelgium,   setLoadingBelgium]    = useState(false)
 
   // F2 — Onglet Utilisateurs
   const [countMembres,     setCountMembres]     = useState(0)
@@ -529,7 +530,7 @@ export default function Admin() {
 
     // ── 6. Count membres (auth.users) via endpoint léger ─────────────────────
     try {
-      const resMembres = await fetch('/api/admin/users?count=true', { headers: hi })
+      const resMembres = await fetch('/api/admin/users?count=true', { headers: hiAuth() })
       const jsonMembres = await resMembres.json()
       setCountMembres(jsonMembres.total || 0)
       setParRole(jsonMembres.parRole || {})
@@ -541,7 +542,7 @@ export default function Admin() {
   const chargerUtilisateurs = async () => {
     setLoadingUsers(true)
     try {
-      const res = await fetch('/api/admin/users', { headers: hi })
+      const res = await fetch('/api/admin/users', { headers: hiAuth() })
       const data = await res.json()
       if (data.users) {
         setUsers(data.users)
@@ -609,7 +610,7 @@ export default function Admin() {
   const changerRole = async (id: string, role: string) => {
     setChangingRole(id)
     try {
-      const res  = await fetch('/api/admin/users', { method: 'PATCH', headers: hi, body: JSON.stringify({ id, role }) })
+      const res  = await fetch('/api/admin/users', { method: 'PATCH', headers: hiAuth(), body: JSON.stringify({ id, role }) })
       const data = await res.json()
       setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
     } catch { /* ignore */ }
@@ -623,7 +624,7 @@ export default function Admin() {
     try {
       await fetch('/api/admin/users', {
         method: 'PATCH',
-        headers: hi,
+        headers: hiAuth(),
         body: JSON.stringify({ id: user.id, suspendu: suspendre }),
       })
       const newBannedUntil = suspendre ? new Date(Date.now() + 876600 * 3600000).toISOString() : null
@@ -635,7 +636,7 @@ export default function Admin() {
   const genererInvitation = async (userId: string, email: string) => {
     setInviteStates(prev => ({ ...prev, [userId]: 'loading' }))
     try {
-      const res  = await fetch('/api/admin/users', { method: 'POST', headers: hi, body: JSON.stringify({ email }) })
+      const res  = await fetch('/api/admin/users', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ email }) })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       await navigator.clipboard.writeText(data.link)
@@ -657,7 +658,7 @@ export default function Admin() {
     const ev = evenements.find(e => e.id === id)
     if (ev) {
       fetch('/api/notify-abonnes', { method: 'POST', headers: hi, body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
-      fetch('/api/push-notify',    { method: 'POST', headers: hi, body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
+      fetch('/api/push-notify',    { method: 'POST', headers: hiAuth(), body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
       if (ev.user_id) {
         await supabase.from('notifications').insert([{
           user_id: ev.user_id,
@@ -669,7 +670,7 @@ export default function Admin() {
         }])
         const typeRole = ev.soumis_en_tant_que === 'contributeur' ? 'utilisateur' : 'organisateur'
         fetch('/api/attributer-points', {
-          method: 'POST', headers: hi,
+          method: 'POST', headers: hiAuth(),
           body: JSON.stringify({ user_id: ev.user_id, action: 'evenement_approuve', evenement_id: ev.id, type_role: typeRole }),
         }).catch(() => {})
 
@@ -680,7 +681,7 @@ export default function Admin() {
           const nouveauRole = ev.soumis_en_tant_que === 'organisateur' ? 'organisateur' : 'contributeur'
           // Anti-rétrogradation : ne jamais promouvoir vers un rôle identique ou inférieur
           if (nouveauRole !== roleActuel) fetch('/api/admin/users', {
-            method: 'PATCH', headers: hi,
+            method: 'PATCH', headers: hiAuth(),
             body: JSON.stringify({ id: ev.user_id, role: nouveauRole, raison: 'Promotion automatique — premier événement approuvé' }),
           }).then(async (res) => {
             if (res.ok) {
@@ -751,7 +752,7 @@ export default function Admin() {
 
     fetch('/api/notify-rejet', {
       method: 'POST',
-      headers: hi,
+      headers: hiAuth(),
       body: JSON.stringify({ evenementId: modalRejet.id, titre: modalRejet.titre, raison, userId: modalRejet.userId }),
     }).catch(() => {})
 
@@ -1601,7 +1602,6 @@ export default function Admin() {
                   { label: 'World Cup',       route: '/api/scrape-worldcup'       },
                   { label: 'Ligue Haïtienne', route: '/api/scrape-liguehaitienne' },
                   { label: 'Eventbrite',          route: '/api/scrape-eventbrite'           },
-                  { label: 'Eventbrite Belgique', route: '/api/import-eventbrite-belgium' },
                 ].map(s => (
                   <button
                     key={s.route}
@@ -1630,6 +1630,31 @@ export default function Admin() {
                     {loadingImport ? '⏳' : '▶️'} {s.label}
                   </button>
                 ))}
+                <button
+                  disabled={loadingBelgium}
+                  onClick={async () => {
+                    setLoadingBelgium(true)
+                    try {
+                      const res  = await fetch('/api/import-eventbrite-belgium', { headers: hiAuth() })
+                      const data = await res.json()
+                      alert(`✅ Eventbrite Belgique : ${data.imported || 0} importés · ${data.skipped || 0} ignorés`)
+                      chargerDonnees()
+                    } catch {
+                      alert('❌ Erreur lors du scraping Eventbrite Belgique')
+                    }
+                    setLoadingBelgium(false)
+                  }}
+                  style={{
+                    background: loadingBelgium ? 'rgba(255,255,255,0.04)' : 'rgba(200,67,26,0.15)',
+                    color: loadingBelgium ? '#555' : '#C8431A',
+                    border: '1px solid rgba(200,67,26,0.3)',
+                    borderRadius: 8, padding: '8px 16px',
+                    fontSize: 13, fontWeight: 'bold',
+                    cursor: loadingBelgium ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {loadingBelgium ? '⏳' : '▶️'} Eventbrite Belgique
+                </button>
               </div>
             </div>
 
