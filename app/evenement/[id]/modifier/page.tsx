@@ -279,14 +279,18 @@ export default function ModifierEvenement() {
       if (userId !== ev.user_id) {
         const { data: ownerProfile } = await supabase.from('profiles').select('notif_evenement_modifie').eq('id', ev.user_id).single()
         if (ownerProfile?.notif_evenement_modifie ?? true) {
-          await supabase.from('notifications').insert([{
-            user_id: ev.user_id,
-            type: 'evenement_modifie',
-            titre: 'Votre événement a été modifié',
-            message: `"${ev.titre}" a été mis à jour par un membre de votre organisation.`,
-            lien: `/evenement/${ev.id}`,
-            lu: false,
-          }])
+          const { data: { session } } = await supabase.auth.getSession()
+          await fetch('/api/notifier-utilisateur', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+            body: JSON.stringify({
+              user_id: ev.user_id,
+              type: 'evenement_modifie',
+              titre: 'Votre événement a été modifié',
+              message: `"${ev.titre}" a été mis à jour par un membre de votre organisation.`,
+              lien: `/evenement/${ev.id}`,
+            }),
+          }).catch(() => {})
         }
       }
 

@@ -661,14 +661,16 @@ export default function Admin() {
       fetch('/api/notify-abonnes', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, ville: ev.ville, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
       fetch('/api/push-notify',    { method: 'POST', headers: hiAuth(), body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
       if (ev.user_id) {
-        await supabase.from('notifications').insert([{
-          user_id: ev.user_id,
-          type: 'evenement_approuve',
-          titre: 'Événement approuvé ✅',
-          message: `Votre événement "${ev.titre}" est maintenant en ligne.`,
-          lien: `/evenement/${ev.id}`,
-          lu: false,
-        }])
+        await fetch('/api/admin/notifications', {
+          method: 'POST', headers: hiAuth(),
+          body: JSON.stringify({
+            user_id: ev.user_id,
+            type: 'evenement_approuve',
+            titre: 'Événement approuvé ✅',
+            message: `Votre événement "${ev.titre}" est maintenant en ligne.`,
+            lien: `/evenement/${ev.id}`,
+          }),
+        }).catch(() => {})
         const typeRole = ev.soumis_en_tant_que === 'contributeur' ? 'utilisateur' : 'organisateur'
         fetch('/api/attributer-points', {
           method: 'POST', headers: hiAuth(),
@@ -696,44 +698,50 @@ export default function Admin() {
               // Mettre à jour la liste utilisateurs si elle est chargée
               setUsers(prev => prev.map(u => u.id === ev.user_id && ROLES_INFERIEURS.includes(u.role) ? { ...u, role: nouveauRole } : u))
               // Notifier l'utilisateur de sa promotion
-              await supabase.from('notifications').insert([{
-                user_id: ev.user_id,
-                type: 'badge_debloque',
-                titre: nouveauRole === 'organisateur' ? '🎪 Tu es Organisateur !' : '⭐ Tu es Contributeur !',
-                message: nouveauRole === 'organisateur'
-                  ? 'Ton premier événement a été approuvé. Bienvenue parmi les organisateurs LOTBO !'
-                  : 'Ton premier événement a été approuvé. Tu rejoins les contributeurs LOTBO !',
-                lien: '/profil',
-                lu: false,
-              }])
+              await fetch('/api/admin/notifications', {
+                method: 'POST', headers: hiAuth(),
+                body: JSON.stringify({
+                  user_id: ev.user_id,
+                  type: 'badge_debloque',
+                  titre: nouveauRole === 'organisateur' ? '🎪 Tu es Organisateur !' : '⭐ Tu es Contributeur !',
+                  message: nouveauRole === 'organisateur'
+                    ? 'Ton premier événement a été approuvé. Bienvenue parmi les organisateurs LOTBO !'
+                    : 'Ton premier événement a été approuvé. Tu rejoins les contributeurs LOTBO !',
+                  lien: '/profil',
+                }),
+              }).catch(() => {})
             }
           }).catch(() => {})
         }
 
         // GM-BADGE-WIKI1 — Badge Contributeur Wikimedia
         if (ev.source === 'wikimedia') {
-          supabase.from('notifications').insert([{
-            user_id: ev.user_id,
-            type: 'badge_debloque',
-            titre: '🌐 Badge Contributeur Wikimedia !',
-            message: 'Ton événement Wikimedia a été approuvé. Badge débloqué sur LOTBO !',
-            lien: '/profil?onglet=badges',
-            lu: false,
-          }]).then(() => {})
+          fetch('/api/admin/notifications', {
+            method: 'POST', headers: hiAuth(),
+            body: JSON.stringify({
+              user_id: ev.user_id,
+              type: 'badge_debloque',
+              titre: '🌐 Badge Contributeur Wikimedia !',
+              message: 'Ton événement Wikimedia a été approuvé. Badge débloqué sur LOTBO !',
+              lien: '/profil?onglet=badges',
+            }),
+          }).catch(() => {})
         }
 
         // notif_scan_publie — notification dédiée si l'événement vient d'un scan IA
         if (ev.source === 'scan_publie') {
           supabase.from('profiles').select('notif_scan_publie').eq('id', ev.user_id).single().then(({ data: p }) => {
             if (p?.notif_scan_publie ?? true) {
-              supabase.from('notifications').insert([{
-                user_id: ev.user_id,
-                type: 'scan_publie',
-                titre: '📸 Ton scan a été publié !',
-                message: `"${ev.titre}" est maintenant en ligne, généré depuis ton scan.`,
-                lien: `/evenement/${ev.id}`,
-                lu: false,
-              }]).then(() => {})
+              fetch('/api/admin/notifications', {
+                method: 'POST', headers: hiAuth(),
+                body: JSON.stringify({
+                  user_id: ev.user_id,
+                  type: 'scan_publie',
+                  titre: '📸 Ton scan a été publié !',
+                  message: `"${ev.titre}" est maintenant en ligne, généré depuis ton scan.`,
+                  lien: `/evenement/${ev.id}`,
+                }),
+              }).catch(() => {})
             }
           })
         }
@@ -774,14 +782,16 @@ export default function Admin() {
     }).catch(() => {})
 
     if (modalRejet.userId) {
-      await supabase.from('notifications').insert([{
-        user_id: modalRejet.userId,
-        type: 'evenement_rejete',
-        titre: 'Événement non publié',
-        message: `Votre événement "${modalRejet.titre}" n'a pas été approuvé.`,
-        lien: null,
-        lu: false,
-      }])
+      await fetch('/api/admin/notifications', {
+        method: 'POST', headers: hiAuth(),
+        body: JSON.stringify({
+          user_id: modalRejet.userId,
+          type: 'evenement_rejete',
+          titre: 'Événement non publié',
+          message: `Votre événement "${modalRejet.titre}" n'a pas été approuvé.`,
+          lien: null,
+        }),
+      }).catch(() => {})
     }
 
     setLoadingRejet(false)
@@ -850,27 +860,31 @@ export default function Admin() {
       const msg = decision === 'maintenu'
         ? "Votre signalement a été examiné — l'événement a été maintenu."
         : "Votre signalement a été examiné — l'événement a été retiré."
-      await supabase.from('notifications').insert([{
-        user_id: sig.user_id,
-        type:    'classement',
-        titre:   'Signalement traité',
-        message: msg,
-        lien:    null,
-        lu:      false,
-      }])
+      await fetch('/api/admin/notifications', {
+        method: 'POST', headers: hiAuth(),
+        body: JSON.stringify({
+          user_id: sig.user_id,
+          type:    'classement',
+          titre:   'Signalement traité',
+          message: msg,
+          lien:    null,
+        }),
+      }).catch(() => {})
     }
 
     if (decision === 'retire') {
       const ev = evenements.find(e => e.id === sig.evenement_id)
       if (ev?.user_id) {
-        await supabase.from('notifications').insert([{
-          user_id: ev.user_id,
-          type:    'evenement_rejete',
-          titre:   'Événement retiré suite à un signalement',
-          message: `Votre événement "${ev.titre}" a été retiré suite à un signalement.`,
-          lien:    null,
-          lu:      false,
-        }])
+        await fetch('/api/admin/notifications', {
+          method: 'POST', headers: hiAuth(),
+          body: JSON.stringify({
+            user_id: ev.user_id,
+            type:    'evenement_rejete',
+            titre:   'Événement retiré suite à un signalement',
+            message: `Votre événement "${ev.titre}" a été retiré suite à un signalement.`,
+            lien:    null,
+          }),
+        }).catch(() => {})
       }
     }
 
@@ -1377,14 +1391,16 @@ export default function Admin() {
                               if (!confirm(`Transférer la propriété de "${rec.evenements?.titre}" à ce reclamant ?`)) return
                               await supabase.from('evenements').update({ user_id: rec.reclamant_id }).eq('id', rec.evenement_id)
                               await supabase.from('reclamations_evenements').update({ statut: 'approuve', traite_le: new Date().toISOString() }).eq('id', rec.id)
-                              supabase.from('notifications').insert([{
-                                user_id: rec.reclamant_id,
-                                type: 'evenement_approuve',
-                                titre: '🔑 Réclamation approuvée !',
-                                message: `Vous êtes maintenant propriétaire de "${rec.evenements?.titre}".`,
-                                lien: `/evenement/${rec.evenement_id}`,
-                                lu: false,
-                              }]).then(() => {})
+                              fetch('/api/admin/notifications', {
+                                method: 'POST', headers: hiAuth(),
+                                body: JSON.stringify({
+                                  user_id: rec.reclamant_id,
+                                  type: 'evenement_approuve',
+                                  titre: '🔑 Réclamation approuvée !',
+                                  message: `Vous êtes maintenant propriétaire de "${rec.evenements?.titre}".`,
+                                  lien: `/evenement/${rec.evenement_id}`,
+                                }),
+                              }).catch(() => {})
                               setReclamations(prev => prev.map(r => r.id === rec.id ? { ...r, statut: 'approuve' } : r))
                             }}
                             style={{ background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
@@ -1394,14 +1410,16 @@ export default function Admin() {
                           <button
                             onClick={async () => {
                               await supabase.from('reclamations_evenements').update({ statut: 'rejete', traite_le: new Date().toISOString() }).eq('id', rec.id)
-                              supabase.from('notifications').insert([{
-                                user_id: rec.reclamant_id,
-                                type: 'evenement_rejete',
-                                titre: 'Réclamation non approuvée',
-                                message: `Votre réclamation sur "${rec.evenements?.titre}" a été examinée et refusée.`,
-                                lien: null,
-                                lu: false,
-                              }]).then(() => {})
+                              fetch('/api/admin/notifications', {
+                                method: 'POST', headers: hiAuth(),
+                                body: JSON.stringify({
+                                  user_id: rec.reclamant_id,
+                                  type: 'evenement_rejete',
+                                  titre: 'Réclamation non approuvée',
+                                  message: `Votre réclamation sur "${rec.evenements?.titre}" a été examinée et refusée.`,
+                                  lien: null,
+                                }),
+                              }).catch(() => {})
                               setReclamations(prev => prev.map(r => r.id === rec.id ? { ...r, statut: 'rejete' } : r))
                             }}
                             style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}

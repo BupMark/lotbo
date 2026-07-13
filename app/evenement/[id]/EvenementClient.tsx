@@ -257,41 +257,47 @@ function CommentaireForm({
         evenement_id: evenementId,
         type_role: 'utilisateur',
       })
+      const { data: { session } } = await supabase.auth.getSession()
+      const notifierUtilisateur = (payload: { user_id: string; type: string; titre: string; message: string; lien?: string | null }) => {
+        fetch('/api/notifier-utilisateur', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+          body: JSON.stringify(payload),
+        }).catch(() => {})
+      }
+
       if (parentId && parentAuthorUserId && parentAuthorUserId !== userProfile.id) {
         const extrait = contenu.trim().slice(0, 80) + (contenu.trim().length > 80 ? '…' : '')
-        supabase.from('notifications').insert([{
+        notifierUtilisateur({
           user_id: parentAuthorUserId,
           type: 'nouveau_commentaire',
           titre: `${userProfile.nom} a répondu à votre commentaire`,
           message: extrait,
           lien: `/evenement/${evenementId}`,
-          lu: false,
-        }]).then(() => {})
+        })
       }
       if (!parentId && userProfile.id !== ADMIN_UUID) {
         const extrait = contenu.trim().slice(0, 80) + (contenu.trim().length > 80 ? '…' : '')
         const titreEv = evenementTitre ? ` sur "${evenementTitre}"` : ''
-        supabase.from('notifications').insert([{
+        notifierUtilisateur({
           user_id: ADMIN_UUID,
           type: 'nouveau_commentaire',
           titre: `Nouveau commentaire${titreEv}`,
           message: `${userProfile.nom} : ${extrait}`,
           lien: `/evenement/${evenementId}`,
-          lu: false,
-        }]).then(() => {})
+        })
       }
       if (!parentId && evenementUserId && evenementUserId !== userProfile.id) {
         supabase.from('profiles').select('notif_commentaires').eq('id', evenementUserId).single().then(({ data: authorProfile }) => {
           if (authorProfile?.notif_commentaires ?? true) {
             const extrait = contenu.trim().slice(0, 80) + (contenu.trim().length > 80 ? '…' : '')
-            supabase.from('notifications').insert([{
+            notifierUtilisateur({
               user_id: evenementUserId,
               type: 'nouveau_commentaire',
               titre: 'Nouveau commentaire sur votre événement',
               message: `${userProfile.nom} : ${extrait}`,
               lien: `/evenement/${evenementId}`,
-              lu: false,
-            }]).then(() => {})
+            })
           }
         })
       }
@@ -1057,22 +1063,21 @@ export default function EvenementPage() {
                   disabled={!propositionForm.nouvelle_valeur.trim()}
                   onClick={async () => {
                     if (!ev || !userProfile) return
-                    const { error } = await supabase.from('propositions_modifications').insert([{
+                    const { data: propData, error } = await supabase.from('propositions_modifications').insert([{
                       evenement_id: ev.id, proposant_id: userProfile.id,
                       champ_modifie: propositionForm.champ_modifie,
                       ancienne_valeur: propositionForm.ancienne_valeur || null,
                       nouvelle_valeur: propositionForm.nouvelle_valeur.trim(),
                       statut: 'en_attente',
-                    }])
-                    if (!error) {
+                    }]).select('id').single()
+                    if (!error && propData) {
                       setPropositionEnvoyee(true)
-                      supabase.from('notifications').insert([{
-                        user_id: 'ff21f2e0-135d-4996-9713-4a0e20c38fe1',
-                        type: 'proposition_modification',
-                        titre: `Correction proposée — ${ev.titre}`,
-                        message: `${userProfile.nom} propose de corriger "${propositionForm.champ_modifie}"`,
-                        lien: '/admin', lu: false,
-                      }]).then(() => {})
+                      const { data: { session } } = await supabase.auth.getSession()
+                      fetch('/api/notifier-admin-action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+                        body: JSON.stringify({ kind: 'proposition', record_id: propData.id }),
+                      }).catch(() => {})
                       setTimeout(() => { setPropositionModal(false); setPropositionEnvoyee(false) }, 3000)
                     }
                   }}
@@ -1168,18 +1173,17 @@ export default function EvenementPage() {
                   onClick={async () => {
                     if (!userProfile) return
                     setClaimLoading(true)
-                    const { error } = await supabase.from('reclamations_evenements').insert([{
+                    const { data: recData, error } = await supabase.from('reclamations_evenements').insert([{
                       evenement_id: ev.id, reclamant_id: userProfile.id,
                       message: claimMessage.trim() || null, statut: 'en_attente',
-                    }])
-                    if (!error) {
-                      supabase.from('notifications').insert([{
-                        user_id: 'ff21f2e0-135d-4996-9713-4a0e20c38fe1',
-                        type: 'reclamation',
-                        titre: `Réclamation — ${ev.titre}`,
-                        message: `${userProfile.nom} réclame la propriété de "${ev.titre}"`,
-                        lien: '/admin', lu: false,
-                      }]).then(() => {})
+                    }]).select('id').single()
+                    if (!error && recData) {
+                      const { data: { session } } = await supabase.auth.getSession()
+                      fetch('/api/notifier-admin-action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+                        body: JSON.stringify({ kind: 'reclamation', record_id: recData.id }),
+                      }).catch(() => {})
                       setClaimEnvoye(true)
                     }
                     setClaimLoading(false)
