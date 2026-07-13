@@ -79,6 +79,17 @@ interface EnqueteurCandidature {
   token_expire_at: string
 }
 
+interface PropositionModification {
+  id: string
+  evenement_id: string
+  champ_modifie: string
+  ancienne_valeur: string | null
+  nouvelle_valeur: string
+  created_at: string
+  evenements: { titre: string } | null
+  proposant_nom: string | null
+}
+
 interface BadgeEnAttente {
   id: string
   nom_affichage: string
@@ -89,7 +100,7 @@ interface BadgeEnAttente {
 
 type FiltreStatut  = 'en_attente' | 'approuve' | 'en_cours' | 'rejete' | 'hors_ligne' | 'archive' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
-type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations' | 'candidatures'
+type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations' | 'candidatures' | 'propositions'
 type FiltreRole    = 'tous' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin' | 'admin_enqueteur'
 type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
 
@@ -372,6 +383,9 @@ export default function Admin() {
   const [traitementId,        setTraitementId]        = useState<string | null>(null)
   const [badgesEnAttente,     setBadgesEnAttente]     = useState<BadgeEnAttente[]>([])
   const [loadingBadges,       setLoadingBadges]       = useState(false)
+  const [propositions,             setPropositions]             = useState<PropositionModification[]>([])
+  const [loadingPropositions,      setLoadingPropositions]       = useState(false)
+  const [traitementPropositionId,  setTraitementPropositionId]   = useState<string | null>(null)
 
   // F5 — Modal rejet
   const [modalRejet,    setModalRejet]    = useState<{ id: string; titre: string; userId: string | null } | null>(null)
@@ -570,6 +584,29 @@ export default function Admin() {
       setBadgesEnAttente(dataB.badges || [])
     } catch { /* ignore */ }
     setLoadingBadges(false)
+  }
+
+  const chargerPropositions = async () => {
+    setLoadingPropositions(true)
+    try {
+      const res  = await fetch('/api/admin/propositions', { headers: hiAuth() })
+      const data = await res.json()
+      setPropositions(data.propositions || [])
+    } catch { /* ignore */ }
+    setLoadingPropositions(false)
+  }
+
+  const traiterProposition = async (id: string, action: 'appliquer' | 'rejeter') => {
+    setTraitementPropositionId(id)
+    try {
+      const res  = await fetch('/api/admin/propositions', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ propositionId: id, action }) })
+      const data = await res.json()
+      if (data.error) { alert('Erreur : ' + data.error); setTraitementPropositionId(null); return }
+      setPropositions(prev => prev.filter(p => p.id !== id))
+    } catch {
+      alert('Erreur lors du traitement')
+    }
+    setTraitementPropositionId(null)
   }
 
   const validerCandidature = async (c: EnqueteurCandidature) => {
@@ -1017,6 +1054,7 @@ export default function Admin() {
             { key: 'signalements', label: 'Signalements', count: signalements.length,                                       badge: true },
             { key: 'reclamations', label: '🔑 Claims', count: reclamations.filter(r => r.statut === 'en_attente').length, badge: true },
             { key: 'candidatures', label: '📋 Enquêteurs', count: candidatures.length,                                      badge: true },
+            { key: 'propositions', label: '✏️ Corrections', count: propositions.length,                                     badge: true },
             { key: 'import',       label: '📥 Import',  count: statsImport.length,                                        badge: true },
             { key: 'utilisateurs', label: '👥 Users',   count: countMembres,                                              badge: true },
           ].map(tab => (
@@ -1026,6 +1064,7 @@ export default function Admin() {
                 setOnglet(tab.key as Onglet)
                 if (tab.key === 'utilisateurs' && users.length === 0) chargerUtilisateurs()
                 if (tab.key === 'candidatures' && candidatures.length === 0 && !loadingCandidatures) chargerCandidatures()
+                if (tab.key === 'propositions' && propositions.length === 0 && !loadingPropositions) chargerPropositions()
               }}
               style={{
                 padding: '10px 16px', fontSize: 13, fontWeight: 'bold',
@@ -1537,6 +1576,66 @@ export default function Admin() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {onglet === 'propositions' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
+            <h3 style={{ color: '#1A1410', fontSize: 15, fontWeight: 'bold', marginBottom: 4 }}>
+              ✏️ Corrections proposées {propositions.length > 0 && `(${propositions.length})`}
+            </h3>
+            {loadingPropositions ? (
+              <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40, fontStyle: 'italic' }}>Chargement…</p>
+            ) : propositions.length === 0 ? (
+              <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucune correction en attente.</p>
+            ) : (
+              propositions.map(p => {
+                const busy = traitementPropositionId === p.id
+                const labelChamp: Record<string, string> = {
+                  titre: 'Titre', lieu: 'Lieu', date: 'Date', description: 'Description',
+                  lien: 'Lien officiel', emplacement_pin: '📍 Emplacement du pin', image: '🖼️ Image',
+                  categorie: '🏷️ Catégorie', heure: '🕐 Heure', prix_acces: '💰 Prix / Accès',
+                }
+                return (
+                  <div key={p.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <a href={`/evenement/${p.evenement_id}`} target="_blank" style={{ color: '#C8431A', fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', marginBottom: 4 }}>
+                          {p.evenements?.titre ?? 'Événement inconnu'} ↗
+                        </a>
+                        <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>
+                          Proposé par {p.proposant_nom ?? 'Utilisateur'} · {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        </p>
+                        <p style={{ color: '#1A1410', fontSize: 12, fontWeight: 'bold', marginBottom: 4 }}>
+                          Champ : {labelChamp[p.champ_modifie] ?? p.champ_modifie}
+                        </p>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 12, color: '#e57373', textDecoration: 'line-through' }}>{p.ancienne_valeur || '(vide)'}</span>
+                          <span style={{ color: '#8C5A40' }}>→</span>
+                          <span style={{ fontSize: 12, color: '#2D9E6B', fontWeight: 'bold' }}>{p.nouvelle_valeur}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button
+                          onClick={() => traiterProposition(p.id, 'appliquer')}
+                          disabled={busy}
+                          style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: busy ? 'not-allowed' : 'pointer' }}
+                        >
+                          {busy ? '…' : '✓ Appliquer'}
+                        </button>
+                        <button
+                          onClick={() => traiterProposition(p.id, 'rejeter')}
+                          disabled={busy}
+                          style={{ background: 'rgba(180,40,40,0.15)', color: '#e57373', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: busy ? 'not-allowed' : 'pointer' }}
+                        >
+                          {busy ? '…' : '✗ Rejeter'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         )}
 
