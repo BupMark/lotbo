@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   if (!auth.ok) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   try {
-    const { consentementId } = await request.json() as { consentementId: string }
+    const { consentementId, fiches_total_initial } = await request.json() as { consentementId: string; fiches_total_initial?: number }
     if (!consentementId) return NextResponse.json({ error: 'consentementId manquant' }, { status: 400 })
 
     const admin = makeAdminClient()
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
       ville:                    row.ville,
       email:                    row.email,
       statut:                   'actif',
+      fiches_total:             fiches_total_initial ?? 0,
       cycle_debut:              now,
       consent_page_publique:    true,
       consent_page_publique_at: now,

@@ -381,6 +381,7 @@ export default function Admin() {
   const [accessToken,         setAccessToken]         = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [candidatures,        setCandidatures]        = useState<EnqueteurCandidature[]>([])
+  const [fichesInitiales,     setFichesInitiales]     = useState<Record<string, number>>({})
   const [loadingCandidatures, setLoadingCandidatures]  = useState(false)
   const [traitementId,        setTraitementId]        = useState<string | null>(null)
   const [badgesEnAttente,     setBadgesEnAttente]     = useState<BadgeEnAttente[]>([])
@@ -686,7 +687,7 @@ export default function Admin() {
     if (!confirm(`Valider la candidature de ${c.nom_complet} ? Elle apparaîtra publiquement sur lotbo.app/enqueteurs.`)) return
     setTraitementId(c.id)
     try {
-      const res  = await fetch('/api/admin/enqueteurs/valider', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ consentementId: c.id }) })
+      const res  = await fetch('/api/admin/enqueteurs/valider', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ consentementId: c.id, fiches_total_initial: fichesInitiales[c.id] ?? 0 }) })
       const data = await res.json()
       if (data.error) { alert('Erreur : ' + data.error); setTraitementId(null); return }
       setCandidatures(prev => prev.filter(x => x.id !== c.id))
@@ -1597,6 +1598,14 @@ export default function Admin() {
                           </p>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, justifyContent: 'center' }}>
+                          <label style={{ fontSize: 9, color: '#8C5A40' }}>Fiches déjà réalisées (optionnel)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={fichesInitiales[c.id] ?? ''}
+                            onChange={e => setFichesInitiales(prev => ({ ...prev, [c.id]: e.target.value === '' ? 0 : parseInt(e.target.value, 10) }))}
+                            style={{ width: 90, padding: '5px 8px', borderRadius: 6, border: '1px solid #E8E0D0', fontSize: 12, color: '#1A1410' }}
+                          />
                           <button
                             onClick={() => validerCandidature(c)}
                             disabled={busy || !tousConsentements}
