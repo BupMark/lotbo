@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-function verifierSecret(request: Request): boolean {
-  const secret = request.headers.get('x-internal-secret')
-  return secret === process.env.INTERNAL_API_SECRET
-}
+import { verifierAdmin } from '../../../../lib/adminAuth'
 
 function makeAdminClient() {
   return createClient(
@@ -16,7 +12,8 @@ function makeAdminClient() {
 
 // GET ?ids=uuid1,uuid2,uuid3 — retourne { id, nom, role } pour chaque ID
 export async function GET(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierAdmin(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

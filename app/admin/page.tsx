@@ -470,7 +470,7 @@ export default function Admin() {
     const userIds = [...new Set(allEvs.map(e => e.user_id).filter(Boolean))] as string[]
     if (userIds.length > 0) {
       try {
-        const res = await fetch(`/api/admin/profiles?ids=${userIds.join(',')}`, { headers: hi })
+        const res = await fetch(`/api/admin/profiles?ids=${userIds.join(',')}`, { headers: hiAuth() })
         const json = await res.json()
         setProfilesMap(new Map((json.profiles || []).map((p: { id: string; nom: string | null; role: string | null }) => [p.id, p])))
       } catch { /* si fetch échoue, la map reste vide — non bloquant */ }
