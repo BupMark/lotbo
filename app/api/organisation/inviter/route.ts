@@ -107,6 +107,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
+    const { data: p } = await supabaseAdmin.from('profiles').select('notif_organisation').eq('id', targetUser.id).single()
+    if (p?.notif_organisation ?? true) {
+      await supabaseAdmin.from('notifications').insert([{
+        user_id: targetUser.id,
+        type: 'organisation_ajout',
+        titre: 'Tu as rejoint une organisation',
+        message: `Tu es maintenant membre de ${orgRow.nom}.`,
+        lien: '/organisations',
+        lu: false,
+      }])
+    }
+
     // Email de confirmation à l'utilisateur ajouté
     await envoyerEmail(
       email,

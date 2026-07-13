@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   // Chercher l'invitation par token
   const { data: inv } = await supabaseAdmin
     .from('invitations_org_en_attente')
-    .select('id, org_id, role, expire_le, statut')
+    .select('id, org_id, role, expire_le, statut, invite_par')
     .eq('token', token)
     .maybeSingle()
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invitation introuvable' }, { status: 404 })
   }
 
-  const invRow = inv as { id: string; org_id: string; role: string; expire_le: string; statut: string }
+  const invRow = inv as { id: string; org_id: string; role: string; expire_le: string; statut: string; invite_par: string | null }
 
   if (invRow.statut !== 'en_attente') {
     return NextResponse.json({ error: 'Cette invitation a déjà été utilisée' }, { status: 410 })
@@ -78,6 +78,20 @@ export async function POST(request: Request) {
 
     if (insertError) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    if (invRow.invite_par) {
+      const { data: p } = await supabaseAdmin.from('profiles').select('notif_organisation').eq('id', invRow.invite_par).single()
+      if (p?.notif_organisation ?? true) {
+        await supabaseAdmin.from('notifications').insert([{
+          user_id: invRow.invite_par,
+          type: 'organisation_invitation_acceptee',
+          titre: 'Invitation acceptée',
+          message: 'Une personne a rejoint votre organisation suite à votre invitation.',
+          lien: '/organisations',
+          lu: false,
+        }])
+      }
     }
   }
 

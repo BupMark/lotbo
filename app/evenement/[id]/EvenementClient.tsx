@@ -196,6 +196,7 @@ function CommentaireForm({
   userProfile,
   parentAuthorUserId,
   evenementTitre,
+  evenementUserId,
 }: {
   evenementId: string
   parentId?: string
@@ -206,6 +207,7 @@ function CommentaireForm({
   userProfile: UserProfile | null
   parentAuthorUserId?: string | null
   evenementTitre?: string
+  evenementUserId?: string | null
 }) {
   const [contenu, setContenu] = useState('')
   const [loading, setLoading] = useState(false)
@@ -277,6 +279,21 @@ function CommentaireForm({
           lien: `/evenement/${evenementId}`,
           lu: false,
         }]).then(() => {})
+      }
+      if (!parentId && evenementUserId && evenementUserId !== userProfile.id) {
+        supabase.from('profiles').select('notif_commentaires').eq('id', evenementUserId).single().then(({ data: authorProfile }) => {
+          if (authorProfile?.notif_commentaires ?? true) {
+            const extrait = contenu.trim().slice(0, 80) + (contenu.trim().length > 80 ? '…' : '')
+            supabase.from('notifications').insert([{
+              user_id: evenementUserId,
+              type: 'nouveau_commentaire',
+              titre: 'Nouveau commentaire sur votre événement',
+              message: `${userProfile.nom} : ${extrait}`,
+              lien: `/evenement/${evenementId}`,
+              lu: false,
+            }]).then(() => {})
+          }
+        })
       }
       setContenu('')
       setEnvoye(true)
@@ -1447,6 +1464,7 @@ export default function EvenementPage() {
               evenementId={ev.id}
               userProfile={userProfile}
               evenementTitre={ev.titre}
+              evenementUserId={ev.user_id}
               onNouveau={(c) => setCommentaires(prev => [{ ...c, reponses: [], reactions: {} }, ...prev])}
             />
             <CommentairesList

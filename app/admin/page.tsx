@@ -721,6 +721,22 @@ export default function Admin() {
             lu: false,
           }]).then(() => {})
         }
+
+        // notif_scan_publie — notification dédiée si l'événement vient d'un scan IA
+        if (ev.source === 'scan_publie') {
+          supabase.from('profiles').select('notif_scan_publie').eq('id', ev.user_id).single().then(({ data: p }) => {
+            if (p?.notif_scan_publie ?? true) {
+              supabase.from('notifications').insert([{
+                user_id: ev.user_id,
+                type: 'scan_publie',
+                titre: '📸 Ton scan a été publié !',
+                message: `"${ev.titre}" est maintenant en ligne, généré depuis ton scan.`,
+                lien: `/evenement/${ev.id}`,
+                lu: false,
+              }]).then(() => {})
+            }
+          })
+        }
       }
     }
   }

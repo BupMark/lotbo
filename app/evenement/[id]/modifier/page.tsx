@@ -276,6 +276,20 @@ export default function ModifierEvenement() {
 
       if (error) throw error
 
+      if (userId !== ev.user_id) {
+        const { data: ownerProfile } = await supabase.from('profiles').select('notif_evenement_modifie').eq('id', ev.user_id).single()
+        if (ownerProfile?.notif_evenement_modifie ?? true) {
+          await supabase.from('notifications').insert([{
+            user_id: ev.user_id,
+            type: 'evenement_modifie',
+            titre: 'Votre événement a été modifié',
+            message: `"${ev.titre}" a été mis à jour par un membre de votre organisation.`,
+            lien: `/evenement/${ev.id}`,
+            lu: false,
+          }])
+        }
+      }
+
       setMessageType('succes')
       setMessage('✅ Événement mis à jour avec succès !')
       setTimeout(() => router.push(`/evenement/${id}`), 1500)
