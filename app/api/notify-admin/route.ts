@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server'
-
-// ── Vérification secret interne ──────────────────────────────────────────────
-// Cette route est appelée uniquement par le code serveur de l'app (handleSubmit).
-// Elle est protégée par un secret partagé pour empêcher les appels externes.
-// ────────────────────────────────────────────────────────────────────────────
-function verifierSecret(request: Request): boolean {
-  const secret = request.headers.get('x-internal-secret')
-  return secret === process.env.INTERNAL_API_SECRET
-}
+import { verifierUtilisateurConnecte } from '../../../lib/adminAuth'
 
 export async function POST(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierUtilisateurConnecte(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

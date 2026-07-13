@@ -978,13 +978,13 @@ export default function AjouterEvenement() {
     // ── Notif admin (fire & forget) ───────────────────────────────────────────
     fetch('/api/notify-admin', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
       body: JSON.stringify({ titre: form.titre, lieu: lieuAffiche, date: form.date, categorie: categorieNom })
     }).catch(() => {})
 
     fetch('/api/push-notify-admins', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
       body: JSON.stringify({ titre: form.titre, lieu: lieuAffiche })
     }).catch(() => {})
 
@@ -992,7 +992,7 @@ export default function AjouterEvenement() {
     if (estRecurrent && !multiJours && inserted?.id) {
       fetch('/api/generer-occurrences', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
         body: JSON.stringify({ parent_id: inserted.id }),
       }).catch(() => {})
     }
@@ -1023,7 +1023,7 @@ export default function AjouterEvenement() {
       // ENG3-C — Push PWA ciblé
       fetch('/api/push-notify-badge', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
         body: JSON.stringify({
           user_id: userId,
           badge_emoji: nouveauBadge.emoji,
@@ -1044,7 +1044,7 @@ export default function AjouterEvenement() {
       // ENG3-D — Email Brevo
       fetch('/api/notify-badge', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
         body: JSON.stringify({
           email: session?.user?.email,
           nom: session?.user?.user_metadata?.nom || null,

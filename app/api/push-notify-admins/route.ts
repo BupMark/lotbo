@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
+import { verifierUtilisateurConnecte } from '../../../lib/adminAuth'
 
 webpush.setVapidDetails(
   process.env.VAPID_EMAIL!,
@@ -8,13 +9,9 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY!
 )
 
-function verifierSecret(request: Request): boolean {
-  const secret = request.headers.get('x-internal-secret')
-  return secret === process.env.INTERNAL_API_SECRET
-}
-
 export async function POST(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierUtilisateurConnecte(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

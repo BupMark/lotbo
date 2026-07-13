@@ -54,3 +54,20 @@ export async function verifierAdminOuEnqueteur(request: Request): Promise<Verifi
 
   return { ok: true, userId: user.id }
 }
+
+export interface AccesUtilisateur {
+  ok: boolean
+  userId?: string
+}
+
+export async function verifierUtilisateurConnecte(request: Request): Promise<AccesUtilisateur> {
+  const authHeader = request.headers.get('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (!token) return { ok: false }
+
+  const admin = makeAdminClient()
+  const { data: { user }, error } = await admin.auth.getUser(token)
+  if (error || !user) return { ok: false }
+
+  return { ok: true, userId: user.id }
+}

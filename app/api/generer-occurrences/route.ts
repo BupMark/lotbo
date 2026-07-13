@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifierUtilisateurConnecte } from '../../../lib/adminAuth'
 
 function verifierSecret(request: Request): boolean {
   const secret = request.headers.get('x-internal-secret')
@@ -79,7 +80,8 @@ function genererDates(dateDebut: string, regle: RecurrenceRegle): string[] {
 }
 
 export async function POST(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierUtilisateurConnecte(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
@@ -101,6 +103,11 @@ export async function POST(request: Request) {
 
     if (parentError || !parent) {
       return NextResponse.json({ error: 'Événement parent introuvable' }, { status: 404 })
+    }
+
+    // Contrôle de propriété — empêche de générer des occurrences sur l'événement d'un autre utilisateur
+    if (parent.user_id !== acces.userId) {
+      return NextResponse.json({ error: 'Cet événement ne vous appartient pas' }, { status: 403 })
     }
 
     if (!parent.recurrence_regle || !parent.est_recurrent) {

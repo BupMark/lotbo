@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server'
-
-function verifierSecret(request: Request): boolean {
-  const secret = request.headers.get('x-internal-secret')
-  return secret === process.env.INTERNAL_API_SECRET
-}
+import { verifierUtilisateurConnecte } from '../../../lib/adminAuth'
 
 export async function POST(request: Request) {
-  if (!verifierSecret(request)) {
+  const acces = await verifierUtilisateurConnecte(request)
+  if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
