@@ -103,15 +103,18 @@ export async function POST(request: Request) {
     if (statutErr) throw statutErr
 
     if (prop.proposant_id) {
-      const { data: ev } = await admin.from('evenements').select('titre').eq('id', prop.evenement_id).single()
-      await admin.from('notifications').insert([{
-        user_id: prop.proposant_id,
-        type: 'correction_appliquee',
-        titre: 'Ta correction a été appliquée ✅',
-        message: `Ta proposition sur "${ev?.titre ?? 'un événement'}" a été validée et appliquée.`,
-        lien: `/evenement/${prop.evenement_id}`,
-        lu: false,
-      }])
+      const { data: proposantProfile } = await admin.from('profiles').select('notif_corrections').eq('id', prop.proposant_id).single()
+      if (proposantProfile?.notif_corrections ?? true) {
+        const { data: ev } = await admin.from('evenements').select('titre').eq('id', prop.evenement_id).single()
+        await admin.from('notifications').insert([{
+          user_id: prop.proposant_id,
+          type: 'correction_appliquee',
+          titre: 'Ta correction a été appliquée ✅',
+          message: `Ta proposition sur "${ev?.titre ?? 'un événement'}" a été validée et appliquée.`,
+          lien: `/evenement/${prop.evenement_id}`,
+          lu: false,
+        }])
+      }
     }
 
     return NextResponse.json({ success: true, action: 'applique' })
