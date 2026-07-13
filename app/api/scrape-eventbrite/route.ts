@@ -2,6 +2,7 @@
 // Ne pas renommer sans mettre à jour le bouton admin correspondant
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifierAdmin } from '../../../lib/adminAuth'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -78,7 +79,16 @@ async function geocode(address: string): Promise<{ longitude: number, latitude: 
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const secret = request.headers.get('x-internal-secret')
+  const secretValide = secret === process.env.INTERNAL_API_SECRET
+  if (!secretValide) {
+    const acces = await verifierAdmin(request)
+    if (!acces.ok) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    }
+  }
+
   // ── Instanciation DANS la fonction — jamais au niveau racine ──
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

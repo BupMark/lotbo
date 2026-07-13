@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifierDoublon } from '../../../lib/deduplication'
 import { normaliserPays } from '../../../lib/normalisation'
+import { verifierAdmin } from '../../../lib/adminAuth'
 
 const CLASSIFICATIONS = [
   { nom: 'Musique',        segment: 'music',  emoji: '🎵', categorie: 'Musique'  },
@@ -10,7 +11,16 @@ const CLASSIFICATIONS = [
   { nom: 'Family',         segment: 'family', emoji: '👨‍👩‍👧', categorie: 'Autre'    },
 ]
 
-export async function GET() {
+export async function GET(request: Request) {
+  const secret = request.headers.get('x-internal-secret')
+  const secretValide = secret === process.env.INTERNAL_API_SECRET
+  if (!secretValide) {
+    const acces = await verifierAdmin(request)
+    if (!acces.ok) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    }
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
