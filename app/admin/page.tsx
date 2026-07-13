@@ -416,12 +416,13 @@ export default function Admin() {
         .single()
       const role = prof?.role ?? data.session.user.user_metadata?.role
       if (role !== 'admin' && role !== 'admin_enqueteur') { router.push('/'); return }
+      const token = data.session.access_token
       setUserEmail(data.session.user.email ?? '')
-      setAccessToken(data.session.access_token)
+      setAccessToken(token)
       setUserRole(role)
       if (role === 'admin_enqueteur') {
         setOnglet('candidatures')
-        chargerCandidatures()
+        chargerCandidatures(token)
         setLoading(false)
       } else {
         chargerDonnees()
@@ -568,10 +569,13 @@ export default function Admin() {
     setLoadingUsers(false)
   }
 
-  const chargerCandidatures = async () => {
+  const chargerCandidatures = async (tokenOverride?: string) => {
     setLoadingCandidatures(true)
+    const headers = tokenOverride
+      ? { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenOverride}` }
+      : hiAuth()
     try {
-      const res  = await fetch('/api/admin/enqueteurs/candidatures', { headers: hiAuth() })
+      const res  = await fetch('/api/admin/enqueteurs/candidatures', { headers })
       const data = await res.json()
       setCandidatures(data.candidatures || [])
     } catch { /* ignore */ }
@@ -579,7 +583,7 @@ export default function Admin() {
 
     setLoadingBadges(true)
     try {
-      const resB  = await fetch('/api/admin/enqueteurs/badges', { headers: hiAuth() })
+      const resB  = await fetch('/api/admin/enqueteurs/badges', { headers })
       const dataB = await resB.json()
       setBadgesEnAttente(dataB.badges || [])
     } catch { /* ignore */ }
