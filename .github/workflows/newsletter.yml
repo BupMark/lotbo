@@ -1,0 +1,16 @@
+name: Newsletter hebdomadaire
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  envoyer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route newsletter
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/newsletter"

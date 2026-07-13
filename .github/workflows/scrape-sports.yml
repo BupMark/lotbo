@@ -1,0 +1,16 @@
+name: Scrape Sports
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route scrape-sports
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/scrape-sports"
