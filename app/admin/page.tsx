@@ -358,6 +358,8 @@ export default function Admin() {
   // SC7 — Dashboard import
   const [statsImport,      setStatsImport]      = useState<{ source: string; nb: number; dernierImport: string | null }[]>([])
   const [repartitionPays,  setRepartitionPays]  = useState<{ pays: string; nb: number }[]>([])
+  const [nbRegionsPublic, setNbRegionsPublic] = useState(0)
+  const [repartitionRegionsPublic, setRepartitionRegionsPublic] = useState<{ region: string; nb: number }[]>([])
   const [loadingImport,    setLoadingImport]     = useState(false)
   const [loadingBelgium,   setLoadingBelgium]    = useState(false)
 
@@ -423,6 +425,7 @@ export default function Admin() {
       if (role === 'admin_enqueteur') {
         setOnglet('candidatures')
         chargerCandidatures(token)
+        chargerStatsPubliques()
         setLoading(false)
       } else {
         chargerDonnees()
@@ -588,6 +591,72 @@ export default function Admin() {
       setBadgesEnAttente(dataB.badges || [])
     } catch { /* ignore */ }
     setLoadingBadges(false)
+  }
+
+  const chargerStatsPubliques = async () => {
+    const [
+      { count: total },
+      { count: approuves },
+    ] = await Promise.all([
+      supabase.from('evenements').select('*', { count: 'exact', head: true }),
+      supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'approuve'),
+    ])
+    setCountTotal(total || 0)
+    setCountApprouves(approuves || 0)
+
+    const { data: villesData } = await supabase
+      .from('evenements')
+      .select('ville')
+      .eq('statut', 'approuve')
+      .not('ville', 'is', null)
+    const mapVilles: Record<string, number> = {}
+    for (const ev of villesData || []) {
+      const v = ev.ville?.trim()
+      if (!v) continue
+      const vStripped = v.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      if (EXCLU_VILLES.has(vStripped)) continue
+      const vNorm = normaliserVille(v)
+      mapVilles[vNorm] = (mapVilles[vNorm] || 0) + 1
+    }
+    const villesArr = Object.entries(mapVilles).map(([ville, nb]) => ({ ville, nb })).sort((a, b) => b.nb - a.nb)
+    setCountVilles(villesArr.length)
+    setRepartitionVilles(villesArr)
+
+    const { data: statsPays } = await supabase
+      .from('evenements')
+      .select('pays')
+      .eq('statut', 'approuve')
+      .not('pays', 'is', null)
+      .limit(2000)
+    if (statsPays) {
+      const map: Record<string, number> = {}
+      for (const ev of statsPays) {
+        if (!ev.pays) continue
+        const paysNorm = codeVersNomPays(normaliserPays(ev.pays))
+        map[paysNorm] = (map[paysNorm] || 0) + 1
+      }
+      const allPays = Object.entries(map).map(([pays, nb]) => ({ pays, nb })).sort((a, b) => b.nb - a.nb)
+      setCountPays(allPays.length)
+      setRepartitionPays(allPays)
+    }
+
+    const { data: statsLong } = await supabase
+      .from('evenements')
+      .select('longitude')
+      .eq('statut', 'approuve')
+      .not('longitude', 'is', null)
+      .limit(2000)
+    if (statsLong) {
+      const map: Record<string, number> = {}
+      for (const ev of statsLong) {
+        if (ev.longitude === null) continue
+        const r = ev.longitude < -30 ? 'Amériques' : ev.longitude < 60 ? 'Europe/Afrique' : 'Asie/Pacifique'
+        map[r] = (map[r] || 0) + 1
+      }
+      const regionsArr = Object.entries(map).map(([region, nb]) => ({ region, nb })).sort((a, b) => b.nb - a.nb)
+      setNbRegionsPublic(regionsArr.length)
+      setRepartitionRegionsPublic(regionsArr)
+    }
   }
 
   const chargerPropositions = async () => {
@@ -951,6 +1020,8 @@ export default function Admin() {
     return Object.entries(map).map(([region, nb]) => ({ region, nb })).sort((a, b) => b.nb - a.nb)
   })()
 
+  const repartitionRegionsActuelle = userRole === 'admin_enqueteur' ? repartitionRegionsPublic : repartitionRegions
+
   // ─── Classification temporelle ───────────────────────────────────────────
 
   const getStatutTemporel = (ev: Evenement): 'a_venir' | 'en_cours' | 'archive' => {
@@ -1026,7 +1097,7 @@ export default function Admin() {
             { label: 'Membres',    valeur: countMembres,   couleur: '#4A90D9', onClick: () => { setOnglet('utilisateurs'); if (users.length === 0) chargerUtilisateurs() }, public: false },
             { label: 'Villes',     valeur: countVilles,    couleur: '#C8431A', onClick: () => setModalGeo('villes'), public: true },
             { label: 'Pays',       valeur: countPays,      couleur: '#8C5A40', onClick: () => setModalGeo('pays'), public: true },
-            { label: 'Régions',    valeur: nbRegions,      couleur: '#8C5A40', onClick: () => setModalGeo('regions'), public: true },
+            { label: 'Régions',    valeur: userRole === 'admin_enqueteur' ? nbRegionsPublic : nbRegions, couleur: '#8C5A40', onClick: () => setModalGeo('regions'), public: true },
           ] as Array<{ label: string; valeur: number; couleur: string; onClick: () => void; public: boolean }>)
             .filter(c => userRole !== 'admin_enqueteur' || c.public)
             .map((c, i) => (
@@ -2099,7 +2170,7 @@ export default function Admin() {
                 <p style={{ color: '#8C5A40', fontSize: 11 }}>
                   {modalGeo === 'villes'   ? `${repartitionVilles.length} villes · événements approuvés`
                    : modalGeo === 'pays'   ? `${repartitionPays.length} pays · événements approuvés`
-                   : `${repartitionRegions.length} région${repartitionRegions.length > 1 ? 's' : ''} · par longitude`}
+                   : `${repartitionRegionsActuelle.length} région${repartitionRegionsActuelle.length > 1 ? 's' : ''} · par longitude`}
                 </p>
               </div>
               <button onClick={() => setModalGeo(null)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>✕</button>
@@ -2112,9 +2183,9 @@ export default function Admin() {
             <div style={{ overflowY: 'auto', flex: 1, padding: '8px 20px 24px' }}>
               {(modalGeo === 'villes' ? repartitionVilles.map((v, i) => ({ nom: v.ville, nb: v.nb, i }))
                 : modalGeo === 'pays' ? repartitionPays.map((p, i) => ({ nom: (DRAPEAUX_PAYS[p.pays] ? DRAPEAUX_PAYS[p.pays] + ' ' : '') + p.pays, nb: p.nb, i }))
-                : repartitionRegions.map((r, i) => ({ nom: r.region, nb: r.nb, i }))
+                : repartitionRegionsActuelle.map((r, i) => ({ nom: r.region, nb: r.nb, i }))
               ).map(({ nom, nb, i }) => {
-                const liste = modalGeo === 'villes' ? repartitionVilles : modalGeo === 'pays' ? repartitionPays : repartitionRegions
+                const liste = modalGeo === 'villes' ? repartitionVilles : modalGeo === 'pays' ? repartitionPays : repartitionRegionsActuelle
                 const maxNb = (liste[0] as { nb: number })?.nb || 1
                 const pct   = Math.round((nb / maxNb) * 100)
                 return (
@@ -2130,7 +2201,7 @@ export default function Admin() {
               })}
               {((modalGeo === 'villes' && repartitionVilles.length === 0)
                 || (modalGeo === 'pays' && repartitionPays.length === 0)
-                || (modalGeo === 'regions' && repartitionRegions.length === 0)) && (
+                || (modalGeo === 'regions' && repartitionRegionsActuelle.length === 0)) && (
                 <p style={{ color: '#8C5A40', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>Aucune donnée disponible</p>
               )}
             </div>
