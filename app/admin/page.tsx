@@ -12,6 +12,7 @@ interface Evenement {
   id: string
   titre: string
   lieu: string
+  ville: string
   organisateur: string | null
   date: string
   heure_debut: string | null
@@ -657,7 +658,7 @@ export default function Admin() {
     setCountEnAttente(c => Math.max(0, c - 1))
     const ev = evenements.find(e => e.id === id)
     if (ev) {
-      fetch('/api/notify-abonnes', { method: 'POST', headers: hi, body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
+      fetch('/api/notify-abonnes', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ id: ev.id, titre: ev.titre, lieu: ev.lieu, ville: ev.ville, date: ev.date, categorie: ev.categorie }) }).catch(() => {})
       fetch('/api/push-notify',    { method: 'POST', headers: hiAuth(), body: JSON.stringify({ titre: ev.titre, lieu: ev.lieu, url: `https://app.lotbo.app/evenement/${ev.id}` }) }).catch(() => {})
       if (ev.user_id) {
         await supabase.from('notifications').insert([{
