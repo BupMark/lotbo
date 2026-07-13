@@ -1050,14 +1050,14 @@ export default function Admin() {
         {/* ── ADMIN2 — Navigation onglets ───────────────────────────────── */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid #E8E0D0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {[
-            { key: 'evenements',   label: 'Événements',   count: countTotal,                                                badge: true },
-            { key: 'signalements', label: 'Signalements', count: signalements.length,                                       badge: true },
-            { key: 'reclamations', label: '🔑 Claims', count: reclamations.filter(r => r.statut === 'en_attente').length, badge: true },
-            { key: 'candidatures', label: '📋 Enquêteurs', count: candidatures.length,                                      badge: true },
-            { key: 'propositions', label: '✏️ Corrections', count: propositions.length,                                     badge: true },
-            { key: 'import',       label: '📥 Import',  count: statsImport.length,                                        badge: true },
-            { key: 'utilisateurs', label: '👥 Users',   count: countMembres,                                              badge: true },
-          ].map(tab => (
+            { key: 'evenements',   label: 'Événements',   count: countTotal,                                                badge: true, public: false },
+            { key: 'signalements', label: 'Signalements', count: signalements.length,                                       badge: true, public: false },
+            { key: 'reclamations', label: '🔑 Claims', count: reclamations.filter(r => r.statut === 'en_attente').length, badge: true, public: false },
+            { key: 'candidatures', label: '📋 Enquêteurs', count: candidatures.length,                                      badge: true, public: true },
+            { key: 'propositions', label: '✏️ Corrections', count: propositions.length,                                     badge: true, public: false },
+            { key: 'import',       label: '📥 Import',  count: statsImport.length,                                        badge: true, public: false },
+            { key: 'utilisateurs', label: '👥 Users',   count: countMembres,                                              badge: true, public: false },
+          ].filter(tab => userRole !== 'admin_enqueteur' || tab.public).map(tab => (
             <button
               key={tab.key}
               onClick={() => {
