@@ -15,6 +15,7 @@ interface EnqueteurConsentementRow {
   consent_photo_at: string | null
   photo_url: string | null
   statut_traitement: string
+  genre: string | null
 }
 
 // Calcule le nom d'affichage final — pour 'prenom_initiale', la valeur n'est
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
     const { data: c, error: fetchErr } = await admin
       .from('enqueteurs_consentements')
-      .select('id, nom_complet, ville, email, nom_affichage_type, nom_affichage_valeur, consent_publication, consent_volontariat, consent_age, consent_photo, consent_photo_at, photo_url, statut_traitement')
+      .select('id, nom_complet, ville, email, nom_affichage_type, nom_affichage_valeur, consent_publication, consent_volontariat, consent_age, consent_photo, consent_photo_at, photo_url, statut_traitement, genre')
       .eq('id', consentementId)
       .single()
     if (fetchErr || !c) return NextResponse.json({ error: 'Candidature introuvable' }, { status: 404 })
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
       photo_url:                row.photo_url,
       ville:                    row.ville,
       email:                    row.email,
+      genre:                    row.genre,
       statut:                   'actif',
       fiches_total:             fiches_total_initial ?? 0,
       cycle_debut:              now,

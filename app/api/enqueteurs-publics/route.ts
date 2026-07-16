@@ -11,7 +11,7 @@ export async function GET() {
   try {
     const { data, error } = await admin
       .from('enqueteurs')
-      .select('nom_affichage, ville, fiches_total, photo_url')
+      .select('nom_affichage, ville, fiches_total, photo_url, genre')
       .eq('statut', 'actif')
       .eq('fiche_masquee', false)
       .not('nom_affichage', 'is', null)

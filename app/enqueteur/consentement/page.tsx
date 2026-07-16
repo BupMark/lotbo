@@ -10,12 +10,14 @@ import { supabase } from '../../../lib/supabase'
 
 type Langue = 'fr' | 'ht'
 type TypeAffichage = 'vrai_nom' | 'prenom_initiale' | 'username'
+type Genre = 'f' | 'h' | null
 
 interface FormData {
   nomComplet: string
   ville: string
   email: string
   whatsapp: string
+  genre: Genre
   typeAffichage: TypeAffichage | null
   valeurAffichage: string
   photoFile: File | null
@@ -28,7 +30,7 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  nomComplet: '', ville: '', email: '', whatsapp: '',
+  nomComplet: '', ville: '', email: '', whatsapp: '', genre: null,
   typeAffichage: null, valeurAffichage: '',
   photoFile: null, photoPreview: null,
   consentPhoto: false, consentPublication: false,
@@ -89,6 +91,7 @@ export default function PageConsentementEnqueteur() {
           ville: data.ville,
           email: data.email,
           whatsapp: data.whatsapp || null,
+          genre: data.genre,
           type_affichage: data.typeAffichage,
           valeur_affichage: data.valeurAffichage,
           consent_publication: data.consentPublication,
@@ -140,6 +143,9 @@ export default function PageConsentementEnqueteur() {
       ville: { fr: 'Ville',            ht: 'Vil' },
       email: { fr: 'Email',            ht: 'Imèl' },
       whatsapp: { fr: 'WhatsApp (optionnel)', ht: 'WhatsApp (opsyonèl)' },
+      genre: { fr: 'Genre', ht: 'Sèks' },
+      femme: { fr: 'Femme', ht: 'Fi' },
+      homme: { fr: 'Homme', ht: 'Gason' },
     },
     affichage: {
       titre:      { fr: 'Comment voulez-vous apparaître ?', ht: 'Kijan ou vle parèt ?' },
@@ -213,6 +219,18 @@ export default function PageConsentementEnqueteur() {
             <input style={styles.input} type="email" value={data.email} onChange={e => maj({ email: e.target.value })} />
             <label style={styles.label}>{t.identite.whatsapp[langue]}</label>
             <input style={styles.input} value={data.whatsapp} onChange={e => maj({ whatsapp: e.target.value })} />
+
+            <label style={styles.label}>{t.identite.genre[langue]}</label>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="radio" name="genre" checked={data.genre === 'f'} onChange={() => maj({ genre: 'f' })} style={{ accentColor: '#C8431A' }} />
+                <span style={{ fontSize: 14, color: '#1A1410' }}>{t.identite.femme[langue]}</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="radio" name="genre" checked={data.genre === 'h'} onChange={() => maj({ genre: 'h' })} style={{ accentColor: '#C8431A' }} />
+                <span style={{ fontSize: 14, color: '#1A1410' }}>{t.identite.homme[langue]}</span>
+              </label>
+            </div>
 
             <button
               style={styles.boutonPrincipal(!!(data.nomComplet && data.ville && data.email))}

@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const {
-      nom_complet, ville, email, whatsapp,
+      nom_complet, ville, email, whatsapp, genre,
       type_affichage, valeur_affichage,
       consent_publication, consent_volontariat, consent_age,
       consent_photo, photo_url, signature_texte, langue,
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         ville,
         email,
         whatsapp: whatsapp || null,
+        genre: genre || null,
         nom_affichage_type: type_affichage,
         nom_affichage_valeur: valeur_affichage,
         consent_publication,
