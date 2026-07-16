@@ -1089,6 +1089,15 @@ export default function Admin() {
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
         </div>
 
+        {userRole === 'admin_enqueteur' && (
+          <button
+            onClick={chargerStatsPubliques}
+            style={{ background: 'rgba(200,67,26,0.1)', color: '#C8431A', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer', marginBottom: 12 }}
+          >
+            🔄 Actualiser les statistiques
+          </button>
+        )}
+
         {/* ── Stats — counts exacts ─────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 16 }}>
           {([
