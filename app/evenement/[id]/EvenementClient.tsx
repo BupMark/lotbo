@@ -672,11 +672,12 @@ export default function EvenementPage() {
     const participations = JSON.parse(localStorage.getItem('lotbo_participations') || '{}')
     setSeraiLa(!!participations[id as string])
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user?.user_metadata?.role === 'admin') setIsAdmin(true)
       setIsConnected(!!session?.user)
       if (session?.user?.id) {
         const { data: profil } = await supabase
-          .from('profiles').select('id, nom, photo_url, charte_contributeur').eq('id', session.user.id).single()
+          .from('profiles').select('id, nom, photo_url, charte_contributeur, role').eq('id', session.user.id).single()
+        const role = profil?.role ?? session.user.user_metadata?.role
+        setIsAdmin(role === 'admin' || role === 'admin_enqueteur')
         if (profil) {
           setUserProfile({
             id: profil.id,

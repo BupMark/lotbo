@@ -127,6 +127,7 @@ export default function Home() {
   const [evenements, setEvenements]         = useState<Evenement[]>([])
   const [evenementsListe, setEvenementsListe] = useState<Evenement[]>([])
   const [user, setUser]                     = useState<UserMeta | null>(null)
+  const [userRole, setUserRole]             = useState<string | null>(null)
   const [recherche, setRecherche]           = useState('')
   const [mode, setMode]                     = useState<'carte' | 'liste'>('carte')
   const { langue, setLangue } = useLangue()
@@ -158,7 +159,7 @@ export default function Home() {
   const evenementsFiltresRef                = useRef<Evenement[]>([])
 
   const t       = getTraductions(langue)
-  const isAdmin = user?.user_metadata?.role === 'admin'
+  const isAdmin = userRole === 'admin' || userRole === 'admin_enqueteur'
 
   // F8 — Recalcul des événements en cours toutes les minutes
   useEffect(() => {
@@ -229,8 +230,16 @@ export default function Home() {
   ].filter(Boolean).length
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setUser((data.session?.user ?? null) as UserMeta | null)
+      if (data.session?.user?.id) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.session.user.id)
+          .single()
+        setUserRole(prof?.role ?? data.session.user.user_metadata?.role ?? null)
+      }
     })
   }, [])
 

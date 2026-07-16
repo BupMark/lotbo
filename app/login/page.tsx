@@ -67,11 +67,16 @@ export default function Login() {
     const access_token  = params.get('access_token')
     const refresh_token = params.get('refresh_token')
     if (access_token && refresh_token) {
-      supabase.auth.setSession({ access_token, refresh_token }).then(({ data, error }) => {
+      supabase.auth.setSession({ access_token, refresh_token }).then(async ({ data, error }) => {
         if (!error && data.session) {
           window.history.replaceState(null, '', window.location.pathname + window.location.search)
-          const role = data.session.user?.user_metadata?.role
-          if (role === 'admin') window.location.href = '/admin'
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.session.user.id)
+            .single()
+          const role = prof?.role ?? data.session.user?.user_metadata?.role
+          if (role === 'admin' || role === 'admin_enqueteur') window.location.href = '/admin'
           else window.location.href = getRedirect()
         }
       })
@@ -184,8 +189,16 @@ export default function Login() {
       fetch('/api/enqueteur/lier-compte', { headers: { Authorization: `Bearer ${data.session.access_token}` } }).catch(() => {})
     }
     track('user_logged_in', { user_id: data.session?.user?.id })
-    const role = data.session?.user?.user_metadata?.role
-    if (role === 'admin') window.location.href = '/admin'
+    let role = data.session?.user?.user_metadata?.role
+    if (data.session?.user?.id) {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.session.user.id)
+        .single()
+      role = prof?.role ?? role
+    }
+    if (role === 'admin' || role === 'admin_enqueteur') window.location.href = '/admin'
     else window.location.href = getRedirect()
   }
 
