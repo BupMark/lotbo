@@ -596,13 +596,14 @@ export default function Admin() {
 
   const chargerStatsPubliques = async () => {
     const [
-      { count: total },
+      // total_recu — reçu depuis le début, tous statuts confondus (stratégie mobilisation)
+      { count: total_recu },
       { count: approuves },
     ] = await Promise.all([
       supabase.from('evenements').select('*', { count: 'exact', head: true }),
       supabase.from('evenements').select('*', { count: 'exact', head: true }).eq('statut', 'approuve'),
     ])
-    setCountTotal(total || 0)
+    setCountTotal(total_recu || 0)
     setCountApprouves(approuves || 0)
 
     const { data: villesData } = await supabase

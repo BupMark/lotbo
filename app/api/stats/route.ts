@@ -13,8 +13,8 @@ function makeAdminClient() {
 export async function GET() {
   const admin = makeAdminClient()
 
-  // ── Total événements soumis — toutes statuts confondus ────────────────────
-  const { count: total } = await admin
+  // ── total_recu — reçu depuis le début, tous statuts confondus (stratégie mobilisation) ──
+  const { count: total_recu } = await admin
     .from('evenements')
     .select('*', { count: 'exact', head: true })
 
@@ -43,7 +43,7 @@ export async function GET() {
   ).size
 
   return NextResponse.json(
-    { total: total || 0, villes, pays },
+    { total: total_recu || 0, villes, pays },
     {
       headers: {
         'Cache-Control': 's-maxage=60, stale-while-revalidate=120',

@@ -298,12 +298,12 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    supabase
-      .from('evenements')
-      .select('*', { count: 'exact', head: true })
-      .then(({ count }) => {
-        if (count) setTotalEvenementsBase(count)
+    fetch('/api/stats-globales')
+      .then(res => res.json())
+      .then(data => {
+        if (data.total_recu) setTotalEvenementsBase(data.total_recu)
       })
+      .catch(() => {})
   }, [])
 
   // BUG-LIMIT1000-1 Phase A — chargement dédié Liste : fenêtre 90j + mis_en_avant toujours inclus
