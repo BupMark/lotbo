@@ -95,11 +95,37 @@ function ProfilInner() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [enqueteurData, setEnqueteurData] = useState<{ ficheCycle: number, objectifFiches: number, ficheTotal: number } | null>(null)
+  const [editingObjectif, setEditingObjectif] = useState(false)
+  const [nouvelObjectif, setNouvelObjectif] = useState('')
+  const [savingObjectif, setSavingObjectif] = useState(false)
   const [candidatureStatut, setCandidatureStatut] = useState<'en_attente' | 'valide' | 'rejete' | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const { langue, setLangue } = useLangue()
   const t = getTraductions(langue)
+  const sauvegarderObjectif = async () => {
+    const val = parseInt(nouvelObjectif, 10)
+    if (!val || val < 1) return
+    setSavingObjectif(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/enqueteur/definir-objectif', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ objectif_fiches: val }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setEnqueteurData(prev => prev ? { ...prev, objectifFiches: val } : prev)
+        setEditingObjectif(false)
+      } else {
+        alert('Erreur : ' + (data.error || 'inconnue'))
+      }
+    } catch {
+      alert('Erreur lors de la sauvegarde')
+    }
+    setSavingObjectif(false)
+  }
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
     check()
@@ -438,6 +464,31 @@ function ProfilInner() {
                       <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
                         {enqueteurData.ficheCycle} / {enqueteurData.objectifFiches}
                       </p>
+                    </div>
+                  )}
+                  {enqueteurData && !editingObjectif && (
+                    <button
+                      onClick={() => { setNouvelObjectif(String(enqueteurData.objectifFiches)); setEditingObjectif(true) }}
+                      style={{ marginTop: 8, background: 'none', border: 'none', color: '#8B4513', fontSize: 11, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                    >
+                      Modifier mon objectif
+                    </button>
+                  )}
+                  {enqueteurData && editingObjectif && (
+                    <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        min={1}
+                        value={nouvelObjectif}
+                        onChange={e => setNouvelObjectif(e.target.value)}
+                        style={{ width: 80, padding: '6px 10px', borderRadius: 6, border: '1px solid #E8E0D0', fontSize: 13 }}
+                      />
+                      <button onClick={sauvegarderObjectif} disabled={savingObjectif} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 'bold', cursor: savingObjectif ? 'not-allowed' : 'pointer' }}>
+                        {savingObjectif ? '...' : 'Sauvegarder'}
+                      </button>
+                      <button onClick={() => setEditingObjectif(false)} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer' }}>
+                        Annuler
+                      </button>
                     </div>
                   )}
                   {/* FEAT-ENQUETEUR-LIAISON-COMPTE-1 — message candidature, uniquement si pas encore actif */}
