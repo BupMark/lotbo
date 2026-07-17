@@ -35,7 +35,19 @@ export async function POST(request: Request) {
          style="background:#C8431A;color:#F7F2E8;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:12px;font-family:Arial,sans-serif;font-weight:500">
         Créer mon compte →
       </a>
-      <p style="color:#8C5A40;font-size:12px;margin-top:24px;font-family:Arial,sans-serif">
+      <div style="background:#F7F2E8;border-radius:8px;padding:16px 20px;margin-top:24px">
+        <p style="color:#1A1410;font-family:Arial,sans-serif;font-weight:bold;margin:0 0 10px">Voici comment continuer :</p>
+        <ol style="color:#1A1410;font-family:Arial,sans-serif;padding-left:20px;margin:0">
+          <li style="margin-bottom:6px">Connecte-toi avec le lien ci-dessus (ou crée ton compte si tu n'en as pas encore).</li>
+          <li style="margin-bottom:6px">Sur ton profil, tu verras ton badge Enquêteur Terrain et ta barre de progression.</li>
+          <li style="margin-bottom:6px">Pour chaque fiche terrain collectée, utilise le formulaire dédié : <a href="https://lotbo.app/terrain" style="color:#C8431A">lotbo.app/terrain</a></li>
+          <li>Tu peux fixer et modifier ton propre objectif de fiches à tout moment, directement depuis ton profil.</li>
+        </ol>
+      </div>
+      <p style="color:#8C5A40;font-size:12px;margin-top:16px;font-family:Arial,sans-serif">
+        Besoin d'aide ou une question ? Écris à Gaetchens : <a href="mailto:gaetchens@lotbo.app" style="color:#8C5A40">gaetchens@lotbo.app</a>
+      </p>
+      <p style="color:#8C5A40;font-size:12px;margin-top:8px;font-family:Arial,sans-serif">
         Le lien reste valide tant que ta fiche enquêteur existe — pas de contrainte de temps.
       </p>
     `
@@ -55,7 +67,19 @@ export async function POST(request: Request) {
          style="background:#C8431A;color:#F7F2E8;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:12px;font-family:Arial,sans-serif;font-weight:500">
         Kreye kont mwen →
       </a>
-      <p style="color:#8C5A40;font-size:12px;margin-top:24px;font-family:Arial,sans-serif">
+      <div style="background:#F7F2E8;border-radius:8px;padding:16px 20px;margin-top:24px">
+        <p style="color:#1A1410;font-family:Arial,sans-serif;font-weight:bold;margin:0 0 10px">Men kijan pou kontinye :</p>
+        <ol style="color:#1A1410;font-family:Arial,sans-serif;padding-left:20px;margin:0">
+          <li style="margin-bottom:6px">Konekte ak lyen ki anwo a (oswa kreye kont ou si ou poko genyen).</li>
+          <li style="margin-bottom:6px">Sou pwofil ou, w ap wè badj Ankètè Tèren ou ak ba pwogrè ou.</li>
+          <li style="margin-bottom:6px">Pou chak fich tèren ou ranmase, itilize fòmilè espesyal la : <a href="https://lotbo.app/terrain" style="color:#C8431A">lotbo.app/terrain</a></li>
+          <li>Ou ka fikse epi modifye objektif fich ou a nenpòt lè, dirèkteman sou pwofil ou.</li>
+        </ol>
+      </div>
+      <p style="color:#8C5A40;font-size:12px;margin-top:16px;font-family:Arial,sans-serif">
+        Ou bezwen èd oswa ou gen yon kesyon ? Ekri Gaetchens : <a href="mailto:gaetchens@lotbo.app" style="color:#8C5A40">gaetchens@lotbo.app</a>
+      </p>
+      <p style="color:#8C5A40;font-size:12px;margin-top:8px;font-family:Arial,sans-serif">
         Lyen sa a ap toujou valab toutan fich ankètè ou egziste — pa gen limit tan.
       </p>
     `
