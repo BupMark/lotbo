@@ -102,10 +102,10 @@ export async function GET() {
           // Coordonnées GPS via Google Geocoding
           let latitude  = 18.5392
           let longitude = -72.3288
-          if (process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY && lieuBrut !== 'Haïti') {
+          if (process.env.GOOGLE_PLACES_KEY && lieuBrut !== 'Haïti') {
             try {
               const geoRes  = await fetch(
-                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(lieuBrut)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}`
+                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(lieuBrut)}&key=${process.env.GOOGLE_PLACES_KEY}`
               )
               const geoData = await geoRes.json()
               if (geoData.results?.[0]) {

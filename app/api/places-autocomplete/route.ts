@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   if (!q) return NextResponse.json({ predictions: [] })
 
   // ── Tentative 1 : Google Places Autocomplete ──────────────────────────────
-  const key = process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY
+  const key = process.env.GOOGLE_PLACES_KEY
   if (key) {
     try {
       const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&key=${key}&language=fr&types=geocode|establishment`
