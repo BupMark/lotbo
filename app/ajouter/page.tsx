@@ -875,7 +875,16 @@ export default function AjouterEvenement() {
       image_url = imageUnsplash.url
     }
 
-    const { data: { session } } = await supabase.auth.getSession()
+    let { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      const { data: refreshed } = await supabase.auth.refreshSession()
+      session = refreshed.session
+    }
+    if (!session) {
+      alert('Ta session a expiré. Reconnecte-toi puis réessaie de soumettre ton événement.')
+      window.location.href = '/login?redirect=/ajouter'
+      return
+    }
     const categorieNom = EVENT_TYPES.find(et => et.id === selectedType)?.nom || ''
     const { data: profile } = await supabase.from('profiles').select('role, charte_acceptee, charte_organisateur, nom').eq('id', session?.user?.id || '').single()
     const nomResolu = profile?.nom
