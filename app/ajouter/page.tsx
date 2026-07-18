@@ -84,57 +84,206 @@ const EVENT_THEMES = [
   { id: 17, nom: 'Environnement', icone: '🌿' },
 ]
 
-const FUSEAUX = [
-  { value: 'America/Port-au-Prince',         label: '🇭🇹 Haïti' },
-  { value: 'America/Guadeloupe',             label: '🇬🇵 Guadeloupe / Martinique' },
-  { value: 'America/Santo_Domingo',          label: '🇩🇴 République Dominicaine' },
-  { value: 'America/Jamaica',                label: '🇯🇲 Jamaïque' },
-  { value: 'America/Havana',                 label: '🇨🇺 Cuba' },
-  { value: 'America/Puerto_Rico',            label: '🇵🇷 Porto Rico' },
-  { value: 'America/New_York',               label: '🇺🇸 New York / Miami / Boston' },
-  { value: 'America/Chicago',                label: '🇺🇸 Chicago / Houston' },
-  { value: 'America/Denver',                 label: '🇺🇸 Denver / Phoenix' },
-  { value: 'America/Los_Angeles',            label: '🇺🇸 Los Angeles / San Francisco' },
-  { value: 'America/Montreal',               label: '🇨🇦 Montréal / Québec' },
-  { value: 'America/Toronto',               label: '🇨🇦 Toronto / Ottawa' },
-  { value: 'America/Vancouver',              label: '🇨🇦 Vancouver' },
-  { value: 'America/Mexico_City',            label: '🇲🇽 Mexique' },
-  { value: 'America/Bogota',                 label: '🇨🇴 Colombie' },
-  { value: 'America/Lima',                   label: '🇵🇪 Pérou' },
-  { value: 'America/Santiago',               label: '🇨🇱 Chili' },
-  { value: 'America/Argentina/Buenos_Aires', label: '🇦🇷 Argentine' },
-  { value: 'America/Sao_Paulo',              label: '🇧🇷 Brésil (São Paulo)' },
-  { value: 'Europe/London',                  label: '🇬🇧 Londres' },
-  { value: 'Europe/Paris',                   label: '🇫🇷 Paris / Bruxelles / Genève' },
-  { value: 'Europe/Berlin',                  label: '🇩🇪 Berlin / Amsterdam / Rome' },
-  { value: 'Europe/Madrid',                  label: '🇪🇸 Madrid / Barcelone' },
-  { value: 'Europe/Lisbon',                  label: '🇵🇹 Lisbonne' },
-  { value: 'Europe/Moscow',                  label: '🇷🇺 Moscou' },
-  { value: 'Africa/Abidjan',                 label: "🇨🇮 Côte d'Ivoire / Sénégal / Mali" },
-  { value: 'Africa/Lagos',                   label: '🇳🇬 Nigeria / Cameroun / Gabon' },
-  { value: 'Africa/Kinshasa',                label: '🇨🇩 Congo / RDC' },
-  { value: 'Africa/Nairobi',                 label: '🇰🇪 Kenya / Éthiopie / Tanzanie' },
-  { value: 'Africa/Casablanca',              label: '🇲🇦 Maroc' },
-  { value: 'Africa/Cairo',                   label: '🇪🇬 Égypte' },
-  { value: 'Indian/Reunion',                 label: '🇷🇪 La Réunion / Maurice' },
-  { value: 'Asia/Beirut',                    label: '🇱🇧 Liban' },
-  { value: 'Asia/Riyadh',                    label: '🇸🇦 Arabie Saoudite / Koweït' },
-  { value: 'Asia/Dubai',                     label: '🇦🇪 Dubaï / EAU' },
-  { value: 'Asia/Tehran',                    label: '🇮🇷 Iran' },
-  { value: 'Asia/Karachi',                   label: '🇵🇰 Pakistan' },
-  { value: 'Asia/Kolkata',                   label: '🇮🇳 Inde' },
-  { value: 'Asia/Dhaka',                     label: '🇧🇩 Bangladesh' },
-  { value: 'Asia/Bangkok',                   label: '🇹🇭 Thaïlande / Vietnam / Cambodge' },
-  { value: 'Asia/Singapore',                 label: '🇸🇬 Singapour / Malaisie / Philippines' },
-  { value: 'Asia/Jakarta',                   label: '🇮🇩 Indonésie' },
-  { value: 'Asia/Shanghai',                  label: '🇨🇳 Chine / Hong Kong / Taïwan' },
-  { value: 'Asia/Seoul',                     label: '🇰🇷 Corée du Sud' },
-  { value: 'Asia/Tokyo',                     label: '🇯🇵 Japon' },
-  { value: 'Australia/Sydney',               label: '🇦🇺 Australie (Sydney)' },
-  { value: 'Pacific/Auckland',               label: '🇳🇿 Nouvelle-Zélande' },
-  { value: 'Pacific/Honolulu',               label: '🇺🇸 Hawaï' },
-  { value: 'UTC',                            label: '🌍 UTC — événement international / en ligne' },
-]
+const FUSEAUX_PAR_REGION: Record<string, { value: string; label: string }[]> = {
+  'Amériques': [
+    { value: 'America/Port-au-Prince',         label: '🇭🇹 Haïti' },
+    { value: 'America/Guadeloupe',             label: '🇬🇵 Guadeloupe / Martinique' },
+    { value: 'America/Santo_Domingo',          label: '🇩🇴 République Dominicaine' },
+    { value: 'America/Jamaica',                label: '🇯🇲 Jamaïque' },
+    { value: 'America/Havana',                 label: '🇨🇺 Cuba' },
+    { value: 'America/Puerto_Rico',            label: '🇵🇷 Porto Rico' },
+    { value: 'America/New_York',               label: '🇺🇸 New York / Miami / Boston' },
+    { value: 'America/Chicago',                label: '🇺🇸 Chicago / Houston' },
+    { value: 'America/Denver',                 label: '🇺🇸 Denver / Phoenix' },
+    { value: 'America/Los_Angeles',            label: '🇺🇸 Los Angeles / San Francisco' },
+    { value: 'America/Montreal',               label: '🇨🇦 Montréal / Québec' },
+    { value: 'America/Toronto',                label: '🇨🇦 Toronto / Ottawa' },
+    { value: 'America/Vancouver',              label: '🇨🇦 Vancouver' },
+    { value: 'America/Mexico_City',            label: '🇲🇽 Mexique' },
+    { value: 'America/Bogota',                 label: '🇨🇴 Colombie' },
+    { value: 'America/Lima',                   label: '🇵🇪 Pérou' },
+    { value: 'America/Santiago',               label: '🇨🇱 Chili' },
+    { value: 'America/Argentina/Buenos_Aires', label: '🇦🇷 Argentine' },
+    { value: 'America/Sao_Paulo',              label: '🇧🇷 Brésil (São Paulo)' },
+    { value: 'America/Anchorage',              label: '🇺🇸 Alaska' },
+    { value: 'America/Halifax',                label: '🇨🇦 Halifax / Maritimes' },
+    { value: 'America/Nassau',                 label: '🇧🇸 Bahamas' },
+    { value: 'America/Port_of_Spain',          label: '🇹🇹 Trinité-et-Tobago / Barbade' },
+    { value: 'America/Caracas',                label: '🇻🇪 Venezuela' },
+    { value: 'America/Guyana',                 label: '🇬🇾 Guyana' },
+    { value: 'America/Paramaribo',             label: '🇸🇷 Suriname' },
+    { value: 'America/Asuncion',               label: '🇵🇾 Paraguay' },
+    { value: 'America/Montevideo',             label: '🇺🇾 Uruguay' },
+    { value: 'America/Guayaquil',              label: '🇪🇨 Équateur' },
+    { value: 'America/Panama',                 label: '🇵🇦 Panama' },
+    { value: 'America/Guatemala',              label: '🇬🇹 Guatemala / Amérique centrale' },
+    { value: 'America/Tegucigalpa',            label: '🇭🇳 Honduras' },
+    { value: 'America/Managua',                label: '🇳🇮 Nicaragua' },
+    { value: 'America/Costa_Rica',             label: '🇨🇷 Costa Rica' },
+    { value: 'America/La_Paz',                 label: '🇧🇴 Bolivie' },
+    { value: 'America/Manaus',                 label: '🇧🇷 Brésil (Manaus / Amazonie)' },
+  ],
+  'Europe': [
+    { value: 'Europe/London',                  label: '🇬🇧 Londres' },
+    { value: 'Europe/Paris',                   label: '🇫🇷 Paris / Bruxelles / Genève' },
+    { value: 'Europe/Berlin',                  label: '🇩🇪 Berlin / Amsterdam / Rome' },
+    { value: 'Europe/Madrid',                  label: '🇪🇸 Madrid / Barcelone' },
+    { value: 'Europe/Lisbon',                  label: '🇵🇹 Lisbonne' },
+    { value: 'Europe/Moscow',                  label: '🇷🇺 Moscou' },
+    { value: 'Europe/Dublin',                  label: '🇮🇪 Irlande' },
+    { value: 'Atlantic/Reykjavik',             label: '🇮🇸 Islande' },
+    { value: 'Europe/Stockholm',               label: '🇸🇪 Suède / Scandinavie' },
+    { value: 'Europe/Warsaw',                  label: '🇵🇱 Pologne' },
+    { value: 'Europe/Athens',                  label: '🇬🇷 Grèce' },
+    { value: 'Europe/Bucharest',               label: '🇷🇴 Roumanie / Bulgarie' },
+    { value: 'Europe/Helsinki',                label: '🇫🇮 Finlande' },
+    { value: 'Europe/Kyiv',                    label: '🇺🇦 Ukraine' },
+    { value: 'Europe/Istanbul',                label: '🇹🇷 Turquie' },
+    { value: 'Europe/Vilnius',                 label: '🇱🇹 Pays baltes (Lituanie / Lettonie / Estonie)' },
+  ],
+  'Afrique': [
+    { value: 'Africa/Abidjan',                 label: "🇨🇮 Côte d'Ivoire / Sénégal / Mali" },
+    { value: 'Africa/Lagos',                   label: '🇳🇬 Nigeria / Cameroun / Gabon' },
+    { value: 'Africa/Kinshasa',                label: '🇨🇩 Congo / RDC' },
+    { value: 'Africa/Nairobi',                 label: '🇰🇪 Kenya / Éthiopie / Tanzanie' },
+    { value: 'Africa/Casablanca',              label: '🇲🇦 Maroc' },
+    { value: 'Africa/Cairo',                   label: '🇪🇬 Égypte' },
+    { value: 'Indian/Reunion',                 label: '🇷🇪 La Réunion / Maurice' },
+    { value: 'Africa/Johannesburg',            label: '🇿🇦 Afrique du Sud / Zimbabwe / Botswana' },
+    { value: 'Africa/Maputo',                  label: '🇲🇿 Mozambique / Zambie / Malawi' },
+    { value: 'Africa/Windhoek',                label: '🇳🇦 Namibie' },
+    { value: 'Africa/Tunis',                   label: '🇹🇳 Tunisie / Algérie / Libye' },
+    { value: 'Africa/Accra',                   label: '🇬🇭 Ghana' },
+    { value: 'Africa/Khartoum',                label: '🇸🇩 Soudan' },
+    { value: 'Africa/Luanda',                  label: '🇦🇴 Angola' },
+    { value: 'Africa/Kigali',                  label: '🇷🇼 Rwanda / Burundi' },
+    { value: 'Africa/Mogadishu',               label: '🇸🇴 Somalie / Djibouti / Érythrée' },
+    { value: 'UTC',                            label: '🌍 UTC — événement international / en ligne' },
+  ],
+  'Asie': [
+    { value: 'Asia/Beirut',                    label: '🇱🇧 Liban' },
+    { value: 'Asia/Riyadh',                    label: '🇸🇦 Arabie Saoudite / Koweït' },
+    { value: 'Asia/Dubai',                     label: '🇦🇪 Dubaï / EAU' },
+    { value: 'Asia/Tehran',                    label: '🇮🇷 Iran' },
+    { value: 'Asia/Karachi',                   label: '🇵🇰 Pakistan' },
+    { value: 'Asia/Kolkata',                   label: '🇮🇳 Inde' },
+    { value: 'Asia/Dhaka',                     label: '🇧🇩 Bangladesh' },
+    { value: 'Asia/Bangkok',                   label: '🇹🇭 Thaïlande / Vietnam / Cambodge' },
+    { value: 'Asia/Singapore',                 label: '🇸🇬 Singapour / Malaisie / Philippines' },
+    { value: 'Asia/Jakarta',                   label: '🇮🇩 Indonésie' },
+    { value: 'Asia/Shanghai',                  label: '🇨🇳 Chine / Hong Kong / Taïwan' },
+    { value: 'Asia/Seoul',                     label: '🇰🇷 Corée du Sud' },
+    { value: 'Asia/Tokyo',                     label: '🇯🇵 Japon' },
+    { value: 'Asia/Jerusalem',                 label: '🇮🇱 Israël / Palestine' },
+    { value: 'Asia/Amman',                     label: '🇯🇴 Jordanie / Syrie' },
+    { value: 'Asia/Nicosia',                   label: '🇨🇾 Chypre' },
+    { value: 'Asia/Baghdad',                   label: '🇮🇶 Irak' },
+    { value: 'Asia/Qatar',                     label: '🇶🇦 Qatar / Bahreïn' },
+    { value: 'Asia/Kabul',                     label: '🇦🇫 Afghanistan' },
+    { value: 'Asia/Kathmandu',                 label: '🇳🇵 Népal' },
+    { value: 'Asia/Yangon',                    label: '🇲🇲 Birmanie (Myanmar)' },
+    { value: 'Asia/Tashkent',                  label: '🇺🇿 Ouzbékistan / Tadjikistan / Turkménistan' },
+    { value: 'Asia/Almaty',                    label: '🇰🇿 Kazakhstan (Est) / Kirghizistan' },
+    { value: 'Asia/Ulaanbaatar',               label: '🇲🇳 Mongolie' },
+    { value: 'Asia/Baku',                      label: '🇦🇿 Azerbaïdjan / Caucase' },
+  ],
+  'Océanie': [
+    { value: 'Australia/Sydney',               label: '🇦🇺 Australie (Sydney)' },
+    { value: 'Pacific/Auckland',               label: '🇳🇿 Nouvelle-Zélande' },
+    { value: 'Pacific/Honolulu',               label: '🇺🇸 Hawaï' },
+    { value: 'Australia/Perth',                label: '🇦🇺 Australie (Perth)' },
+    { value: 'Australia/Adelaide',             label: '🇦🇺 Australie (Adelaide / Darwin)' },
+    { value: 'Pacific/Fiji',                   label: '🇫🇯 Fidji' },
+    { value: 'Pacific/Port_Moresby',           label: '🇵🇬 Papouasie-Nouvelle-Guinée / Îles Salomon' },
+  ],
+}
+
+const PAYS_VERS_FUSEAU: Record<string, string> = {
+  // — Amériques —
+  'Haiti': 'America/Port-au-Prince', 'Haïti': 'America/Port-au-Prince',
+  'Guadeloupe': 'America/Guadeloupe', 'Martinique': 'America/Guadeloupe',
+  'Dominican Republic': 'America/Santo_Domingo', 'République Dominicaine': 'America/Santo_Domingo',
+  'Jamaica': 'America/Jamaica', 'Cuba': 'America/Havana', 'Puerto Rico': 'America/Puerto_Rico',
+  'Mexico': 'America/Mexico_City', 'Colombia': 'America/Bogota', 'Peru': 'America/Lima',
+  'Chile': 'America/Santiago', 'Argentina': 'America/Argentina/Buenos_Aires',
+  'Brazil': 'America/Sao_Paulo',
+  'Bahamas': 'America/Nassau', 'The Bahamas': 'America/Nassau',
+  'Trinidad and Tobago': 'America/Port_of_Spain', 'Barbados': 'America/Port_of_Spain',
+  'Antigua and Barbuda': 'America/Port_of_Spain', 'Dominica': 'America/Port_of_Spain',
+  'Saint Lucia': 'America/Port_of_Spain', 'Saint Vincent and the Grenadines': 'America/Port_of_Spain',
+  'Grenada': 'America/Port_of_Spain', 'Saint Kitts and Nevis': 'America/Port_of_Spain',
+  'Venezuela': 'America/Caracas', 'Guyana': 'America/Guyana', 'Suriname': 'America/Paramaribo',
+  'Paraguay': 'America/Asuncion', 'Uruguay': 'America/Montevideo', 'Ecuador': 'America/Guayaquil',
+  'Panama': 'America/Panama', 'Guatemala': 'America/Guatemala', 'Belize': 'America/Guatemala',
+  'El Salvador': 'America/Guatemala', 'Honduras': 'America/Tegucigalpa', 'Nicaragua': 'America/Managua',
+  'Costa Rica': 'America/Costa_Rica', 'Bolivia': 'America/La_Paz',
+
+  // — Europe —
+  'United Kingdom': 'Europe/London', 'Ireland': 'Europe/Dublin', 'Iceland': 'Atlantic/Reykjavik',
+  'France': 'Europe/Paris', 'Belgium': 'Europe/Paris', 'Switzerland': 'Europe/Paris',
+  'Monaco': 'Europe/Paris', 'Andorra': 'Europe/Paris', 'Luxembourg': 'Europe/Paris',
+  'Germany': 'Europe/Berlin', 'Netherlands': 'Europe/Berlin', 'Italy': 'Europe/Berlin',
+  'Austria': 'Europe/Berlin', 'Denmark': 'Europe/Berlin', 'Norway': 'Europe/Berlin',
+  'Czech Republic': 'Europe/Berlin', 'Czechia': 'Europe/Berlin', 'Slovakia': 'Europe/Berlin',
+  'Hungary': 'Europe/Berlin', 'Croatia': 'Europe/Berlin', 'Slovenia': 'Europe/Berlin',
+  'Serbia': 'Europe/Berlin', 'Bosnia and Herzegovina': 'Europe/Berlin', 'North Macedonia': 'Europe/Berlin',
+  'Albania': 'Europe/Berlin', 'Malta': 'Europe/Berlin', 'San Marino': 'Europe/Berlin',
+  'Vatican City': 'Europe/Berlin', 'Liechtenstein': 'Europe/Berlin',
+  'Sweden': 'Europe/Stockholm', 'Poland': 'Europe/Warsaw',
+  'Spain': 'Europe/Madrid', 'Portugal': 'Europe/Lisbon',
+  'Russia': 'Europe/Moscow', 'Belarus': 'Europe/Moscow',
+  'Turkey': 'Europe/Istanbul', 'Greece': 'Europe/Athens',
+  'Romania': 'Europe/Bucharest', 'Bulgaria': 'Europe/Bucharest', 'Finland': 'Europe/Helsinki',
+  'Ukraine': 'Europe/Kyiv', 'Lithuania': 'Europe/Vilnius', 'Latvia': 'Europe/Vilnius', 'Estonia': 'Europe/Vilnius',
+
+  // — Afrique —
+  "Côte d'Ivoire": 'Africa/Abidjan', 'Ivory Coast': 'Africa/Abidjan',
+  'Senegal': 'Africa/Abidjan', 'Mali': 'Africa/Abidjan', 'Burkina Faso': 'Africa/Abidjan',
+  'Guinea': 'Africa/Abidjan', 'Guinea-Bissau': 'Africa/Abidjan', 'Sierra Leone': 'Africa/Abidjan',
+  'Liberia': 'Africa/Abidjan', 'Gambia': 'Africa/Abidjan', 'Mauritania': 'Africa/Abidjan', 'Togo': 'Africa/Abidjan',
+  'Ghana': 'Africa/Accra',
+  'Nigeria': 'Africa/Lagos', 'Cameroon': 'Africa/Lagos', 'Gabon': 'Africa/Lagos', 'Chad': 'Africa/Lagos',
+  'Central African Republic': 'Africa/Lagos',
+  'Republic of the Congo': 'Africa/Lagos', 'Congo': 'Africa/Lagos', 'Congo-Brazzaville': 'Africa/Lagos',
+  'Equatorial Guinea': 'Africa/Lagos', 'Niger': 'Africa/Lagos', 'Benin': 'Africa/Lagos',
+  'Angola': 'Africa/Luanda',
+  'Tunisia': 'Africa/Tunis', 'Algeria': 'Africa/Tunis', 'Libya': 'Africa/Tunis',
+  'Democratic Republic of the Congo': 'Africa/Kinshasa', 'DR Congo': 'Africa/Kinshasa', 'Congo (RDC)': 'Africa/Kinshasa',
+  'Kenya': 'Africa/Nairobi', 'Ethiopia': 'Africa/Nairobi', 'Tanzania': 'Africa/Nairobi', 'Uganda': 'Africa/Nairobi',
+  'South Sudan': 'Africa/Nairobi', 'Madagascar': 'Africa/Nairobi', 'Comoros': 'Africa/Nairobi',
+  'Rwanda': 'Africa/Kigali', 'Burundi': 'Africa/Kigali',
+  'Somalia': 'Africa/Mogadishu', 'Djibouti': 'Africa/Mogadishu', 'Eritrea': 'Africa/Mogadishu',
+  'Morocco': 'Africa/Casablanca', 'Egypt': 'Africa/Cairo', 'Sudan': 'Africa/Khartoum',
+  'South Africa': 'Africa/Johannesburg', 'Zimbabwe': 'Africa/Johannesburg', 'Botswana': 'Africa/Johannesburg',
+  'Lesotho': 'Africa/Johannesburg', 'Eswatini': 'Africa/Johannesburg', 'Swaziland': 'Africa/Johannesburg',
+  'Mozambique': 'Africa/Maputo', 'Zambia': 'Africa/Maputo', 'Malawi': 'Africa/Maputo',
+  'Namibia': 'Africa/Windhoek',
+  'Reunion': 'Indian/Reunion', 'Réunion': 'Indian/Reunion', 'Mauritius': 'Indian/Reunion', 'Seychelles': 'Indian/Reunion',
+
+  // — Asie —
+  'Lebanon': 'Asia/Beirut', 'Jordan': 'Asia/Amman', 'Syria': 'Asia/Amman',
+  'Israel': 'Asia/Jerusalem', 'Palestine': 'Asia/Jerusalem', 'Cyprus': 'Asia/Nicosia', 'Iraq': 'Asia/Baghdad',
+  'Saudi Arabia': 'Asia/Riyadh', 'Kuwait': 'Asia/Riyadh', 'Yemen': 'Asia/Riyadh',
+  'Qatar': 'Asia/Qatar', 'Bahrain': 'Asia/Qatar',
+  'United Arab Emirates': 'Asia/Dubai', 'Oman': 'Asia/Dubai',
+  'Iran': 'Asia/Tehran', 'Afghanistan': 'Asia/Kabul',
+  'Pakistan': 'Asia/Karachi', 'Maldives': 'Asia/Karachi',
+  'Uzbekistan': 'Asia/Tashkent', 'Tajikistan': 'Asia/Tashkent', 'Turkmenistan': 'Asia/Tashkent',
+  'Kyrgyzstan': 'Asia/Almaty', 'Kazakhstan': 'Asia/Almaty',
+  'India': 'Asia/Kolkata', 'Sri Lanka': 'Asia/Kolkata', 'Nepal': 'Asia/Kathmandu',
+  'Bangladesh': 'Asia/Dhaka', 'Bhutan': 'Asia/Dhaka',
+  'Myanmar': 'Asia/Yangon', 'Burma': 'Asia/Yangon',
+  'Thailand': 'Asia/Bangkok', 'Vietnam': 'Asia/Bangkok', 'Cambodia': 'Asia/Bangkok', 'Laos': 'Asia/Bangkok',
+  'Singapore': 'Asia/Singapore', 'Malaysia': 'Asia/Singapore', 'Philippines': 'Asia/Singapore', 'Brunei': 'Asia/Singapore',
+  'Indonesia': 'Asia/Jakarta',
+  'China': 'Asia/Shanghai', 'Hong Kong': 'Asia/Shanghai', 'Taiwan': 'Asia/Shanghai', 'Mongolia': 'Asia/Ulaanbaatar',
+  'South Korea': 'Asia/Seoul', 'North Korea': 'Asia/Seoul', 'Japan': 'Asia/Tokyo',
+  'Azerbaijan': 'Asia/Baku', 'Georgia': 'Asia/Baku', 'Armenia': 'Asia/Baku',
+
+  // — Océanie —
+  'New Zealand': 'Pacific/Auckland', 'Fiji': 'Pacific/Fiji',
+  'Papua New Guinea': 'Pacific/Port_Moresby', 'Solomon Islands': 'Pacific/Port_Moresby',
+}
 
 const VISIBILITES = [
   { value: 'public',  label: '🌍 Public',  description: 'Visible sur la carte pour tout le monde',                        color: '#2D9E6B', bg: 'rgba(45,158,107,0.12)',  border: 'rgba(45,158,107,0.4)'  },
@@ -469,6 +618,7 @@ export default function AjouterEvenement() {
   const [charteOrgaAcceptee, setCharteOrgaAcceptee] = useState(false)
   const [scanConsentOk, setScanConsentOk]           = useState(false)
   const [pendingSubmit, setPendingSubmit]           = useState(false)
+  const [fuseauModifieManuellement, setFuseauModifieManuellement] = useState(false)
 
   // F8 — Récurrence
   const [touteJournee, setTouteJournee]           = useState(false)
@@ -878,6 +1028,30 @@ export default function AjouterEvenement() {
 
   const toggleTheme = (id: number) => {
     setSelectedThemes(prev => prev.includes(id) ? prev.filter(th => th !== id) : [...prev, id])
+  }
+
+  const handlePinChange = async (c: Coords) => {
+    setCoordsPin(c)
+    setPinConfirme(false)
+
+    // Géocodage inverse — ne remplit que si ville/pays sont encore vides (jamais d'écrasement)
+    if (!form.ville || !form.pays) {
+      try {
+        const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+        const res   = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${c.longitude},${c.latitude}.json?access_token=${token}&types=place,country`)
+        const data  = await res.json()
+        const villeFeature = data.features?.find((f: { place_type: string[] }) => f.place_type.includes('place'))
+        const paysFeature  = data.features?.find((f: { place_type: string[] }) => f.place_type.includes('country'))
+        if (villeFeature && !form.ville) setForm(f => ({ ...f, ville: normaliserVille(villeFeature.text) }))
+        if (paysFeature && !form.pays)   setForm(f => ({ ...f, pays: normaliserPays(paysFeature.text) }))
+
+        // Déduction du fuseau via PAYS_VERS_FUSEAU — jamais si l'utilisateur a déjà choisi manuellement
+        if (!fuseauModifieManuellement && paysFeature?.text) {
+          const tz = PAYS_VERS_FUSEAU[paysFeature.text]
+          if (tz) setForm(f => ({ ...f, fuseau_organisateur: tz }))
+        }
+      } catch { /* non-bloquant — l'utilisateur peut toujours saisir manuellement */ }
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1565,7 +1739,7 @@ export default function AjouterEvenement() {
             </div>
             {coordsPin && (
               <div style={{ marginTop: 12 }}>
-                <CarteInteractive coords={coordsPin} onCoordsChange={(c) => { setCoordsPin(c); setPinConfirme(false) }} />
+                <CarteInteractive coords={coordsPin} onCoordsChange={handlePinChange} />
                 <div style={{ marginTop: 10 }}>
                   {!pinConfirme ? (
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -1756,8 +1930,12 @@ export default function AjouterEvenement() {
 
           <div>
             <label style={labelStyle}>{t.ajouter.fuseau} <span style={{ color: '#8C5A40', marginLeft: 4 }}>{t.ajouter.aideFuseau}</span></label>
-            <select name="fuseau_organisateur" value={form.fuseau_organisateur} onChange={handleChange} style={inputStyle}>
-              {FUSEAUX.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+            <select name="fuseau_organisateur" value={form.fuseau_organisateur} onChange={(e) => { handleChange(e); setFuseauModifieManuellement(true) }} style={inputStyle}>
+              {Object.entries(FUSEAUX_PAR_REGION).map(([region, fuseaux]) => (
+                <optgroup key={region} label={region}>
+                  {fuseaux.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                </optgroup>
+              ))}
             </select>
           </div>
 
