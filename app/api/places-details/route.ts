@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   if (!place_id) return NextResponse.json({ error: 'place_id requis' })
 
   const key = process.env.GOOGLE_PLACES_KEY
-  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=geometry,formatted_address,address_components&key=${key}&language=fr`
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=name,geometry,formatted_address,address_components&key=${key}&language=fr`
 
   const res = await fetch(url)
   const data = await res.json()

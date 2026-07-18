@@ -488,6 +488,7 @@ export default function AjouterEvenement() {
   const [rechercheTexte, setRechercheTexte]   = useState('')
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const biaisGeoCacheRef = useRef<{ ville: string; pays: string; lat: number; lng: number } | null>(null)
 
   const [form, setForm] = useState({
     titre: '', organisateur: '', nom_lieu: '', adresse: '', ville: '', pays: '',
@@ -774,8 +775,34 @@ export default function AjouterEvenement() {
     if (value.length < 3) { setSuggestions([]); setShowSuggestions(false); return }
     debounceRef.current = setTimeout(async () => {
       const query = `${value}${form.ville ? ', ' + form.ville : ''}${form.pays ? ', ' + form.pays : ''}`
+
+      let biaisLat: number | null = null
+      let biaisLng: number | null = null
+      if (form.ville && form.pays) {
+        const cache = biaisGeoCacheRef.current
+        if (cache && cache.ville === form.ville && cache.pays === form.pays) {
+          biaisLat = cache.lat
+          biaisLng = cache.lng
+        } else {
+          try {
+            const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+            const bQuery = `${form.ville}, ${form.pays}`
+            const bUrl   = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(bQuery)}.json?access_token=${token}&limit=1`
+            const bRes   = await fetch(bUrl)
+            const bData  = await bRes.json()
+            if (bData.features?.length > 0) {
+              const [lng, lat] = bData.features[0].center
+              biaisGeoCacheRef.current = { ville: form.ville, pays: form.pays, lat, lng }
+              biaisLat = lat
+              biaisLng = lng
+            }
+          } catch {}
+        }
+      }
+      const biaisParams = (biaisLat !== null && biaisLng !== null) ? `&lat=${biaisLat}&lng=${biaisLng}` : ''
+
       try {
-        const res  = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(query)}`)
+        const res  = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(query)}${biaisParams}`)
         const data = await res.json()
         if (data.predictions?.length > 0) {
           setSuggestions(data.predictions.map((p: { description: string; structured_formatting?: { main_text: string }; place_id: string; _osm_lat?: string; _osm_lon?: string }) => ({
@@ -813,6 +840,8 @@ export default function AjouterEvenement() {
           const paysComp  = comps.find((c: { types: string[]; long_name: string }) => c.types.includes('country'))
           if (villeComp && !form.ville) setForm(f => ({ ...f, ville: normaliserVille(villeComp.long_name) }))
           if (paysComp && !form.pays)   setForm(f => ({ ...f, pays: normaliserPays(paysComp.long_name) }))
+          const nomLieuGoogle = data.result?.name
+          if (nomLieuGoogle && !form.nom_lieu) setForm(f => ({ ...f, nom_lieu: nomLieuGoogle }))
           setCoordsPin({ longitude: loc.lng, latitude: loc.lat, adresse: suggestion.place_name })
           return
         }

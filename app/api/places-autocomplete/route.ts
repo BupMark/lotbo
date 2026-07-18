@@ -2,14 +2,17 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get('q')
+  const q   = request.nextUrl.searchParams.get('q')
+  const lat = request.nextUrl.searchParams.get('lat')
+  const lng = request.nextUrl.searchParams.get('lng')
   if (!q) return NextResponse.json({ predictions: [] })
 
   // ── Tentative 1 : Google Places Autocomplete ──────────────────────────────
   const key = process.env.GOOGLE_PLACES_KEY
   if (key) {
     try {
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&key=${key}&language=fr&types=geocode|establishment`
+      let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&key=${key}&language=fr&types=geocode|establishment`
+      if (lat && lng) url += `&location=${lat},${lng}&radius=50000`
       const res  = await fetch(url)
       const data = await res.json()
       if (data.predictions && data.predictions.length > 0) {
