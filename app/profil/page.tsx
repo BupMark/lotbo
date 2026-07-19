@@ -13,6 +13,7 @@ import { type Langue, getTraductions } from '../../lib/i18n'
 import { useLangue } from '../../lib/useLangue'
 import { usePushPermission } from '../../lib/usePushPermission'
 import PrePermissionModal from '../../components/PrePermissionModal'
+import NotifCloche from '../../components/NotifCloche'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -376,6 +377,7 @@ function ProfilInner() {
             <span style={{ color: '#1A1410' }}>lot</span><span style={{ color: '#C8431A' }}>bo</span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <NotifCloche userId={user?.id} />
             <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>{t.profil.header.retourCarte}</a>
             {isAdmin && <a href="/admin" style={{ background: 'rgba(212,168,32,0.15)', color: '#D4A820', padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', textDecoration: 'none' }}>{t.profil.header.admin}</a>}
             <button onClick={handleLogout} style={{ background: 'rgba(180,40,40,0.15)', color: '#e57373', border: '1px solid rgba(180,40,40,0.3)', borderRadius: 999, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>{t.profil.header.deconnexion}</button>

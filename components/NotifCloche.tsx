@@ -181,6 +181,20 @@ export default function NotifCloche({ userId }: { userId?: string }) {
               </div>
             ))}
           </div>
+
+          {/* ── Voir tout ── */}
+          <a
+            href="/notifications"
+            style={{
+              display: 'block', textAlign: 'center',
+              padding: '10px 16px',
+              borderTop: '1px solid #E8E0D0',
+              color: '#C8431A', fontSize: 12, fontWeight: 'bold',
+              textDecoration: 'none',
+            }}
+          >
+            Voir tout →
+          </a>
         </div>
       )}
     </div>
