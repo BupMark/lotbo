@@ -858,6 +858,18 @@ export default function Admin() {
             }
           })
         }
+
+        // Fil d'activité communautaire — evenement_approuve
+        fetch('/api/activite-communautaire/log', {
+          method: 'POST',
+          headers: hiAuth(),
+          body: JSON.stringify({
+            type: 'evenement_approuve',
+            user_id: ev.user_id,
+            ville: ev.ville,
+            contenu: { ville: ev.ville, categorie: ev.categorie, titre: ev.titre },
+          }),
+        }).catch(() => {})
       }
     }
   }
