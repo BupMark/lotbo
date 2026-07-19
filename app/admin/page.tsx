@@ -870,6 +870,41 @@ export default function Admin() {
             contenu: { ville: ev.ville, categorie: ev.categorie, titre: ev.titre },
           }),
         }).catch(() => {})
+
+        // Détection badge débloqué — recalcul sur les mêmes bases que /profil (comptage d'événements, pas points)
+        try {
+          const estContrib = ev.soumis_en_tant_que === 'contributeur'
+          const { count: nbContribApres } = await supabase
+            .from('evenements')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', ev.user_id)
+            .eq('soumis_en_tant_que', 'contributeur')
+          const { count: nbApprouvesApres } = await supabase
+            .from('evenements')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', ev.user_id)
+            .eq('statut', 'approuve')
+
+          const SEUILS_CONTRIBUTEUR: [string, number][] = [['decouvreur',1],['actif',5],['contributeur',10],['top_contributeur',25],['elite',50],['legende',100]]
+          const SEUILS_ORGANISATEUR: [string, number][] = [['organisateur',1],['regulier',3],['premium',10],['vedette',25],['champion',50]]
+
+          const badgeFranchiContrib = estContrib ? SEUILS_CONTRIBUTEUR.find(([, seuil]) => nbContribApres === seuil) : null
+          const badgeFranchiOrga    = SEUILS_ORGANISATEUR.find(([, seuil]) => nbApprouvesApres === seuil)
+
+          const badgeFranchi = badgeFranchiContrib || badgeFranchiOrga
+          if (badgeFranchi) {
+            fetch('/api/activite-communautaire/log', {
+              method: 'POST',
+              headers: hiAuth(),
+              body: JSON.stringify({
+                type: 'badge_debloque',
+                user_id: ev.user_id,
+                ville: null,
+                contenu: { badge: badgeFranchi[0], type: badgeFranchiContrib ? 'contributeur' : 'organisateur', points: badgeFranchi[1] },
+              }),
+            }).catch(() => {})
+          }
+        } catch { /* non-bloquant */ }
       }
     }
   }
