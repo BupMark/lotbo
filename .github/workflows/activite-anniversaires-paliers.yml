@@ -1,0 +1,16 @@
+name: Activité communautaire — Anniversaires & Paliers
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # chaque jour à 7h UTC — même créneau que anniversaires.yml
+  workflow_dispatch:
+
+jobs:
+  executer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route activite-anniversaires-paliers
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/activite-anniversaires-paliers"
