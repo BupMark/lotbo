@@ -1,0 +1,16 @@
+name: Purge activité communautaire (rétention 90j)
+
+on:
+  schedule:
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+
+jobs:
+  purger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route purge-activite-communautaire
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/purge-activite-communautaire"
