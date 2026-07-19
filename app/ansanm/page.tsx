@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import BadgeProgression, { type BadgeDef } from '../../components/BadgeProgression'
 
-// ── Système de badges — dupliqué de app/profil/page.tsx pour rester cohérent ──
-const BADGES_CONTRIBUTEUR = [
+const BADGES_CONTRIBUTEUR: BadgeDef[] = [
   { id: 'decouvreur',       emoji: '🌱', seuil: 1,   label: 'Découvreur' },
   { id: 'actif',            emoji: '🔥', seuil: 5,   label: 'Actif' },
   { id: 'contributeur',     emoji: '⭐', seuil: 10,  label: 'Contributeur' },
@@ -13,22 +13,13 @@ const BADGES_CONTRIBUTEUR = [
   { id: 'legende',          emoji: '👑', seuil: 100, label: 'Légende' },
 ]
 
-const BADGES_ORGANISATEUR = [
+const BADGES_ORGANISATEUR: BadgeDef[] = [
   { id: 'organisateur', emoji: '🎪', seuil: 1,  label: 'Organisateur' },
   { id: 'regulier',     emoji: '📅', seuil: 3,  label: 'Régulier' },
   { id: 'premium',      emoji: '💎', seuil: 10, label: 'Premium' },
   { id: 'vedette',      emoji: '🌟', seuil: 25, label: 'Vedette' },
   { id: 'champion',     emoji: '🏆', seuil: 50, label: 'Champion' },
 ]
-
-function getBadgeActuel(nb: number, badges: typeof BADGES_CONTRIBUTEUR) {
-  const obtenus = badges.filter(b => nb >= b.seuil)
-  return obtenus[obtenus.length - 1] || null
-}
-
-function getProchainBadge(nb: number, badges: typeof BADGES_CONTRIBUTEUR) {
-  return badges.find(b => nb < b.seuil) || null
-}
 
 interface StatsGlobales {
   total: number
@@ -139,11 +130,6 @@ export default function AnsanmPage() {
     setSavingToggle(false)
   }
 
-  const badgeContribActuel = getBadgeActuel(nbContrib, BADGES_CONTRIBUTEUR)
-  const prochainBadgeContrib = getProchainBadge(nbContrib, BADGES_CONTRIBUTEUR)
-  const badgeOrgaActuel = getBadgeActuel(nbApprouves, BADGES_ORGANISATEUR)
-  const prochainBadgeOrga = getProchainBadge(nbApprouves, BADGES_ORGANISATEUR)
-
   const carte = {
     background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 16,
   }
@@ -251,91 +237,15 @@ export default function AnsanmPage() {
                     <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement de ta progression…</p>
                   </div>
                 ) : (
-                  <>
-                    {/* Badges contributeur */}
-                    <div style={carte}>
-                      <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
-                        Niveau actuel — {badgeContribActuel ? `${badgeContribActuel.emoji} ${badgeContribActuel.label}` : 'Pas encore de badge'}
-                      </h3>
-                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{nbContrib} contribution{nbContrib > 1 ? 's' : ''} repérée{nbContrib > 1 ? 's' : ''}</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                        {BADGES_CONTRIBUTEUR.map(b => {
-                          const obtenu = nbContrib >= b.seuil
-                          return (
-                            <div key={b.id} style={{
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                              padding: '12px 16px', borderRadius: 12, minWidth: 80,
-                              background: obtenu ? 'rgba(212,168,32,0.12)' : 'rgba(26,20,16,0.03)',
-                              border: obtenu ? '1px solid rgba(212,168,32,0.4)' : '1px solid #E8E0D0',
-                              opacity: obtenu ? 1 : 0.4,
-                            }}>
-                              <span style={{ fontSize: 24 }}>{b.emoji}</span>
-                              <p style={{ color: obtenu ? '#D4A820' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center', margin: 0 }}>{b.label}</p>
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {prochainBadgeContrib && (
-                        <div style={{ marginTop: 16, background: 'rgba(212,168,32,0.06)', borderRadius: 10, padding: '12px 14px' }}>
-                          <p style={{ color: '#D4A820', fontSize: 12, marginBottom: 6 }}>
-                            Prochain badge : {prochainBadgeContrib.emoji} {prochainBadgeContrib.label}
-                          </p>
-                          <div style={{ background: 'rgba(26,20,16,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
-                            <div style={{
-                              background: '#D4A820', height: '100%', borderRadius: 999,
-                              width: `${Math.min(100, (nbContrib / prochainBadgeContrib.seuil) * 100)}%`,
-                              transition: 'width 0.5s ease',
-                            }} />
-                          </div>
-                          <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
-                            {nbContrib} / {prochainBadgeContrib.seuil}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Badges organisateur */}
-                    <div style={carte}>
-                      <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
-                        Organisateur — {badgeOrgaActuel ? `${badgeOrgaActuel.emoji} ${badgeOrgaActuel.label}` : 'Pas encore de badge'}
-                      </h3>
-                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{nbApprouves} événement{nbApprouves > 1 ? 's' : ''} approuvé{nbApprouves > 1 ? 's' : ''}</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                        {BADGES_ORGANISATEUR.map(b => {
-                          const obtenu = nbApprouves >= b.seuil
-                          return (
-                            <div key={b.id} style={{
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                              padding: '12px 16px', borderRadius: 12, minWidth: 80,
-                              background: obtenu ? 'rgba(200,67,26,0.12)' : 'rgba(26,20,16,0.03)',
-                              border: obtenu ? '1px solid rgba(200,67,26,0.4)' : '1px solid #E8E0D0',
-                              opacity: obtenu ? 1 : 0.4,
-                            }}>
-                              <span style={{ fontSize: 24 }}>{b.emoji}</span>
-                              <p style={{ color: obtenu ? '#C8431A' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center', margin: 0 }}>{b.label}</p>
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {prochainBadgeOrga && (
-                        <div style={{ marginTop: 16, background: 'rgba(200,67,26,0.06)', borderRadius: 10, padding: '12px 14px' }}>
-                          <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 6 }}>
-                            Prochain badge : {prochainBadgeOrga.emoji} {prochainBadgeOrga.label}
-                          </p>
-                          <div style={{ background: 'rgba(26,20,16,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
-                            <div style={{
-                              background: '#C8431A', height: '100%', borderRadius: 999,
-                              width: `${Math.min(100, (nbApprouves / prochainBadgeOrga.seuil) * 100)}%`,
-                              transition: 'width 0.5s ease',
-                            }} />
-                          </div>
-                          <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
-                            {nbApprouves} / {prochainBadgeOrga.seuil}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </>
+                  <BadgeProgression
+                    nbContrib={nbContrib}
+                    nbApprouves={nbApprouves}
+                    badgesContributeur={BADGES_CONTRIBUTEUR}
+                    badgesOrganisateur={BADGES_ORGANISATEUR}
+                    titreContributeur={(b) => `Niveau actuel — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
+                    titreOrganisateur={(b) => `Organisateur — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
+                    labelProchainBadge="Prochain badge"
+                  />
                 )}
 
                 {/* Fil d'activité communautaire */}

@@ -14,6 +14,7 @@ import { useLangue } from '../../lib/useLangue'
 import { usePushPermission } from '../../lib/usePushPermission'
 import PrePermissionModal from '../../components/PrePermissionModal'
 import NotifCloche from '../../components/NotifCloche'
+import BadgeProgression from '../../components/BadgeProgression'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGES_CONTRIBUTEUR = [
@@ -354,9 +355,16 @@ function ProfilInner() {
   const nbContrib = evenements.filter(e => e.soumis_en_tant_que === 'contributeur').length
   const nbOrga    = evenements.filter(e => e.soumis_en_tant_que === 'organisateur').length
   const badgeContribActuel = getBadgeActuel(nbContrib, BADGES_CONTRIBUTEUR)
-  const prochainBadgeContrib = getProchainBadge(nbContrib, BADGES_CONTRIBUTEUR)
-  const badgeOrgaActuel = getBadgeActuel(nbApprouves, BADGES_ORGANISATEUR)
-  const prochainBadgeOrga = getProchainBadge(nbApprouves, BADGES_ORGANISATEUR)
+  const badgesContributeurTraduits = BADGES_CONTRIBUTEUR.map(b => ({
+    ...b,
+    label: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.label ?? b.id,
+    desc: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.desc,
+  }))
+  const badgesOrganisateurTraduits = BADGES_ORGANISATEUR.map(b => ({
+    ...b,
+    label: t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.label ?? b.id,
+    desc: t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.desc,
+  }))
   const hasPioneerScan = evenements.some((e: any) => e.source === 'scan_publie')
   const hasWikiBadge   = evenements.some((e: any) => e.source === 'wikimedia' && e.statut === 'approuve')
 
@@ -723,91 +731,18 @@ function ProfilInner() {
                   </div>
                 </div>
 
-                {/* Badges contributeur */}
-                <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
-                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>{t.profil.badges.titreEngage}</h3>
-                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{nbContrib} contribution{nbContrib > 1 ? 's' : ''} repérée{nbContrib > 1 ? 's' : ''}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {BADGES_CONTRIBUTEUR.map(b => {
-                      const obtenu = nbContrib >= b.seuil
-                      return (
-                        <div key={b.id} style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                          padding: '12px 16px', borderRadius: 12, minWidth: 80,
-                          background: obtenu ? 'rgba(212,168,32,0.12)' : 'rgba(26,20,16,0.03)',
-                          border: obtenu ? '1px solid rgba(212,168,32,0.4)' : '1px solid #2a2a2a',
-                          opacity: obtenu ? 1 : 0.4,
-                        }}>
-                          <p style={{ color: obtenu ? '#D4A820' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.label ?? b.id}</p>
-<p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.desc ?? ''}</p>
-{obtenu && (
-                            <button onClick={() => setBadgeSelectionne({ id: b.id, emoji: b.emoji, label: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.label ?? b.id, desc: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.desc ?? '' })} style={{ background: 'rgba(200,67,26,0.12)', border: 'none', borderRadius: 6, padding: '3px 8px', color: '#C8431A', fontSize: 10, cursor: 'pointer', fontWeight: 'bold', marginTop: 2 }}>
-                              🎨
-                            </button>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {prochainBadgeContrib && (
-                    <div style={{ marginTop: 16, background: 'rgba(212,168,32,0.06)', borderRadius: 10, padding: '12px 14px' }}>
-                      <p style={{ color: '#D4A820', fontSize: 12, marginBottom: 6 }}>
-                        {t.profil.badges.prochainBadge} : {prochainBadgeContrib.emoji} {t.profil.badges.contributeur[prochainBadgeContrib.id as keyof typeof t.profil.badges.contributeur]?.label ?? prochainBadgeContrib.id}
-                      </p>
-                      <div style={{ background: 'rgba(26,20,16,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
-                        <div style={{
-                          background: '#D4A820', height: '100%', borderRadius: 999,
-                          width: `${Math.min(100, (nbContrib / prochainBadgeContrib.seuil) * 100)}%`,
-                          transition: 'width 0.5s ease'
-                        }} />
-                      </div>
-                      <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
-                        {nbContrib} / {prochainBadgeContrib.seuil} — {prochainBadgeContrib.seuil - nbContrib > 1 ? t.profil.badges.encoreContributionsPluriel.replace('{n}', String(prochainBadgeContrib.seuil - nbContrib)) : t.profil.badges.encoreContributions.replace('{n}', String(prochainBadgeContrib.seuil - nbContrib))}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Badges organisateur */}
-                <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20 }}>
-                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>{t.profil.badges.titreOrganisateur}</h3>
-                  <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>{nbApprouves} événement{nbApprouves > 1 ? 's' : ''} approuvé{nbApprouves > 1 ? 's' : ''}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {BADGES_ORGANISATEUR.map(b => {
-                      const obtenu = nbApprouves >= b.seuil
-                      return (
-                        <div key={b.id} style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                          padding: '12px 16px', borderRadius: 12, minWidth: 80,
-                          background: obtenu ? 'rgba(200,67,26,0.12)' : 'rgba(26,20,16,0.03)',
-                          border: obtenu ? '1px solid rgba(200,67,26,0.4)' : '1px solid #2a2a2a',
-                          opacity: obtenu ? 1 : 0.4,
-                        }}>
-                          <span style={{ fontSize: 28 }}>{b.emoji}</span>
-                          <p style={{ color: obtenu ? '#C8431A' : '#8C5A40', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>{t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.label ?? b.id}</p>
-                          <p style={{ color: '#8C5A40', fontSize: 10, textAlign: 'center' }}>{t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.desc ?? ''}</p>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {prochainBadgeOrga && (
-                    <div style={{ marginTop: 16, background: 'rgba(200,67,26,0.06)', borderRadius: 10, padding: '12px 14px' }}>
-                      <p style={{ color: '#C8431A', fontSize: 12, marginBottom: 6 }}>
-                        {t.profil.badges.prochainBadge} : {prochainBadgeOrga.emoji} {t.profil.badges.organisateur[prochainBadgeOrga.id as keyof typeof t.profil.badges.organisateur]?.label ?? prochainBadgeOrga.id}
-                      </p>
-                      <div style={{ background: 'rgba(26,20,16,0.06)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
-                        <div style={{
-                          background: '#C8431A', height: '100%', borderRadius: 999,
-                          width: `${Math.min(100, (nbApprouves / prochainBadgeOrga.seuil) * 100)}%`,
-                          transition: 'width 0.5s ease'
-                        }} />
-                      </div>
-                      <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 6 }}>
-                        {nbApprouves} / {prochainBadgeOrga.seuil} — {prochainBadgeOrga.seuil - nbApprouves > 1 ? t.profil.badges.encoreEvenementsPluriel.replace('{n}', String(prochainBadgeOrga.seuil - nbApprouves)) : t.profil.badges.encoreEvenements.replace('{n}', String(prochainBadgeOrga.seuil - nbApprouves))}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <BadgeProgression
+                  nbContrib={nbContrib}
+                  nbApprouves={nbApprouves}
+                  badgesContributeur={badgesContributeurTraduits}
+                  badgesOrganisateur={badgesOrganisateurTraduits}
+                  titreContributeur={() => t.profil.badges.titreEngage}
+                  titreOrganisateur={() => t.profil.badges.titreOrganisateur}
+                  labelProchainBadge={t.profil.badges.prochainBadge}
+                  texteRestantContributeur={(n) => n > 1 ? t.profil.badges.encoreContributionsPluriel.replace('{n}', String(n)) : t.profil.badges.encoreContributions.replace('{n}', String(n))}
+                  texteRestantOrganisateur={(n) => n > 1 ? t.profil.badges.encoreEvenementsPluriel.replace('{n}', String(n)) : t.profil.badges.encoreEvenements.replace('{n}', String(n))}
+                  onCustomizeContributeur={(b) => setBadgeSelectionne({ id: b.id, emoji: b.emoji, label: b.label, desc: b.desc ?? '' })}
+                />
 
                 {/* Badges spéciaux */}
                 {(hasPioneerScan || hasWikiBadge) && (
