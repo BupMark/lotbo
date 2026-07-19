@@ -122,6 +122,17 @@ export default function Login() {
       auth_provider:        opts.provider,
       onboarding_complete:  true,
     }).eq('id', userId)
+
+    // Fil d'activité communautaire — nouveau_membre (la route dérive user_id du token,
+    // pas du paramètre userId ci-dessus — on récupère donc la session séparément)
+    const { data: { session: sessionApresConsent } } = await supabase.auth.getSession()
+    if (sessionApresConsent) {
+      fetch('/api/activite-communautaire/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionApresConsent.access_token}` },
+        body: JSON.stringify({ type: 'nouveau_membre', ville: null, contenu: {} }),
+      }).catch(() => {})
+    }
   }
 
   // ── Google OAuth ───────────────────────────────────────────────────────────
@@ -241,6 +252,17 @@ export default function Login() {
         onboarding_complete:  true,
         created_at:           now,
       })
+
+      // Fil d'activité communautaire — nouveau_membre (pas de session tant que
+      // l'email n'est pas confirmé — le fetch est simplement sauté dans ce cas)
+      const { data: { session: sessionApresConsent } } = await supabase.auth.getSession()
+      if (sessionApresConsent) {
+        fetch('/api/activite-communautaire/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionApresConsent.access_token}` },
+          body: JSON.stringify({ type: 'nouveau_membre', ville: null, contenu: {} }),
+        }).catch(() => {})
+      }
 
       // Résolution du parrain
       try {

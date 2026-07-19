@@ -108,6 +108,13 @@ export default function ConsentPage() {
       return
     }
 
+    // Fil d'activité communautaire — nouveau_membre (session déjà disponible ci-dessus)
+    fetch('/api/activite-communautaire/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ type: 'nouveau_membre', ville: null, contenu: {} }),
+    }).catch(() => {})
+
     // Newsletter si opt-in
     if (newsletter) {
       try {
