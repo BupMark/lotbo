@@ -274,9 +274,17 @@ export default function AnsanmPage() {
 
             {/* Contexte dynamique */}
             {contexteActif && (
-              <div style={{ background: 'rgba(200,67,26,0.1)', borderRadius: 12, height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 16, padding: 16, textAlign: 'center' }}>
-                <span style={{ fontSize: 48, marginBottom: 8 }}>🌍</span>
-                <p style={{ color: '#1A1410', fontSize: 15, fontWeight: 500, maxWidth: 280 }}>{contexteActif.message}</p>
+              <div style={{ borderRadius: 12, height: 160, marginBottom: 16, overflow: 'hidden', position: 'relative' }}>
+                {contexteActif.illustration ? (
+                  <img src={contexteActif.illustration} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ background: 'rgba(200,67,26,0.1)', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 48 }}>🌍</span>
+                  </div>
+                )}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(26,20,16,0.7))', padding: '24px 16px 12px' }}>
+                  <p style={{ color: 'white', fontSize: 15, fontWeight: 500, textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>{contexteActif.message}</p>
+                </div>
               </div>
             )}
 
