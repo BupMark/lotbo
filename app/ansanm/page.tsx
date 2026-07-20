@@ -251,6 +251,30 @@ export default function AnsanmPage() {
           <p style={{ color: '#8C5A40', fontSize: 13 }}>La communauté LOTBO, ensemble.</p>
         </div>
 
+        {/* Stats globales — bandeau pleine largeur */}
+        <div style={{ ...carte, textAlign: 'center' }}>
+          {loadingStats ? (
+            <p style={{ color: '#8C5A40', fontSize: 13, margin: 0 }}>Chargement des statistiques…</p>
+          ) : stats ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxWidth: 400, margin: '0 auto' }}>
+              <div>
+                <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.total.toLocaleString('fr-FR')}</p>
+                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>événements</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.villes.toLocaleString('fr-FR')}</p>
+                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>villes</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.pays.toLocaleString('fr-FR')}</p>
+                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>pays</p>
+              </div>
+            </div>
+          ) : (
+            <p style={{ color: '#8C5A40', fontSize: 13, margin: 0 }}>Statistiques indisponibles pour l'instant.</p>
+          )}
+        </div>
+
         <div style={{
           display: isDesktop ? 'grid' : 'block',
           gridTemplateColumns: isDesktop ? '340px minmax(0, 1fr)' : undefined,
@@ -258,19 +282,8 @@ export default function AnsanmPage() {
           alignItems: 'start',
         }}>
 
-          {/* ── COLONNE GAUCHE — Stats + Toggle ── */}
+          {/* ── COLONNE GAUCHE — Contexte + Aujourd'hui + Ville ── */}
           <div style={{ position: isDesktop ? 'sticky' : 'static', top: isDesktop ? 24 : 'auto' }}>
-
-            {/* Bloc 1 — Aujourd'hui dans le monde */}
-            {enCours && (
-              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
-                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>🔴 Aujourd'hui dans le monde</p>
-                <p style={{ color: '#1A1410', fontSize: 15, marginBottom: 10 }}>
-                  {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
-                </p>
-                <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir sur la carte →</a>
-              </div>
-            )}
 
             {/* Contexte dynamique */}
             {contexteActif && (
@@ -285,6 +298,17 @@ export default function AnsanmPage() {
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(26,20,16,0.7))', padding: '24px 16px 12px' }}>
                   <p style={{ color: 'white', fontSize: 15, fontWeight: 500, textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>{contexteActif.message}</p>
                 </div>
+              </div>
+            )}
+
+            {/* Bloc 1 — Aujourd'hui dans le monde */}
+            {enCours && (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>🔴 Aujourd'hui dans le monde</p>
+                <p style={{ color: '#1A1410', fontSize: 15, marginBottom: 10 }}>
+                  {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
+                </p>
+                <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir sur la carte →</a>
               </div>
             )}
 
@@ -322,63 +346,9 @@ export default function AnsanmPage() {
               </div>
             )}
 
-            {/* 1. Stats globales */}
-            <div style={carte}>
-              {loadingStats ? (
-                <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement des statistiques…</p>
-              ) : stats ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, textAlign: 'center' }}>
-                  <div>
-                    <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.total.toLocaleString('fr-FR')}</p>
-                    <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>événements</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.villes.toLocaleString('fr-FR')}</p>
-                    <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>villes</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.pays.toLocaleString('fr-FR')}</p>
-                    <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>pays</p>
-                  </div>
-                </div>
-              ) : (
-                <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Statistiques indisponibles pour l'instant.</p>
-              )}
-            </div>
-
-            {/* 3. Toggle visible_ansanm — seulement si connecté */}
-            {userId && (
-              <div style={carte}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <div>
-                    <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', margin: 0 }}>Apparaître dans le fil communautaire</p>
-                    <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4, marginBottom: 0 }}>Tu restes anonyme si désactivé.</p>
-                  </div>
-                  <button
-                    onClick={toggleVisibleAnsanm}
-                    disabled={savingToggle}
-                    aria-pressed={visibleAnsanm}
-                    aria-label="Apparaître dans le fil communautaire"
-                    style={{
-                      flexShrink: 0, width: 46, height: 26, borderRadius: 999, border: 'none',
-                      background: visibleAnsanm ? '#C8431A' : '#E8E0D0',
-                      position: 'relative', cursor: savingToggle ? 'default' : 'pointer',
-                      opacity: savingToggle ? 0.6 : 1, transition: 'background 0.2s ease',
-                    }}
-                  >
-                    <span style={{
-                      position: 'absolute', top: 3, left: visibleAnsanm ? 23 : 3,
-                      width: 20, height: 20, borderRadius: '50%', background: 'white',
-                      transition: 'left 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                    }} />
-                  </button>
-                </div>
-              </div>
-            )}
-
           </div>
 
-          {/* ── COLONNE DROITE — Progression + Fil ── */}
+          {/* ── COLONNE DROITE — Toggle + Progression + Fil ── */}
           <div style={{ minWidth: 0 }}>
 
             {/* 2. Progression personnelle */}
@@ -397,6 +367,34 @@ export default function AnsanmPage() {
               </div>
             ) : (
               <>
+                {/* Toggle visible_ansanm */}
+                <div style={carte}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div>
+                      <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', margin: 0 }}>Apparaître dans le fil communautaire</p>
+                      <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4, marginBottom: 0 }}>Tu restes anonyme si désactivé.</p>
+                    </div>
+                    <button
+                      onClick={toggleVisibleAnsanm}
+                      disabled={savingToggle}
+                      aria-pressed={visibleAnsanm}
+                      aria-label="Apparaître dans le fil communautaire"
+                      style={{
+                        flexShrink: 0, width: 46, height: 26, borderRadius: 999, border: 'none',
+                        background: visibleAnsanm ? '#C8431A' : '#E8E0D0',
+                        position: 'relative', cursor: savingToggle ? 'default' : 'pointer',
+                        opacity: savingToggle ? 0.6 : 1, transition: 'background 0.2s ease',
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute', top: 3, left: visibleAnsanm ? 23 : 3,
+                        width: 20, height: 20, borderRadius: '50%', background: 'white',
+                        transition: 'left 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      }} />
+                    </button>
+                  </div>
+                </div>
+
                 {loadingProgression ? (
                   <div style={carte}>
                     <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement de ta progression…</p>
@@ -436,6 +434,7 @@ export default function AnsanmPage() {
                       ))}
                     </div>
                     <a href='https://lotbo.app/enqueteurs' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 14, display: 'inline-block' }}>Voir tous les enquêteurs →</a>
+                    <a href='https://app.lotbo.app/enqueteur/consentement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block', marginLeft: 16 }}>Devenir enquêteur →</a>
                   </div>
                 )}
 
