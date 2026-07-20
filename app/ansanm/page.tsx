@@ -92,6 +92,9 @@ export default function AnsanmPage() {
   const [isDesktop, setIsDesktop] = useState(false)
   const { langue } = useLangue()
 
+  // ── Bloc 1 — Aujourd'hui dans le monde (publique) ──
+  const [enCours, setEnCours] = useState<{ evenements_du_jour: number; villes: number; pays: number } | null>(null)
+
   // ── Contexte dynamique (bandeau du haut, publique) ──
   const [contexteActif, setContexteActif] = useState<{ message: string; illustration: string | null } | null>(null)
 
@@ -127,6 +130,11 @@ export default function AnsanmPage() {
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Bloc 1 — Aujourd'hui dans le monde
+  useEffect(() => {
+    fetch('/api/ansanm/en-cours').then(r => r.json()).then(setEnCours).catch(() => {})
   }, [])
 
   // Stats globales
@@ -244,6 +252,17 @@ export default function AnsanmPage() {
 
           {/* ── COLONNE GAUCHE — Stats + Toggle ── */}
           <div style={{ position: isDesktop ? 'sticky' : 'static', top: isDesktop ? 24 : 'auto' }}>
+
+            {/* Bloc 1 — Aujourd'hui dans le monde */}
+            {enCours && (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>🔴 Aujourd'hui dans le monde</p>
+                <p style={{ color: '#1A1410', fontSize: 15, marginBottom: 10 }}>
+                  {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
+                </p>
+                <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir sur la carte →</a>
+              </div>
+            )}
 
             {/* Contexte dynamique */}
             {contexteActif && (
