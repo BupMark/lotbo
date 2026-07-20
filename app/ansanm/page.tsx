@@ -95,6 +95,11 @@ export default function AnsanmPage() {
   // ── Contexte dynamique (bandeau du haut, publique) ──
   const [contexteActif, setContexteActif] = useState<{ message: string; illustration: string | null } | null>(null)
 
+  // ── Bloc 2 — À votre ville (géolocalisation locale) ──
+  const [localisation, setLocalisation] = useState<{ ville: string; evenements_locaux: number } | null>(null)
+  const [demandeGeoEnCours, setDemandeGeoEnCours] = useState(false)
+  const [geoRefusee, setGeoRefusee] = useState(false)
+
   // ── Stats globales (publiques, pas d'auth requise) ──
   const [stats, setStats] = useState<StatsGlobales | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
@@ -194,6 +199,25 @@ export default function AnsanmPage() {
     setSavingToggle(false)
   }
 
+  const activerPosition = () => {
+    if (!navigator.geolocation) { setGeoRefusee(true); return }
+    setDemandeGeoEnCours(true)
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const res = await fetch(`/api/ansanm/local?lat=${position.coords.latitude}&lng=${position.coords.longitude}`)
+          const data = await res.json()
+          if (data.ville) setLocalisation(data)
+          else setGeoRefusee(true)
+        } catch {
+          setGeoRefusee(true)
+        }
+        setDemandeGeoEnCours(false)
+      },
+      () => { setGeoRefusee(true); setDemandeGeoEnCours(false) }
+    )
+  }
+
   const carte = {
     background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 16,
   }
@@ -226,6 +250,40 @@ export default function AnsanmPage() {
               <div style={{ background: 'rgba(200,67,26,0.1)', borderRadius: 12, height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 16, padding: 16, textAlign: 'center' }}>
                 <span style={{ fontSize: 48, marginBottom: 8 }}>🌍</span>
                 <p style={{ color: '#1A1410', fontSize: 15, fontWeight: 500, maxWidth: 280 }}>{contexteActif.message}</p>
+              </div>
+            )}
+
+            {/* Bloc 2 — À votre ville */}
+            {!localisation && !demandeGeoEnCours && (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16, textAlign: 'center' }}>
+                <p style={{ color: '#1A1410', fontSize: 14, marginBottom: 12 }}>📍 Voir les événements dans ta ville</p>
+                <button onClick={activerPosition} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>
+                  Activer ma position →
+                </button>
+                {geoRefusee && <p style={{ color: '#8C5A40', fontSize: 12, marginTop: 10 }}>Active ta position pour voir les événements près de toi.</p>}
+              </div>
+            )}
+
+            {demandeGeoEnCours && (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16, textAlign: 'center' }}>
+                <p style={{ color: '#8C5A40', fontSize: 13 }}>Localisation en cours...</p>
+              </div>
+            )}
+
+            {localisation && (
+              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                <p style={{ color: '#1A1410', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>📍 À {localisation.ville}</p>
+                {localisation.evenements_locaux > 0 ? (
+                  <>
+                    <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 10 }}>{localisation.evenements_locaux} événement{localisation.evenements_locaux > 1 ? 's' : ''} aujourd'hui</p>
+                    <a href={`/?ville=${encodeURIComponent(localisation.ville)}&date=today`} style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir les événements →</a>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 10 }}>Aucun événement aujourd'hui</p>
+                    <a href='/ajouter' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Tu en connais un ? Ajouter →</a>
+                  </>
+                )}
               </div>
             )}
 

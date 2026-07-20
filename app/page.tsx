@@ -219,6 +219,11 @@ export default function Home() {
       setMode('liste')
       setTimeout(() => searchRef.current?.focus(), 100)
     }
+    const villeParam = params.get('ville')
+    if (villeParam) {
+      setRecherche(villeParam)
+      setMode('liste')
+    }
   }, [])
 
   const nbFiltres = [
