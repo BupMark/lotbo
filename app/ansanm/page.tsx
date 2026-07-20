@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useLangue } from '../../lib/useLangue'
+import { type Langue } from '../../lib/i18n'
 import BadgeProgression, { type BadgeDef } from '../../components/BadgeProgression'
 
 const BADGES_CONTRIBUTEUR: BadgeDef[] = [
@@ -36,8 +38,62 @@ interface EntreeFil {
   derniere_activite: string
 }
 
+interface ContextePayload {
+  type: string
+  nom: string
+  date_debut: string | null
+  date_fin: string | null
+  heure_debut: string | null
+  heure_fin: string | null
+  mois_debut: number | null
+  mois_fin: number | null
+  priorite: number
+  illustrations: string[]
+  messages: Record<string, string>
+}
+
+// Sélection : événement ponctuel > saison (cas spécial hiver à cheval sur l'année) > moment de journée > défaut
+function selectionnerContexte(contextes: ContextePayload[], langue: Langue): { message: string; illustration: string | null } | null {
+  const maintenant = new Date()
+  const auj = `${maintenant.getFullYear()}-${String(maintenant.getMonth() + 1).padStart(2, '0')}-${String(maintenant.getDate()).padStart(2, '0')}`
+  const moisActuel = maintenant.getMonth() + 1
+  const heureActuelle = `${String(maintenant.getHours()).padStart(2, '0')}:${String(maintenant.getMinutes()).padStart(2, '0')}:00`
+
+  const evenement = contextes
+    .filter(c => c.type === 'evenement' && c.date_debut && c.date_fin)
+    .find(c => auj >= c.date_debut! && auj <= c.date_fin!)
+
+  const saison = contextes
+    .filter(c => c.type === 'saison' && c.mois_debut != null && c.mois_fin != null)
+    .find(c => {
+      const debut = c.mois_debut!, fin = c.mois_fin!
+      return debut <= fin ? (moisActuel >= debut && moisActuel <= fin) : (moisActuel >= debut || moisActuel <= fin)
+    })
+
+  const moment = contextes
+    .filter(c => c.type === 'moment_journee' && c.heure_debut && c.heure_fin)
+    .find(c => {
+      const debut = c.heure_debut!, fin = c.heure_fin!
+      return debut <= fin ? (heureActuelle >= debut && heureActuelle <= fin) : (heureActuelle >= debut || heureActuelle <= fin)
+    })
+
+  const defaut = contextes.find(c => c.type === 'defaut')
+
+  const choisi = evenement || saison || moment || defaut
+  if (!choisi) return null
+
+  const message = choisi.messages?.[langue] || choisi.messages?.fr
+  if (!message) return null
+
+  return { message, illustration: choisi.illustrations?.[0] || null }
+}
+
 export default function AnsanmPage() {
   const [isDesktop, setIsDesktop] = useState(false)
+  const { langue } = useLangue()
+
+  // ── Contexte dynamique (bandeau du haut, publique) ──
+  const [contexteActif, setContexteActif] = useState<{ message: string; illustration: string | null } | null>(null)
 
   // ── Stats globales (publiques, pas d'auth requise) ──
   const [stats, setStats] = useState<StatsGlobales | null>(null)
@@ -76,6 +132,14 @@ export default function AnsanmPage() {
       .catch(() => {})
       .finally(() => setLoadingStats(false))
   }, [])
+
+  // Contexte dynamique — refait la sélection si la langue se résout après le montage (useLangue async)
+  useEffect(() => {
+    fetch('/api/ansanm/contexte')
+      .then(res => res.json())
+      .then(data => setContexteActif(selectionnerContexte(data.contextes || [], langue)))
+      .catch(() => {})
+  }, [langue])
 
   // Session + données personnelles
   useEffect(() => {
@@ -156,6 +220,14 @@ export default function AnsanmPage() {
 
           {/* ── COLONNE GAUCHE — Stats + Toggle ── */}
           <div style={{ position: isDesktop ? 'sticky' : 'static', top: isDesktop ? 24 : 'auto' }}>
+
+            {/* Contexte dynamique */}
+            {contexteActif && (
+              <div style={{ background: 'rgba(200,67,26,0.1)', borderRadius: 12, height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 16, padding: 16, textAlign: 'center' }}>
+                <span style={{ fontSize: 48, marginBottom: 8 }}>🌍</span>
+                <p style={{ color: '#1A1410', fontSize: 15, fontWeight: 500, maxWidth: 280 }}>{contexteActif.message}</p>
+              </div>
+            )}
 
             {/* 1. Stats globales */}
             <div style={carte}>
