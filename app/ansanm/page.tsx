@@ -125,6 +125,9 @@ export default function AnsanmPage() {
   const [fil, setFil] = useState<EntreeFil[] | null>(null)
   const [loadingFil, setLoadingFil] = useState(true)
 
+  // ── Bloc 3 — Enquêteurs actifs ──
+  const [enqueteursActifs, setEnqueteursActifs] = useState<{ id: string; nom_affichage: string; ville: string; zone_description: string | null; fiches_total: number; objectif_fiches: number; photo_url: string | null }[]>([])
+
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
     check()
@@ -135,6 +138,11 @@ export default function AnsanmPage() {
   // Bloc 1 — Aujourd'hui dans le monde
   useEffect(() => {
     fetch('/api/ansanm/en-cours').then(r => r.json()).then(setEnCours).catch(() => {})
+  }, [])
+
+  // Bloc 3 — Enquêteurs actifs
+  useEffect(() => {
+    fetch('/api/ansanm/enqueteurs-actifs').then(r => r.json()).then(d => setEnqueteursActifs(d.enqueteurs || [])).catch(() => {})
   }, [])
 
   // Stats globales
@@ -395,6 +403,32 @@ export default function AnsanmPage() {
                     titreOrganisateur={(b) => `Organisateur — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
                     labelProchainBadge="Prochain badge"
                   />
+                )}
+
+                {/* Bloc 3 — Enquêteurs actifs */}
+                {enqueteursActifs.length > 0 && (
+                  <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginTop: 16 }}>
+                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🌍 Enquêteurs actifs</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {enqueteursActifs.map(e => (
+                        <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          {e.photo_url ? (
+                            <img src={e.photo_url} alt='' style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                          ) : (
+                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#F7F2E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>👤</div>
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 500 }}>{e.nom_affichage}</p>
+                            <p style={{ color: '#8C5A40', fontSize: 12 }}>{e.ville}{e.zone_description ? ' · ' + e.zone_description : ''}</p>
+                            <div style={{ background: '#F7F2E8', borderRadius: 999, height: 5, marginTop: 4, overflow: 'hidden' }}>
+                              <div style={{ background: '#C8431A', height: '100%', width: Math.min(100, (e.fiches_total / (e.objectif_fiches || 1)) * 100) + '%' }} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <a href='https://lotbo.app/enqueteurs' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 14, display: 'inline-block' }}>Voir tous les enquêteurs →</a>
+                  </div>
                 )}
 
                 {/* Fil d'activité communautaire */}
