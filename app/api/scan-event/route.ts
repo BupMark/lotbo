@@ -98,7 +98,10 @@ Retourne UNIQUEMENT ce JSON :
 }
 
 Instructions :
-- Pour les dates, utilise le format YYYY-MM-DD
+- Nous sommes aujourd'hui le ${new Date().toISOString().slice(0, 10)}.
+- Pour les dates, utilise le format YYYY-MM-DD.
+- Si l'année n'est pas explicitement visible sur l'affiche, déduis l'année la PLUS PROCHE dans le futur par rapport à aujourd'hui (jamais une date déjà passée), sauf si le contexte de l'affiche indique clairement une date passée (ex: compte-rendu d'un événement déjà tenu).
+- Si le jour de la semaine et la date du mois semblent incohérents entre eux, privilégie la date explicite du mois plutôt que le jour de la semaine.
 - Pour les heures, utilise le format HH:MM
 - Pour "categorie" : Concert, Festival, Conférence, Exposition, Formation, Tournoi, Culte, Assemblée, Inauguration, Célébration
 - Pour "lieu" : nom exact du bâtiment ou espace
@@ -125,7 +128,31 @@ Instructions :
     try {
       const clean = text.replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean)
-      const events: unknown[] = parsed.events || []
+      const events: Record<string, unknown>[] = Array.isArray(parsed.events) ? parsed.events : []
+
+      // Correction date passée — probable erreur d'extraction (année manquante sur l'affiche)
+      const aujourdhui = new Date().toISOString().slice(0, 10)
+      for (const ev of events) {
+        const dateDebut = ev.date_debut
+        if (typeof dateDebut === 'string') {
+          let d = dateDebut
+          while (d < aujourdhui) {
+            const [annee, mois, jour] = d.split('-')
+            d = `${parseInt(annee, 10) + 1}-${mois}-${jour}`
+          }
+          ev.date_debut = d
+        }
+        const dateFin = ev.date_fin
+        if (typeof dateFin === 'string') {
+          let f = dateFin
+          while (f < aujourdhui) {
+            const [anneeFin, moisFin, jourFin] = f.split('-')
+            f = `${parseInt(anneeFin, 10) + 1}-${moisFin}-${jourFin}`
+          }
+          ev.date_fin = f
+        }
+      }
+
       const firstEvent = events[0] as Record<string, unknown> | undefined
       return NextResponse.json({
         success:         true,
