@@ -109,6 +109,12 @@ export default function PageConsentementEnqueteur() {
       setPrenomConfirmation(data.nomComplet.split(' ')[0] || '')
       setSoumission('success')
       setEtape(7)
+
+      try {
+        if (window.fbq && localStorage.getItem('lotbo_analytics_consent') === 'true') {
+          window.fbq('trackCustom', 'CandidatureEnqueteur')
+        }
+      } catch (e) {}
     } catch (err) {
       console.error('[Consentement] Erreur soumission:', err)
       setSoumission('error')
