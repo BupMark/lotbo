@@ -411,6 +411,8 @@ export default function AnsanmPage() {
                   />
                 )}
 
+                <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 12, display: 'inline-block' }}>Voir le classement →</a>
+
                 {/* Bloc 3 — Enquêteurs actifs */}
                 {enqueteursActifs.length > 0 && (
                   <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginTop: 16 }}>
