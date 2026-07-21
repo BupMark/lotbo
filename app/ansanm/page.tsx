@@ -88,6 +88,15 @@ function selectionnerContexte(contextes: ContextePayload[], langue: Langue): { m
   return { message, illustration: choisi.illustrations?.[0] || null }
 }
 
+const STYLE_PAR_TYPE: Record<string, { icone: string; couleur: string }> = {
+  evenement_approuve: { icone: '🔴', couleur: '#C8431A' },
+  badge_debloque: { icone: '🏅', couleur: '#D4A820' },
+  palier_anciennete: { icone: '⭐', couleur: '#8C5A40' },
+  anniversaire: { icone: '🎂', couleur: '#E88A9A' },
+  nouveau_membre: { icone: '👋', couleur: '#2D9E6B' },
+  objectif_enqueteur: { icone: '🎯', couleur: '#4A90D9' },
+}
+
 export default function AnsanmPage() {
   const [isDesktop, setIsDesktop] = useState(false)
   const { langue } = useLangue()
@@ -456,9 +465,10 @@ export default function AnsanmPage() {
                             padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#1A1410',
                             background: entree.highlight ? 'rgba(200,67,26,0.08)' : 'rgba(26,20,16,0.02)',
                             border: entree.highlight ? '1px solid rgba(200,67,26,0.35)' : '1px solid #F0E8DC',
+                            borderLeft: `4px solid ${STYLE_PAR_TYPE[entree.type]?.couleur || '#E8E0D0'}`,
                           }}
                         >
-                          {entree.libelle}
+                          <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
                         </div>
                       ))}
                     </div>
