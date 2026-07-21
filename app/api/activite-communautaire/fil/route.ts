@@ -41,10 +41,10 @@ export async function GET(request: Request) {
       .from('activite_communautaire')
       .select('id, type, user_id, ville, contenu, created_at')
       .order('created_at', { ascending: false })
-      .limit(500)
+      .limit(1000)
 
     if (!entrees || entrees.length === 0) {
-      return NextResponse.json({ fil: [] })
+      return NextResponse.json({ fil_evenements: [], fil_autres: [] })
     }
 
     // Résout les prénoms nécessaires en une seule requête groupée
@@ -88,9 +88,19 @@ export async function GET(request: Request) {
         highlight: estHighlight,
         derniere_activite: items[0].created_at,
       }
-    }).sort((a, b) => new Date(b.derniere_activite).getTime() - new Date(a.derniere_activite).getTime())
+    })
 
-    return NextResponse.json({ fil: fil.slice(0, 30) })
+    const trierParRecence = (a: typeof fil[number], b: typeof fil[number]) =>
+      new Date(b.derniere_activite).getTime() - new Date(a.derniere_activite).getTime()
+
+    // Sépare par type pour qu'aucun type ne puisse en évincer un autre par volume
+    const groupesEvenements = fil.filter(g => g.type === 'evenement_approuve').sort(trierParRecence)
+    const groupesAutres     = fil.filter(g => g.type !== 'evenement_approuve').sort(trierParRecence)
+
+    return NextResponse.json({
+      fil_evenements: groupesEvenements,
+      fil_autres: groupesAutres.slice(0, 20),
+    })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
     return NextResponse.json({ error: message }, { status: 500 })

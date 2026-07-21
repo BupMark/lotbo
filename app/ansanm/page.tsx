@@ -131,7 +131,9 @@ export default function AnsanmPage() {
   const [savingToggle, setSavingToggle] = useState(false)
 
   // ── Fil d'activité communautaire ──
-  const [fil, setFil] = useState<EntreeFil[] | null>(null)
+  const [filEvenements, setFilEvenements] = useState<EntreeFil[]>([])
+  const [filAutres, setFilAutres] = useState<EntreeFil[]>([])
+  const [accordeonOuvert, setAccordeonOuvert] = useState(false)
   const [loadingFil, setLoadingFil] = useState(true)
 
   // ── Bloc 3 — Enquêteurs actifs ──
@@ -205,9 +207,11 @@ export default function AnsanmPage() {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
         const filData = await res.json()
-        setFil(filData.fil || [])
+        setFilEvenements(filData.fil_evenements || [])
+        setFilAutres(filData.fil_autres || [])
       } catch {
-        setFil([])
+        setFilEvenements([])
+        setFilAutres([])
       } finally {
         setLoadingFil(false)
       }
@@ -454,11 +458,29 @@ export default function AnsanmPage() {
                   <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 14 }}>Ce qui se passe en ce moment</h3>
                   {loadingFil ? (
                     <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement du fil…</p>
-                  ) : !fil || fil.length === 0 ? (
+                  ) : filEvenements.length === 0 && filAutres.length === 0 ? (
                     <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Rien à afficher pour l'instant.</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {fil.map((entree, i) => (
+                      {filEvenements.slice(0, accordeonOuvert ? undefined : 10).map((entree, i) => (
+                        <div
+                          key={`${entree.type}-${entree.ville}-${i}`}
+                          style={{
+                            padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#1A1410',
+                            background: entree.highlight ? 'rgba(200,67,26,0.08)' : 'rgba(26,20,16,0.02)',
+                            border: entree.highlight ? '1px solid rgba(200,67,26,0.35)' : '1px solid #F0E8DC',
+                            borderLeft: `4px solid ${STYLE_PAR_TYPE[entree.type]?.couleur || '#E8E0D0'}`,
+                          }}
+                        >
+                          <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
+                        </div>
+                      ))}
+                      {filEvenements.length > 10 && (
+                        <button onClick={() => setAccordeonOuvert(!accordeonOuvert)} style={{ background: 'none', border: 'none', color: '#C8431A', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', padding: '8px 0', textAlign: 'left' }}>
+                          {accordeonOuvert ? '▲ Voir moins' : `▼ Voir plus (${filEvenements.length - 10} autres)`}
+                        </button>
+                      )}
+                      {filAutres.map((entree, i) => (
                         <div
                           key={`${entree.type}-${entree.ville}-${i}`}
                           style={{
