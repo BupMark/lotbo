@@ -1,0 +1,14 @@
+name: Scrape Leagues Cup 2026
+on:
+  schedule:
+    - cron: '15 2 * * *'
+  workflow_dispatch:
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route scrape-leagues-cup-2026
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/scrape-leagues-cup-2026"
