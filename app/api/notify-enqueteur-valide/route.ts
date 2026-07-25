@@ -44,6 +44,9 @@ export async function POST(request: Request) {
           <li>Tu peux fixer et modifier ton propre objectif de fiches à tout moment, directement depuis ton profil.</li>
         </ol>
       </div>
+      <p style="color:#8C5A40;font-size:12px;margin-top:12px;font-family:Arial,sans-serif">
+        📄 <a href="https://cwshefnimydmycttzish.supabase.co/storage/v1/object/public/guides-enqueteurs/guides/fr.pdf" style="color:#C8431A">Télécharge le guide complet du Programme Terrain (PDF)</a>
+      </p>
       <p style="color:#8C5A40;font-size:12px;margin-top:16px;font-family:Arial,sans-serif">
         Besoin d'aide ou une question ? Écris à Gaetchens : <a href="mailto:gaetchens@lotbo.app" style="color:#8C5A40">gaetchens@lotbo.app</a>
       </p>
@@ -76,6 +79,9 @@ export async function POST(request: Request) {
           <li>Ou ka fikse epi modifye objektif fich ou a nenpòt lè, dirèkteman sou pwofil ou.</li>
         </ol>
       </div>
+      <p style="color:#8C5A40;font-size:12px;margin-top:12px;font-family:Arial,sans-serif">
+        📄 <a href="https://cwshefnimydmycttzish.supabase.co/storage/v1/object/public/guides-enqueteurs/guides/ht.pdf" style="color:#C8431A">Telechaje gid konplè Pwogram Tèren an (PDF)</a>
+      </p>
       <p style="color:#8C5A40;font-size:12px;margin-top:16px;font-family:Arial,sans-serif">
         Ou bezwen èd oswa ou gen yon kesyon ? Ekri Gaetchens : <a href="mailto:gaetchens@lotbo.app" style="color:#8C5A40">gaetchens@lotbo.app</a>
       </p>

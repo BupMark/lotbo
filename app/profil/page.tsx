@@ -502,14 +502,24 @@ function ProfilInner() {
                     </div>
                   )}
                   {enqueteurData && (
-                    <a
-                      href="https://lotbo.app/terrain"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(139,69,19,0.1)', color: '#8B4513', border: '1px solid rgba(139,69,19,0.3)', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}
-                    >
-                      📋 Remplir une fiche terrain →
-                    </a>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                      <a
+                        href="https://lotbo.app/terrain"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(139,69,19,0.1)', color: '#8B4513', border: '1px solid rgba(139,69,19,0.3)', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}
+                      >
+                        📋 Remplir une fiche terrain →
+                      </a>
+                      <a
+                        href="https://cwshefnimydmycttzish.supabase.co/storage/v1/object/public/guides-enqueteurs/guides/fr.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(139,69,19,0.1)', color: '#8B4513', border: '1px solid rgba(139,69,19,0.3)', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}
+                      >
+                        📄 Guide complet (PDF) →
+                      </a>
+                    </div>
                   )}
                   {/* FEAT-ENQUETEUR-LIAISON-COMPTE-1 — message candidature, uniquement si pas encore actif */}
                   {!enqueteurData && candidatureStatut === 'en_attente' && (
