@@ -6,6 +6,7 @@ import { useLangue } from '../../lib/useLangue'
 import { type Langue } from '../../lib/i18n'
 import BadgeProgression, { type BadgeDef } from '../../components/BadgeProgression'
 import PodiumTop3 from '../../components/PodiumTop3'
+import MenuLateralAnsanm from '../../components/MenuLateralAnsanm'
 
 const BADGES_CONTRIBUTEUR: BadgeDef[] = [
   { id: 'decouvreur',       emoji: '🌱', seuil: 1,   label: 'Découvreur' },
@@ -264,6 +265,7 @@ export default function AnsanmPage() {
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', paddingBottom: 96 }}>
+      <MenuLateralAnsanm />
       <div style={{ margin: '0 auto', padding: isDesktop ? '32px 32px 64px' : '24px 16px 64px' }}>
 
         {/* Titre */}
