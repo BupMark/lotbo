@@ -5,6 +5,7 @@ import { verifierAdmin } from '../../../lib/adminAuth'
 
 const POINTS: Record<string, number> = {
   'evenement_approuve': 10,
+  'fiche_terrain':      10,
   'evenement_trending':  5,
   'commenter':           2,
   'repondre':            1,
@@ -21,9 +22,12 @@ const POINTS: Record<string, number> = {
 }
 
 export async function POST(request: Request) {
-  const acces = await verifierAdmin(request)
-  if (!acces.ok) {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  const secretValide = request.headers.get('x-internal-secret') === process.env.INTERNAL_API_SECRET
+  if (!secretValide) {
+    const acces = await verifierAdmin(request)
+    if (!acces.ok) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    }
   }
 
   const { user_id, action, evenement_id, type_role } = await request.json() as {
