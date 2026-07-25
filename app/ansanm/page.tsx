@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { useLangue } from '../../lib/useLangue'
 import { type Langue } from '../../lib/i18n'
 import BadgeProgression, { type BadgeDef } from '../../components/BadgeProgression'
+import PodiumTop3 from '../../components/PodiumTop3'
 
 const BADGES_CONTRIBUTEUR: BadgeDef[] = [
   { id: 'decouvreur',       emoji: '🌱', seuil: 1,   label: 'Découvreur' },
@@ -140,6 +141,8 @@ export default function AnsanmPage() {
   // ── Bloc 3 — Enquêteurs actifs ──
   const [enqueteursActifs, setEnqueteursActifs] = useState<{ id: string; nom_affichage: string; ville: string; zone_description: string | null; fiches_total: number; objectif_fiches: number; photo_url: string | null }[]>([])
 
+  const [top3Classement, setTop3Classement] = useState<{ id: string; nom: string | null; photo_url: string | null; points_total: number; niveau: string }[]>([])
+
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
     check()
@@ -150,6 +153,13 @@ export default function AnsanmPage() {
   // Bloc 1 — Aujourd'hui dans le monde
   useEffect(() => {
     fetch('/api/ansanm/en-cours').then(r => r.json()).then(setEnCours).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/classement')
+      .then(r => r.json())
+      .then(d => setTop3Classement((d.membres || []).slice(0, 3)))
+      .catch(() => {})
   }, [])
 
   // Bloc 3 — Enquêteurs actifs
@@ -452,6 +462,14 @@ export default function AnsanmPage() {
                     </div>
                     <a href='https://lotbo.app/enqueteurs' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 14, display: 'inline-block' }}>Voir tous les enquêteurs →</a>
                     <a href='https://app.lotbo.app/enqueteur/consentement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block', marginLeft: 16 }}>Devenir enquêteur →</a>
+                  </div>
+                )}
+
+                {top3Classement.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🏆 Top 3 classement</p>
+                    <PodiumTop3 top3={top3Classement} isDesktop={isDesktop} />
+                    <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>Voir le classement complet →</a>
                   </div>
                 )}
 
