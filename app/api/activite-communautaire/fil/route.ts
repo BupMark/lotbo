@@ -83,8 +83,12 @@ export async function GET(request: Request) {
         libelle = LIBELLES[type]?.(n, villeAffichee) || type
       }
 
+      const evenementIds = type === 'evenement_approuve'
+        ? items.map(i => (i.contenu as any)?.evenement_id).filter(Boolean)
+        : []
+
       return {
-        type, ville: villeAffichee, count: n, libelle,
+        type, ville: villeAffichee, evenement_ids: evenementIds, count: n, libelle,
         highlight: estHighlight,
         derniere_activite: items[0].created_at,
       }
