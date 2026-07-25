@@ -20,6 +20,7 @@ interface BadgeProgressionProps {
   texteRestantOrganisateur?: (nRestant: number) => string
   onCustomizeContributeur?: (badge: BadgeDef) => void
   onCustomizeOrganisateur?: (badge: BadgeDef) => void
+  compact?: boolean
 }
 
 const PALETTES = {
@@ -40,6 +41,10 @@ const PALETTES = {
 function getBadgeActuel(nb: number, badges: BadgeDef[]): BadgeDef | null {
   const obtenus = badges.filter(b => nb >= b.seuil)
   return obtenus[obtenus.length - 1] || null
+}
+
+function getBadgesObtenus(nb: number, badges: BadgeDef[]): BadgeDef[] {
+  return badges.filter(b => nb >= b.seuil)
 }
 
 function getProchainBadge(nb: number, badges: BadgeDef[]): BadgeDef | null {
@@ -123,6 +128,7 @@ export default function BadgeProgression({
   titreContributeur, titreOrganisateur, labelProchainBadge,
   texteRestantContributeur, texteRestantOrganisateur,
   onCustomizeContributeur, onCustomizeOrganisateur,
+  compact,
 }: BadgeProgressionProps) {
   const badgeContribActuel = getBadgeActuel(nbContrib, badgesContributeur)
   const prochainBadgeContrib = getProchainBadge(nbContrib, badgesContributeur)
@@ -130,6 +136,35 @@ export default function BadgeProgression({
   const prochainBadgeOrga = getProchainBadge(nbApprouves, badgesOrganisateur)
 
   const carte = { background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 16 }
+
+  if (compact) {
+    const badgesObtenusContrib = getBadgesObtenus(nbContrib, badgesContributeur)
+    const badgesObtenusOrga = getBadgesObtenus(nbApprouves, badgesOrganisateur)
+
+    return (
+      <>
+        <div style={carte}>
+          <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
+            {titreContributeur(badgeContribActuel)}
+          </h3>
+          <p style={{ color: '#8C5A40', fontSize: 12, margin: 0 }}>
+            {badgeContribActuel ? `${badgeContribActuel.emoji} ${badgeContribActuel.label}` : 'Pas encore de badge'}
+            {badgesObtenusContrib.length > 1 ? ` +${badgesObtenusContrib.length - 1} autres` : ''}
+          </p>
+        </div>
+
+        <div style={carte}>
+          <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
+            {titreOrganisateur(badgeOrgaActuel)}
+          </h3>
+          <p style={{ color: '#8C5A40', fontSize: 12, margin: 0 }}>
+            {badgeOrgaActuel ? `${badgeOrgaActuel.emoji} ${badgeOrgaActuel.label}` : 'Pas encore de badge'}
+            {badgesObtenusOrga.length > 1 ? ` +${badgesObtenusOrga.length - 1} autres` : ''}
+          </p>
+        </div>
+      </>
+    )
+  }
 
   return (
     <>
