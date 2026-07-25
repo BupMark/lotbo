@@ -36,6 +36,7 @@ interface EntreeFil {
   libelle: string
   highlight: boolean
   derniere_activite: string
+  evenement_ids?: string[]
 }
 
 interface ContextePayload {
@@ -462,19 +463,38 @@ export default function AnsanmPage() {
                     <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Rien à afficher pour l'instant.</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {filEvenements.slice(0, accordeonOuvert ? undefined : 10).map((entree, i) => (
-                        <div
-                          key={`${entree.type}-${entree.ville}-${i}`}
-                          style={{
-                            padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#1A1410',
-                            background: entree.highlight ? 'rgba(200,67,26,0.08)' : 'rgba(26,20,16,0.02)',
-                            border: entree.highlight ? '1px solid rgba(200,67,26,0.35)' : '1px solid #F0E8DC',
-                            borderLeft: `4px solid ${STYLE_PAR_TYPE[entree.type]?.couleur || '#E8E0D0'}`,
-                          }}
-                        >
-                          <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
-                        </div>
-                      ))}
+                      {filEvenements.slice(0, accordeonOuvert ? undefined : 10).map((entree, i) => {
+                        const ids = entree.evenement_ids || []
+                        const href = ids.length === 1
+                          ? `/evenement/${ids[0]}`
+                          : ids.length > 1
+                            ? `/?ville=${encodeURIComponent(entree.ville || '')}&date=${entree.derniere_activite.slice(0, 10)}`
+                            : null
+
+                        const contenuStyle = {
+                          padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#1A1410',
+                          background: entree.highlight ? 'rgba(200,67,26,0.08)' : 'rgba(26,20,16,0.02)',
+                          border: entree.highlight ? '1px solid rgba(200,67,26,0.35)' : '1px solid #F0E8DC',
+                          borderLeft: `4px solid ${STYLE_PAR_TYPE[entree.type]?.couleur || '#E8E0D0'}`,
+                        }
+
+                        return href ? (
+                          <a
+                            key={`${entree.type}-${entree.ville}-${i}`}
+                            href={href}
+                            style={{ ...contenuStyle, textDecoration: 'none', display: 'block' }}
+                          >
+                            <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
+                          </a>
+                        ) : (
+                          <div
+                            key={`${entree.type}-${entree.ville}-${i}`}
+                            style={contenuStyle}
+                          >
+                            <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
+                          </div>
+                        )
+                      })}
                       {filEvenements.length > 10 && (
                         <button onClick={() => setAccordeonOuvert(!accordeonOuvert)} style={{ background: 'none', border: 'none', color: '#C8431A', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', padding: '8px 0', textAlign: 'left' }}>
                           {accordeonOuvert ? '▲ Voir moins' : `▼ Voir plus (${filEvenements.length - 10} autres)`}
