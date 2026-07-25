@@ -422,6 +422,7 @@ export default function AnsanmPage() {
                     titreContributeur={(b) => `Niveau actuel — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
                     titreOrganisateur={(b) => `Organisateur — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
                     labelProchainBadge="Prochain badge"
+                    compact
                   />
                 )}
 
