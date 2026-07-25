@@ -436,7 +436,13 @@ export default function AnsanmPage() {
                   />
                 )}
 
-                <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 12, display: 'inline-block' }}>Voir le classement →</a>
+                {top3Classement.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🏆 Top 3 classement</p>
+                    <PodiumTop3 top3={top3Classement} isDesktop={isDesktop} />
+                    <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>Voir le classement complet →</a>
+                  </div>
+                )}
 
                 {/* Bloc 3 — Enquêteurs actifs */}
                 {enqueteursActifs.length > 0 && (
@@ -462,14 +468,6 @@ export default function AnsanmPage() {
                     </div>
                     <a href='https://lotbo.app/enqueteurs' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 14, display: 'inline-block' }}>Voir tous les enquêteurs →</a>
                     <a href='https://app.lotbo.app/enqueteur/consentement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block', marginLeft: 16 }}>Devenir enquêteur →</a>
-                  </div>
-                )}
-
-                {top3Classement.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🏆 Top 3 classement</p>
-                    <PodiumTop3 top3={top3Classement} isDesktop={isDesktop} />
-                    <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>Voir le classement complet →</a>
                   </div>
                 )}
 
