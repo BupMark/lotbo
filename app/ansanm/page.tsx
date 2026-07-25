@@ -276,7 +276,7 @@ export default function AnsanmPage() {
         </div>
 
         {/* Stats globales — bandeau pleine largeur */}
-        <div style={{ ...carte, textAlign: 'center' }}>
+        <div id="ansanm-stats" style={{ ...carte, textAlign: 'center' }}>
           {loadingStats ? (
             <p style={{ color: '#8C5A40', fontSize: 13, margin: 0 }}>Chargement des statistiques…</p>
           ) : stats ? (
@@ -327,7 +327,7 @@ export default function AnsanmPage() {
 
             {/* Bloc 1 — Aujourd'hui dans le monde */}
             {enCours && (
-              <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+              <div id="ansanm-autour-de-moi" style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
                 <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>🔴 Aujourd'hui dans le monde</p>
                 <p style={{ color: '#1A1410', fontSize: 15, marginBottom: 10 }}>
                   {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
@@ -419,25 +419,27 @@ export default function AnsanmPage() {
                   </div>
                 </div>
 
-                {loadingProgression ? (
-                  <div style={carte}>
-                    <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement de ta progression…</p>
-                  </div>
-                ) : (
-                  <BadgeProgression
-                    nbContrib={nbContrib}
-                    nbApprouves={nbApprouves}
-                    badgesContributeur={BADGES_CONTRIBUTEUR}
-                    badgesOrganisateur={BADGES_ORGANISATEUR}
-                    titreContributeur={(b) => `Niveau actuel — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
-                    titreOrganisateur={(b) => `Organisateur — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
-                    labelProchainBadge="Prochain badge"
-                    compact
-                  />
-                )}
+                <div id="ansanm-progression">
+                  {loadingProgression ? (
+                    <div style={carte}>
+                      <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement de ta progression…</p>
+                    </div>
+                  ) : (
+                    <BadgeProgression
+                      nbContrib={nbContrib}
+                      nbApprouves={nbApprouves}
+                      badgesContributeur={BADGES_CONTRIBUTEUR}
+                      badgesOrganisateur={BADGES_ORGANISATEUR}
+                      titreContributeur={(b) => `Niveau actuel — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
+                      titreOrganisateur={(b) => `Organisateur — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
+                      labelProchainBadge="Prochain badge"
+                      compact
+                    />
+                  )}
+                </div>
 
                 {top3Classement.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
+                  <div id="ansanm-classement" style={{ marginTop: 16 }}>
                     <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🏆 Top 3 classement</p>
                     <PodiumTop3 top3={top3Classement} isDesktop={isDesktop} />
                     <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>Voir le classement complet →</a>
@@ -446,7 +448,7 @@ export default function AnsanmPage() {
 
                 {/* Bloc 3 — Enquêteurs actifs */}
                 {enqueteursActifs.length > 0 && (
-                  <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginTop: 16 }}>
+                  <div id="ansanm-enqueteurs" style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginTop: 16 }}>
                     <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🌍 Enquêteurs actifs</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {enqueteursActifs.map(e => (
@@ -472,7 +474,7 @@ export default function AnsanmPage() {
                 )}
 
                 {/* Fil d'activité communautaire */}
-                <div style={carte}>
+                <div id="ansanm-fil" style={carte}>
                   <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 14 }}>Ce qui se passe en ce moment</h3>
                   {loadingFil ? (
                     <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement du fil…</p>
@@ -517,6 +519,7 @@ export default function AnsanmPage() {
                           {accordeonOuvert ? '▲ Voir moins' : `▼ Voir plus (${filEvenements.length - 10} autres)`}
                         </button>
                       )}
+                      <div id="ansanm-paliers" />
                       {filAutres.map((entree, i) => (
                         <div
                           key={`${entree.type}-${entree.ville}-${i}`}
