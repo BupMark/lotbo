@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { calculerNiveau } from '../../lib/points'
+import PodiumTop3 from '../../components/PodiumTop3'
+import { NIVEAUX, getInitiales } from '../../lib/classementUtils'
 
 interface Membre {
   id: string
@@ -12,27 +14,6 @@ interface Membre {
   photo_url: string | null
   points_total: number
   niveau: string
-}
-
-const NIVEAUX: Record<string, { emoji: string; label: string; couleur: string }> = {
-  'decouvreur':       { emoji: '🌱', label: 'Découvreur',       couleur: '#8C5A40' },
-  'actif':            { emoji: '🔥', label: 'Actif',            couleur: '#D4A820' },
-  'contributeur':     { emoji: '⭐', label: 'Engagé',           couleur: '#D4A820' },
-  'top_contributeur': { emoji: '🏅', label: 'Top Contributeur', couleur: '#C8431A' },
-  'elite':            { emoji: '🥇', label: 'Élite',            couleur: '#C8431A' },
-  'legende':          { emoji: '👑', label: 'Légende LOTBO',    couleur: '#C8431A' },
-}
-
-function getInitiales(nom: string | null): string {
-  if (!nom) return 'LB'
-  return nom.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function medallePosition(pos: number): string {
-  if (pos === 1) return '🥇'
-  if (pos === 2) return '🥈'
-  if (pos === 3) return '🥉'
-  return String(pos)
 }
 
 export default function Classement() {
@@ -213,71 +194,7 @@ export default function Classement() {
           }}>
 
             {/* ── Colonne gauche — Podium Top 3 ── */}
-            {top3.length > 0 && (
-              <div style={{
-                background: 'white', borderRadius: 16,
-                padding: isDesktop ? '24px' : '0',
-                border: isDesktop ? '1px solid #E8E0D0' : 'none',
-                marginBottom: isDesktop ? 0 : 24,
-              }}>
-                {isDesktop && (
-                  <p style={{ fontWeight: 'bold', fontSize: 14, color: '#8C5A40', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
-                    🥇 Top 3
-                  </p>
-                )}
-                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
-                  {[top3[1], top3[0], top3[2]].map((membre, i) => {
-                    if (!membre) return null
-                    const pos  = i === 0 ? 2 : i === 1 ? 1 : 3
-                    const haut = pos === 1 ? 140 : pos === 2 ? 110 : 90
-
-                    return (
-                      <div key={membre.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: pos === 1 ? 1.2 : 1 }}>
-                        <div style={{ position: 'relative', marginBottom: 8 }}>
-                          {membre.photo_url ? (
-                            <img src={membre.photo_url} alt={membre.nom || ''} style={{
-                              width: pos === 1 ? 72 : 56, height: pos === 1 ? 72 : 56,
-                              borderRadius: '50%', objectFit: 'cover',
-                              border: `3px solid ${pos === 1 ? '#D4A820' : pos === 2 ? '#8C8C8C' : '#C8431A'}`,
-                            }} />
-                          ) : (
-                            <div style={{
-                              width: pos === 1 ? 72 : 56, height: pos === 1 ? 72 : 56,
-                              borderRadius: '50%', background: '#C8431A',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: 'white', fontWeight: 'bold', fontSize: pos === 1 ? 24 : 18,
-                              border: `3px solid ${pos === 1 ? '#D4A820' : pos === 2 ? '#8C8C8C' : '#C8431A'}`,
-                            }}>
-                              {getInitiales(membre.nom)}
-                            </div>
-                          )}
-                          <span style={{ position: 'absolute', bottom: -4, right: -4, fontSize: 18 }}>
-                            {medallePosition(pos)}
-                          </span>
-                        </div>
-
-                        <p style={{ fontWeight: 'bold', fontSize: pos === 1 ? 14 : 12, color: '#1A1410', textAlign: 'center', marginBottom: 2, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {membre.nom || 'Membre LOTBO'}
-                        </p>
-                        <p style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>{membre.points_total} pts</p>
-
-                        <div style={{
-                          width: '100%', height: haut,
-                          background: pos === 1 ? 'rgba(212,168,32,0.2)' : pos === 2 ? 'rgba(140,140,140,0.15)' : 'rgba(200,67,26,0.15)',
-                          borderRadius: '8px 8px 0 0',
-                          border: `2px solid ${pos === 1 ? 'rgba(212,168,32,0.4)' : pos === 2 ? 'rgba(140,140,140,0.3)' : 'rgba(200,67,26,0.3)'}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <span style={{ fontSize: 28, opacity: 0.6 }}>
-                            {NIVEAUX[calculerNiveau(membre.points_total)]?.emoji || '🌱'}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+            <PodiumTop3 top3={top3} isDesktop={isDesktop} />
 
             {/* ── Colonne droite — Liste 4e+ ── */}
             <div>
