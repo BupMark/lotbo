@@ -9,19 +9,27 @@ const SAISON      = '2026'
 const DATE_DEBUT  = '2026-08-04'
 const DATE_FIN    = '2026-09-06'
 
-async function geocodeStade(stade: string, ville: string): Promise<{ longitude: number, latitude: number }> {
+interface MapboxContext {
+  id: string
+  text: string
+}
+
+async function geocodeStade(stade: string, pays: string): Promise<{ longitude: number, latitude: number, ville: string }> {
   try {
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-    const query = encodeURIComponent(`${stade}, ${ville}`)
+    const query = encodeURIComponent(`${stade}, ${pays}`)
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${token}&limit=1`
     const res = await fetch(url)
     const data = await res.json()
-    if (data.features?.length > 0) {
-      const [longitude, latitude] = data.features[0].center
-      return { longitude, latitude }
+    const feature = data.features?.[0]
+    if (feature) {
+      const [longitude, latitude] = feature.center
+      const placeContext = (feature.context as MapboxContext[] | undefined)?.find(c => c.id.startsWith('place.'))
+      const ville = placeContext?.text || pays
+      return { longitude, latitude, ville }
     }
   } catch {}
-  return { longitude: -100, latitude: 40 }
+  return { longitude: -100, latitude: 40, ville: pays }
 }
 
 export async function GET(request: Request) {
@@ -76,11 +84,9 @@ export async function GET(request: Request) {
 
         if (existing) { skipped++; continue }
 
-        const villeBrute = ev.strCity || ev.strCountry || 'USA'
-        const ville = normaliserVille(villeBrute)
         const pays  = normaliserPays(ev.strCountry || 'USA')
-
-        const coords = await geocodeStade(ev.strVenue || '', villeBrute)
+        const coords = await geocodeStade(ev.strVenue || '', pays)
+        const ville = normaliserVille(coords.ville)
 
         const titre = `⚽ ${ev.strHomeTeam} vs ${ev.strAwayTeam}`
         const lieu  = ev.strVenue ? `${ev.strVenue}, ${ville}` : ville
