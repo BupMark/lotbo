@@ -140,27 +140,77 @@ export default function BadgeProgression({
   if (compact) {
     const badgesObtenusContrib = getBadgesObtenus(nbContrib, badgesContributeur)
     const badgesObtenusOrga = getBadgesObtenus(nbApprouves, badgesOrganisateur)
+    const pContrib = PALETTES.contributeur
+    const pOrga = PALETTES.organisateur
 
     return (
       <>
+        <style>{`
+          @keyframes lotboMedalPop {
+            0% { transform: scale(0.7); opacity: 0; }
+            60% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); }
+          }
+          @keyframes lotboSpark {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+          .lotbo-medal { animation: lotboMedalPop 0.5s ease-out; }
+          .lotbo-spark { animation: lotboSpark 1.6s ease-in-out infinite; display: inline-block; }
+        `}</style>
+
         <div style={carte}>
-          <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
+          <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 12 }}>
             {titreContributeur(badgeContribActuel)}
           </h3>
-          <p style={{ color: '#8C5A40', fontSize: 12, margin: 0 }}>
-            {badgeContribActuel ? `${badgeContribActuel.emoji} ${badgeContribActuel.label}` : 'Pas encore de badge'}
-            {badgesObtenusContrib.length > 1 ? ` +${badgesObtenusContrib.length - 1} autres` : ''}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="lotbo-medal" style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: pContrib.fondObtenu, border: `2px solid ${pContrib.couleurTexte}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 26, flexShrink: 0,
+            }}>
+              {badgeContribActuel ? badgeContribActuel.emoji : '🌱'}
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 500, color: '#1A1410', margin: 0 }}>
+                {badgeContribActuel ? badgeContribActuel.label : 'Pas encore de badge'}
+                {badgesObtenusContrib.length > 0 && <span className="lotbo-spark" style={{ marginLeft: 6 }}>✨</span>}
+              </p>
+              {badgesObtenusContrib.length > 1 && (
+                <p style={{ fontSize: 12, color: '#8C5A40', margin: 0 }}>
+                  +{badgesObtenusContrib.length - 1} autre{badgesObtenusContrib.length - 1 > 1 ? 's' : ''} badge{badgesObtenusContrib.length - 1 > 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={carte}>
-          <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
+          <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 12 }}>
             {titreOrganisateur(badgeOrgaActuel)}
           </h3>
-          <p style={{ color: '#8C5A40', fontSize: 12, margin: 0 }}>
-            {badgeOrgaActuel ? `${badgeOrgaActuel.emoji} ${badgeOrgaActuel.label}` : 'Pas encore de badge'}
-            {badgesObtenusOrga.length > 1 ? ` +${badgesObtenusOrga.length - 1} autres` : ''}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="lotbo-medal" style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: pOrga.fondObtenu, border: `2px solid ${pOrga.couleurTexte}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 26, flexShrink: 0,
+            }}>
+              {badgeOrgaActuel ? badgeOrgaActuel.emoji : '🎪'}
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 500, color: '#1A1410', margin: 0 }}>
+                {badgeOrgaActuel ? badgeOrgaActuel.label : 'Pas encore de badge'}
+                {badgesObtenusOrga.length > 0 && <span className="lotbo-spark" style={{ marginLeft: 6 }}>✨</span>}
+              </p>
+              {badgesObtenusOrga.length > 1 && (
+                <p style={{ fontSize: 12, color: '#8C5A40', margin: 0 }}>
+                  +{badgesObtenusOrga.length - 1} autre{badgesObtenusOrga.length - 1 > 1 ? 's' : ''} badge{badgesObtenusOrga.length - 1 > 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </>
     )
