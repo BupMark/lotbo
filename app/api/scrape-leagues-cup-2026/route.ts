@@ -9,15 +9,21 @@ const SAISON      = '2026'
 const DATE_DEBUT  = '2026-08-04'
 const DATE_FIN    = '2026-09-06'
 
+const VILLE_SECOURS_MX: Record<string, string> = {
+  'Toluca':      'Toluca',
+  'Tigres UANL': 'Monterrey',
+  'América':     'Ciudad de México',
+}
+
 interface MapboxContext {
   id: string
   text: string
 }
 
-async function geocodeStade(stade: string, pays: string): Promise<{ longitude: number, latitude: number, ville: string }> {
+async function geocodeStade(stade: string, ville: string): Promise<{ longitude: number, latitude: number, ville: string }> {
   try {
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-    const query = encodeURIComponent(`${stade}, ${pays}`)
+    const query = encodeURIComponent(`${stade}, ${ville}`)
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${token}&limit=1`
     const res = await fetch(url)
     const data = await res.json()
@@ -25,11 +31,30 @@ async function geocodeStade(stade: string, pays: string): Promise<{ longitude: n
     if (feature) {
       const [longitude, latitude] = feature.center
       const placeContext = (feature.context as MapboxContext[] | undefined)?.find(c => c.id.startsWith('place.'))
-      const ville = placeContext?.text || pays
-      return { longitude, latitude, ville }
+      const villeResolue = placeContext?.text || ville
+      return { longitude, latitude, ville: villeResolue }
     }
   } catch {}
-  return { longitude: -100, latitude: 40, ville: pays }
+  return { longitude: -100, latitude: 40, ville }
+}
+
+async function lookupTeamLocation(idTeam: string): Promise<{ ville: string, pays: string } | null> {
+  try {
+    const res = await fetch(
+      `https://www.thesportsdb.com/api/v1/json/3/lookupteam.php?id=${idTeam}`,
+      { headers: { 'User-Agent': 'Lotbo/1.0 (https://lotbo.app)' } }
+    )
+    const data = await res.json()
+    const strLocation: string | undefined = data.teams?.[0]?.strLocation
+    if (!strLocation) return null
+
+    const segments = strLocation.split(',').map((s: string) => s.trim()).filter(Boolean)
+    if (segments.length === 0) return null
+
+    return { ville: segments[0], pays: segments[segments.length - 1] }
+  } catch {
+    return null
+  }
 }
 
 export async function GET(request: Request) {
@@ -51,6 +76,7 @@ export async function GET(request: Request) {
   let skipped = 0
   const results: any[] = []
   const errors: any[] = []
+  const cacheEquipes = new Map<string, { ville: string, pays: string }>()
 
   try {
     const res = await fetch(
@@ -84,9 +110,21 @@ export async function GET(request: Request) {
 
         if (existing) { skipped++; continue }
 
-        const pays  = normaliserPays(ev.strCountry || 'USA')
-        const coords = await geocodeStade(ev.strVenue || '', pays)
-        const ville = normaliserVille(coords.ville)
+        const idHomeTeam = String(ev.idHomeTeam || '')
+        let localisation = idHomeTeam ? cacheEquipes.get(idHomeTeam) : undefined
+        if (!localisation && idHomeTeam) {
+          const trouvee = await lookupTeamLocation(idHomeTeam)
+          if (trouvee) {
+            localisation = trouvee
+            cacheEquipes.set(idHomeTeam, trouvee)
+          }
+        }
+
+        const pays  = normaliserPays(ev.strCountry || localisation?.pays || 'USA')
+        const ville = normaliserVille(
+          localisation?.ville || VILLE_SECOURS_MX[ev.strHomeTeam] || pays
+        )
+        const coords = await geocodeStade(ev.strVenue || '', ville)
 
         const titre = `⚽ ${ev.strHomeTeam} vs ${ev.strAwayTeam}`
         const lieu  = ev.strVenue ? `${ev.strVenue}, ${ville}` : ville
