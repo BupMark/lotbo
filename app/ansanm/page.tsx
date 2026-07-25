@@ -329,12 +329,45 @@ export default function AnsanmPage() {
 
             {/* Bloc 1 — Aujourd'hui dans le monde */}
             {enCours && (
-              <div id="ansanm-autour-de-moi" style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
-                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>🔴 Aujourd'hui dans le monde</p>
-                <p style={{ color: '#1A1410', fontSize: 15, marginBottom: 10 }}>
-                  {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
-                </p>
-                <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir sur la carte →</a>
+              <div id="ansanm-autour-de-moi" style={{
+                background: 'linear-gradient(135deg, #1A1410, #2C1810)',
+                borderRadius: 12, padding: 20, marginBottom: 16,
+                position: 'relative', overflow: 'hidden',
+              }}>
+                <style>{`
+                  @keyframes lotboRadarSweep {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                  }
+                  @keyframes lotboPinTwinkle {
+                    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+                    50% { opacity: 1; transform: scale(1.2); }
+                  }
+                  .lotbo-radar-sweep {
+                    animation: lotboRadarSweep 3s linear infinite;
+                    transform-origin: center;
+                  }
+                  .lotbo-pin-twinkle { animation: lotboPinTwinkle 2.4s ease-in-out infinite; }
+                `}</style>
+
+                <div style={{ position: 'absolute', top: 10, right: 16, width: 60, height: 60, borderRadius: '50%', border: '1px solid rgba(200,67,26,0.25)' }}>
+                  <div className="lotbo-radar-sweep" style={{
+                    position: 'absolute', inset: 0, borderRadius: '50%',
+                    background: 'conic-gradient(from 0deg, rgba(200,67,26,0.5), transparent 40%)',
+                  }} />
+                </div>
+
+                <div className="lotbo-pin-twinkle" style={{ position: 'absolute', top: 30, left: 40, width: 5, height: 5, borderRadius: '50%', background: '#E88A5A', animationDelay: '0.4s' }} />
+                <div className="lotbo-pin-twinkle" style={{ position: 'absolute', top: 55, left: 90, width: 5, height: 5, borderRadius: '50%', background: '#E88A5A', animationDelay: '1.2s' }} />
+                <div className="lotbo-pin-twinkle" style={{ position: 'absolute', top: 20, left: 130, width: 5, height: 5, borderRadius: '50%', background: '#E88A5A', animationDelay: '0.8s' }} />
+
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>🔴 Aujourd'hui dans le monde</p>
+                  <p style={{ color: 'white', fontSize: 15, marginBottom: 10 }}>
+                    {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
+                  </p>
+                  <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir sur la carte →</a>
+                </div>
               </div>
             )}
 
