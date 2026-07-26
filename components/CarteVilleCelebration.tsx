@@ -26,7 +26,7 @@ export default function CarteVilleCelebration({
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      const W = 1080, H = 1350
+      const W = 1080, H = 1080
       canvas.width = W
       canvas.height = H
 
@@ -97,9 +97,9 @@ export default function CarteVilleCelebration({
       const totalW = ctx.measureText('lotbo').width
       const startX = W / 2 - totalW / 2
       ctx.textAlign = 'left'
-      ctx.fillText('lot', startX, H - 60)
+      ctx.fillText('lot', startX, hauteurPhoto + 280)
       ctx.fillStyle = '#C8431A'
-      ctx.fillText('bo', startX + lotW, H - 60)
+      ctx.fillText('bo', startX + lotW, hauteurPhoto + 280)
 
       setImageChargee(true)
     }
@@ -148,7 +148,7 @@ export default function CarteVilleCelebration({
         <div style={{ position: 'relative' }}>
           <canvas
             ref={canvasRef}
-            style={{ width: '100%', display: 'block', aspectRatio: '1080/1350', opacity: imageChargee ? 1 : 0.3 }}
+            style={{ width: '100%', display: 'block', aspectRatio: '1080/1080', opacity: imageChargee ? 1 : 0.3 }}
           />
           <button
             onClick={onClose}
