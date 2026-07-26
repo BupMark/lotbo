@@ -5,6 +5,12 @@ const HEADERS = {
   'User-Agent': 'Lotbo/1.0 (https://lotbo.app; contact@lotbo.app)',
 }
 
+const MOTS_EXCLUS = [
+  'flag', 'logo', 'seal', 'coat_of_arms', 'emblem', 'icon', 'crest',
+  'drapeau', 'blason', 'sceau', 'armoiries',
+  'embleme', 'emblème', 'icone', 'icône',
+]
+
 interface Attribution {
   auteur: string | null
   licence: string | null
@@ -17,6 +23,11 @@ interface CommonsPage {
       LicenseShortName?: { value?: string }
     }
   }[]
+}
+
+function estImageValide(url: string): boolean {
+  const nomFichier = decodeURIComponent(url).toLowerCase()
+  return !MOTS_EXCLUS.some(mot => nomFichier.includes(mot))
 }
 
 async function recupererAttribution(imageUrl: string): Promise<Attribution> {
@@ -62,7 +73,7 @@ export async function GET(request: NextRequest) {
 
       const data = await res.json()
       const imageUrl = data.originalimage?.source || data.thumbnail?.source
-      if (!imageUrl) continue
+      if (!imageUrl || !estImageValide(imageUrl)) continue
 
       const attribution = await recupererAttribution(imageUrl)
 
