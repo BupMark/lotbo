@@ -116,7 +116,7 @@ function parseListePage(html: string): EventBrut[] {
 
 async function recupererAnneePublication(ficheUrl: string): Promise<number> {
   try {
-    const res = await fetch(ficheUrl, { headers: HEADERS })
+    const res = await fetch(ficheUrl, { headers: HEADERS, signal: AbortSignal.timeout(8000) })
     const html = await res.text()
     const m = html.match(/"datePublished":"(\d{4})-/)
     return m ? parseInt(m[1]) : new Date().getFullYear()
@@ -128,7 +128,7 @@ async function recupererAnneePublication(ficheUrl: string): Promise<number> {
 async function recupererCoordonnees(lieuSlug: string, cache: Map<string, { lat: number; lng: number } | null>): Promise<{ lat: number; lng: number } | null> {
   if (cache.has(lieuSlug)) return cache.get(lieuSlug) || null
   try {
-    const res = await fetch(`https://sortirdanslaube.com/lieux/${lieuSlug}/`, { headers: HEADERS })
+    const res = await fetch(`https://sortirdanslaube.com/lieux/${lieuSlug}/`, { headers: HEADERS, signal: AbortSignal.timeout(8000) })
     const html = await res.text()
     const m = html.match(/"lat":"([\d.]+)","lng":"([\d.]+)"/)
     const coords = m ? { lat: parseFloat(m[1]), lng: parseFloat(m[2]) } : null
@@ -164,7 +164,7 @@ export async function GET(request: Request) {
         ? 'https://sortirdanslaube.com/evenements/'
         : `https://sortirdanslaube.com/evenements/page/${page}/`
 
-      const res = await fetch(url, { headers: HEADERS })
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(8000) })
       if (!res.ok) break
       const html = await res.text()
       const events = parseListePage(html)
