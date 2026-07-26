@@ -10,6 +10,7 @@ export default function TabBarGlobal() {
   const pathname              = usePathname()
   const [userId, setUserId]   = useState<string | null>(null)
   const [nonLues, setNonLues] = useState(0)
+  const [badgeAnsanm, setBadgeAnsanm] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -23,6 +24,29 @@ export default function TabBarGlobal() {
           .eq('lu', false)
           .then(({ count }) => setNonLues(count || 0))
       }
+
+      fetch('/api/ansanm/dernier-moment')
+        .then(r => r.json())
+        .then(async (d) => {
+          if (!d.derniere_activite) return
+          const derniereActivite = new Date(d.derniere_activite).getTime()
+
+          let lastSeen: number | null = null
+          if (uid) {
+            const { data: prof } = await supabase
+              .from('profiles')
+              .select('last_seen_ansanm')
+              .eq('id', uid)
+              .single()
+            lastSeen = prof?.last_seen_ansanm ? new Date(prof.last_seen_ansanm).getTime() : null
+          } else {
+            const stored = localStorage.getItem('lotbo_last_seen_ansanm')
+            lastSeen = stored ? parseInt(stored, 10) : null
+          }
+
+          setBadgeAnsanm(!lastSeen || derniereActivite > lastSeen)
+        })
+        .catch(() => {})
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
@@ -76,12 +100,21 @@ export default function TabBarGlobal() {
 
       {/* Ansanm — Communauté */}
       <a href="/ansanm" className="lotbo-tabbar-item" aria-label="Ansanm — Communauté">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <circle cx="9" cy="8" r="3" stroke={c(isAnsanm)} strokeWidth="1.8"/>
-          <path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
-          <path d="M16 3.5a3.5 3.5 0 0 1 0 6.9" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
-          <path d="M21 20c0-3-2.2-5-5-5.3" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
-        </svg>
+        <div style={{ position: 'relative', display: 'inline-flex' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="9" cy="8" r="3" stroke={c(isAnsanm)} strokeWidth="1.8"/>
+            <path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M16 3.5a3.5 3.5 0 0 1 0 6.9" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M21 20c0-3-2.2-5-5-5.3" stroke={c(isAnsanm)} strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+          {badgeAnsanm && (
+            <span style={{
+              position: 'absolute', top: -2, right: -2,
+              width: 8, height: 8, borderRadius: '50%',
+              background: '#C8431A', border: '1.5px solid #1A1410',
+            }} />
+          )}
+        </div>
         <span style={{ color: c(isAnsanm) }}>Ansanm</span>
       </a>
 
