@@ -1,0 +1,14 @@
+name: Classement Villes
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+jobs:
+  calcul:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route classement-villes
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/classement-villes"
