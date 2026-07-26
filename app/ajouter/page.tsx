@@ -64,26 +64,6 @@ const EVENT_TYPES = [
   { id: 12, nom: 'Loisir',                        icone: '🎯' },
 ]
 
-const EVENT_THEMES = [
-  { id: 1,  nom: 'Religion',      icone: '✝️' },
-  { id: 2,  nom: 'Politique',     icone: '🏛️' },
-  { id: 3,  nom: 'Business',      icone: '💼' },
-  { id: 4,  nom: 'Culture',       icone: '🎭' },
-  { id: 5,  nom: 'Gastronomie',   icone: '🍽️' },
-  { id: 6,  nom: 'Littérature',   icone: '📖' },
-  { id: 7,  nom: 'Art',           icone: '🎨' },
-  { id: 8,  nom: 'Artisanat',     icone: '🪡' },
-  { id: 9,  nom: 'Sport',         icone: '⚽' },
-  { id: 10, nom: 'Technologie',   icone: '💻' },
-  { id: 11, nom: 'Éducation',     icone: '🎓' },
-  { id: 12, nom: 'Social',        icone: '👥' },
-  { id: 13, nom: 'Musique',       icone: '🎵' },
-  { id: 14, nom: 'Cinéma',        icone: '🎬' },
-  { id: 15, nom: 'Mode',          icone: '👗' },
-  { id: 16, nom: 'Santé',         icone: '❤️' },
-  { id: 17, nom: 'Environnement', icone: '🌿' },
-]
-
 const FUSEAUX_PAR_REGION: Record<string, { value: string; label: string }[]> = {
   '— AMÉRIQUES —': [
     { value: 'America/Port-au-Prince',         label: '🇭🇹 Haïti' },
@@ -415,6 +395,13 @@ const inputStyle = {
 }
 const labelStyle = { color: '#8C5A40', fontSize: 12, marginBottom: 4 }
 
+interface EventTheme {
+  id: number
+  nom: string
+  icone: string | null
+  parent_id: number | null
+}
+
 interface Suggestion {
   place_name: string
   center: [number, number]
@@ -713,6 +700,7 @@ export default function AjouterEvenement() {
 
   const [selectedType, setSelectedType]       = useState<number | null>(null)
   const [selectedThemes, setSelectedThemes]   = useState<number[]>([])
+  const [allThemes, setAllThemes]             = useState<EventTheme[]>([])
   const [multiJours, setMultiJours]           = useState(false)
   const [visibilite, setVisibilite]           = useState<'public' | 'discret' | 'prive'>('public')
   const [codeAcces, setCodeAcces]             = useState('')
@@ -758,6 +746,13 @@ export default function AjouterEvenement() {
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/event-themes')
+      .then(r => r.json())
+      .then(d => setAllThemes(d.themes || []))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -1482,6 +1477,10 @@ export default function AjouterEvenement() {
   const categorieNomSelectionnee = EVENT_TYPES.find(et => et.id === selectedType)?.nom || ''
   const imageConfirmee           = !!(image || imageUnsplash)
 
+  const themesParents = allThemes.filter(t => t.parent_id === null)
+  const themesEnfantsParParent = (parentId: number) =>
+    allThemes.filter(t => t.parent_id === parentId)
+
   // ── Modale Charte Organisateur (Niveau 2) ──────────────────────────────
   if (showCharteOrga) {
     const isOrga  = soumisEnTantQue === 'organisateur'
@@ -2061,12 +2060,26 @@ export default function AjouterEvenement() {
           <div>
             <label style={labelStyle}>{t.ajouter.themesLabel} <span style={{ color: '#8C5A40' }}>{t.ajouter.themesAide}</span></label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-              {EVENT_THEMES.map(theme => (
+              {themesParents.map(theme => (
                 <button key={theme.id} type="button" onClick={() => toggleTheme(theme.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer', background: selectedThemes.includes(theme.id) ? 'rgba(200,67,26,0.15)' : 'white', border: selectedThemes.includes(theme.id) ? '1px solid #C8431A' : '1px solid #E8E0D0', color: selectedThemes.includes(theme.id) ? '#1A1410' : '#8C5A40' }}>
-                  <span>{theme.icone}</span><span>{(t.ajouter.themesItems as Record<string,string>)[String(theme.id)] || theme.nom}</span>
+                  <span>{theme.icone}</span><span>{theme.nom}</span>
                 </button>
               ))}
             </div>
+            {themesParents
+              .filter(parent => selectedThemes.includes(parent.id) && themesEnfantsParParent(parent.id).length > 0)
+              .map(parent => (
+                <div key={parent.id} style={{ marginTop: 10, paddingLeft: 12, borderLeft: '2px solid #E8E0D0' }}>
+                  <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 6 }}>{parent.nom} — précise si possible :</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {themesEnfantsParParent(parent.id).map(enfant => (
+                      <button key={enfant.id} type="button" onClick={() => toggleTheme(enfant.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 999, fontSize: 11, cursor: 'pointer', background: selectedThemes.includes(enfant.id) ? 'rgba(200,67,26,0.15)' : 'white', border: selectedThemes.includes(enfant.id) ? '1px solid #C8431A' : '1px solid #E8E0D0', color: selectedThemes.includes(enfant.id) ? '#1A1410' : '#8C5A40' }}>
+                        <span>{enfant.icone}</span><span>{enfant.nom}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
