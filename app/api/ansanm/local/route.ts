@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { normaliserVille } from '../../../../lib/normalisation'
 
 function makeAdminClient() {
   return createClient(
@@ -23,23 +24,21 @@ export async function GET(request: Request) {
     const geoRes = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&types=place`)
     const geoData = await geoRes.json()
     const villeFeature = geoData.features?.find((f: { place_type: string[] }) => f.place_type.includes('place'))
-    const ville = villeFeature?.text || null
+    const villeBrute = villeFeature?.text || null
+    const ville = villeBrute ? normaliserVille(villeBrute) : null
 
     if (!ville) {
       return NextResponse.json({ ville: null, evenements_locaux: 0 })
     }
 
     const admin = makeAdminClient()
-    const debutJour = new Date(); debutJour.setHours(0, 0, 0, 0)
-    const finJour = new Date(); finJour.setHours(23, 59, 59, 999)
-
+    const aujourdHui = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Port-au-Prince' })
     const { count } = await admin
       .from('evenements')
       .select('*', { count: 'exact', head: true })
       .eq('statut', 'approuve')
       .ilike('ville', ville)
-      .gte('date_debut', debutJour.toISOString())
-      .lte('date_debut', finJour.toISOString())
+      .eq('date_debut', aujourdHui)
 
     return NextResponse.json({ ville, evenements_locaux: count || 0 })
   } catch (err: unknown) {
