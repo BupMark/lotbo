@@ -620,17 +620,13 @@ export default function Home() {
         const nomLieu = props.nom_lieu || props.lieu || ''
         const uid = Date.now()
 
-        const formatDate = (ev: (typeof evList)[number]) => {
-          const debut = ev.date_debut || ev.date || ''
-          if (ev.date_fin && ev.date_fin !== ev.date && ev.date_fin !== ev.date_debut)
-            return `${new Date(debut).toLocaleDateString('fr-FR')} → ${new Date(ev.date_fin).toLocaleDateString('fr-FR')}`
-          return debut ? new Date(debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-        }
+        const formatDateCarrousel = (ev: (typeof evList)[number]) =>
+          afficherPeriode({ date: ev.date_debut || ev.date || '', date_fin: ev.date_fin }, langue)
 
         const slideHTML = (idx: number) => {
           const ev = evList[idx]
           const imageUrl = ev.image_url || getEventImage(null, ev.categorie)
-          const dateStr = formatDate(ev)
+          const dateStr = formatDateCarrousel(ev)
           return `
             ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:110px;object-fit:cover;display:block;" crossorigin="anonymous"/>` : ''}
             <div style="padding:10px 12px;">
@@ -695,9 +691,7 @@ export default function Home() {
         const ev = evenementsFiltresRef.current.find(item => item.id === props.id)
         if (!ev) return
 
-        const periodeAffichee = ev.date_fin && ev.date_fin !== ev.date
-          ? `${new Date(ev.date_debut || ev.date).toLocaleDateString('fr-FR')} → ${new Date(ev.date_fin).toLocaleDateString('fr-FR')}`
-          : ev.date_debut ? new Date(ev.date_debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+        const periodeAffichee = afficherPeriode({ date: ev.date_debut || ev.date || '', date_fin: ev.date_fin }, langue)
 
         const imageUrl = ev.image_url || getEventImage(null, ev.categorie)
 
@@ -807,7 +801,7 @@ export default function Home() {
           if (!villes.some((v: string) => userVille.toLowerCase().includes(v) || v.includes(userVille.toLowerCase()))) score -= 5000
         }
         if (userVille && ev.lieu?.toLowerCase().includes(userVille.toLowerCase())) score += 5
-        const dateEv = new Date(ev.date_debut || ev.date)
+        const dateEv = new Date(`${ev.date_debut || ev.date}T00:00:00`)
         const diffJ  = (dateEv.getTime() - now.getTime()) / 86400000
         if (diffJ >= 0 && diffJ <= 7) score += 3
         score += (favorisCounts[ev.id] || 0) * 2
