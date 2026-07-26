@@ -34,7 +34,7 @@ async function recupererAttribution(imageUrl: string): Promise<Attribution> {
   try {
     // Extrait le nom de fichier Commons depuis l'URL du thumbnail
     // (format habituel : .../commons/x/xx/Nom_du_fichier.jpg)
-    const match = imageUrl.match(/\/commons\/[0-9a-f]\/[0-9a-f]{2}\/([^/?]+)/)
+    const match = imageUrl.match(/\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?]+?)(?:\/\d+px-[^/?]+)?$/)
     if (!match) return { auteur: null, licence: null }
     const nomFichier = decodeURIComponent(match[1])
 
