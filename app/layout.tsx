@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -7,6 +8,7 @@ import StoreBanner from "../components/StoreBanner";
 import AnalyticsBanner from "../components/AnalyticsBanner";
 import Preloader from "../components/Preloader";
 import TabBarGlobal from "../components/TabBarGlobal";
+import CelebrationVilleGlobal from "../components/CelebrationVilleGlobal";
 import { Analytics } from "@vercel/analytics/react";
 import AmplitudeInit from "../components/AmplitudeInit";
 
@@ -56,6 +58,9 @@ export default function RootLayout({
       <body className={`${dmSans.variable} ${playfairDisplay.variable} antialiased`}>
         <Preloader />
         {children}
+        <Suspense fallback={null}>
+          <CelebrationVilleGlobal />
+        </Suspense>
         <TabBarGlobal />
         <StoreBanner />
         <CookieBanner />
