@@ -157,6 +157,21 @@ export default function AnsanmPage() {
   }, [])
 
   useEffect(() => {
+    const marquerVu = async () => {
+      const maintenant = new Date().toISOString()
+      const { data } = await supabase.auth.getSession()
+      const uid = data.session?.user?.id
+
+      if (uid) {
+        await supabase.from('profiles').update({ last_seen_ansanm: maintenant }).eq('id', uid)
+      } else {
+        localStorage.setItem('lotbo_last_seen_ansanm', String(Date.now()))
+      }
+    }
+    marquerVu()
+  }, [])
+
+  useEffect(() => {
     fetch('/api/classement')
       .then(r => r.json())
       .then(d => setTop3Classement((d.membres || []).slice(0, 3)))
