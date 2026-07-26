@@ -1266,7 +1266,7 @@ export default function AjouterEvenement() {
     const { data: inserted, error } = await supabase.from('evenements').insert([{
       titre: form.titre, organisateur: form.organisateur || null, user_id: session?.user?.id || null,
       nom_lieu: form.nom_lieu || null, adresse: form.adresse || null, lieu: lieuAffiche,
-      ville: form.ville, pays: form.pays, date: form.date, date_debut: form.date,
+      ville: form.ville.trim(), pays: form.pays.trim(), date: form.date, date_debut: form.date,
       date_fin: multiJours && form.date_fin ? form.date_fin : null,
       heure_debut: touteJournee ? null : form.heure_debut || null,
       heure_fin: touteJournee ? null : form.heure_fin || null,
