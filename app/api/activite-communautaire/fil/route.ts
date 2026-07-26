@@ -88,10 +88,13 @@ export async function GET(request: Request) {
         ? items.map(i => (i.contenu as any)?.evenement_id).filter(Boolean)
         : []
 
+      const estCelebrationVille = type === 'ville_top_changee'
+
       return {
         type, ville: villeAffichee, evenement_ids: evenementIds, count: n, libelle,
         highlight: estHighlight,
         derniere_activite: items[0].created_at,
+        celebration_ville: estCelebrationVille,
       }
     })
 
