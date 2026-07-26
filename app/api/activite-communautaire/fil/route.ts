@@ -19,6 +19,7 @@ const LIBELLES: Record<string, (n: number, ville: string | null) => string> = {
   badge_debloque:      () => 'ont débloqué un badge',
   palier_anciennete:   () => 'fêtent un palier d\'ancienneté sur LOTBO',
   anniversaire:        () => 'fêtent leur anniversaire aujourd\'hui',
+  ville_top_changee:   (n, ville) => `${ville} est maintenant #1 sur LOTBO`,
 }
 
 function formatNoms(prenoms: string[], suffixe: string): string {

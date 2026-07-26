@@ -98,6 +98,7 @@ const STYLE_PAR_TYPE: Record<string, { icone: string; couleur: string }> = {
   anniversaire: { icone: '🎂', couleur: '#E88A9A' },
   nouveau_membre: { icone: '👋', couleur: '#2D9E6B' },
   objectif_enqueteur: { icone: '🎯', couleur: '#4A90D9' },
+  ville_top_changee: { icone: '🏆', couleur: '#D4A820' },
 }
 
 export default function AnsanmPage() {
