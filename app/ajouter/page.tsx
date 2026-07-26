@@ -1276,6 +1276,27 @@ export default function AjouterEvenement() {
 
     setLoading(false)
     if (error) { alert('Erreur: ' + error.message); return }
+
+    // Thèmes — Option A : un enfant coché remplace son parent dans
+    // le stockage (le parent reste déductible via parent_id à la lecture)
+    if (selectedThemes.length > 0 && inserted?.id) {
+      const parentsAvecEnfantCoche = new Set(
+        selectedThemes
+          .map(id => allThemes.find(t => t.id === id))
+          .filter((t): t is EventTheme => !!t && t.parent_id !== null)
+          .map(t => t.parent_id)
+      )
+      const themesAInserer = selectedThemes.filter(id => !parentsAvecEnfantCoche.has(id))
+      const liaisons = themesAInserer.map(theme_id => ({
+        evenement_id: inserted.id,
+        theme_id,
+      }))
+      const { error: erreurThemes } = await supabase.from('evenement_themes').insert(liaisons)
+      if (erreurThemes) {
+        console.error('Erreur insertion evenement_themes:', erreurThemes.message)
+      }
+    }
+
     track('event_submitted', { event_id: inserted?.id, titre: form.titre, categorie: categorieNom })
 
     const { count: nbApres } = await supabase.from('evenements').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('soumis_en_tant_que', choix)
