@@ -350,6 +350,17 @@ export default function Admin() {
   const [countPays,      setCountPays]      = useState(0)
   const [repartitionVilles, setRepartitionVilles] = useState<{ ville: string; nb: number }[]>([])
   const [modalGeo,       setModalGeo]       = useState<'villes' | 'pays' | 'regions' | null>(null)
+  const [celebrationVille, setCelebrationVille] = useState<{
+    active: boolean
+    ville: string
+  } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/classement-villes/etat')
+      .then(r => r.json())
+      .then(d => setCelebrationVille(d))
+      .catch(() => {})
+  }, [])
 
   const [misEnAvantConfigs, setMisEnAvantConfigs] = useState<Record<string, { ville: string; jusqu_au: string }>>({})
   const [misEnAvantSaveStatus, setMisEnAvantSaveStatus] = useState<Record<string, 'saving' | 'ok' | 'error'>>({})
@@ -2242,9 +2253,17 @@ export default function Admin() {
                 const liste = modalGeo === 'villes' ? repartitionVilles : modalGeo === 'pays' ? repartitionPays : repartitionRegionsActuelle
                 const maxNb = (liste[0] as { nb: number })?.nb || 1
                 const pct   = Math.round((nb / maxNb) * 100)
+                const estCelebrationVille = modalGeo === 'villes' && i === 0 &&
+                  celebrationVille?.active && nom === celebrationVille.ville
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid #E8E0D0' }}>
-                    <span style={{ color: '#8C5A40', fontSize: 11, width: 22, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid #E8E0D0', background: estCelebrationVille ? 'rgba(212,168,32,0.12)' : 'transparent', borderRadius: estCelebrationVille ? 8 : 0 }}>
+                    <span style={{
+                      color: estCelebrationVille ? '#1A1410' : '#8C5A40',
+                      fontSize: 11, width: 22, textAlign: 'right', flexShrink: 0,
+                      fontWeight: estCelebrationVille ? 'bold' : 'normal',
+                    }}>
+                      {estCelebrationVille ? '🏆' : i + 1}
+                    </span>
                     <span style={{ color: '#1A1410', fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nom}</span>
                     <div style={{ width: 80, background: '#E8E0D0', borderRadius: 999, height: 5, overflow: 'hidden', flexShrink: 0 }}>
                       <div style={{ width: `${pct}%`, height: '100%', background: '#C8431A', borderRadius: 999 }} />
