@@ -565,5 +565,14 @@
       ],
       "checkbox_label": "Mwen konfime ke afich sa a pa gen done pèsonèl (nimewo telefòn pèsonèl, imèl pèsonèl) oswa mwen te retire enfòmasyon sa yo anvan mwen soumèt."
     }
+  },
+  "classementVilles": {
+    "notifTitre": "🏆 Nouvo vil #1",
+    "notifSujet": "🏆 {ville} se #1 kounye a  sou LOTBO!",
+    "notifMessage": "{ville} sot pran tèt nan klasman vil yo.",
+    "emailTitre": "🏆 {ville} nan tèt!",
+    "emailTexte": "{ville} fèk vin vil #1 sou LOTBO ak {count} evènman aktif.",
+    "emailBouton": "Gade klasman an",
+    "filLibelle": "🏆 {ville} se #1 kounye a  sou LOTBO"
   }
 }

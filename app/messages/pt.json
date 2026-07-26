@@ -565,5 +565,14 @@
       ],
       "checkbox_label": "Confirmo que este cartaz não contém dados pessoais (número de telemóvel pessoal, email pessoal) ou que removi essas informações antes de submeter."
     }
+  },
+  "classementVilles": {
+    "notifTitre": "🏆 Nova cidade #1",
+    "notifSujet": "🏆 {ville} agora é #1 no LOTBO!",
+    "notifMessage": "{ville} acabou de assumir a liderança no ranking de cidades.",
+    "emailTitre": "🏆 {ville} está em primeiro!",
+    "emailTexte": "{ville} acabou de se tornar a cidade #1 no LOTBO com {count} eventos ativos.",
+    "emailBouton": "Ver classificação",
+    "filLibelle": "🏆 {ville} agora é #1 no LOTBO"
   }
 }

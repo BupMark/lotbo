@@ -565,5 +565,14 @@
       ],
       "checkbox_label": "Je confirme que cette affiche ne contient pas de données personnelles (numéro de téléphone personnel, email personnel) ou que j'ai supprimé ces informations avant de soumettre."
     }
+  },
+  "classementVilles": {
+    "notifTitre": "🏆 Nouvelle ville #1",
+    "notifSujet": "🏆 {ville} est maintenant #1 sur LOTBO !",
+    "notifMessage": "{ville} vient de passer en tête du classement des villes.",
+    "emailTitre": "🏆 {ville} est en tête !",
+    "emailTexte": "{ville} vient de devenir la ville #1 sur LOTBO avec {count} événements actifs.",
+    "emailBouton": "Voir le classement",
+    "filLibelle": "🏆 {ville} est maintenant #1 sur LOTBO"
   }
 }

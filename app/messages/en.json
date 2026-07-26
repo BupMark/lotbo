@@ -565,5 +565,14 @@
       ],
       "checkbox_label": "I confirm that this flyer does not contain personal data (personal phone number, personal email) or that I have removed this information before submitting."
     }
+  },
+  "classementVilles": {
+    "notifTitre": "🏆 New #1 city",
+    "notifSujet": "🏆 {ville} is now #1 on LOTBO!",
+    "notifMessage": "{ville} just took the lead in the city rankings.",
+    "emailTitre": "🏆 {ville} is on top!",
+    "emailTexte": "{ville} just became the #1 city on LOTBO with {count} active events.",
+    "emailBouton": "View ranking",
+    "filLibelle": "🏆 {ville} is now #1 on LOTBO"
   }
 }
