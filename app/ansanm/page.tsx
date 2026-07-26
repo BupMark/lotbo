@@ -39,6 +39,7 @@ interface EntreeFil {
   highlight: boolean
   derniere_activite: string
   evenement_ids?: string[]
+  celebration_ville?: boolean
 }
 
 interface ContextePayload {
@@ -571,19 +572,31 @@ export default function AnsanmPage() {
                         </button>
                       )}
                       <div id="ansanm-paliers" />
-                      {filAutres.map((entree, i) => (
-                        <div
-                          key={`${entree.type}-${entree.ville}-${i}`}
-                          style={{
-                            padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#1A1410',
-                            background: entree.highlight ? 'rgba(200,67,26,0.08)' : 'rgba(26,20,16,0.02)',
-                            border: entree.highlight ? '1px solid rgba(200,67,26,0.35)' : '1px solid #F0E8DC',
-                            borderLeft: `4px solid ${STYLE_PAR_TYPE[entree.type]?.couleur || '#E8E0D0'}`,
-                          }}
-                        >
-                          <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
-                        </div>
-                      ))}
+                      {filAutres.map((entree, i) => {
+                        const href = entree.celebration_ville ? '/?celebration=1' : null
+                        const contenuStyle = {
+                          padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#1A1410',
+                          background: entree.highlight ? 'rgba(200,67,26,0.08)' : 'rgba(26,20,16,0.02)',
+                          border: entree.highlight ? '1px solid rgba(200,67,26,0.35)' : '1px solid #F0E8DC',
+                          borderLeft: `4px solid ${STYLE_PAR_TYPE[entree.type]?.couleur || '#E8E0D0'}`,
+                        }
+                        return href ? (
+                          <a
+                            key={`${entree.type}-${entree.ville}-${i}`}
+                            href={href}
+                            style={{ ...contenuStyle, textDecoration: 'none', display: 'block' }}
+                          >
+                            <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
+                          </a>
+                        ) : (
+                          <div
+                            key={`${entree.type}-${entree.ville}-${i}`}
+                            style={contenuStyle}
+                          >
+                            <span style={{ marginRight: 8 }}>{STYLE_PAR_TYPE[entree.type]?.icone || '•'}</span>{entree.libelle}
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
