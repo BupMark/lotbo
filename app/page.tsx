@@ -146,6 +146,12 @@ export default function Home() {
   const [clicsEvenements, setClicsEvenements] = useState(0)
   const [totalEvenementsBase, setTotalEvenementsBase] = useState(0)
   const [statsApp, setStatsApp] = useState<StatsApp>({ total: 0, villes: 0, pays: 0 })
+  const [celebrationVille, setCelebrationVille] = useState<{
+    active: boolean
+    ville: string
+    pays: string | null
+    nb_evenements: number
+  } | null>(null)
   const [inviteVisible, setInviteVisible]   = useState(false)
   const [favoriTooltipId, setFavoriTooltipId] = useState<string | null>(null)
   const [sheetReduit, setSheetReduit]       = useState(false)
@@ -340,6 +346,13 @@ export default function Home() {
       const row = (data as StatsApp[] | null)?.[0]
       if (row) setStatsApp(row)
     })
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/classement-villes/etat')
+      .then(r => r.json())
+      .then(d => setCelebrationVille(d))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -1624,7 +1637,9 @@ export default function Home() {
               <>
                 <div className="sidebar-section-title">🌍 {t.sidebar.topvilles}</div>
                 <div>
-                  {topVilles.map((v, i) => (
+                  {topVilles.map((v, i) => {
+                    const estCelebration = celebrationVille?.active && v.ville === celebrationVille.ville
+                    return (
                     <div
                       key={v.ville}
                       className="sidebar-ville-row"
@@ -1633,16 +1648,17 @@ export default function Home() {
                       tabIndex={0}
                       onKeyDown={e => e.key === 'Enter' && allerVersVille(v.ville)}
                       aria-label={`Explorer ${v.ville}`}
+                      style={estCelebration ? { background: 'rgba(212,168,32,0.12)', borderRadius: 8 } : undefined}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                         <span style={{
                           width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-                          background: i === 0 ? '#C8431A' : i === 1 ? '#D4A820' : '#E8E0D0',
-                          color: i < 2 ? 'white' : '#8C5A40',
+                          background: estCelebration ? '#D4A820' : i === 0 ? '#C8431A' : i === 1 ? '#D4A820' : '#E8E0D0',
+                          color: estCelebration ? 'white' : i < 2 ? 'white' : '#8C5A40',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 10, fontWeight: 'bold',
                         }}>
-                          {i + 1}
+                          {estCelebration ? '🏆' : i + 1}
                         </span>
                         <div style={{ minWidth: 0 }}>
                           <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1410', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.ville}</p>
@@ -1653,7 +1669,8 @@ export default function Home() {
                         {v.count} {t.sidebar.evenements}
                       </span>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Lien vers vue liste filtrée */}
