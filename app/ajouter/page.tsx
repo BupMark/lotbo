@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import { normaliserVille, normaliserPays } from '../../lib/normalisation'
 import { track } from '../../lib/amplitude'
@@ -520,6 +520,7 @@ function BlocIncitatiImage({
   t,
   titre,
   categorie,
+  theme,
   onSelectUnsplash,
   onOwnImage,
   onSkip,
@@ -528,6 +529,7 @@ function BlocIncitatiImage({
   t: Record<string, string>
   titre: string
   categorie: string
+  theme: string | null
   onSelectUnsplash: (photo: UnsplashPhoto) => void
   onOwnImage: () => void
   onSkip: () => void
@@ -543,14 +545,15 @@ function BlocIncitatiImage({
     try {
       const q   = encodeURIComponent(titre.slice(0, 40))
       const cat = encodeURIComponent(categorie)
-      const res = await fetch(`/api/unsplash?q=${q}&categorie=${cat}&count=3`)
+      const themeParam = theme ? `&theme=${encodeURIComponent(theme)}` : ''
+      const res = await fetch(`/api/unsplash?q=${q}&categorie=${cat}${themeParam}&count=3`)
       const data = await res.json()
       setPhotos(data.photos || [])
     } catch {
       setPhotos([])
     }
     setLoading(false)
-  }, [titre, categorie])
+  }, [titre, categorie, theme])
 
   useEffect(() => { charger() }, [charger])
 
@@ -739,6 +742,18 @@ export default function AjouterEvenement() {
     description: '', lien: '', acces: 'public', prix: 'gratuit',
     organisation_id: '',
   })
+
+  const themesEffectifs = useMemo(() => {
+    const parentsAvecEnfantCoche = new Set(
+      selectedThemes
+        .map(id => allThemes.find(t => t.id === id))
+        .filter((t): t is EventTheme => !!t && t.parent_id !== null)
+        .map(t => t.parent_id)
+    )
+    return selectedThemes.filter(id => !parentsAvecEnfantCoche.has(id))
+  }, [selectedThemes, allThemes])
+
+  const themePrincipal = allThemes.find(t => t.id === themesEffectifs[0])?.nom || null
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -2142,6 +2157,7 @@ export default function AjouterEvenement() {
                 t={t.ajouter.image as Record<string, string>}
                 titre={form.titre}
                 categorie={categorieNomSelectionnee}
+                theme={themePrincipal}
                 imageDejaSelectionnee={imageConfirmee}
                 onSelectUnsplash={(photo) => {
                   setImageUnsplash(photo)
