@@ -1,0 +1,14 @@
+name: Scrape Sortir dans l'Aube
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route scrape-sortirdanslaube
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" --max-time 90 \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/scrape-sortirdanslaube"
