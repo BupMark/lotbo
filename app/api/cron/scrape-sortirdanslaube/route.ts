@@ -103,7 +103,17 @@ function parseListePage(html: string): EventBrut[] {
 
     events.push({
       slug: ficheMatch[1],
-      titre: titreMatch[1].replace(/&rsquo;/g, "'").replace(/&amp;/g, '&').trim(),
+      titre: titreMatch[1]
+        .replace(/&rsquo;/g, "'")
+        .replace(/&amp;/g, '&')
+        .replace(/&#8211;/g, '–')
+        .replace(/&#8212;/g, '—')
+        .replace(/&eacute;/g, 'é')
+        .replace(/&egrave;/g, 'è')
+        .replace(/&ccedil;/g, 'ç')
+        .replace(/&agrave;/g, 'à')
+        .replace(/&ocirc;/g, 'ô')
+        .trim(),
       dateTexte: dateMatch[1].trim(),
       lieuSlug: lieuMatch[1],
       lieuNom: lieuMatch[2].trim(),
