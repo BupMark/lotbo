@@ -15,25 +15,9 @@ import { usePushPermission } from '../../lib/usePushPermission'
 import PrePermissionModal from '../../components/PrePermissionModal'
 import NotifCloche from '../../components/NotifCloche'
 import BadgeProgression from '../../components/BadgeProgression'
+import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
-const BADGES_CONTRIBUTEUR = [
-  { id: 'decouvreur',       emoji: '🌱', seuil: 1   },
-  { id: 'actif',            emoji: '🔥', seuil: 5   },
-  { id: 'contributeur',     emoji: '⭐', seuil: 10  },
-  { id: 'top_contributeur', emoji: '🏅', seuil: 25  },
-  { id: 'elite',            emoji: '🥇', seuil: 50  },
-  { id: 'legende',          emoji: '👑', seuil: 100 },
-]
-
-const BADGES_ORGANISATEUR = [
-  { id: 'organisateur', emoji: '🎪', seuil: 1  },
-  { id: 'regulier',     emoji: '📅', seuil: 3  },
-  { id: 'premium',      emoji: '💎', seuil: 10 },
-  { id: 'vedette',      emoji: '🌟', seuil: 25 },
-  { id: 'champion',     emoji: '🏆', seuil: 50 },
-]
-
 const PALIERS_ANCIENNETE = [
   { id: 'mois1',  mois: 1,  badge: '🌱' },
   { id: 'mois3',  mois: 3,  badge: '🔥' },
