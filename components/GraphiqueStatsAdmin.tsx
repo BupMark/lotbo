@@ -61,16 +61,16 @@ export default function GraphiqueStatsAdmin({ accessToken }: Props) {
   const data = fusionnerSeries(donnees)
 
   return (
-    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 20, marginTop: 16 }}>
+    <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginTop: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold', margin: 0 }}>📈 Statistiques temporelles</p>
+        <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', margin: 0 }}>📈 Statistiques temporelles</p>
         <div style={{ display: 'flex', gap: 6 }}>
           {(['jour', 'semaine', 'mois'] as Granularite[]).map(g => (
             <button
               key={g}
               onClick={() => setGranularite(g)}
               style={{
-                background: granularite === g ? '#C8431A' : 'rgba(255,255,255,0.06)',
+                background: granularite === g ? '#C8431A' : '#F7F2E8',
                 color: granularite === g ? 'white' : '#8C5A40',
                 border: 'none', borderRadius: 8, padding: '6px 12px',
                 fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
@@ -89,18 +89,19 @@ export default function GraphiqueStatsAdmin({ accessToken }: Props) {
       ) : (
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E8E0D0" />
             <XAxis dataKey="periode" stroke="#8C5A40" style={{ fontSize: 11 }} />
-            <YAxis stroke="#8C5A40" style={{ fontSize: 11 }} />
+            <YAxis yAxisId="gauche" stroke="#8C5A40" style={{ fontSize: 11 }} />
+            <YAxis yAxisId="droite" orientation="right" stroke="#8C5A40" style={{ fontSize: 11 }} />
             <Tooltip
               contentStyle={{ background: '#1A1410', border: '1px solid #2a2a2a', borderRadius: 8, fontSize: 12 }}
               labelStyle={{ color: '#F7F2E8' }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Line type="monotone" dataKey="Événements soumis" stroke="#C8431A" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="Événements approuvés" stroke="#2D9E6B" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="Nouveaux membres" stroke="#4A90D9" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="Membres actifs" stroke="#D4A820" strokeWidth={2} dot={false} />
+            <Line yAxisId="gauche" type="monotone" dataKey="Événements soumis" stroke="#C8431A" strokeWidth={2} dot={false} />
+            <Line yAxisId="gauche" type="monotone" dataKey="Événements approuvés" stroke="#2D9E6B" strokeWidth={2} dot={false} />
+            <Line yAxisId="droite" type="monotone" dataKey="Nouveaux membres" stroke="#4A90D9" strokeWidth={2} dot={false} />
+            <Line yAxisId="droite" type="monotone" dataKey="Membres actifs" stroke="#D4A820" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       )}
