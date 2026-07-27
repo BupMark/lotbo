@@ -4,26 +4,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useLangue } from '../../lib/useLangue'
 import { type Langue } from '../../lib/i18n'
-import BadgeProgression, { type BadgeDef } from '../../components/BadgeProgression'
+import BadgeProgression from '../../components/BadgeProgression'
 import PodiumTop3 from '../../components/PodiumTop3'
 import MenuLateralAnsanm from '../../components/MenuLateralAnsanm'
-
-const BADGES_CONTRIBUTEUR: BadgeDef[] = [
-  { id: 'decouvreur',       emoji: '🌱', seuil: 1,   label: 'Découvreur' },
-  { id: 'actif',            emoji: '🔥', seuil: 5,   label: 'Actif' },
-  { id: 'contributeur',     emoji: '⭐', seuil: 10,  label: 'Contributeur' },
-  { id: 'top_contributeur', emoji: '🏅', seuil: 25,  label: 'Top contributeur' },
-  { id: 'elite',            emoji: '🥇', seuil: 50,  label: 'Élite' },
-  { id: 'legende',          emoji: '👑', seuil: 100, label: 'Légende' },
-]
-
-const BADGES_ORGANISATEUR: BadgeDef[] = [
-  { id: 'organisateur', emoji: '🎪', seuil: 1,  label: 'Organisateur' },
-  { id: 'regulier',     emoji: '📅', seuil: 3,  label: 'Régulier' },
-  { id: 'premium',      emoji: '💎', seuil: 10, label: 'Premium' },
-  { id: 'vedette',      emoji: '🌟', seuil: 25, label: 'Vedette' },
-  { id: 'champion',     emoji: '🏆', seuil: 50, label: 'Champion' },
-]
+import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
 
 interface StatsGlobales {
   total: number
