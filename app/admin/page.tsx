@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { getEventImage } from '../../lib/fallbackImages'
 import { normaliserVille, normaliserPays, codeVersNomPays } from '../../lib/normalisation'
 import { useRouter } from 'next/navigation'
+import GraphiqueStatsAdmin from '../../components/GraphiqueStatsAdmin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1171,6 +1172,8 @@ export default function Admin() {
             </button>
           ))}
         </div>
+
+        {accessToken && <GraphiqueStatsAdmin accessToken={accessToken} />}
 
         {/* ── Utilisateur connecté ──────────────────────────────────────── */}
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #333', borderRadius: 12, padding: '10px 16px', marginBottom: 24 }}>
