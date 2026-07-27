@@ -11,25 +11,9 @@ import dynamicImport from 'next/dynamic'
 const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
 import { attributerPoints } from '../../lib/points'
 import CarteInteractive, { Coords } from '../components/CarteInteractive'
+import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
-const BADGES_CONTRIBUTEUR = [
-  { id: 'decouvreur',       emoji: '🌱', label: 'Découvreur',       seuil: 1,   desc: '1re contribution' },
-  { id: 'actif',            emoji: '🔥', label: 'Actif',            seuil: 5,   desc: '5 contributions' },
-  { id: 'contributeur',     emoji: '⭐', label: 'Contributeur',     seuil: 10,  desc: '10 contributions' },
-  { id: 'top_contributeur', emoji: '🏅', label: 'Top Contributeur', seuil: 25,  desc: '25 contributions' },
-  { id: 'elite',            emoji: '🥇', label: 'Élite',            seuil: 50,  desc: '50 contributions' },
-  { id: 'legende',          emoji: '👑', label: 'Légende LOTBO',    seuil: 100, desc: '100 contributions' },
-]
-
-const BADGES_ORGANISATEUR = [
-  { id: 'organisateur', emoji: '🎪', label: 'Organisateur', seuil: 1,  desc: '1er événement' },
-  { id: 'regulier',     emoji: '📅', label: 'Régulier',     seuil: 3,  desc: '3 événements' },
-  { id: 'premium',      emoji: '💎', label: 'Premium',      seuil: 10, desc: '10 événements' },
-  { id: 'vedette',      emoji: '🌟', label: 'Vedette',      seuil: 25, desc: '25 événements' },
-  { id: 'champion',     emoji: '🏆', label: 'Champion',     seuil: 50, desc: '50 événements' },
-]
-
 const BADGE_PIONEER_SCAN: Badge = { id: 'pioneer_scan', emoji: '📸', label: 'Pioneer Scan & Publie', seuil: 0, desc: '1er scan publié' }
 
 type Badge = { id: string; emoji: string; label: string; seuil: number; desc: string }
