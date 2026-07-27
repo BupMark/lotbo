@@ -4,18 +4,10 @@ import type { NextRequest } from 'next/server'
 
 type Granularite = 'jour' | 'semaine' | 'mois'
 
-function cleDate(date: Date, granularite: Granularite): string {
-  if (granularite === 'jour') {
-    return date.toISOString().split('T')[0]
-  }
-  if (granularite === 'semaine') {
-    const d = new Date(date)
-    const jour = d.getUTCDay() || 7
-    d.setUTCDate(d.getUTCDate() - jour + 1) // lundi de la semaine
-    return d.toISOString().split('T')[0]
-  }
-  // mois
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
+const GRANULARITE_SQL: Record<Granularite, string> = {
+  jour: 'day',
+  semaine: 'week',
+  mois: 'month',
 }
 
 function fenetreDebut(granularite: Granularite): Date {
@@ -23,20 +15,19 @@ function fenetreDebut(granularite: Granularite): Date {
   if (granularite === 'jour') {
     maintenant.setUTCDate(maintenant.getUTCDate() - 30)
   } else if (granularite === 'semaine') {
-    maintenant.setUTCDate(maintenant.getUTCDate() - 84) // 12 semaines
+    maintenant.setUTCDate(maintenant.getUTCDate() - 84)
   } else {
     maintenant.setUTCMonth(maintenant.getUTCMonth() - 12)
   }
   return maintenant
 }
 
-function bucketize(dates: string[], granularite: Granularite): Record<string, number> {
-  const buckets: Record<string, number> = {}
-  for (const d of dates) {
-    const cle = cleDate(new Date(d), granularite)
-    buckets[cle] = (buckets[cle] || 0) + 1
+function versRecord(rows: { periode: string; total: number }[] | null): Record<string, number> {
+  const record: Record<string, number> = {}
+  for (const r of rows || []) {
+    record[r.periode] = Number(r.total)
   }
-  return buckets
+  return record
 }
 
 export async function GET(request: NextRequest) {
@@ -52,47 +43,68 @@ export async function GET(request: NextRequest) {
 
   const admin = makeAdminClient()
   const depuis = fenetreDebut(granularite).toISOString()
+  const granulariteSql = GRANULARITE_SQL[granularite]
 
   try {
-    // 1. Événements soumis
-    const { data: evenements } = await admin
-      .from('evenements')
-      .select('created_at')
-      .gte('created_at', depuis)
-      .limit(5000)
+    const [evenements, approbations, nouveauxMembres] = await Promise.all([
+      admin.rpc('stats_temporelles_evenements', {
+        table_cible: 'evenements',
+        colonne_date: 'created_at',
+        filtre_type: '',
+        granularite: granulariteSql,
+        depuis,
+      }),
+      admin.rpc('stats_temporelles_evenements', {
+        table_cible: 'activite_communautaire',
+        colonne_date: 'created_at',
+        filtre_type: 'evenement_approuve',
+        granularite: granulariteSql,
+        depuis,
+      }),
+      admin.rpc('stats_temporelles_evenements', {
+        table_cible: 'profiles',
+        colonne_date: 'created_at',
+        filtre_type: '',
+        granularite: granulariteSql,
+        depuis,
+      }),
+    ])
 
-    // 2. Événements approuvés (via activite_communautaire, plus fiable
-    // que evenements qui n'a pas de colonne de date d'approbation)
-    const { data: approbations } = await admin
-      .from('activite_communautaire')
-      .select('created_at')
-      .eq('type', 'evenement_approuve')
-      .gte('created_at', depuis)
-      .limit(5000)
+    if (evenements.error) throw evenements.error
+    if (approbations.error) throw approbations.error
+    if (nouveauxMembres.error) throw nouveauxMembres.error
 
-    // 3. Nouveaux membres
-    const { data: nouveauxMembres } = await admin
-      .from('profiles')
-      .select('created_at')
-      .gte('created_at', depuis)
-      .limit(5000)
-
-    // 4. Membres actifs — approximation via dernière connexion uniquement
+    // Membres actifs — approximation via dernière connexion uniquement
     // (Supabase Auth n'expose pas l'historique complet des connexions,
-    // seulement la plus récente par utilisateur — un membre actif
-    // plusieurs jours de suite n'apparaît que dans sa période la plus
-    // récente, pas dans toutes)
+    // seulement la plus récente par utilisateur)
     const { data: usersResponse } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
     const connexions = (usersResponse?.users ?? [])
       .filter(u => u.last_sign_in_at && new Date(u.last_sign_in_at) >= new Date(depuis))
       .map(u => u.last_sign_in_at!)
 
+    function cleDate(date: Date): string {
+      if (granularite === 'jour') return date.toISOString().split('T')[0]
+      if (granularite === 'semaine') {
+        const d = new Date(date)
+        const jour = d.getUTCDay() || 7
+        d.setUTCDate(d.getUTCDate() - jour + 1)
+        return d.toISOString().split('T')[0]
+      }
+      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
+    }
+
+    const membresActifs: Record<string, number> = {}
+    for (const c of connexions) {
+      const cle = cleDate(new Date(c))
+      membresActifs[cle] = (membresActifs[cle] || 0) + 1
+    }
+
     return NextResponse.json({
       granularite,
-      evenements_soumis: bucketize((evenements || []).map(e => e.created_at), granularite),
-      evenements_approuves: bucketize((approbations || []).map(a => a.created_at), granularite),
-      nouveaux_membres: bucketize((nouveauxMembres || []).map(m => m.created_at), granularite),
-      membres_actifs: bucketize(connexions, granularite),
+      evenements_soumis: versRecord(evenements.data),
+      evenements_approuves: versRecord(approbations.data),
+      nouveaux_membres: versRecord(nouveauxMembres.data),
+      membres_actifs: membresActifs,
     }, {
       headers: { 'Cache-Control': 'private, max-age=300' },
     })
