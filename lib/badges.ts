@@ -10,7 +10,7 @@ export const BADGES_CONTRIBUTEUR: BadgeDef[] = [
   { id: 'decouvreur',       emoji: '🌱', label: 'Découvreur',       seuil: 1,    desc: '1re contribution' },
   { id: 'motive',           emoji: '💪', label: 'Motivé',           seuil: 3,    desc: '3 contributions' },
   { id: 'actif',            emoji: '⚡', label: 'Actif',            seuil: 5,    desc: '5 contributions' },
-  { id: 'contributeur',     emoji: '⭐', label: 'Contributeur',     seuil: 10,   desc: '10 contributions' },
+  { id: 'engage',           emoji: '⭐', label: 'Engagé',           seuil: 10,   desc: '10 contributions' },
   { id: 'habitue',          emoji: '🔥', label: 'Habitué',          seuil: 15,   desc: '15 contributions' },
   { id: 'top_contributeur', emoji: '🏅', label: 'Top Contributeur', seuil: 25,   desc: '25 contributions' },
   { id: 'confirme',         emoji: '🎯', label: 'Confirmé',         seuil: 35,   desc: '35 contributions' },
