@@ -439,6 +439,10 @@
           "label": "Eksplorè",
           "desc": "1ye kontribisyon"
         },
+        "motive": {
+          "label": "Motive",
+          "desc": "3 kontribisyon"
+        },
         "actif": {
           "label": "Aktif",
           "desc": "5 kontribisyon"
@@ -447,9 +451,17 @@
           "label": "Angaje",
           "desc": "10 kontribisyon"
         },
+        "habitue": {
+          "label": "Abitye",
+          "desc": "15 kontribisyon"
+        },
         "top_contributeur": {
           "label": "Top Kontribitè",
           "desc": "25 kontribisyon"
+        },
+        "confirme": {
+          "label": "Konfime",
+          "desc": "35 kontribisyon"
         },
         "elite": {
           "label": "Elit",
@@ -458,6 +470,18 @@
         "legende": {
           "label": "Lejann LOTBO",
           "desc": "100 kontribisyon"
+        },
+        "icone": {
+          "label": "Ikòn",
+          "desc": "250 kontribisyon"
+        },
+        "mythique": {
+          "label": "Mitik",
+          "desc": "500 kontribisyon"
+        },
+        "titan": {
+          "label": "Titan",
+          "desc": "1000 kontribisyon"
         }
       },
       "organisateur": {
@@ -465,13 +489,25 @@
           "label": "Òganizatè",
           "desc": "1ye evènman"
         },
+        "debutant": {
+          "label": "Debitan",
+          "desc": "2 evènman"
+        },
         "regulier": {
           "label": "Regilye",
           "desc": "3 evènman"
         },
+        "actif": {
+          "label": "Aktif",
+          "desc": "6 evènman"
+        },
         "premium": {
           "label": "Premium",
           "desc": "10 evènman"
+        },
+        "confirme": {
+          "label": "Konfime",
+          "desc": "15 evènman"
         },
         "vedette": {
           "label": "Vedèt",
@@ -480,6 +516,14 @@
         "champion": {
           "label": "Chanpyon",
           "desc": "50 evènman"
+        },
+        "icone": {
+          "label": "Ikòn",
+          "desc": "75 evènman"
+        },
+        "souverain": {
+          "label": "Souvren",
+          "desc": "120 evènman"
         }
       },
       "anciennete": {

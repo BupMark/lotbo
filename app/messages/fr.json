@@ -439,6 +439,10 @@
           "label": "Découvreur",
           "desc": "1re contribution"
         },
+        "motive": {
+          "label": "Motivé",
+          "desc": "3 contributions"
+        },
         "actif": {
           "label": "Actif",
           "desc": "5 contributions"
@@ -447,9 +451,17 @@
           "label": "Engagé",
           "desc": "10 contributions"
         },
+        "habitue": {
+          "label": "Habitué",
+          "desc": "15 contributions"
+        },
         "top_contributeur": {
           "label": "Top Contributeur",
           "desc": "25 contributions"
+        },
+        "confirme": {
+          "label": "Confirmé",
+          "desc": "35 contributions"
         },
         "elite": {
           "label": "Élite",
@@ -458,6 +470,18 @@
         "legende": {
           "label": "Légende LOTBO",
           "desc": "100 contributions"
+        },
+        "icone": {
+          "label": "Icône",
+          "desc": "250 contributions"
+        },
+        "mythique": {
+          "label": "Mythique",
+          "desc": "500 contributions"
+        },
+        "titan": {
+          "label": "Titan",
+          "desc": "1000 contributions"
         }
       },
       "organisateur": {
@@ -465,13 +489,25 @@
           "label": "Organisateur",
           "desc": "1er événement"
         },
+        "debutant": {
+          "label": "Débutant",
+          "desc": "2 événements"
+        },
         "regulier": {
           "label": "Régulier",
           "desc": "3 événements"
         },
+        "actif": {
+          "label": "Actif",
+          "desc": "6 événements"
+        },
         "premium": {
           "label": "Premium",
           "desc": "10 événements"
+        },
+        "confirme": {
+          "label": "Confirmé",
+          "desc": "15 événements"
         },
         "vedette": {
           "label": "Vedette",
@@ -480,6 +516,14 @@
         "champion": {
           "label": "Champion",
           "desc": "50 événements"
+        },
+        "icone": {
+          "label": "Icône",
+          "desc": "75 événements"
+        },
+        "souverain": {
+          "label": "Souverain",
+          "desc": "120 événements"
         }
       },
       "anciennete": {
