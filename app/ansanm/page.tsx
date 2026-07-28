@@ -232,7 +232,7 @@ export default function AnsanmPage() {
 
       // Fil communautaire
       try {
-        const res = await fetch('/api/activite-communautaire/fil', {
+        const res = await fetch(`/api/activite-communautaire/fil?langue=${langue}`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
         const filData = await res.json()
