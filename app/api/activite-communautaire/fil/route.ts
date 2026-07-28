@@ -10,23 +10,83 @@ function makeAdminClient() {
   )
 }
 
+type Langue = 'fr' | 'en' | 'es' | 'pt' | 'ht'
+const LANGUES_VALIDES: Langue[] = ['fr', 'en', 'es', 'pt', 'ht']
+
 const TYPES_AVEC_PRENOMS = new Set(['badge_debloque', 'palier_anciennete', 'anniversaire'])
 
-const LIBELLES: Record<string, (n: number, ville: string | null) => string> = {
-  evenement_approuve:  (n, ville) => `${n} nouvel${n > 1 ? 's' : ''} événement${n > 1 ? 's' : ''} approuvé${n > 1 ? 's' : ''}${ville ? ` à ${ville}` : ''}`,
-  nouveau_membre:      (n) => `${n} nouveau${n > 1 ? 'x' : ''} membre${n > 1 ? 's' : ''} ${n > 1 ? 'ont' : 'a'} rejoint LOTBO`,
-  objectif_enqueteur:  (n, ville) => `${n} enquêteur${n > 1 ? 's' : ''} terrain ${n > 1 ? 'ont' : 'a'} atteint son objectif${ville ? ` à ${ville}` : ''}`,
-  badge_debloque:      () => 'ont débloqué un badge',
-  palier_anciennete:   () => 'fêtent un palier d\'ancienneté sur LOTBO',
-  anniversaire:        () => 'fêtent leur anniversaire aujourd\'hui',
-  ville_top_changee:   (n, ville) => `${ville} est maintenant #1 sur LOTBO`,
+type LibelleFn = (n: number, ville: string | null) => string
+
+const LIBELLES: Record<string, Record<Langue, LibelleFn>> = {
+  evenement_approuve: {
+    fr: (n, ville) => `${n} nouvel${n > 1 ? 's' : ''} événement${n > 1 ? 's' : ''} approuvé${n > 1 ? 's' : ''}${ville ? ` à ${ville}` : ''}`,
+    en: (n, ville) => `${n} new event${n > 1 ? 's' : ''} approved${ville ? ` in ${ville}` : ''}`,
+    es: (n, ville) => `${n} nuevo${n > 1 ? 's' : ''} evento${n > 1 ? 's' : ''} aprobado${n > 1 ? 's' : ''}${ville ? ` en ${ville}` : ''}`,
+    pt: (n, ville) => `${n} novo${n > 1 ? 's' : ''} evento${n > 1 ? 's' : ''} aprovado${n > 1 ? 's' : ''}${ville ? ` em ${ville}` : ''}`,
+    ht: (n, ville) => `${n} nouvo evènman apwouve${ville ? ` nan ${ville}` : ''}`,
+  },
+  nouveau_membre: {
+    fr: (n) => `${n} nouveau${n > 1 ? 'x' : ''} membre${n > 1 ? 's' : ''} ${n > 1 ? 'ont' : 'a'} rejoint LOTBO`,
+    en: (n) => `${n} new member${n > 1 ? 's' : ''} joined LOTBO`,
+    es: (n) => `${n} nuevo${n > 1 ? 's' : ''} miembro${n > 1 ? 's' : ''} se ${n > 1 ? 'unieron' : 'unió'} a LOTBO`,
+    pt: (n) => `${n} novo${n > 1 ? 's' : ''} membro${n > 1 ? 's' : ''} ${n > 1 ? 'entraram' : 'entrou'} no LOTBO`,
+    ht: (n) => `${n} nouvo manm vin jwenn LOTBO`,
+  },
+  objectif_enqueteur: {
+    fr: (n, ville) => `${n} enquêteur${n > 1 ? 's' : ''} terrain ${n > 1 ? 'ont' : 'a'} atteint son objectif${ville ? ` à ${ville}` : ''}`,
+    en: (n, ville) => `${n} field investigator${n > 1 ? 's' : ''} reached their goal${ville ? ` in ${ville}` : ''}`,
+    es: (n, ville) => `${n} investigador${n > 1 ? 'es' : ''} de campo ${n > 1 ? 'alcanzaron' : 'alcanzó'} su objetivo${ville ? ` en ${ville}` : ''}`,
+    pt: (n, ville) => `${n} investigador${n > 1 ? 'es' : ''} de campo ${n > 1 ? 'atingiram' : 'atingiu'} sua meta${ville ? ` em ${ville}` : ''}`,
+    ht: (n, ville) => `${n} anketè teren atenn objektif yo${ville ? ` nan ${ville}` : ''}`,
+  },
+  badge_debloque: {
+    fr: () => 'ont débloqué un badge',
+    en: () => 'unlocked a badge',
+    es: () => 'desbloquearon una insignia',
+    pt: () => 'desbloquearam um badge',
+    ht: () => 'debloke yon badj',
+  },
+  palier_anciennete: {
+    fr: () => 'fêtent un palier d\'ancienneté sur LOTBO',
+    en: () => 'are celebrating a milestone on LOTBO',
+    es: () => 'están celebrando un hito en LOTBO',
+    pt: () => 'estão celebrando um marco no LOTBO',
+    ht: () => 'ap selebre yon etap sou LOTBO',
+  },
+  anniversaire: {
+    fr: () => 'fêtent leur anniversaire aujourd\'hui',
+    en: () => 'are celebrating their birthday today',
+    es: () => 'están celebrando su cumpleaños hoy',
+    pt: () => 'estão celebrando seu aniversário hoje',
+    ht: () => 'ap fete anivèsè yo jodi a',
+  },
+  ville_top_changee: {
+    fr: (n, ville) => `${ville} est maintenant #1 sur LOTBO`,
+    en: (n, ville) => `${ville} is now #1 on LOTBO`,
+    es: (n, ville) => `${ville} es ahora #1 en LOTBO`,
+    pt: (n, ville) => `${ville} agora é #1 no LOTBO`,
+    ht: (n, ville) => `${ville} se #1 kounye a sou LOTBO`,
+  },
 }
 
-function formatNoms(prenoms: string[], suffixe: string): string {
-  if (prenoms.length === 0) return `Des membres ${suffixe}`
+const MEMBRES_DEFAUT: Record<Langue, string> = {
+  fr: 'Des membres', en: 'Some members', es: 'Algunos miembros',
+  pt: 'Alguns membros', ht: 'Kèk manm',
+}
+
+const AUTRES_MOT: Record<Langue, (reste: number) => string> = {
+  fr: (r) => `et ${r} autre${r > 1 ? 's' : ''}`,
+  en: (r) => `and ${r} other${r > 1 ? 's' : ''}`,
+  es: (r) => `y ${r} otro${r > 1 ? 's' : ''}`,
+  pt: (r) => `e mais ${r} outro${r > 1 ? 's' : ''}`,
+  ht: (r) => `ak ${r} lòt ankò`,
+}
+
+function formatNoms(prenoms: string[], suffixe: string, langue: Langue): string {
+  if (prenoms.length === 0) return `${MEMBRES_DEFAUT[langue]} ${suffixe}`
   if (prenoms.length <= 3) return `${prenoms.join(', ')} ${suffixe}`
   const reste = prenoms.length - 3
-  return `${prenoms.slice(0, 3).join(', ')} et ${reste} autre${reste > 1 ? 's' : ''} ${suffixe}`
+  return `${prenoms.slice(0, 3).join(', ')} ${AUTRES_MOT[langue](reste)} ${suffixe}`
 }
 
 export async function GET(request: Request) {
@@ -34,6 +94,10 @@ export async function GET(request: Request) {
   if (!acces.ok) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
+
+  const url = new URL(request.url)
+  const langueParam = url.searchParams.get('langue') || 'fr'
+  const langue: Langue = LANGUES_VALIDES.includes(langueParam as Langue) ? (langueParam as Langue) : 'fr'
 
   const admin = makeAdminClient()
 
@@ -48,7 +112,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ fil_evenements: [], fil_autres: [] })
     }
 
-    // Résout les prénoms nécessaires en une seule requête groupée
     const userIds = [...new Set(entrees.filter(e => e.user_id && TYPES_AVEC_PRENOMS.has(e.type)).map(e => e.user_id))]
     const prenomsMap = new Map<string, string>()
     if (userIds.length > 0) {
@@ -58,7 +121,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Regroupe par type + ville + jour
     const groupes = new Map<string, typeof entrees>()
     for (const e of entrees) {
       const jour = e.created_at.slice(0, 10)
@@ -76,12 +138,13 @@ export async function GET(request: Request) {
         ['legende', 'elite', 'champion'].includes((i.contenu as any)?.badge)
       )
 
+      const libelleFn = LIBELLES[type]?.[langue]
       let libelle: string
       if (TYPES_AVEC_PRENOMS.has(type)) {
         const prenoms = items.map(i => i.user_id ? prenomsMap.get(i.user_id) : null).filter(Boolean) as string[]
-        libelle = formatNoms(prenoms, LIBELLES[type](n, villeAffichee))
+        libelle = libelleFn ? formatNoms(prenoms, libelleFn(n, villeAffichee), langue) : type
       } else {
-        libelle = LIBELLES[type]?.(n, villeAffichee) || type
+        libelle = libelleFn ? libelleFn(n, villeAffichee) : type
       }
 
       const evenementIds = type === 'evenement_approuve'
@@ -101,7 +164,6 @@ export async function GET(request: Request) {
     const trierParRecence = (a: typeof fil[number], b: typeof fil[number]) =>
       new Date(b.derniere_activite).getTime() - new Date(a.derniere_activite).getTime()
 
-    // Sépare par type pour qu'aucun type ne puisse en évincer un autre par volume
     const groupesEvenements = fil.filter(g => g.type === 'evenement_approuve').sort(trierParRecence)
     const groupesAutres     = fil.filter(g => g.type !== 'evenement_approuve').sort(trierParRecence)
 
