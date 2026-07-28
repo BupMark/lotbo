@@ -1,12 +1,15 @@
 import { NIVEAUX, getInitiales, medallePosition } from '../lib/classementUtils'
 import { calculerNiveau } from '../lib/points'
+import { getTraductions, type Langue } from '../lib/i18n'
 
 interface PodiumTop3Props {
   top3: { id: string; nom: string | null; photo_url: string | null; points_total: number; niveau: string }[]
   isDesktop: boolean
+  langue?: Langue
 }
 
-export default function PodiumTop3({ top3, isDesktop }: PodiumTop3Props) {
+export default function PodiumTop3({ top3, isDesktop, langue = 'fr' }: PodiumTop3Props) {
+  const t = getTraductions(langue)
   return (
     <>
       <style>{`
@@ -30,7 +33,7 @@ export default function PodiumTop3({ top3, isDesktop }: PodiumTop3Props) {
         }}>
           {isDesktop && (
             <p style={{ fontWeight: 'bold', fontSize: 14, color: '#8C5A40', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
-              🥇 Top 3
+              {t.podium.top3}
             </p>
           )}
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
@@ -74,9 +77,9 @@ export default function PodiumTop3({ top3, isDesktop }: PodiumTop3Props) {
                   </div>
 
                   <p style={{ fontWeight: 'bold', fontSize: pos === 1 ? 14 : 12, color: '#1A1410', textAlign: 'center', marginBottom: 2, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {membre.nom || 'Membre LOTBO'}
+                    {membre.nom || t.podium.membreParDefaut}
                   </p>
-                  <p style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>{membre.points_total} pts</p>
+                  <p style={{ color: '#C8431A', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>{membre.points_total} {t.podium.points}</p>
 
                   <div style={{
                     width: '100%', height: haut,
