@@ -230,22 +230,27 @@ export default function AnsanmPage() {
       setVisibleAnsanm(prof?.visible_ansanm ?? true)
       setLoadingProgression(false)
 
-      // Fil communautaire
-      try {
-        const res = await fetch(`/api/activite-communautaire/fil?langue=${langue}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-        const filData = await res.json()
-        setFilEvenements(filData.fil_evenements || [])
-        setFilAutres(filData.fil_autres || [])
-      } catch {
-        setFilEvenements([])
-        setFilAutres([])
-      } finally {
-        setLoadingFil(false)
-      }
+      setLoadingFil(false)
     })
   }, [])
+
+  useEffect(() => {
+    if (!accessToken) return
+    setLoadingFil(true)
+    fetch(`/api/activite-communautaire/fil?langue=${langue}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then(r => r.json())
+      .then(filData => {
+        setFilEvenements(filData.fil_evenements || [])
+        setFilAutres(filData.fil_autres || [])
+      })
+      .catch(() => {
+        setFilEvenements([])
+        setFilAutres([])
+      })
+      .finally(() => setLoadingFil(false))
+  }, [accessToken, langue])
 
   const toggleVisibleAnsanm = async () => {
     if (!userId || savingToggle) return
