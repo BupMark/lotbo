@@ -11,7 +11,7 @@ import dynamicImport from 'next/dynamic'
 const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { ssr: false })
 import { attributerPoints } from '../../lib/points'
 import CarteInteractive, { Coords } from '../components/CarteInteractive'
-import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
+import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR, getProchainBadge } from '../../lib/badges'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGE_PIONEER_SCAN: Badge = { id: 'pioneer_scan', emoji: '📸', label: 'Pioneer Scan & Publie', seuil: 0, desc: '1er scan publié' }
@@ -1463,6 +1463,44 @@ export default function AjouterEvenement() {
               </div>
             </div>
           )}
+          {!succesData?.nouveauBadge && (() => {
+            const badgesActuels = isContrib ? BADGES_CONTRIBUTEUR : BADGES_ORGANISATEUR
+            const prochain = getProchainBadge(nb, badgesActuels)
+            if (!prochain) return null
+            const restant = prochain.seuil - nb
+            const badgeActuel = getBadgeActuel(nb, badgesActuels)
+            const seuilPrecedent = badgeActuel?.seuil || 0
+            const progression = Math.min(100, ((nb - seuilPrecedent) / (prochain.seuil - seuilPrecedent)) * 100)
+            return (
+              <div style={{
+                background: 'rgba(200,67,26,0.06)', border: '1px solid rgba(200,67,26,0.2)',
+                borderRadius: 12, padding: '16px 18px', marginBottom: 20,
+                animation: 'popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)',
+              }}>
+                <style>{`
+                  @keyframes popIn { from { transform: scale(0.95); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+                `}</style>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 22 }}>{prochain.emoji}</span>
+                  <div>
+                    <p style={{ color: '#C8431A', fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Prochain badge</p>
+                    <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>{prochain.label}</p>
+                  </div>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 999, height: 6, overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{
+                    background: '#C8431A', height: '100%', borderRadius: 999,
+                    width: `${progression}%`, transition: 'width 0.6s ease',
+                  }} />
+                </div>
+                <p style={{ color: '#8C5A40', fontSize: 12 }}>
+                  {isContrib
+                    ? `Plus que ${restant} contribution${restant > 1 ? 's' : ''} !`
+                    : `Plus que ${restant} événement${restant > 1 ? 's' : ''} !`}
+                </p>
+              </div>
+            )
+          })()}
           {succesData?.visibilite === 'prive' && succesData.lienSecret && (
             <div style={{ background: 'rgba(200,67,26,0.1)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
               <p style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>🫧 Lien secret :</p>
