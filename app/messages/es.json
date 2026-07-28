@@ -656,5 +656,10 @@
     "niveauActuel": "Nivel actual",
     "organisateurTitre": "Organizador",
     "prochainBadge": "Próxima insignia"
+  },
+  "podium": {
+    "top3": "🥇 Top 3",
+    "membreParDefaut": "Miembro LOTBO",
+    "points": "pts"
   }
 }

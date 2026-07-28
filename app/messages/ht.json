@@ -656,5 +656,10 @@
     "niveauActuel": "Nivo aktyèl",
     "organisateurTitre": "Òganizatè",
     "prochainBadge": "Pwochen badj"
+  },
+  "podium": {
+    "top3": "🥇 Top 3",
+    "membreParDefaut": "Manm LOTBO",
+    "points": "pwen"
   }
 }

@@ -656,5 +656,10 @@
     "niveauActuel": "Current level",
     "organisateurTitre": "Organizer",
     "prochainBadge": "Next badge"
+  },
+  "podium": {
+    "top3": "🥇 Top 3",
+    "membreParDefaut": "LOTBO Member",
+    "points": "pts"
   }
 }
