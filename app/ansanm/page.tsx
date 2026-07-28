@@ -447,12 +447,12 @@ export default function AnsanmPage() {
                 {localisation.evenements_locaux > 0 ? (
                   <>
                     <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 10 }}>{localisation.evenements_locaux} événement{localisation.evenements_locaux > 1 ? 's' : ''} aujourd'hui</p>
-                    <a href={`/?ville=${encodeURIComponent(localisation.ville)}&date=today`} style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir les événements →</a>
+                    <a href={`/?ville=${encodeURIComponent(localisation.ville)}&date=today`} style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>{t.ansanm.voirEvenements}</a>
                   </>
                 ) : (
                   <>
-                    <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 10 }}>Aucun événement aujourd'hui</p>
-                    <a href='/ajouter' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Tu en connais un ? Ajouter →</a>
+                    <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 10 }}>{t.ansanm.aucunEvenementAujourdhui}</p>
+                    <a href='/ajouter' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>{t.ansanm.connaisUnEvenement}</a>
                   </>
                 )}
               </div>
@@ -466,15 +466,15 @@ export default function AnsanmPage() {
             {/* 2. Progression personnelle */}
             {loadingSession ? (
               <div style={carte}>
-                <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement…</p>
+                <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>{t.ansanm.chargement}</p>
               </div>
             ) : !userId ? (
               <div style={carte}>
                 <p style={{ color: '#1A1410', fontSize: 14, textAlign: 'center', marginBottom: 12 }}>
-                  Connecte-toi pour voir ta progression et le fil communautaire.
+                  {t.ansanm.connecteToiPourProgression}
                 </p>
                 <a href="/login" style={{ display: 'block', textAlign: 'center', background: '#C8431A', color: 'white', padding: '10px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
-                  Se connecter
+                  {t.ansanm.seConnecter}
                 </a>
               </div>
             ) : (
@@ -483,14 +483,14 @@ export default function AnsanmPage() {
                 <div style={carte}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <div>
-                      <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', margin: 0 }}>Apparaître dans le fil communautaire</p>
-                      <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4, marginBottom: 0 }}>Tu restes anonyme si désactivé.</p>
+                      <p style={{ color: '#1A1410', fontSize: 13, fontWeight: 'bold', margin: 0 }}>{t.ansanm.apparaitreFil}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4, marginBottom: 0 }}>{t.ansanm.resteAnonyme}</p>
                     </div>
                     <button
                       onClick={toggleVisibleAnsanm}
                       disabled={savingToggle}
                       aria-pressed={visibleAnsanm}
-                      aria-label="Apparaître dans le fil communautaire"
+                      aria-label={t.ansanm.apparaitreFil}
                       style={{
                         flexShrink: 0, width: 46, height: 26, borderRadius: 999, border: 'none',
                         background: visibleAnsanm ? '#C8431A' : '#E8E0D0',
@@ -510,7 +510,7 @@ export default function AnsanmPage() {
                 <div id="ansanm-progression">
                   {loadingProgression ? (
                     <div style={carte}>
-                      <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement de ta progression…</p>
+                      <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>{t.ansanm.chargementProgression}</p>
                     </div>
                   ) : (
                     <BadgeProgression
@@ -528,16 +528,16 @@ export default function AnsanmPage() {
 
                 {top3Classement.length > 0 && (
                   <div id="ansanm-classement" style={{ marginTop: 16 }}>
-                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🏆 Top 3 classement</p>
+                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>{t.ansanm.top3Classement}</p>
                     <PodiumTop3 top3={top3Classement} isDesktop={isDesktop} />
-                    <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>Voir le classement complet →</a>
+                    <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>{t.ansanm.voirClassementComplet}</a>
                   </div>
                 )}
 
                 {/* Bloc 3 — Enquêteurs actifs */}
                 {enqueteursActifs.length > 0 && (
                   <div id="ansanm-enqueteurs" style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginTop: 16 }}>
-                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>🌍 Enquêteurs actifs</p>
+                    <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>{t.ansanm.enqueteursActifs}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {enqueteursActifs.map(e => (
                         <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -556,8 +556,8 @@ export default function AnsanmPage() {
                         </div>
                       ))}
                     </div>
-                    <a href='https://lotbo.app/enqueteurs' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 14, display: 'inline-block' }}>Voir tous les enquêteurs →</a>
-                    <a href='https://app.lotbo.app/enqueteur/consentement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block', marginLeft: 16 }}>Devenir enquêteur →</a>
+                    <a href='https://lotbo.app/enqueteurs' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 14, display: 'inline-block' }}>{t.ansanm.voirTousEnqueteurs}</a>
+                    <a href='https://app.lotbo.app/enqueteur/consentement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block', marginLeft: 16 }}>{t.ansanm.devenirEnqueteur}</a>
                   </div>
                 )}
 
