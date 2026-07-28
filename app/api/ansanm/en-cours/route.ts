@@ -12,8 +12,10 @@ function makeAdminClient() {
 export async function GET() {
   const admin = makeAdminClient()
 
-  const aujourdhui = new Date().toISOString().slice(0, 10)
-  const il7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const aujourdhui = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Port-au-Prince' })
+  const dateIl7j = new Date()
+  dateIl7j.setDate(dateIl7j.getDate() - 7)
+  const il7j = dateIl7j.toLocaleDateString('en-CA', { timeZone: 'America/Port-au-Prince' })
 
   // date_debut/date_fin sont des colonnes DATE (pas de composante heure) — "en cours" est donc
   // approximé par "événements du jour". Le plancher il7j évite qu'un vieil événement sans
