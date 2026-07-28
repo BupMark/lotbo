@@ -303,24 +303,24 @@ export default function AnsanmPage() {
         {/* Stats globales — bandeau pleine largeur */}
         <div id="ansanm-stats" style={{ ...carte, textAlign: 'center' }}>
           {loadingStats ? (
-            <p style={{ color: '#8C5A40', fontSize: 13, margin: 0 }}>Chargement des statistiques…</p>
+            <p style={{ color: '#8C5A40', fontSize: 13, margin: 0 }}>{t.ansanm.chargementStats}</p>
           ) : stats ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxWidth: 400, margin: '0 auto' }}>
               <div>
                 <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.total.toLocaleString('fr-FR')}</p>
-                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>événements</p>
+                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>{t.ansanm.evenements}</p>
               </div>
               <div>
                 <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.villes.toLocaleString('fr-FR')}</p>
-                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>villes</p>
+                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>{t.ansanm.villes}</p>
               </div>
               <div>
                 <p style={{ fontSize: 20, fontWeight: 'bold', color: '#C8431A', margin: 0 }}>{stats.pays.toLocaleString('fr-FR')}</p>
-                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>pays</p>
+                <p style={{ fontSize: 11, color: '#8C5A40', margin: 0 }}>{t.ansanm.pays}</p>
               </div>
             </div>
           ) : (
-            <p style={{ color: '#8C5A40', fontSize: 13, margin: 0 }}>Statistiques indisponibles pour l'instant.</p>
+            <p style={{ color: '#8C5A40', fontSize: 13, margin: 0 }}>{t.ansanm.statsIndisponibles}</p>
           )}
         </div>
 
@@ -387,7 +387,7 @@ export default function AnsanmPage() {
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>{t.ansanm.aujourdhuiMonde}</p>
                   <p style={{ color: 'white', fontSize: 15, marginBottom: 10 }}>
-                    {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
+                    {enCours.evenements_du_jour} {t.ansanm.evenements} · {enCours.villes} {t.ansanm.villes} · {enCours.pays} {t.ansanm.pays}
                   </p>
                   <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>{t.ansanm.voirCarte}</a>
                 </div>
@@ -403,7 +403,7 @@ export default function AnsanmPage() {
                   padding: 16, marginBottom: 16, overflow: 'hidden',
                 }}
               >
-                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 10 }}>🔥 Événement du jour</p>
+                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 10 }}>{t.ansanm.evenementDuJour}</p>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   {evenementDuJour.image_url && (
                     <img
@@ -563,11 +563,11 @@ export default function AnsanmPage() {
 
                 {/* Fil d'activité communautaire */}
                 <div id="ansanm-fil" style={carte}>
-                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 14 }}>Ce qui se passe en ce moment</h3>
+                  <h3 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 14 }}>{t.ansanm.cePasseMoment}</h3>
                   {loadingFil ? (
-                    <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Chargement du fil…</p>
+                    <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>{t.ansanm.chargementFil}</p>
                   ) : filEvenements.length === 0 && filAutres.length === 0 ? (
-                    <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>Rien à afficher pour l'instant.</p>
+                    <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', margin: 0 }}>{t.ansanm.rienAAfficher}</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {filEvenements.slice(0, accordeonOuvert ? undefined : 10).map((entree, i) => {
@@ -604,7 +604,7 @@ export default function AnsanmPage() {
                       })}
                       {filEvenements.length > 10 && (
                         <button onClick={() => setAccordeonOuvert(!accordeonOuvert)} style={{ background: 'none', border: 'none', color: '#C8431A', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', padding: '8px 0', textAlign: 'left' }}>
-                          {accordeonOuvert ? '▲ Voir moins' : `▼ Voir plus (${filEvenements.length - 10} autres)`}
+                          {accordeonOuvert ? t.ansanm.voirMoins : t.ansanm.voirPlus.replace('{n}', String(filEvenements.length - 10))}
                         </button>
                       )}
                       <div id="ansanm-paliers" />
