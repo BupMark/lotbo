@@ -92,6 +92,15 @@ export default function AnsanmPage() {
 
   // ── Bloc 1 — Aujourd'hui dans le monde (publique) ──
   const [enCours, setEnCours] = useState<{ evenements_du_jour: number; villes: number; pays: number } | null>(null)
+  const [evenementDuJour, setEvenementDuJour] = useState<{
+    id: string
+    titre: string
+    ville: string | null
+    pays: string | null
+    lieu: string | null
+    image_url: string | null
+    categorie: string | null
+  } | null>(null)
 
   // ── Contexte dynamique (bandeau du haut, publique) ──
   const [contexteActif, setContexteActif] = useState<{ message: string; illustration: string | null } | null>(null)
@@ -140,6 +149,13 @@ export default function AnsanmPage() {
   // Bloc 1 — Aujourd'hui dans le monde
   useEffect(() => {
     fetch('/api/ansanm/en-cours').then(r => r.json()).then(setEnCours).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/ansanm/evenement-du-jour')
+      .then(r => r.json())
+      .then(d => setEvenementDuJour(d.evenement || null))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -370,6 +386,36 @@ export default function AnsanmPage() {
                   <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir sur la carte →</a>
                 </div>
               </div>
+            )}
+
+            {evenementDuJour && (
+              <a
+                href={`/evenement/${evenementDuJour.id}`}
+                style={{
+                  display: 'block', textDecoration: 'none',
+                  background: 'white', border: '1px solid #E8E0D0', borderRadius: 12,
+                  padding: 16, marginBottom: 16, overflow: 'hidden',
+                }}
+              >
+                <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 10 }}>🔥 Événement du jour</p>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  {evenementDuJour.image_url && (
+                    <img
+                      src={evenementDuJour.image_url}
+                      alt=""
+                      style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+                    />
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {evenementDuJour.titre}
+                    </p>
+                    <p style={{ color: '#8C5A40', fontSize: 12 }}>
+                      {evenementDuJour.ville}{evenementDuJour.pays ? `, ${evenementDuJour.pays}` : ''}
+                    </p>
+                  </div>
+                </div>
+              </a>
             )}
 
             {/* Bloc 2 — À votre ville */}
