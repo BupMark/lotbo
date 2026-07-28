@@ -8,6 +8,40 @@ export interface BadgeDef {
   desc?: string
 }
 
+type Langue = 'fr' | 'en' | 'es' | 'pt' | 'ht'
+
+const PAS_ENCORE_BADGE: Record<Langue, string> = {
+  fr: 'Pas encore de badge',
+  en: 'No badge yet',
+  es: 'Aún sin insignia',
+  pt: 'Ainda sem badge',
+  ht: 'Poko gen badj',
+}
+
+const AUTRES_BADGES: Record<Langue, (n: number) => string> = {
+  fr: (n) => `+${n} autre${n > 1 ? 's' : ''} badge${n > 1 ? 's' : ''}`,
+  en: (n) => `+${n} other badge${n > 1 ? 's' : ''}`,
+  es: (n) => `+${n} otra${n > 1 ? 's' : ''} insignia${n > 1 ? 's' : ''}`,
+  pt: (n) => `+${n} outro${n > 1 ? 's' : ''} badge${n > 1 ? 's' : ''}`,
+  ht: (n) => `+${n} lòt badj ankò`,
+}
+
+const CONTRIBUTIONS_REPEREES: Record<Langue, (n: number) => string> = {
+  fr: (n) => `${n} contribution${n > 1 ? 's' : ''} repérée${n > 1 ? 's' : ''}`,
+  en: (n) => `${n} contribution${n > 1 ? 's' : ''} tracked`,
+  es: (n) => `${n} contribución${n > 1 ? 'es' : ''} registrada${n > 1 ? 's' : ''}`,
+  pt: (n) => `${n} contribuição${n > 1 ? 'ões' : ''} registrada${n > 1 ? 's' : ''}`,
+  ht: (n) => `${n} kontribisyon repere`,
+}
+
+const EVENEMENTS_APPROUVES: Record<Langue, (n: number) => string> = {
+  fr: (n) => `${n} événement${n > 1 ? 's' : ''} approuvé${n > 1 ? 's' : ''}`,
+  en: (n) => `${n} event${n > 1 ? 's' : ''} approved`,
+  es: (n) => `${n} evento${n > 1 ? 's' : ''} aprobado${n > 1 ? 's' : ''}`,
+  pt: (n) => `${n} evento${n > 1 ? 's' : ''} aprovado${n > 1 ? 's' : ''}`,
+  ht: (n) => `${n} evènman apwouve`,
+}
+
 interface BadgeProgressionProps {
   nbContrib: number
   nbApprouves: number
@@ -21,6 +55,7 @@ interface BadgeProgressionProps {
   onCustomizeContributeur?: (badge: BadgeDef) => void
   onCustomizeOrganisateur?: (badge: BadgeDef) => void
   compact?: boolean
+  langue?: Langue
 }
 
 const PALETTES = {
@@ -129,7 +164,9 @@ export default function BadgeProgression({
   texteRestantContributeur, texteRestantOrganisateur,
   onCustomizeContributeur, onCustomizeOrganisateur,
   compact,
+  langue = 'fr',
 }: BadgeProgressionProps) {
+  const lang = langue || 'fr'
   const badgeContribActuel = getBadgeActuel(nbContrib, badgesContributeur)
   const prochainBadgeContrib = getProchainBadge(nbContrib, badgesContributeur)
   const badgeOrgaActuel = getBadgeActuel(nbApprouves, badgesOrganisateur)
@@ -174,12 +211,12 @@ export default function BadgeProgression({
             </div>
             <div>
               <p style={{ fontSize: 14, fontWeight: 500, color: '#1A1410', margin: 0 }}>
-                {badgeContribActuel ? badgeContribActuel.label : 'Pas encore de badge'}
+                {badgeContribActuel ? badgeContribActuel.label : PAS_ENCORE_BADGE[lang]}
                 {badgesObtenusContrib.length > 0 && <span className="lotbo-spark" style={{ marginLeft: 6 }}>✨</span>}
               </p>
               {badgesObtenusContrib.length > 1 && (
                 <p style={{ fontSize: 12, color: '#8C5A40', margin: 0 }}>
-                  +{badgesObtenusContrib.length - 1} autre{badgesObtenusContrib.length - 1 > 1 ? 's' : ''} badge{badgesObtenusContrib.length - 1 > 1 ? 's' : ''}
+                  {AUTRES_BADGES[lang](badgesObtenusContrib.length - 1)}
                 </p>
               )}
             </div>
@@ -201,12 +238,12 @@ export default function BadgeProgression({
             </div>
             <div>
               <p style={{ fontSize: 14, fontWeight: 500, color: '#1A1410', margin: 0 }}>
-                {badgeOrgaActuel ? badgeOrgaActuel.label : 'Pas encore de badge'}
+                {badgeOrgaActuel ? badgeOrgaActuel.label : PAS_ENCORE_BADGE[lang]}
                 {badgesObtenusOrga.length > 0 && <span className="lotbo-spark" style={{ marginLeft: 6 }}>✨</span>}
               </p>
               {badgesObtenusOrga.length > 1 && (
                 <p style={{ fontSize: 12, color: '#8C5A40', margin: 0 }}>
-                  +{badgesObtenusOrga.length - 1} autre{badgesObtenusOrga.length - 1 > 1 ? 's' : ''} badge{badgesObtenusOrga.length - 1 > 1 ? 's' : ''}
+                  {AUTRES_BADGES[lang](badgesObtenusOrga.length - 1)}
                 </p>
               )}
             </div>
@@ -223,7 +260,7 @@ export default function BadgeProgression({
           {titreContributeur(badgeContribActuel)}
         </h3>
         <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>
-          {nbContrib} contribution{nbContrib > 1 ? 's' : ''} repérée{nbContrib > 1 ? 's' : ''}
+          {CONTRIBUTIONS_REPEREES[lang](nbContrib)}
         </p>
         <GrilleBadges badges={badgesContributeur} nb={nbContrib} variante="contributeur" onCustomize={onCustomizeContributeur} />
         <BarreProgression nb={nbContrib} prochainBadge={prochainBadgeContrib} labelProchainBadge={labelProchainBadge} variante="contributeur" texteRestant={texteRestantContributeur} />
@@ -234,7 +271,7 @@ export default function BadgeProgression({
           {titreOrganisateur(badgeOrgaActuel)}
         </h3>
         <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 16 }}>
-          {nbApprouves} événement{nbApprouves > 1 ? 's' : ''} approuvé{nbApprouves > 1 ? 's' : ''}
+          {EVENEMENTS_APPROUVES[lang](nbApprouves)}
         </p>
         <GrilleBadges badges={badgesOrganisateur} nb={nbApprouves} variante="organisateur" onCustomize={onCustomizeOrganisateur} />
         <BarreProgression nb={nbApprouves} prochainBadge={prochainBadgeOrga} labelProchainBadge={labelProchainBadge} variante="organisateur" texteRestant={texteRestantOrganisateur} />
