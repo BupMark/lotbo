@@ -652,6 +652,9 @@
     "statsIndisponibles": "Statistiques indisponibles pour l'instant.",
     "evenements": "événements",
     "villes": "villes",
-    "pays": "pays"
+    "pays": "pays",
+    "niveauActuel": "Niveau actuel",
+    "organisateurTitre": "Organisateur",
+    "prochainBadge": "Prochain badge"
   }
 }

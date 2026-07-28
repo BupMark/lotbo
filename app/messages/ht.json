@@ -652,6 +652,9 @@
     "statsIndisponibles": "Estatistik pa disponib kounye a.",
     "evenements": "evènman",
     "villes": "vil",
-    "pays": "peyi"
+    "pays": "peyi",
+    "niveauActuel": "Nivo aktyèl",
+    "organisateurTitre": "Òganizatè",
+    "prochainBadge": "Pwochen badj"
   }
 }
