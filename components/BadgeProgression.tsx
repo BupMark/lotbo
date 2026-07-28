@@ -8,9 +8,9 @@ export interface BadgeDef {
   desc?: string
 }
 
-type Langue = 'fr' | 'en' | 'es' | 'pt' | 'ht'
+export type Langue = 'fr' | 'en' | 'es' | 'pt' | 'ht'
 
-const PAS_ENCORE_BADGE: Record<Langue, string> = {
+export const PAS_ENCORE_BADGE: Record<Langue, string> = {
   fr: 'Pas encore de badge',
   en: 'No badge yet',
   es: 'Aún sin insignia',
