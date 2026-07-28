@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useLangue } from '../../lib/useLangue'
 import { type Langue, getTraductions } from '../../lib/i18n'
-import BadgeProgression from '../../components/BadgeProgression'
+import BadgeProgression, { PAS_ENCORE_BADGE } from '../../components/BadgeProgression'
 import PodiumTop3 from '../../components/PodiumTop3'
 import MenuLateralAnsanm from '../../components/MenuLateralAnsanm'
 import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
@@ -518,10 +518,11 @@ export default function AnsanmPage() {
                       nbApprouves={nbApprouves}
                       badgesContributeur={BADGES_CONTRIBUTEUR}
                       badgesOrganisateur={BADGES_ORGANISATEUR}
-                      titreContributeur={(b) => `Niveau actuel — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
-                      titreOrganisateur={(b) => `Organisateur — ${b ? `${b.emoji} ${b.label}` : 'Pas encore de badge'}`}
-                      labelProchainBadge="Prochain badge"
+                      titreContributeur={(b) => `${t.ansanm.niveauActuel} — ${b ? `${b.emoji} ${b.label}` : PAS_ENCORE_BADGE[langue]}`}
+                      titreOrganisateur={(b) => `${t.ansanm.organisateurTitre} — ${b ? `${b.emoji} ${b.label}` : PAS_ENCORE_BADGE[langue]}`}
+                      labelProchainBadge={t.ansanm.prochainBadge}
                       compact
+                      langue={langue}
                     />
                   )}
                 </div>
