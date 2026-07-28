@@ -530,7 +530,7 @@ export default function AnsanmPage() {
                 {top3Classement.length > 0 && (
                   <div id="ansanm-classement" style={{ marginTop: 16 }}>
                     <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 14 }}>{t.ansanm.top3Classement}</p>
-                    <PodiumTop3 top3={top3Classement} isDesktop={isDesktop} />
+                    <PodiumTop3 top3={top3Classement} isDesktop={isDesktop} langue={langue} />
                     <a href='/classement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>{t.ansanm.voirClassementComplet}</a>
                   </div>
                 )}
