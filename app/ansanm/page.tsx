@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useLangue } from '../../lib/useLangue'
-import { type Langue } from '../../lib/i18n'
+import { type Langue, getTraductions } from '../../lib/i18n'
 import BadgeProgression from '../../components/BadgeProgression'
 import PodiumTop3 from '../../components/PodiumTop3'
 import MenuLateralAnsanm from '../../components/MenuLateralAnsanm'
@@ -89,6 +89,7 @@ const STYLE_PAR_TYPE: Record<string, { icone: string; couleur: string }> = {
 export default function AnsanmPage() {
   const [isDesktop, setIsDesktop] = useState(false)
   const { langue } = useLangue()
+  const t = getTraductions(langue)
 
   // ── Bloc 1 — Aujourd'hui dans le monde (publique) ──
   const [enCours, setEnCours] = useState<{ evenements_du_jour: number; villes: number; pays: number } | null>(null)
@@ -294,9 +295,9 @@ export default function AnsanmPage() {
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ fontSize: 36, marginBottom: 6 }}>🌍</div>
           <h1 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 26, fontWeight: 'bold', color: '#1A1410', marginBottom: 4 }}>
-            <span style={{ color: '#C8431A' }}>Ansanm</span>
+            <span style={{ color: '#C8431A' }}>{t.ansanm.titre}</span>
           </h1>
-          <p style={{ color: '#8C5A40', fontSize: 13 }}>La communauté LOTBO, ensemble.</p>
+          <p style={{ color: '#8C5A40', fontSize: 13 }}>{t.ansanm.sousTitre}</p>
         </div>
 
         {/* Stats globales — bandeau pleine largeur */}
@@ -384,11 +385,11 @@ export default function AnsanmPage() {
                 <div className="lotbo-pin-twinkle" style={{ position: 'absolute', top: 20, left: 130, width: 5, height: 5, borderRadius: '50%', background: '#E88A5A', animationDelay: '0.8s' }} />
 
                 <div style={{ position: 'relative', zIndex: 1 }}>
-                  <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>🔴 Aujourd'hui dans le monde</p>
+                  <p style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>{t.ansanm.aujourdhuiMonde}</p>
                   <p style={{ color: 'white', fontSize: 15, marginBottom: 10 }}>
                     {enCours.evenements_du_jour} événements · {enCours.villes} villes · {enCours.pays} pays
                   </p>
-                  <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>Voir sur la carte →</a>
+                  <a href='/' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>{t.ansanm.voirCarte}</a>
                 </div>
               </div>
             )}
@@ -426,17 +427,17 @@ export default function AnsanmPage() {
             {/* Bloc 2 — À votre ville */}
             {!localisation && !demandeGeoEnCours && (
               <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16, textAlign: 'center' }}>
-                <p style={{ color: '#1A1410', fontSize: 14, marginBottom: 12 }}>📍 Voir les événements dans ta ville</p>
+                <p style={{ color: '#1A1410', fontSize: 14, marginBottom: 12 }}>{t.ansanm.voirVotreVille}</p>
                 <button onClick={activerPosition} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>
-                  Activer ma position →
+                  {t.ansanm.activerPosition}
                 </button>
-                {geoRefusee && <p style={{ color: '#8C5A40', fontSize: 12, marginTop: 10 }}>Active ta position pour voir les événements près de toi.</p>}
+                {geoRefusee && <p style={{ color: '#8C5A40', fontSize: 12, marginTop: 10 }}>{t.ansanm.aideActiverPosition}</p>}
               </div>
             )}
 
             {demandeGeoEnCours && (
               <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 20, marginBottom: 16, textAlign: 'center' }}>
-                <p style={{ color: '#8C5A40', fontSize: 13 }}>Localisation en cours...</p>
+                <p style={{ color: '#8C5A40', fontSize: 13 }}>{t.ansanm.localisationEnCours}</p>
               </div>
             )}
 
