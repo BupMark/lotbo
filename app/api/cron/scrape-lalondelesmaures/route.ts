@@ -11,7 +11,7 @@ const HEADERS = {
 const BASE_URL = 'https://www.ville-lalondelesmaures.fr'
 const VILLE = 'La Londe-les-Maures'
 const PAYS = 'France'
-const MAX_PAGES = 10
+const MAX_PAGES = 8
 
 function normaliserTitre(titre: string): string {
   return titre
@@ -130,6 +130,8 @@ export async function GET(request: Request) {
       (existants || []).map(e => `${normaliserTitre(e.titre)}|${e.date_debut}`)
     )
 
+    let dernierePremiereFicheUrl: string | null = null
+
     for (let page = 0; page < MAX_PAGES; page++) {
       const start = page * 12
       const url = `${BASE_URL}/culture-et-sport/agenda.html?start=${start}`
@@ -138,6 +140,8 @@ export async function GET(request: Request) {
       const html = await res.text()
       const events = parseListePage(html)
       if (events.length === 0) break
+      if (page > 0 && events[0]?.ficheUrl === dernierePremiereFicheUrl) break
+      dernierePremiereFicheUrl = events[0]?.ficheUrl || null
 
       for (const ev of events) {
         try {
