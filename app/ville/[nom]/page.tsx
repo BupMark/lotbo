@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import SuivreVilleBouton from '../../../components/SuivreVilleBouton'
+import { normaliserVille } from '../../../lib/normalisation'
 
 interface EvenementLigne {
   id: string
@@ -14,7 +15,7 @@ interface EvenementLigne {
 
 export default function FicheVillePage() {
   const params = useParams()
-  const ville = decodeURIComponent(String(params.nom || ''))
+  const ville = normaliserVille(decodeURIComponent(String(params.nom || '')))
   const [evenements, setEvenements] = useState<EvenementLigne[]>([])
   const [pays, setPays] = useState<string | null>(null)
   const [chargement, setChargement] = useState(true)
