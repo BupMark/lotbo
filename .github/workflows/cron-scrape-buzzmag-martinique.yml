@@ -1,0 +1,15 @@
+name: Scrape Buzzmag Martinique
+
+on:
+  schedule:
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route scrape-buzzmag-martinique
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" --max-time 90 \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/scrape-buzzmag-martinique"
