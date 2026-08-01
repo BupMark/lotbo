@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { chargerImage } from '../lib/carteCanvasUtils'
+import SuivreVilleBouton from './SuivreVilleBouton'
 
 interface Props {
   ville: string
@@ -166,7 +167,7 @@ export default function CarteVilleCelebration({
 
         <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <a
-            href={`/?ville=${encodeURIComponent(ville)}`}
+            href={`/ville/${encodeURIComponent(ville)}`}
             style={{
               background: '#C8431A', color: 'white', textDecoration: 'none',
               borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 'bold',
@@ -185,6 +186,7 @@ export default function CarteVilleCelebration({
           >
             📤 Partager
           </button>
+          <SuivreVilleBouton ville={ville} pays={pays} />
           {auteur && licence && (
             <p style={{ fontSize: 10, color: '#8C5A40', textAlign: 'center', margin: 0 }}>
               Photo : {auteur} via Wikimedia Commons ({licence})

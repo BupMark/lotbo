@@ -16,6 +16,7 @@ import PrePermissionModal from '../../components/PrePermissionModal'
 import NotifCloche from '../../components/NotifCloche'
 import BadgeProgression from '../../components/BadgeProgression'
 import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
+import RechercheVilleSuivre from '../../components/RechercheVilleSuivre'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const PALIERS_ANCIENNETE = [
@@ -1111,6 +1112,7 @@ function ProfilInner() {
                     ))}
                   </div>
                 )}
+                {user?.id && <RechercheVilleSuivre userId={user.id} />}
               </div>
             )}
 
