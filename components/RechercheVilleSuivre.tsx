@@ -29,13 +29,15 @@ export default function RechercheVilleSuivre({ userId }: { userId: string }) {
   }, [userId])
 
   const suivre = async (ville: string) => {
-    await supabase.from('villes_suivies').insert([{ user_id: userId, ville }])
+    const { error } = await supabase.from('villes_suivies').insert([{ user_id: userId, ville }])
+    if (error) { console.error('[RechercheVilleSuivre] insert error:', error); return }
     setSuivies(s => [...s, { id: crypto.randomUUID(), ville, pays: null }])
     setRecherche('')
   }
 
   const arreter = async (ville: string) => {
-    await supabase.from('villes_suivies').delete().eq('user_id', userId).eq('ville', ville)
+    const { error } = await supabase.from('villes_suivies').delete().eq('user_id', userId).eq('ville', ville)
+    if (error) { console.error('[RechercheVilleSuivre] delete error:', error); return }
     setSuivies(s => s.filter(v => v.ville !== ville))
   }
 

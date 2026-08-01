@@ -8,6 +8,7 @@ import BadgeProgression, { PAS_ENCORE_BADGE } from '../../components/BadgeProgre
 import PodiumTop3 from '../../components/PodiumTop3'
 import MenuLateralAnsanm from '../../components/MenuLateralAnsanm'
 import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
+import VillesSuiviesAnsanm from '../../components/VillesSuiviesAnsanm'
 
 interface StatsGlobales {
   total: number
@@ -561,6 +562,8 @@ export default function AnsanmPage() {
                     <a href='https://app.lotbo.app/enqueteur/consentement' style={{ color: '#C8431A', fontSize: 13, fontWeight: 'bold', textDecoration: 'none', marginTop: 8, display: 'inline-block', marginLeft: 16 }}>{t.ansanm.devenirEnqueteur}</a>
                   </div>
                 )}
+
+                {userId && <VillesSuiviesAnsanm userId={userId} />}
 
                 {/* Fil d'activité communautaire */}
                 <div id="ansanm-fil" style={carte}>

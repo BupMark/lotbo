@@ -37,10 +37,12 @@ export default function SuivreVilleBouton({ ville, pays }: Props) {
       return
     }
     if (suivie) {
-      await supabase.from('villes_suivies').delete().eq('user_id', userId).eq('ville', ville)
+      const { error } = await supabase.from('villes_suivies').delete().eq('user_id', userId).eq('ville', ville)
+      if (error) { console.error('[SuivreVilleBouton] delete error:', error); return }
       setSuivie(false)
     } else {
-      await supabase.from('villes_suivies').insert([{ user_id: userId, ville, pays: pays || null }])
+      const { error } = await supabase.from('villes_suivies').insert([{ user_id: userId, ville, pays: pays || null }])
+      if (error) { console.error('[SuivreVilleBouton] insert error:', error); return }
       setSuivie(true)
     }
   }
