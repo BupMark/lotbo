@@ -9,13 +9,16 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
 const ICAL_URL = 'https://www.buzzmagmartinique.com/?post_type=tribe_events&ical=1&eventDisplay=list'
 
+// Fenêtre de portée du scraper — au-delà, un événement récurrent/permanent
+// (musée "toute l'année", exposition longue durée) sera re-détecté au
+// prochain run quand il entrera dans la fenêtre. Évite d'importer des
+// centaines d'événements à horizon 2027-2028 dès le premier run.
+const FENETRE_JOURS = 90
+
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 }
 
-// ── Mapping CATEGORIES iCal → texte libre "categorie" (aligné sur le
-// vocabulaire déjà utilisé par sortirdanslaube — cf. incohérence connue
-// avec event_types en base, non corrigée ici, signalée séparément) ─────────
 const CATEGORIE_PRIORITE = [
   'Sport', 'Marché', 'Soirée', 'Science', 'Art & Culture',
   'Environnement', 'Santé', 'Gastronomie', 'Jeune public', 'Buzziness',
@@ -41,7 +44,6 @@ function mapCategorie(categories: string[]): string {
   return 'Célébration communautaire'
 }
 
-// ── Parsing iCal minimal (unfold RFC5545 + line-based parser) ──────────────
 interface VEventBrut {
   uid: string
   summary: string
@@ -120,13 +122,19 @@ function parseIcs(icsText: string): VEventBrut[] {
   return events
 }
 
-// ── Ville extraite du dernier segment du titre (ex. "..., FORT DE FRANCE") ─
 function extraireVille(summary: string): string | null {
   const parts = summary.split(',')
   if (parts.length < 2) return null
   const dernier = parts[parts.length - 1].trim()
   if (dernier.length < 2 || dernier.length > 40) return null
   return dernier
+}
+
+function dansLaFenetre(dateStr: string, joursMax: number): boolean {
+  const date = new Date(dateStr + 'T00:00:00')
+  const maintenant = new Date()
+  const limite = new Date(maintenant.getTime() + joursMax * 86400000)
+  return date >= new Date(maintenant.toDateString()) && date <= limite
 }
 
 async function geocode(address: string): Promise<{ longitude: number; latitude: number } | null> {
@@ -159,6 +167,7 @@ export async function GET(request: Request) {
   let skipped = 0
   let doublons = 0
   let errors = 0
+  let horsFenetre = 0
   const cacheGeocode = new Map<string, { longitude: number; latitude: number } | null>()
 
   try {
@@ -167,20 +176,33 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: `Flux iCal inaccessible (${res.status})` }, { status: 502 })
     }
     const icsText = await res.text()
-    const events = parseIcs(icsText)
+    const tousEvents = parseIcs(icsText)
+
+    // Filtre fenêtre AVANT tout appel réseau — élimine les événements
+    // longue durée / permanents sans jamais interroger Supabase ou Mapbox
+    const events = tousEvents.filter(ev => {
+      if (!ev.dateDebut) return false
+      if (!dansLaFenetre(ev.dateDebut, FENETRE_JOURS)) { horsFenetre++; return false }
+      return true
+    })
+
+    // Préchargement en une seule requête des source_id déjà en base pour
+    // cette source — évite un .select().eq().maybeSingle() par événement
+    const { data: existants } = await admin
+      .from('evenements')
+      .select('source_id')
+      .eq('source', 'buzzmag-martinique')
+    const setExistants = new Set((existants || []).map(e => e.source_id).filter(Boolean))
 
     for (const ev of events) {
-      if (!ev.dateDebut) { skipped++; continue }
       if (!ev.location) { skipped++; continue }
 
       const sourceId = `buzzmag-${ev.uid.split('@')[0]}`
 
+      if (setExistants.has(sourceId)) { skipped++; continue }
+
       const bloquee = await estSourceBloquee(admin, 'buzzmag-martinique', sourceId)
       if (bloquee) { skipped++; continue }
-
-      const { data: existing } = await admin
-        .from('evenements').select('id').eq('source_id', sourceId).maybeSingle()
-      if (existing) { skipped++; continue }
 
       let coords = cacheGeocode.get(ev.location)
       if (coords === undefined) {
@@ -194,7 +216,7 @@ export async function GET(request: Request) {
 
       const dedup = await verifierDoublon(admin, {
         titre: ev.summary,
-        date: ev.dateDebut,
+        date: ev.dateDebut!,
         latitude: coords.latitude,
         longitude: coords.longitude,
         source_id: sourceId,
@@ -223,12 +245,13 @@ export async function GET(request: Request) {
         lien: ev.url || ICAL_URL,
       }])
 
-      if (error) { errors++ } else { imported++ }
-
-      await new Promise(r => setTimeout(r, 50))
+      if (error) { errors++ } else { imported++; setExistants.add(sourceId) }
     }
 
-    return NextResponse.json({ success: true, imported, skipped, doublons, errors })
+    return NextResponse.json({
+      success: true, imported, skipped, doublons, errors,
+      hors_fenetre: horsFenetre, total_flux: tousEvents.length,
+    })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
     return NextResponse.json({ error: message }, { status: 500 })
