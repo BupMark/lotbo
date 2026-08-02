@@ -370,7 +370,7 @@ export default function PageOrganisation() {
               </a>
             )}
             {peutGerer && (
-              <a href="/ajouter" style={{
+              <a href={`/ajouter?organisation_id=${org.id}&organisateur=${encodeURIComponent(org.nom)}`} style={{
                 background: '#C8431A',
                 color: 'white',
                 border: 'none',

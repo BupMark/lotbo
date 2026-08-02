@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import { normaliserVille, normaliserPays } from '../../lib/normalisation'
 import { track } from '../../lib/amplitude'
@@ -656,7 +657,8 @@ function BlocIncitatiImage({
 }
 
 // ── Composant principal ───────────────────────────────────────────────────────
-export default function AjouterEvenement() {
+function AjouterEvenement() {
+  const searchParams = useSearchParams()
   const [loading, setLoading]               = useState(false)
   const [succes, setSucces]                 = useState(false)
   const [succesData, setSuccesData]         = useState<SuccesData | null>(null)
@@ -792,6 +794,13 @@ export default function AjouterEvenement() {
       setMesOrgs(unique)
     })
   }, [])
+
+  useEffect(() => {
+    const orgIdParam = searchParams.get('organisation_id')
+    const orgNomParam = searchParams.get('organisateur')
+    if (orgIdParam) setOrgSelectionnee(orgIdParam)
+    if (orgNomParam) setForm(f => ({ ...f, organisateur: orgNomParam }))
+  }, [searchParams])
 
   useEffect(() => {
     if (!imageSectionRef.current || imageBlocIgnore || image || imageUnsplash) return
@@ -2307,5 +2316,13 @@ export default function AjouterEvenement() {
         </form>
       </div>
     </main>
+  )
+}
+
+export default function AjouterEvenementPage() {
+  return (
+    <Suspense fallback={null}>
+      <AjouterEvenement />
+    </Suspense>
   )
 }
