@@ -2,43 +2,11 @@ import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import EvenementClient from './EvenementClient'
 
-// ── Image de fallback générique LOTBO ─────────────────────────────────────────
-const FALLBACK_IMAGE = 'https://lotbo.app/og-default.png'
-
-// ── Mapping catégorie → query Unsplash ────────────────────────────────────────
-const CATEGORIE_QUERIES: Record<string, string> = {
-  'Concert / Spectacle':          'concert music live',
-  'Festival':                     'festival crowd celebration',
-  'Conférence / Sommet':          'conference business meeting',
-  'Foire / Exposition':           'exhibition fair expo',
-  'Tournoi / Compétition':        'sports competition tournament',
-  'Inauguration / Lancement':     'launch event celebration',
-  'Assemblée / Réunion':          'meeting assembly community',
-  'Formation / Séminaire':        'seminar training workshop',
-  'Célébration communautaire':    'community celebration culture',
-  'Culte / Cérémonie religieuse': 'ceremony church spiritual',
-  'Droit / Juridique':            'law justice legal',
-  'Loisir':                       'leisure fun activity',
-}
-
-// ── Récupérer une image Unsplash côté serveur ─────────────────────────────────
-async function getUnsplashImage(categorie: string, titre: string): Promise<string | null> {
-  try {
-    const query = CATEGORIE_QUERIES[categorie] || titre.slice(0, 40)
-    const res   = await fetch(
-      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape&content_filter=high`,
-      {
-        headers: { 'Authorization': `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}` },
-        next: { revalidate: 3600 }, // cache 1h — même image pour le même événement
-      }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.urls?.regular || null
-  } catch {
-    return null
-  }
-}
+// ── OG image : priorité absolue à la photo du contributeur/organisateur.
+// Si absente, on ne force AUCUNE image ici — Next.js bascule automatiquement
+// sur le fichier de convention opengraph-image.tsx (carte brandée avec
+// titre/lieu/date en overlay), plutôt qu'une photo Unsplash générique sans
+// rapport avec l'événement réel.
 
 // ── generateMetadata ──────────────────────────────────────────────────────────
 export async function generateMetadata(
@@ -68,17 +36,6 @@ export async function generateMetadata(
 
   const url = `https://app.lotbo.app/evenement/${id}`
 
-  // ── Résolution de l'image OG ──────────────────────────────────────────────
-  // Priorité : image_url de l'événement > Unsplash > fallback LOTBO
-  let ogImage = FALLBACK_IMAGE
-
-  if (ev?.image_url) {
-    ogImage = ev.image_url
-  } else if (ev) {
-    const unsplashUrl = await getUnsplashImage(categorie, titre)
-    if (unsplashUrl) ogImage = unsplashUrl
-  }
-
   // ── Titre enrichi pour le partage ─────────────────────────────────────────
   const titreOG      = titre
   const descriptionOG = description
@@ -94,20 +51,17 @@ export async function generateMetadata(
       url,
       siteName:    'Lotbo',
       type:        'article',
-      images: [
-        {
-          url:    ogImage,
-          width:  1200,
-          height: 630,
-          alt:    titre,
-        },
-      ],
+      // Pas de "images" ici si aucune photo réelle n'existe — opengraph-image.tsx
+      // prend le relais automatiquement dans ce cas (voir commentaire en tête de fichier)
+      ...(ev?.image_url ? {
+        images: [{ url: ev.image_url, width: 1200, height: 630, alt: titre }],
+      } : {}),
     },
     twitter: {
       card:        'summary_large_image',
       title:       titreOG,
       description: descriptionOG,
-      images:      [ogImage],
+      ...(ev?.image_url ? { images: [ev.image_url] } : {}),
     },
   }
 }
