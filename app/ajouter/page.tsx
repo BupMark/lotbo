@@ -1418,11 +1418,11 @@ function AjouterEvenement() {
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {succesData?.evenementId && (
-              <a href={'/evenement/' + succesData.evenementId} style={{ background: '#C8431A', color: 'white', padding: '13px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>👁️ Voir l'événement</a>
+              <a href={'/evenement/' + succesData.evenementId} style={{ background: '#C8431A', color: 'white', padding: '13px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>{t.ajouter.voirEvenement}</a>
             )}
-            <a href="/ajouter" style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', border: '1px solid #2a2a2a', padding: '13px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>+ Ajouter un autre événement</a>
-            <a href="/profil" style={{ background: 'rgba(255,255,255,0.10)', color: '#F7F2E8', border: '1px solid #444', padding: '13px 24px', borderRadius: 10, fontSize: 14, textDecoration: 'none', display: 'block', textAlign: 'center' }}>Mon tableau de bord →</a>
-            <a href="/" style={{ color: '#C8431A', fontSize: 13, textDecoration: 'none', display: 'block', textAlign: 'center', marginTop: 4, fontWeight: 'bold' }}>← Retour à la carte</a>
+            <a href="/ajouter" style={{ background: 'rgba(255,255,255,0.06)', color: '#F7F2E8', border: '1px solid #2a2a2a', padding: '13px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none', display: 'block', textAlign: 'center' }}>{t.ajouter.ajouterAutreEvenement}</a>
+            <a href="/profil" style={{ background: 'rgba(255,255,255,0.10)', color: '#F7F2E8', border: '1px solid #444', padding: '13px 24px', borderRadius: 10, fontSize: 14, textDecoration: 'none', display: 'block', textAlign: 'center' }}>{t.ajouter.monTableauDeBord}</a>
+            <a href="/" style={{ color: '#C8431A', fontSize: 13, textDecoration: 'none', display: 'block', textAlign: 'center', marginTop: 4, fontWeight: 'bold' }}>{t.ajouter.retourCarte}</a>
           </div>
         </div>
       </main>
@@ -1552,8 +1552,8 @@ function AjouterEvenement() {
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
         <div style={{ marginBottom: 32 }}>
-          <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour à la carte</a>
-          <h1 style={{ color: '#1A1410', fontSize: 26, fontWeight: 'bold', marginTop: 12, marginBottom: 4 }}>Ajouter un événement</h1>
+          <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>{t.ajouter.retourCarte}</a>
+          <h1 style={{ color: '#1A1410', fontSize: 26, fontWeight: 'bold', marginTop: 12, marginBottom: 4 }}>{t.ajouter.titre_h1}</h1>
           {/* ── FEAT-SCAN-PUBLIE — Bouton scan ── */}
           <input
             ref={scanInputRef}
@@ -1577,8 +1577,8 @@ function AjouterEvenement() {
             }}
           >
             {scanLoading
-              ? <><span style={{ fontSize: 18 }}>⏳</span><span>Analyse en cours...</span></>
-              : <><span style={{ fontSize: 18 }}>📸</span><span>Scanner ou importer une affiche</span></>
+              ? <><span style={{ fontSize: 18 }}>⏳</span><span>{t.ajouter.scanEnCours}</span></>
+              : <><span style={{ fontSize: 18 }}>📸</span><span>{t.ajouter.scannerOuImporter}</span></>
             }
           </button>
           {scanMessage && (
@@ -1600,23 +1600,23 @@ function AjouterEvenement() {
               marginTop: 8,
             }}>
               <p style={{ fontWeight: 'bold', fontSize: 13, color: alerteRgpd ? '#C8431A' : '#D4A820', marginBottom: 8 }}>
-                ⚠️ Vérifie avant de publier
+                {t.ajouter.rgpd.verifieAvantPublier}
               </p>
               {alerteRgpd && (
                 <p style={{ fontSize: 12, color: '#C8431A', marginBottom: 8, fontWeight: 'bold' }}>
-                  Des données de contact ont été automatiquement masquées.
+                  {t.ajouter.rgpd.donneesMasquees}
                 </p>
               )}
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 140 }}>
-                  <p style={{ fontSize: 11, color: '#8C5A40', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>À retirer</p>
-                  {['Numéro de téléphone personnel', 'Email personnel', 'Adresse personnelle'].map(item => (
+                  <p style={{ fontSize: 11, color: '#8C5A40', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.ajouter.rgpd.aRetirer}</p>
+                  {[t.ajouter.rgpd.telephonePersonnel, t.ajouter.rgpd.emailPersonnel, t.ajouter.rgpd.adressePersonnelle].map(item => (
                     <p key={item} style={{ fontSize: 12, color: '#C8431A', marginBottom: 2 }}>✗ {item}</p>
                   ))}
                 </div>
                 <div style={{ flex: 1, minWidth: 140 }}>
-                  <p style={{ fontSize: 11, color: '#8C5A40', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>OK à conserver</p>
-                  {["Nom de l'événement", 'Lieu public', 'Date et heure', 'Prix', 'Site web officiel', 'Page Facebook/Instagram officielle'].map(item => (
+                  <p style={{ fontSize: 11, color: '#8C5A40', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.ajouter.rgpd.okAConserver}</p>
+                  {[t.ajouter.rgpd.nomEvenement, t.ajouter.rgpd.lieuPublic, t.ajouter.rgpd.dateEtHeure, t.ajouter.rgpd.prix, t.ajouter.rgpd.siteWebOfficiel, t.ajouter.rgpd.pageOfficielle].map(item => (
                     <p key={item} style={{ fontSize: 12, color: '#2D9E6B', marginBottom: 2 }}>✓ {item}</p>
                   ))}
                 </div>
@@ -1630,14 +1630,14 @@ function AjouterEvenement() {
           <div style={{ background: 'white', border: '2px solid #C8431A', borderRadius: 16, padding: 20, marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <h3 style={{ fontSize: 15, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>
-                📋 {scanMultiEvents.length} événements détectés
+                📋 {scanMultiEvents.length} {t.ajouter.multiScan.evenementsDetectes}
               </h3>
               <span style={{ fontSize: 12, color: '#8C5A40' }}>
-                {scanMultiSelected.size} sélectionné(s)
+                {scanMultiSelected.size} {t.ajouter.multiScan.selectionnes}
               </span>
             </div>
             <p style={{ fontSize: 13, color: '#8C5A40', marginBottom: 14 }}>
-              Sélectionne les événements à publier, puis clique sur Continuer.
+              {t.ajouter.multiScan.instructionSelection}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
               {scanMultiEvents.map((ev, i) => (
@@ -1932,13 +1932,13 @@ function AjouterEvenement() {
           <div>
             <button type="button" onClick={() => setEstRecurrent(!estRecurrent)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: estRecurrent ? 'rgba(200,67,26,0.12)' : 'white', border: estRecurrent ? '1px solid #C8431A' : '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: estRecurrent ? '#1A1410' : '#8C5A40', fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left' as const }}>
               <span style={{ fontSize: 16 }}>{estRecurrent ? '✅' : '☐'}</span>
-              <span>Cet événement se répète</span>
+              <span>{t.ajouter.recurrence.seRepete}</span>
             </button>
 
             {estRecurrent && (
               <div style={{ background: 'rgba(200,67,26,0.04)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 12, padding: '16px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <label style={labelStyle}>Fréquence</label>
+                  <label style={labelStyle}>{t.ajouter.recurrence.frequence}</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                     {[
                       { key: 'quotidien',    label: t.ajouter.recurrence.quotidien },
@@ -1953,12 +1953,14 @@ function AjouterEvenement() {
 
                 {typeRecurrence === 'hebdomadaire' && (
                   <div>
-                    <label style={labelStyle}>Jour(s) de la semaine</label>
+                    <label style={labelStyle}>{t.ajouter.recurrence.joursDeLaSemaine}</label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                      {['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'].map(jour => {
+                      {['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'].map((jour, idx) => {
                         const actif = joursRecurrence.includes(jour)
+                        const cles = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'] as const
+                        const label = t.ajouter.recurrence[cles[idx]]
                         return (
-                          <button key={jour} type="button" onClick={() => setJoursRecurrence(prev => actif ? prev.filter(j => j !== jour) : [...prev, jour])} style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer', background: actif ? '#C8431A' : 'white', color: actif ? 'white' : '#8C5A40' }}>{jour}</button>
+                          <button key={jour} type="button" onClick={() => setJoursRecurrence(prev => actif ? prev.filter(j => j !== jour) : [...prev, jour])} style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold', border: actif ? 'none' : '1px solid #E8E0D0', cursor: 'pointer', background: actif ? '#C8431A' : 'white', color: actif ? 'white' : '#8C5A40' }}>{label}</button>
                         )
                       })}
                     </div>
@@ -1966,10 +1968,10 @@ function AjouterEvenement() {
                 )}
 
                 <div>
-                  <label style={labelStyle}>Fin de la récurrence</label>
+                  <label style={labelStyle}>{t.ajouter.recurrence.finRecurrence}</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 10 }}>
                     {[
-                      { key: 'sans_fin',    label: 'Sans fin' },
+                      { key: 'sans_fin',    label: t.ajouter.recurrence.sansFin },
                       { key: 'date',        label: t.ajouter.recurrence.finDate },
                       { key: 'occurrences', label: t.ajouter.recurrence.finOccurrences },
                     ].map(f => (
