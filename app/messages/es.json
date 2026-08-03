@@ -222,7 +222,14 @@
       "badgeDebloque": "¡Insignia desbloqueada!",
       "roleContrib": "⭐ Contribuidor ·",
       "roleOrga": "🎪 Organizador ·",
-      "contribution": "contribución"
+      "contribution": "contribución",
+      "plusQueContributionUn": "¡Solo falta 1 contribución!",
+      "plusQueContributionPlusieurs": "¡Solo faltan {n} contribuciones!",
+      "plusQueEvenementUn": "¡Solo falta 1 evento!",
+      "plusQueEvenementPlusieurs": "¡Solo faltan {n} eventos!",
+      "lienSecret": "🫧 Enlace secreto:",
+      "codeAcces": "🔒 Código de acceso:",
+      "copier": "Copiar"
     },
     "typesItems": {
       "1": "Conferencia / Cumbre",

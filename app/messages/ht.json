@@ -222,7 +222,14 @@
       "badgeDebloque": "Badj debloke!",
       "roleContrib": "⭐ Kontribitè ·",
       "roleOrga": "🎪 Òganizatè ·",
-      "contribution": "kontribisyon"
+      "contribution": "kontribisyon",
+      "plusQueContributionUn": "1 kontribisyon ankò!",
+      "plusQueContributionPlusieurs": "{n} kontribisyon ankò!",
+      "plusQueEvenementUn": "1 evènman ankò!",
+      "plusQueEvenementPlusieurs": "{n} evènman ankò!",
+      "lienSecret": "🫧 Lyen sekrè :",
+      "codeAcces": "🔒 Kòd aksè :",
+      "copier": "Kopye"
     },
     "typesItems": {
       "1": "Konferans / Somè",

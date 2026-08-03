@@ -222,7 +222,14 @@
       "badgeDebloque": "Distintivo desbloqueado!",
       "roleContrib": "⭐ Contribuidor ·",
       "roleOrga": "🎪 Organizador ·",
-      "contribution": "contribuição"
+      "contribution": "contribuição",
+      "plusQueContributionUn": "Só falta 1 contribuição!",
+      "plusQueContributionPlusieurs": "Só faltam {n} contribuições!",
+      "plusQueEvenementUn": "Só falta 1 evento!",
+      "plusQueEvenementPlusieurs": "Só faltam {n} eventos!",
+      "lienSecret": "🫧 Link secreto:",
+      "codeAcces": "🔒 Código de acesso:",
+      "copier": "Copiar"
     },
     "typesItems": {
       "1": "Conferência / Cimeira",

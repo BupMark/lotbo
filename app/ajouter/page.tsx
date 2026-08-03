@@ -1391,28 +1391,31 @@ function AjouterEvenement() {
                   }} />
                 </div>
                 <p style={{ color: '#8C5A40', fontSize: 12 }}>
-                  {isContrib
-                    ? `Plus que ${restant} contribution${restant > 1 ? 's' : ''} !`
-                    : `Plus que ${restant} événement${restant > 1 ? 's' : ''} !`}
+                  {(() => {
+                    const cle = isContrib
+                      ? (restant === 1 ? 'plusQueContributionUn' : 'plusQueContributionPlusieurs')
+                      : (restant === 1 ? 'plusQueEvenementUn' : 'plusQueEvenementPlusieurs')
+                    return t.ajouter.succes[cle].replaceAll('{n}', String(restant))
+                  })()}
                 </p>
               </div>
             )
           })()}
           {succesData?.visibilite === 'prive' && succesData.lienSecret && (
             <div style={{ background: 'rgba(200,67,26,0.1)', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
-              <p style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>🫧 Lien secret :</p>
+              <p style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>{t.ajouter.succes.lienSecret}</p>
               <div style={{ background: 'white', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <code style={{ color: '#1A1410', fontSize: 11, flex: 1, wordBreak: 'break-all' }}>{`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`}</code>
-                <button onClick={() => navigator.clipboard.writeText(`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`)} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>Copier</button>
+                <button onClick={() => navigator.clipboard.writeText(`https://app.lotbo.app/evenement/secret/${succesData.lienSecret}`)} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>{t.ajouter.succes.copier}</button>
               </div>
             </div>
           )}
           {succesData?.visibilite === 'discret' && succesData.codeAcces && (
             <div style={{ background: 'rgba(212,168,32,0.1)', border: '1px solid rgba(212,168,32,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
-              <p style={{ color: '#D4A820', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>🔒 Code d'accès :</p>
+              <p style={{ color: '#D4A820', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>{t.ajouter.succes.codeAcces}</p>
               <div style={{ background: 'white', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ color: '#1A1410', fontSize: 24, fontWeight: 'bold', letterSpacing: 8 }}>{succesData.codeAcces}</span>
-                <button onClick={() => navigator.clipboard.writeText(succesData.codeAcces!)} style={{ background: '#D4A820', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>Copier</button>
+                <button onClick={() => navigator.clipboard.writeText(succesData.codeAcces!)} style={{ background: '#D4A820', color: 'white', border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>{t.ajouter.succes.copier}</button>
               </div>
             </div>
           )}

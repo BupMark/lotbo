@@ -222,7 +222,14 @@
       "badgeDebloque": "Badge débloqué !",
       "roleContrib": "⭐ Contributeur ·",
       "roleOrga": "🎪 Organisateur ·",
-      "contribution": "contribution"
+      "contribution": "contribution",
+      "plusQueContributionUn": "Plus qu'une contribution !",
+      "plusQueContributionPlusieurs": "Plus que {n} contributions !",
+      "plusQueEvenementUn": "Plus qu'un événement !",
+      "plusQueEvenementPlusieurs": "Plus que {n} événements !",
+      "lienSecret": "🫧 Lien secret :",
+      "codeAcces": "🔒 Code d'accès :",
+      "copier": "Copier"
     },
     "typesItems": {
       "1": "Conférence / Sommet",

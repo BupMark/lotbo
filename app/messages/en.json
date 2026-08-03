@@ -222,7 +222,14 @@
       "badgeDebloque": "Badge unlocked!",
       "roleContrib": "⭐ Contributor ·",
       "roleOrga": "🎪 Organizer ·",
-      "contribution": "contribution"
+      "contribution": "contribution",
+      "plusQueContributionUn": "Just 1 more contribution to go!",
+      "plusQueContributionPlusieurs": "Just {n} more contributions to go!",
+      "plusQueEvenementUn": "Just 1 more event to go!",
+      "plusQueEvenementPlusieurs": "Just {n} more events to go!",
+      "lienSecret": "🫧 Secret link:",
+      "codeAcces": "🔒 Access code:",
+      "copier": "Copy"
     },
     "typesItems": {
       "1": "Conference / Summit",
