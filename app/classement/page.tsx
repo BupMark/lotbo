@@ -7,6 +7,8 @@ import { supabase } from '../../lib/supabase'
 import { calculerNiveau } from '../../lib/points'
 import PodiumTop3 from '../../components/PodiumTop3'
 import { NIVEAUX, getInitiales } from '../../lib/classementUtils'
+import { useLangue } from '../../lib/useLangue'
+import { getTraductions } from '../../lib/i18n'
 
 interface Membre {
   id: string
@@ -17,6 +19,8 @@ interface Membre {
 }
 
 export default function Classement() {
+  const { langue } = useLangue()
+  const t = getTraductions(langue)
   const [membres, setMembres] = useState<Membre[]>([])
   const [loading, setLoading] = useState(true)
   const [moi, setMoi]         = useState<{ position: number; total: number; membre: Membre } | null>(null)
@@ -93,7 +97,7 @@ export default function Classement() {
 
         {/* ── Lien retour ── */}
         <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'inline-block', marginBottom: 20 }}>
-          ← Retour à la carte
+          {t.classement.retourCarte}
         </a>
 
         {/* ── Hero ── */}
@@ -113,34 +117,34 @@ export default function Classement() {
           }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase' }}>
-              Communauté LOTBO
+              {t.classement.communaute}
             </p>
             <h1 style={{
               fontSize: isDesktop ? 42 : 28, fontWeight: 'bold',
               fontFamily: 'serif', fontStyle: 'italic',
               color: 'white', marginBottom: 12,
             }}>
-              🏆 Classement
+              🏆 {t.classement.titre}
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: isDesktop ? 16 : 14, maxWidth: 500 }}>
-              Les membres les plus actifs de LOTBO — chaque contribution compte.
+              {t.classement.sousTitre}
             </p>
             <div style={{ display: 'flex', gap: isDesktop ? 32 : 16, marginTop: 24, flexWrap: 'wrap' }}>
               <div>
                 <p style={{ color: '#C8431A', fontSize: isDesktop ? 28 : 22, fontWeight: 'bold' }}>{membres.length}</p>
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>membres actifs</p>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{t.classement.membresActifs}</p>
               </div>
               <div>
                 <p style={{ color: '#C8431A', fontSize: isDesktop ? 28 : 22, fontWeight: 'bold' }}>
                   {membres.reduce((sum, m) => sum + (m.points_total || 0), 0).toLocaleString()}
                 </p>
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>points distribués</p>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{t.classement.pointsDistribues}</p>
               </div>
               <div>
                 <p style={{ color: '#C8431A', fontSize: isDesktop ? 28 : 22, fontWeight: 'bold' }}>
                   {membres[0]?.points_total?.toLocaleString() || 0}
                 </p>
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>record du leader</p>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{t.classement.recordLeader}</p>
               </div>
             </div>
           </div>
@@ -165,9 +169,9 @@ export default function Classement() {
               </div>
             )}
             <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410' }}>Ma position</p>
+              <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410' }}>{t.classement.maPosition}</p>
               <p style={{ color: '#8C5A40', fontSize: 12 }}>
-                #{moi.position} · {moi.membre.points_total} pts
+                #{moi.position} · {moi.membre.points_total} {t.classement.pts}
               </p>
             </div>
             <span style={{ fontSize: 20 }}>{NIVEAUX[calculerNiveau(moi.membre.points_total)]?.emoji || '🌱'}</span>
@@ -177,13 +181,13 @@ export default function Classement() {
         {/* ── Contenu principal ── */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <p style={{ color: '#8C5A40' }}>Chargement du classement…</p>
+            <p style={{ color: '#8C5A40' }}>{t.classement.chargement}</p>
           </div>
         ) : membres.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <p style={{ fontSize: 40, marginBottom: 12 }}>🏆</p>
-            <p style={{ color: '#8C5A40', fontSize: 14 }}>Aucun membre dans ce classement pour l'instant.</p>
-            <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 8 }}>Sois le premier à contribuer !</p>
+            <p style={{ color: '#8C5A40', fontSize: 14 }}>{t.classement.aucunMembre}</p>
+            <p style={{ color: '#8C5A40', fontSize: 13, marginTop: 8 }}>{t.classement.premierContribuer}</p>
           </div>
         ) : (
           <div style={{
@@ -194,13 +198,13 @@ export default function Classement() {
           }}>
 
             {/* ── Colonne gauche — Podium Top 3 ── */}
-            <PodiumTop3 top3={top3} isDesktop={isDesktop} />
+            <PodiumTop3 top3={top3} isDesktop={isDesktop} langue={langue} />
 
             {/* ── Colonne droite — Liste 4e+ ── */}
             <div>
               {isDesktop && (
                 <p style={{ fontWeight: 'bold', fontSize: 14, color: '#8C5A40', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  📋 Classement complet
+                  📋 {t.classement.classementComplet}
                 </p>
               )}
               {reste.length > 0 && (
@@ -229,14 +233,14 @@ export default function Classement() {
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontWeight: 'bold', fontSize: 14, color: '#1A1410', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {membre.nom || 'Membre LOTBO'} {estMoi && <span style={{ color: '#C8431A', fontSize: 12 }}>← Toi</span>}
+                            {membre.nom || t.classement.membreParDefaut} {estMoi && <span style={{ color: '#C8431A', fontSize: 12 }}>{t.classement.toi}</span>}
                           </p>
                           <p style={{ color: '#8C5A40', fontSize: 12 }}>
                             {niveau.emoji} {niveau.label}
                           </p>
                         </div>
                         <span style={{ color: '#C8431A', fontWeight: 'bold', fontSize: 14, flexShrink: 0 }}>
-                          {membre.points_total} pts
+                          {membre.points_total} {t.classement.pts}
                         </span>
                       </div>
                     )

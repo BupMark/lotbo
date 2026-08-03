@@ -671,5 +671,22 @@
     "top3": "🥇 Top 3",
     "membreParDefaut": "Membre LOTBO",
     "points": "pts"
+  },
+  "classement": {
+    "retourCarte": "← Retour à la carte",
+    "communaute": "Communauté LOTBO",
+    "titre": "Classement",
+    "sousTitre": "Les membres les plus actifs de LOTBO — chaque contribution compte.",
+    "membresActifs": "membres actifs",
+    "pointsDistribues": "points distribués",
+    "recordLeader": "record du leader",
+    "maPosition": "Ma position",
+    "chargement": "Chargement du classement…",
+    "aucunMembre": "Aucun membre dans ce classement pour l'instant.",
+    "premierContribuer": "Sois le premier à contribuer !",
+    "classementComplet": "Classement complet",
+    "membreParDefaut": "Membre LOTBO",
+    "toi": "← Toi",
+    "pts": "pts"
   }
 }

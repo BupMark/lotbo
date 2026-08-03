@@ -671,5 +671,22 @@
     "top3": "🥇 Top 3",
     "membreParDefaut": "Manm LOTBO",
     "points": "pwen"
+  },
+  "classement": {
+    "retourCarte": "← Retounen nan kat la",
+    "communaute": "Kominote LOTBO",
+    "titre": "Klasman",
+    "sousTitre": "Manm ki pi aktif nan LOTBO yo — chak kontribisyon konte.",
+    "membresActifs": "manm aktif",
+    "pointsDistribues": "pwen distribye",
+    "recordLeader": "rekò lidè a",
+    "maPosition": "Pozisyon mwen",
+    "chargement": "N ap chaje klasman an…",
+    "aucunMembre": "Poko gen manm nan klasman sa a.",
+    "premierContribuer": "Se ou ki premye pou kontribye!",
+    "classementComplet": "Klasman konplè",
+    "membreParDefaut": "Manm LOTBO",
+    "toi": "← Ou",
+    "pts": "pwen"
   }
 }
