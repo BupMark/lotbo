@@ -225,6 +225,15 @@
       "discret_desc": "Pin visível no mapa — endereço revelado com um código",
       "prive_label": "🫧 Privado",
       "prive_desc": "Oculto do mapa — acessível apenas via link secreto"
+    },
+    "popupBadge": {
+      "titre": "Distintivo desbloqueado!",
+      "felicitationsContrib": "Parabéns! Você acabou de alcançar sua {ordinal} contribuição no LOTBO!",
+      "felicitationsOrga": "Parabéns! Você acabou de enviar seu {ordinal} evento no LOTBO!",
+      "voirMesBadges": "Ver meus distintivos →",
+      "creerCarteBadge": "Criar meu cartão de distintivo",
+      "continuer": "Continuar",
+      "prochainBadge": "Próximo distintivo"
     }
   },
   "tabbar": {

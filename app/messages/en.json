@@ -225,6 +225,15 @@
       "discret_desc": "Pin visible on map — address revealed with a code",
       "prive_label": "🫧 Private",
       "prive_desc": "Hidden from map — accessible only via secret link"
+    },
+    "popupBadge": {
+      "titre": "Badge unlocked!",
+      "felicitationsContrib": "Congratulations! You just reached your {ordinal} contribution on LOTBO!",
+      "felicitationsOrga": "Congratulations! You just submitted your {ordinal} event on LOTBO!",
+      "voirMesBadges": "See my badges →",
+      "creerCarteBadge": "Create my badge card",
+      "continuer": "Continue",
+      "prochainBadge": "Next badge"
     }
   },
   "tabbar": {

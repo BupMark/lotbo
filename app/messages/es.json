@@ -225,6 +225,15 @@
       "discret_desc": "Pin visible en el mapa — dirección revelada con un código",
       "prive_label": "🫧 Privado",
       "prive_desc": "Oculto del mapa — accesible solo mediante enlace secreto"
+    },
+    "popupBadge": {
+      "titre": "¡Insignia desbloqueada!",
+      "felicitationsContrib": "¡Felicidades! Acabas de alcanzar tu {ordinal} contribución en LOTBO!",
+      "felicitationsOrga": "¡Felicidades! Acabas de enviar tu {ordinal} evento en LOTBO!",
+      "voirMesBadges": "Ver mis insignias →",
+      "creerCarteBadge": "Crear mi tarjeta de insignia",
+      "continuer": "Continuar",
+      "prochainBadge": "Próxima insignia"
     }
   },
   "tabbar": {

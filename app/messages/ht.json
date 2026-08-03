@@ -225,6 +225,15 @@
       "discret_desc": "Pin vizib sou kat la — adrès reveye ak yon kòd",
       "prive_label": "🫧 Prive",
       "prive_desc": "Kache sou kat la — aksesib sèlman via lyen sekrè"
+    },
+    "popupBadge": {
+      "titre": "Badj debloke!",
+      "felicitationsContrib": "Byen fèt! Ou fèk rive nan {ordinal} kontribisyon ou sou LOTBO!",
+      "felicitationsOrga": "Byen fèt! Ou fèk soumèt {ordinal} evènman ou sou LOTBO!",
+      "voirMesBadges": "Gade badj mwen yo →",
+      "creerCarteBadge": "Kreye kat badj mwen",
+      "continuer": "Kontinye",
+      "prochainBadge": "Pwochen badj"
     }
   },
   "tabbar": {

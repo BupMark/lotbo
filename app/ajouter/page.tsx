@@ -350,8 +350,8 @@ function Confetti() {
 }
 
 // ── Popup badge ───────────────────────────────────────────────────────────────
-function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte }: {
-  badge: Badge; nbContributions: number; role: string; onContinuer: () => void; onCreerCarte: () => void
+function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte, t }: {
+  badge: Badge; nbContributions: number; role: string; onContinuer: () => void; onCreerCarte: () => void; t: any
 })
 {
   const isContrib = role === 'contributeur'
@@ -366,10 +366,10 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte }:
         `}</style>
         <div style={{ background: '#1A1410', border: '1px solid rgba(212,168,32,0.4)', borderRadius: 24, padding: '40px 32px', maxWidth: 380, width: '100%', textAlign: 'center', animation: 'popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)', boxShadow: '0 0 60px rgba(212,168,32,0.15)' }}>
           <div style={{ fontSize: 72, lineHeight: 1, marginBottom: 16, display: 'inline-block', animation: 'badgePulse 1.5s ease-in-out infinite' }}>{badge.emoji}</div>
-          <p style={{ color: '#D4A820', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>🏅 Badge débloqué !</p>
+          <p style={{ color: '#D4A820', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>🏅 {t.ajouter.popupBadge.titre}</p>
           <h2 style={{ color: '#F7F2E8', fontSize: 26, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', marginBottom: 8 }}>{badge.label}</h2>
           <p style={{ color: '#8C5A40', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
-            {isContrib ? `Félicitations ! Tu viens d'atteindre ta ${ordinal} contribution sur LOTBO !` : `Félicitations ! Tu viens de soumettre ton ${ordinal} événement sur LOTBO !`}
+            {(isContrib ? t.ajouter.popupBadge.felicitationsContrib : t.ajouter.popupBadge.felicitationsOrga).replace('{ordinal}', ordinal)}
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
             <span style={{ background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)', color: '#D4A820', padding: '6px 18px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>
@@ -377,9 +377,9 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte }:
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button onClick={onContinuer} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Voir mes badges →</button>
-            <button onClick={onCreerCarte} style={{ background: 'rgba(247,242,232,0.1)', color: '#F7F2E8', border: '1px solid rgba(247,242,232,0.2)', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: 8 }}>🎨 Créer ma carte badge</button>
-            <button onClick={onContinuer} style={{ background: 'transparent', color: '#8C5A40', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px' }}>Continuer</button>
+            <button onClick={onContinuer} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>{t.ajouter.popupBadge.voirMesBadges}</button>
+            <button onClick={onCreerCarte} style={{ background: 'rgba(247,242,232,0.1)', color: '#F7F2E8', border: '1px solid rgba(247,242,232,0.2)', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: 8 }}>🎨 {t.ajouter.popupBadge.creerCarteBadge}</button>
+            <button onClick={onContinuer} style={{ background: 'transparent', color: '#8C5A40', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px' }}>{t.ajouter.popupBadge.continuer}</button>
           </div>
         </div>
       </div>
@@ -1325,6 +1325,7 @@ function AjouterEvenement() {
             role={succesData.role || 'organisateur'}
             onContinuer={handleContinuerApresBadge}
             onCreerCarte={() => { setShowBadgePopup(false); setShowCarteBadge(true) }}
+            t={t}
           />
         )}
         {showCarteBadge && succesData?.nouveauBadge && (
@@ -1379,7 +1380,7 @@ function AjouterEvenement() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                   <span style={{ fontSize: 22 }}>{prochain.emoji}</span>
                   <div>
-                    <p style={{ color: '#C8431A', fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Prochain badge</p>
+                    <p style={{ color: '#C8431A', fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.ajouter.popupBadge.prochainBadge}</p>
                     <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>{prochain.label}</p>
                   </div>
                 </div>
@@ -1622,7 +1623,7 @@ function AjouterEvenement() {
               </div>
             </div>
           )}
-          <p style={{ color: '#8C5A40', fontSize: 13 }}>Partage un événement avec la communauté Lotbo</p>
+          <p style={{ color: '#8C5A40', fontSize: 13 }}>{t.ajouter.sous_titre}</p>
         </div>
 
         {scanMultiSelectMode && scanMultiEvents.length > 0 && (
