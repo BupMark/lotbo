@@ -13,7 +13,17 @@
     "confidentialite": "Konfidansyalite",
     "aide": "Èd",
     "cgu": "Kondisyon",
-    "connexion": "Konekte"
+    "connexion": "Konekte",
+    "tabbar": {
+      "navigationPrincipale": "Navigasyon prensipal",
+      "carte": "Kat",
+      "recherche": "Chache",
+      "ajouterAria": "Ajoute yon evènman",
+      "ajouter": "Ajoute",
+      "ansanmAria": "Ansanm — Kominote",
+      "ansanm": "Ansanm",
+      "profil": "Pwofil"
+    }
   },
   "carte": {
     "recherche": "Vil, peyi oswa evènman...",

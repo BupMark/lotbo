@@ -13,7 +13,17 @@
     "confidentialite": "Confidentialité",
     "aide": "Aide",
     "cgu": "CGU",
-    "connexion": "Connexion"
+    "connexion": "Connexion",
+    "tabbar": {
+      "navigationPrincipale": "Navigation principale",
+      "carte": "Carte",
+      "recherche": "Recherche",
+      "ajouterAria": "Ajouter un événement",
+      "ajouter": "Ajouter",
+      "ansanmAria": "Ansanm — Communauté",
+      "ansanm": "Ansanm",
+      "profil": "Profil"
+    }
   },
   "carte": {
     "recherche": "Ville, pays ou événement...",

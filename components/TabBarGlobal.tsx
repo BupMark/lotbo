@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import { useLangue } from '../lib/useLangue'
+import { getTraductions } from '../lib/i18n'
 
 const EXCLUSIONS = ['/admin', '/login']
 
 export default function TabBarGlobal() {
   const pathname              = usePathname()
+  const { langue }            = useLangue()
+  const t                     = getTraductions(langue)
   const [userId, setUserId]   = useState<string | null>(null)
   const [nonLues, setNonLues] = useState(0)
   const [badgeAnsanm, setBadgeAnsanm] = useState(false)
@@ -67,39 +71,39 @@ export default function TabBarGlobal() {
   const c = (active: boolean) => active ? '#C8431A' : 'rgba(255,255,255,0.5)'
 
   return (
-    <nav className="lotbo-tabbar-global" role="navigation" aria-label="Navigation principale">
+    <nav className="lotbo-tabbar-global" role="navigation" aria-label={t.nav.tabbar.navigationPrincipale}>
 
       {/* Carte */}
-      <a href="/" className="lotbo-tabbar-item" aria-label="Carte">
+      <a href="/" className="lotbo-tabbar-item" aria-label={t.nav.tabbar.carte}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <polygon points="3,6 9,3 15,6 21,3 21,18 15,21 9,18 3,21" stroke={c(isHome)} strokeWidth="1.8" strokeLinejoin="round" fill="none"/>
           <line x1="9" y1="3" x2="9" y2="18" stroke={c(isHome)} strokeWidth="1.8"/>
           <line x1="15" y1="6" x2="15" y2="21" stroke={c(isHome)} strokeWidth="1.8"/>
         </svg>
-        <span style={{ color: c(isHome) }}>Carte</span>
+        <span style={{ color: c(isHome) }}>{t.nav.tabbar.carte}</span>
       </a>
 
       {/* Recherche */}
-      <a href="/?s=1" className="lotbo-tabbar-item" aria-label="Recherche">
+      <a href="/?s=1" className="lotbo-tabbar-item" aria-label={t.nav.tabbar.recherche}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <circle cx="11" cy="11" r="7" stroke={c(false)} strokeWidth="1.8"/>
           <path d="M16.5 16.5L21 21" stroke={c(false)} strokeWidth="1.8" strokeLinecap="round"/>
         </svg>
-        <span style={{ color: c(false) }}>Recherche</span>
+        <span style={{ color: c(false) }}>{t.nav.tabbar.recherche}</span>
       </a>
 
       {/* Ajouter — FAB central */}
-      <a href="/ajouter" className="lotbo-tabbar-item" aria-label="Ajouter un événement">
+      <a href="/ajouter" className="lotbo-tabbar-item" aria-label={t.nav.tabbar.ajouterAria}>
         <div className="lotbo-tabbar-fab">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.4" strokeLinecap="round"/>
           </svg>
         </div>
-        <span style={{ color: c(isAjout) }}>Ajouter</span>
+        <span style={{ color: c(isAjout) }}>{t.nav.tabbar.ajouter}</span>
       </a>
 
       {/* Ansanm — Communauté */}
-      <a href="/ansanm" className="lotbo-tabbar-item" aria-label="Ansanm — Communauté">
+      <a href="/ansanm" className="lotbo-tabbar-item" aria-label={t.nav.tabbar.ansanmAria}>
         <div style={{ position: 'relative', display: 'inline-flex' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <circle cx="9" cy="8" r="3" stroke={c(isAnsanm)} strokeWidth="1.8"/>
@@ -115,11 +119,11 @@ export default function TabBarGlobal() {
             }} />
           )}
         </div>
-        <span style={{ color: c(isAnsanm) }}>Ansanm</span>
+        <span style={{ color: c(isAnsanm) }}>{t.nav.tabbar.ansanm}</span>
       </a>
 
       {/* Profil — badge notif migré ici */}
-      <a href={userId ? '/profil' : '/login'} className="lotbo-tabbar-item" aria-label="Profil">
+      <a href={userId ? '/profil' : '/login'} className="lotbo-tabbar-item" aria-label={t.nav.tabbar.profil}>
         <div style={{ position: 'relative', display: 'inline-flex' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="8" r="4" stroke={c(isProfil)} strokeWidth="1.8"/>
@@ -138,7 +142,7 @@ export default function TabBarGlobal() {
             </span>
           )}
         </div>
-        <span style={{ color: c(isProfil) }}>Profil</span>
+        <span style={{ color: c(isProfil) }}>{t.nav.tabbar.profil}</span>
       </a>
 
     </nav>

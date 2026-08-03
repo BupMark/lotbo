@@ -13,7 +13,17 @@
     "confidentialite": "Privacidade",
     "aide": "Ajuda",
     "cgu": "Termos",
-    "connexion": "Entrar"
+    "connexion": "Entrar",
+    "tabbar": {
+      "navigationPrincipale": "Navegação principal",
+      "carte": "Mapa",
+      "recherche": "Pesquisar",
+      "ajouterAria": "Adicionar um evento",
+      "ajouter": "Adicionar",
+      "ansanmAria": "Ansanm — Comunidade",
+      "ansanm": "Ansanm",
+      "profil": "Perfil"
+    }
   },
   "carte": {
     "recherche": "Cidade, país ou evento...",
