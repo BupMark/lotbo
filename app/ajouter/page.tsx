@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo, Suspense } from 'rea
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import { normaliserVille, normaliserPays } from '../../lib/normalisation'
+import { FUSEAUX_PAR_REGION, REGIONS } from '../../lib/fuseauxEtCategories'
 import { track } from '../../lib/amplitude'
 import { type Langue, getTraductions } from '../../lib/i18n'
 import { useLangue } from '../../lib/useLangue'
@@ -48,120 +49,6 @@ const EVENT_TYPES = [
   { id: 11, nom: 'Droit / Juridique',             icone: '⚖️' },
   { id: 12, nom: 'Loisir',                        icone: '🎯' },
 ]
-
-const FUSEAUX_PAR_REGION: Record<string, { value: string; label: string }[]> = {
-  '— AMÉRIQUES —': [
-    { value: 'America/Port-au-Prince',         label: '🇭🇹 Haïti' },
-    { value: 'America/Guadeloupe',             label: '🇬🇵 Guadeloupe / Martinique' },
-    { value: 'America/Santo_Domingo',          label: '🇩🇴 République Dominicaine' },
-    { value: 'America/Jamaica',                label: '🇯🇲 Jamaïque' },
-    { value: 'America/Havana',                 label: '🇨🇺 Cuba' },
-    { value: 'America/Puerto_Rico',            label: '🇵🇷 Porto Rico' },
-    { value: 'America/New_York',               label: '🇺🇸 New York / Miami / Boston' },
-    { value: 'America/Chicago',                label: '🇺🇸 Chicago / Houston' },
-    { value: 'America/Denver',                 label: '🇺🇸 Denver / Phoenix' },
-    { value: 'America/Los_Angeles',            label: '🇺🇸 Los Angeles / San Francisco' },
-    { value: 'America/Montreal',               label: '🇨🇦 Montréal / Québec' },
-    { value: 'America/Toronto',                label: '🇨🇦 Toronto / Ottawa' },
-    { value: 'America/Vancouver',              label: '🇨🇦 Vancouver' },
-    { value: 'America/Mexico_City',            label: '🇲🇽 Mexique' },
-    { value: 'America/Bogota',                 label: '🇨🇴 Colombie' },
-    { value: 'America/Lima',                   label: '🇵🇪 Pérou' },
-    { value: 'America/Santiago',               label: '🇨🇱 Chili' },
-    { value: 'America/Argentina/Buenos_Aires', label: '🇦🇷 Argentine' },
-    { value: 'America/Sao_Paulo',              label: '🇧🇷 Brésil (São Paulo)' },
-    { value: 'America/Anchorage',              label: '🇺🇸 Alaska' },
-    { value: 'America/Halifax',                label: '🇨🇦 Halifax / Maritimes' },
-    { value: 'America/Nassau',                 label: '🇧🇸 Bahamas' },
-    { value: 'America/Port_of_Spain',          label: '🇹🇹 Trinité-et-Tobago / Barbade' },
-    { value: 'America/Caracas',                label: '🇻🇪 Venezuela' },
-    { value: 'America/Guyana',                 label: '🇬🇾 Guyana' },
-    { value: 'America/Paramaribo',             label: '🇸🇷 Suriname' },
-    { value: 'America/Asuncion',               label: '🇵🇾 Paraguay' },
-    { value: 'America/Montevideo',             label: '🇺🇾 Uruguay' },
-    { value: 'America/Guayaquil',              label: '🇪🇨 Équateur' },
-    { value: 'America/Panama',                 label: '🇵🇦 Panama' },
-    { value: 'America/Guatemala',              label: '🇬🇹 Guatemala / Amérique centrale' },
-    { value: 'America/Tegucigalpa',            label: '🇭🇳 Honduras' },
-    { value: 'America/Managua',                label: '🇳🇮 Nicaragua' },
-    { value: 'America/Costa_Rica',             label: '🇨🇷 Costa Rica' },
-    { value: 'America/La_Paz',                 label: '🇧🇴 Bolivie' },
-    { value: 'America/Manaus',                 label: '🇧🇷 Brésil (Manaus / Amazonie)' },
-  ],
-  '— EUROPE —': [
-    { value: 'Europe/London',                  label: '🇬🇧 Londres' },
-    { value: 'Europe/Paris',                   label: '🇫🇷 Paris / Bruxelles / Genève' },
-    { value: 'Europe/Berlin',                  label: '🇩🇪 Berlin / Amsterdam / Rome' },
-    { value: 'Europe/Madrid',                  label: '🇪🇸 Madrid / Barcelone' },
-    { value: 'Europe/Lisbon',                  label: '🇵🇹 Lisbonne' },
-    { value: 'Europe/Moscow',                  label: '🇷🇺 Moscou' },
-    { value: 'Europe/Dublin',                  label: '🇮🇪 Irlande' },
-    { value: 'Atlantic/Reykjavik',             label: '🇮🇸 Islande' },
-    { value: 'Europe/Stockholm',               label: '🇸🇪 Suède / Scandinavie' },
-    { value: 'Europe/Warsaw',                  label: '🇵🇱 Pologne' },
-    { value: 'Europe/Athens',                  label: '🇬🇷 Grèce' },
-    { value: 'Europe/Bucharest',               label: '🇷🇴 Roumanie / Bulgarie' },
-    { value: 'Europe/Helsinki',                label: '🇫🇮 Finlande' },
-    { value: 'Europe/Kyiv',                    label: '🇺🇦 Ukraine' },
-    { value: 'Europe/Istanbul',                label: '🇹🇷 Turquie' },
-    { value: 'Europe/Vilnius',                 label: '🇱🇹 Pays baltes (Lituanie / Lettonie / Estonie)' },
-  ],
-  '— AFRIQUE —': [
-    { value: 'Africa/Abidjan',                 label: "🇨🇮 Côte d'Ivoire / Sénégal / Mali" },
-    { value: 'Africa/Lagos',                   label: '🇳🇬 Nigeria / Cameroun / Gabon' },
-    { value: 'Africa/Kinshasa',                label: '🇨🇩 Congo / RDC' },
-    { value: 'Africa/Nairobi',                 label: '🇰🇪 Kenya / Éthiopie / Tanzanie' },
-    { value: 'Africa/Casablanca',              label: '🇲🇦 Maroc' },
-    { value: 'Africa/Cairo',                   label: '🇪🇬 Égypte' },
-    { value: 'Indian/Reunion',                 label: '🇷🇪 La Réunion / Maurice' },
-    { value: 'Africa/Johannesburg',            label: '🇿🇦 Afrique du Sud / Zimbabwe / Botswana' },
-    { value: 'Africa/Maputo',                  label: '🇲🇿 Mozambique / Zambie / Malawi' },
-    { value: 'Africa/Windhoek',                label: '🇳🇦 Namibie' },
-    { value: 'Africa/Tunis',                   label: '🇹🇳 Tunisie / Algérie / Libye' },
-    { value: 'Africa/Accra',                   label: '🇬🇭 Ghana' },
-    { value: 'Africa/Khartoum',                label: '🇸🇩 Soudan' },
-    { value: 'Africa/Luanda',                  label: '🇦🇴 Angola' },
-    { value: 'Africa/Kigali',                  label: '🇷🇼 Rwanda / Burundi' },
-    { value: 'Africa/Mogadishu',               label: '🇸🇴 Somalie / Djibouti / Érythrée' },
-    { value: 'UTC',                            label: '🌍 UTC — événement international / en ligne' },
-  ],
-  '— ASIE —': [
-    { value: 'Asia/Beirut',                    label: '🇱🇧 Liban' },
-    { value: 'Asia/Riyadh',                    label: '🇸🇦 Arabie Saoudite / Koweït' },
-    { value: 'Asia/Dubai',                     label: '🇦🇪 Dubaï / EAU' },
-    { value: 'Asia/Tehran',                    label: '🇮🇷 Iran' },
-    { value: 'Asia/Karachi',                   label: '🇵🇰 Pakistan' },
-    { value: 'Asia/Kolkata',                   label: '🇮🇳 Inde' },
-    { value: 'Asia/Dhaka',                     label: '🇧🇩 Bangladesh' },
-    { value: 'Asia/Bangkok',                   label: '🇹🇭 Thaïlande / Vietnam / Cambodge' },
-    { value: 'Asia/Singapore',                 label: '🇸🇬 Singapour / Malaisie / Philippines' },
-    { value: 'Asia/Jakarta',                   label: '🇮🇩 Indonésie' },
-    { value: 'Asia/Shanghai',                  label: '🇨🇳 Chine / Hong Kong / Taïwan' },
-    { value: 'Asia/Seoul',                     label: '🇰🇷 Corée du Sud' },
-    { value: 'Asia/Tokyo',                     label: '🇯🇵 Japon' },
-    { value: 'Asia/Jerusalem',                 label: '🇮🇱 Israël / Palestine' },
-    { value: 'Asia/Amman',                     label: '🇯🇴 Jordanie / Syrie' },
-    { value: 'Asia/Nicosia',                   label: '🇨🇾 Chypre' },
-    { value: 'Asia/Baghdad',                   label: '🇮🇶 Irak' },
-    { value: 'Asia/Qatar',                     label: '🇶🇦 Qatar / Bahreïn' },
-    { value: 'Asia/Kabul',                     label: '🇦🇫 Afghanistan' },
-    { value: 'Asia/Kathmandu',                 label: '🇳🇵 Népal' },
-    { value: 'Asia/Yangon',                    label: '🇲🇲 Birmanie (Myanmar)' },
-    { value: 'Asia/Tashkent',                  label: '🇺🇿 Ouzbékistan / Tadjikistan / Turkménistan' },
-    { value: 'Asia/Almaty',                    label: '🇰🇿 Kazakhstan (Est) / Kirghizistan' },
-    { value: 'Asia/Ulaanbaatar',               label: '🇲🇳 Mongolie' },
-    { value: 'Asia/Baku',                      label: '🇦🇿 Azerbaïdjan / Caucase' },
-  ],
-  '— OCÉANIE —': [
-    { value: 'Australia/Sydney',               label: '🇦🇺 Australie (Sydney)' },
-    { value: 'Pacific/Auckland',               label: '🇳🇿 Nouvelle-Zélande' },
-    { value: 'Pacific/Honolulu',               label: '🇺🇸 Hawaï' },
-    { value: 'Australia/Perth',                label: '🇦🇺 Australie (Perth)' },
-    { value: 'Australia/Adelaide',             label: '🇦🇺 Australie (Adelaide / Darwin)' },
-    { value: 'Pacific/Fiji',                   label: '🇫🇯 Fidji' },
-    { value: 'Pacific/Port_Moresby',           label: '🇵🇬 Papouasie-Nouvelle-Guinée / Îles Salomon' },
-  ],
-}
 
 const PAYS_VERS_FUSEAU: Record<string, string> = {
   // — Amériques — (EN + FR accentué/non-accentué)
@@ -2106,8 +1993,8 @@ function AjouterEvenement() {
             <label style={labelStyle}>{t.ajouter.fuseau} <span style={{ color: '#8C5A40', marginLeft: 4 }}>{t.ajouter.aideFuseau}</span></label>
             <select name="fuseau_organisateur" value={form.fuseau_organisateur} onChange={(e) => { handleChange(e); setFuseauModifieManuellement(true) }} style={inputStyle}>
               {Object.entries(FUSEAUX_PAR_REGION).map(([region, fuseaux]) => (
-                <optgroup key={region} label={region}>
-                  {fuseaux.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                <optgroup key={region} label={REGIONS[region][langue]}>
+                  {fuseaux.map(f => <option key={f.value} value={f.value}>{f.label[langue]}</option>)}
                 </optgroup>
               ))}
             </select>
