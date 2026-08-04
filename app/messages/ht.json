@@ -62,6 +62,11 @@
   },
   "evenement": {
     "voir": "Wè paj la →",
+    "calendrier": "Kalandriye",
+    "googleCalendar": "Google Calendar",
+    "appleOutlook": "Apple / Outlook (.ics)",
+    "rejoindreEnLigne": "Antre nan evènman an sou entènèt →",
+    "aPropos": "Konsènan",
     "details": "Plis detay",
     "partager_whatsapp": "WhatsApp",
     "partager_facebook": "Facebook",

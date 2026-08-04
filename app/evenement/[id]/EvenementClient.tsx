@@ -1380,7 +1380,7 @@ function EvenementPageInner() {
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '12px 16px', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}
                   >
                     <span style={{ fontSize: 16 }}>📅</span>
-                    <span style={{ fontSize: 14 }}>Calendrier</span>
+                    <span style={{ fontSize: 14 }}>{t.evenement.calendrier}</span>
                     <span style={{ fontSize: 12, color: '#8C5A40', marginLeft: 4 }}>{showCalMenu ? '▲' : '▼'}</span>
                   </button>
                   {showCalMenu && (
@@ -1391,13 +1391,13 @@ function EvenementPageInner() {
                         onClick={() => setShowCalMenu(false)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', textDecoration: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', borderBottom: '1px solid #E8E0D0' }}
                       >
-                        <span style={{ fontSize: 20 }}>📅</span> Google Calendar
+                        <span style={{ fontSize: 20 }}>📅</span> {t.evenement.googleCalendar}
                       </a>
                       <button
                         onClick={() => { genererICS(); setShowCalMenu(false) }}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: 'none', border: 'none', color: '#1A1410', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%', textAlign: 'left' }}
                       >
-                        <span style={{ fontSize: 20 }}>📥</span> Apple / Outlook (.ics)
+                        <span style={{ fontSize: 20 }}>📥</span> {t.evenement.appleOutlook}
                       </button>
                     </div>
                   )}
@@ -1407,14 +1407,14 @@ function EvenementPageInner() {
 
             {enLigne && ev.lien && (
               <a href={ev.lien} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(45,158,107,0.1)', border: '1px solid rgba(45,158,107,0.3)', borderRadius: 12, padding: '12px 16px', textDecoration: 'none', color: '#2D9E6B', fontSize: 14, fontWeight: 'bold' }}>
-                <span style={{ fontSize: 20 }}>🌐</span>Rejoindre l'événement en ligne →
+                <span style={{ fontSize: 20 }}>🌐</span>{t.evenement.rejoindreEnLigne}
               </a>
             )}
           </div>
 
           {ev.description && (
             <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#1A1410' }}>À propos</h2>
+              <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#1A1410' }}>{t.evenement.aPropos}</h2>
               <p style={{ color: '#3D2B1F', lineHeight: 1.7, fontSize: 14, whiteSpace: 'pre-wrap' }}>{ev.description}</p>
             </div>
           )}

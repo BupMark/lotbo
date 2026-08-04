@@ -62,6 +62,11 @@
   },
   "evenement": {
     "voir": "Ver página →",
+    "calendrier": "Calendário",
+    "googleCalendar": "Google Calendar",
+    "appleOutlook": "Apple / Outlook (.ics)",
+    "rejoindreEnLigne": "Participar do evento online →",
+    "aPropos": "Sobre",
     "details": "Mais detalhes",
     "partager_whatsapp": "WhatsApp",
     "partager_facebook": "Facebook",
