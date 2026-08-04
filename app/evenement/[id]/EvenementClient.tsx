@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import CarteVisuelle from '../../../components/CarteVisuelle'
 import { attributerPoints } from '../../../lib/points'
 import { getEventImage } from '../../../lib/fallbackImages'
@@ -87,6 +87,8 @@ interface UserProfile {
   id: string
   nom: string
   photo_url: string | null
+  charte_contributeur: boolean
+  charte_acceptee: boolean
 }
 
 interface Evenement {
@@ -534,9 +536,10 @@ function CommentairesList({
 }
 
 // ── Page principale ───────────────────────────────────────────────────────────
-export default function EvenementPage() {
+function EvenementPageInner() {
   const { id }   = useParams()
   const router   = useRouter()
+  const searchParams = useSearchParams()
   const { langue } = useLangue()
   const t = getTraductions(langue)
   const [ev, setEv]                         = useState<Evenement | null>(null)
@@ -686,7 +689,7 @@ export default function EvenementPage() {
       setIsConnected(!!session?.user)
       if (session?.user?.id) {
         const { data: profil } = await supabase
-          .from('profiles').select('id, nom, photo_url, charte_contributeur, role').eq('id', session.user.id).single()
+          .from('profiles').select('id, nom, photo_url, charte_contributeur, charte_acceptee, role').eq('id', session.user.id).single()
         const role = profil?.role ?? session.user.user_metadata?.role
         setIsAdmin(role === 'admin' || role === 'admin_enqueteur')
         if (profil) {
@@ -694,6 +697,8 @@ export default function EvenementPage() {
             id: profil.id,
             nom: profil.nom || session.user.user_metadata?.full_name || session.user.email || 'Anonyme',
             photo_url: profil.photo_url ?? null,
+            charte_contributeur: !!profil.charte_contributeur,
+            charte_acceptee: !!profil.charte_acceptee,
           })
         }
         const { data: evOrg } = await supabase
@@ -735,6 +740,14 @@ export default function EvenementPage() {
     }
     enregistrerVue()
   }, [ev?.id])
+  useEffect(() => {
+    if (!ev || !userProfile) return
+    if (searchParams.get('ouvrirCorrection') === '1') {
+      setPropositionForm({ champ_modifie: 'titre', ancienne_valeur: ev?.titre || '', nouvelle_valeur: '' })
+      setPropositionModal(true)
+      router.replace(`/evenement/${ev.id}`)
+    }
+  }, [ev, userProfile])
 
   const handleLike = async () => {
     if (!id) return
@@ -943,30 +956,30 @@ export default function EvenementPage() {
           <div onClick={() => { setPropositionModal(false); setPropositionEnvoyee(false) }}
             style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
           <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#F7F2E8', borderTop: '1px solid #E8E0D0', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
-            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Proposer une correction</h3>
+            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>{t.evenement.proposition.titre}</h3>
             <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 20, lineHeight: 1.5 }}>
-              Ta proposition sera examinée avant publication. Merci de contribuer à la qualité des informations.
+              {t.evenement.proposition.description}
             </p>
             {propositionEnvoyee ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <p style={{ fontSize: 32, marginBottom: 12 }}>✅</p>
-                <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Proposition envoyée !</p>
-                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 20 }}>Elle sera examinée par notre équipe. Merci !</p>
+                <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>{t.evenement.proposition.envoyee}</p>
+                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 20 }}>{t.evenement.proposition.merci}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <button onClick={() => { setPropositionEnvoyee(false); setPropositionForm({ champ_modifie: 'titre', ancienne_valeur: ev?.titre || '', nouvelle_valeur: '' }) }}
                     style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>
-                    ✏️ Proposer une autre correction
+                    {t.evenement.proposition.proposerAutre}
                   </button>
                   <button onClick={() => { setPropositionModal(false); setPropositionEnvoyee(false) }}
                     style={{ background: 'transparent', color: '#8C5A40', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px' }}>
-                    Fermer
+                    {t.evenement.fermer}
                   </button>
                 </div>
               </div>
             ) : (
               <>
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Champ à modifier</label>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>{t.evenement.proposition.champAModifier}</label>
                   <select value={propositionForm.champ_modifie}
                     onChange={e => {
                       const champ = e.target.value
@@ -984,39 +997,39 @@ export default function EvenementPage() {
                       if (champ === 'image') setPropositionImageFile(null)
                     }}
                     style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%' }}>
-                    <option value="titre">Titre</option>
-                    <option value="lieu">Lieu</option>
-                    <option value="date">Date</option>
-                    <option value="description">Description</option>
-                    <option value="lien">Lien officiel</option>
-                    <option value="emplacement_pin">📍 Emplacement du pin sur la carte</option>
-                    <option value="image">🖼️ Image de l&apos;événement</option>
-                    <option value="categorie">🏷️ Catégorie</option>
-                    <option value="heure">🕐 Heure de début / fin</option>
-                    <option value="prix_acces">💰 Prix / Accès</option>
+                    <option value="titre">{t.evenement.proposition.champTitre}</option>
+                    <option value="lieu">{t.evenement.proposition.champLieu}</option>
+                    <option value="date">{t.evenement.proposition.champDate}</option>
+                    <option value="description">{t.evenement.proposition.champDescription}</option>
+                    <option value="lien">{t.evenement.proposition.champLien}</option>
+                    <option value="emplacement_pin">{t.evenement.proposition.champEmplacementPin}</option>
+                    <option value="image">{t.evenement.proposition.champImage}</option>
+                    <option value="categorie">{t.evenement.proposition.champCategorie}</option>
+                    <option value="heure">{t.evenement.proposition.champHeure}</option>
+                    <option value="prix_acces">{t.evenement.proposition.champPrixAcces}</option>
                   </select>
                 </div>
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Valeur actuelle</label>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>{t.evenement.proposition.valeurActuelle}</label>
                   <div style={{ background: 'rgba(26,20,16,0.04)', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#8C5A40', fontSize: 13 }}>
-                    {propositionForm.ancienne_valeur || '(vide)'}
+                    {propositionForm.ancienne_valeur || t.evenement.proposition.vide}
                   </div>
                 </div>
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>Valeur corrigée *</label>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>{t.evenement.proposition.valeurCorrigee}</label>
                   {propositionForm.champ_modifie === 'description' ? (
                     <textarea value={propositionForm.nouvelle_valeur}
                       onChange={e => setPropositionForm(f => ({ ...f, nouvelle_valeur: e.target.value }))}
-                      placeholder="Nouvelle valeur..." rows={4}
+                      placeholder={t.evenement.proposition.placeholderNouvelleValeur} rows={4}
                       style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%', resize: 'vertical', fontFamily: 'inherit' }} />
                   ) : propositionForm.champ_modifie === 'emplacement_pin' ? (
                     <div>
                       <p style={{ fontSize: 12, color: '#8C5A40', marginBottom: 8 }}>
-                        Coordonnées actuelles : {ev?.latitude?.toFixed(5)}, {ev?.longitude?.toFixed(5)}
+                        {t.evenement.proposition.coordonneesActuelles} {ev?.latitude?.toFixed(5)}, {ev?.longitude?.toFixed(5)}
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
                         <div>
-                          <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Latitude</label>
+                          <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>{t.evenement.proposition.latitude}</label>
                           <input type="number" step="0.00001" value={propositionLat}
                             onChange={e => { setPropositionLat(parseFloat(e.target.value)); setPropositionForm(f => ({ ...f, nouvelle_valeur: `${e.target.value},${propositionLng}` })) }}
                             style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }} />
@@ -1029,42 +1042,42 @@ export default function EvenementPage() {
                         </div>
                       </div>
                       <p style={{ fontSize: 11, color: '#8C5A40', fontStyle: 'italic' }}>
-                        💡 Cherche le lieu sur Google Maps → clic droit → &quot;Plus d&apos;infos sur cet endroit&quot; pour les coordonnées exactes.
+                        {t.evenement.proposition.aideCoordonnees}
                       </p>
                     </div>
                   ) : propositionForm.champ_modifie === 'image' ? (
                     <div>
                       <label style={{ display: 'block', background: 'white', border: '1px dashed #C8431A', borderRadius: 10, padding: '12px 16px', cursor: 'pointer', fontSize: 13, color: '#C8431A', fontWeight: 'bold', textAlign: 'center' as const }}>
-                        📷 {propositionImageFile ? propositionImageFile.name : 'Choisir une nouvelle image'}
+                        📷 {propositionImageFile ? propositionImageFile.name : t.evenement.proposition.choisirNouvelleImage}
                         <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
                           onChange={e => { const file = e.target.files?.[0]; if (!file) return; setPropositionImageFile(file); setPropositionForm(f => ({ ...f, nouvelle_valeur: file.name })) }} />
                       </label>
-                      {propositionImageFile && <p style={{ fontSize: 11, color: '#2D9E6B', marginTop: 6 }}>✅ Image sélectionnée : {propositionImageFile.name}</p>}
+                      {propositionImageFile && <p style={{ fontSize: 11, color: '#2D9E6B', marginTop: 6 }}>{t.evenement.proposition.imageSelectionnee} {propositionImageFile.name}</p>}
                     </div>
                   ) : propositionForm.champ_modifie === 'categorie' ? (
                     <select value={propositionForm.nouvelle_valeur}
                       onChange={e => setPropositionForm(f => ({ ...f, nouvelle_valeur: e.target.value }))}
                       style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#1A1410' }}>
-                      <option value="">Choisir une catégorie...</option>
-                      <option value="Festival">Festival</option>
-                      <option value="Concert/Spectacle">Concert / Spectacle</option>
-                      <option value="Conférence/Formation">Conférence / Formation</option>
-                      <option value="Foire/Exposition">Foire / Exposition</option>
-                      <option value="Tournoi/Compétition">Tournoi / Compétition</option>
-                      <option value="Célébration communautaire">Célébration communautaire</option>
-                      <option value="Culte/Assemblée">Culte / Assemblée</option>
-                      <option value="Autre">Autre</option>
+                      <option value="">{t.evenement.proposition.choisirCategorie}</option>
+                      <option value="Festival">{t.evenement.proposition.catFestival}</option>
+                      <option value="Concert/Spectacle">{t.evenement.proposition.catConcert}</option>
+                      <option value="Conférence/Formation">{t.evenement.proposition.catConference}</option>
+                      <option value="Foire/Exposition">{t.evenement.proposition.catFoire}</option>
+                      <option value="Tournoi/Compétition">{t.evenement.proposition.catTournoi}</option>
+                      <option value="Célébration communautaire">{t.evenement.proposition.catCelebration}</option>
+                      <option value="Culte/Assemblée">{t.evenement.proposition.catCulte}</option>
+                      <option value="Autre">{t.evenement.proposition.catAutre}</option>
                     </select>
                   ) : propositionForm.champ_modifie === 'heure' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       <div>
-                        <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Heure de début</label>
+                        <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>{t.evenement.proposition.heureDebut}</label>
                         <input type="time"
                           onChange={e => setPropositionForm(f => ({ ...f, nouvelle_valeur: `début:${e.target.value}${f.nouvelle_valeur.includes('fin:') ? ' ' + f.nouvelle_valeur.substring(f.nouvelle_valeur.indexOf('fin:')) : ''}` }))}
                           style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }} />
                       </div>
                       <div>
-                        <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Heure de fin</label>
+                        <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>{t.evenement.proposition.heureFin}</label>
                         <input type="time"
                           onChange={e => setPropositionForm(f => ({ ...f, nouvelle_valeur: f.nouvelle_valeur.replace(/ fin:.*$/, '') + ` fin:${e.target.value}` }))}
                           style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }} />
@@ -1077,7 +1090,7 @@ export default function EvenementPage() {
                           <button key={p} type="button"
                             onClick={() => setPropositionForm(f => ({ ...f, nouvelle_valeur: f.nouvelle_valeur.includes('prix:') ? f.nouvelle_valeur.replace(/prix:\w+/, `prix:${p}`) : `prix:${p} ${f.nouvelle_valeur}`.trim() }))}
                             style={{ flex: 1, padding: '10px 0', borderRadius: 8, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', background: propositionForm.nouvelle_valeur.includes(`prix:${p}`) ? '#C8431A' : 'white', color: propositionForm.nouvelle_valeur.includes(`prix:${p}`) ? 'white' : '#8C5A40', border: `1px solid ${propositionForm.nouvelle_valeur.includes(`prix:${p}`) ? '#C8431A' : '#E8E0D0'}` }}>
-                            {p === 'gratuit' ? '🎟️ Gratuit' : '💳 Payant'}
+                            {p === 'gratuit' ? t.evenement.proposition.gratuit : t.evenement.proposition.payant}
                           </button>
                         ))}
                       </div>
@@ -1086,7 +1099,7 @@ export default function EvenementPage() {
                           <button key={a} type="button"
                             onClick={() => setPropositionForm(f => ({ ...f, nouvelle_valeur: f.nouvelle_valeur.includes('acces:') ? f.nouvelle_valeur.replace(/acces:\w+/, `acces:${a}`) : `${f.nouvelle_valeur} acces:${a}`.trim() }))}
                             style={{ flex: 1, padding: '10px 0', borderRadius: 8, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', background: propositionForm.nouvelle_valeur.includes(`acces:${a}`) ? '#1A1410' : 'white', color: propositionForm.nouvelle_valeur.includes(`acces:${a}`) ? 'white' : '#8C5A40', border: `1px solid ${propositionForm.nouvelle_valeur.includes(`acces:${a}`) ? '#1A1410' : '#E8E0D0'}` }}>
-                            {a === 'public' ? '🌐 Public' : '🔒 Privé'}
+                            {a === 'public' ? t.evenement.proposition.public : t.evenement.proposition.prive}
                           </button>
                         ))}
                       </div>
@@ -1462,7 +1475,7 @@ export default function EvenementPage() {
               </button>
               {userProfile && (
                 <button onClick={() => {
-                    if (!(userProfile as any)?.charte_contributeur) {
+                    if (!userProfile?.charte_contributeur && !userProfile?.charte_acceptee) {
                       window.location.href = `/contributeur/charte?redirect=/evenement/${ev.id}`
                       return
                     }
@@ -1607,5 +1620,13 @@ export default function EvenementPage() {
         </div>{/* fin colonne droite */}
       </div>{/* fin grid 2 colonnes */}
     </main>
+  )
+}
+
+export default function EvenementPage() {
+  return (
+    <Suspense fallback={null}>
+      <EvenementPageInner />
+    </Suspense>
   )
 }

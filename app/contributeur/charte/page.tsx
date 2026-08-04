@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function CharteContributeur() {
+function CharteContributeurInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect')
   const [loading, setLoading] = useState(false)
   const [accepted, setAccepted] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -16,7 +18,6 @@ export default function CharteContributeur() {
       if (!session) { router.push('/login'); return }
       setUser(session.user)
 
-      // Vérifier si charte déjà acceptée
       const { data: profile } = await supabase
         .from('profiles')
         .select('charte_acceptee, role')
@@ -31,7 +32,6 @@ export default function CharteContributeur() {
     if (!accepted || !user) return
     setLoading(true)
 
-    // Upsert profil avec charte acceptée
     const now = new Date().toISOString()
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
@@ -44,7 +44,6 @@ export default function CharteContributeur() {
       updated_at:            now,
     })
 
-    // Promouvoir dans roles_actifs si pas déjà présent
     if (!error) {
       const { data: raRow } = await supabase
         .from('profiles')
@@ -62,7 +61,10 @@ export default function CharteContributeur() {
 
     setLoading(false)
     if (!error) {
-      router.push('/ajouter?contributeur=1')
+      const destination = redirectTo
+        ? `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}ouvrirCorrection=1`
+        : '/ajouter?contributeur=1'
+      router.push(destination)
     } else {
       alert('Erreur: ' + error.message)
     }
@@ -75,7 +77,7 @@ export default function CharteContributeur() {
           <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
           <h1 style={{ color: '#1A1410', fontSize: 22, fontWeight: 'bold', marginBottom: 8 }}>Charte déjà acceptée</h1>
           <p style={{ color: '#8C5A40', fontSize: 14, marginBottom: 24 }}>Tu es déjà Contributeur LOTBO. Tu peux publier des événements directement.</p>
-          <a href="/ajouter" style={{ background: '#C8431A', color: 'white', padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none' }}>
+          <a href={redirectTo || '/ajouter'} style={{ background: '#C8431A', color: 'white', padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 'bold', textDecoration: 'none' }}>
             + Ajouter un événement
           </a>
         </div>
@@ -87,7 +89,6 @@ export default function CharteContributeur() {
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', padding: '32px 16px' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
 
-        {/* Header */}
         <div style={{ marginBottom: 32 }}>
           <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none' }}>← Retour</a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, marginBottom: 8 }}>
@@ -99,7 +100,6 @@ export default function CharteContributeur() {
           </p>
         </div>
 
-        {/* Badge */}
         <div style={{ background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 12, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 28 }}>🏅</span>
           <div>
@@ -108,7 +108,6 @@ export default function CharteContributeur() {
           </div>
         </div>
 
-        {/* Charte */}
         <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: '24px', marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           <section>
@@ -184,7 +183,6 @@ export default function CharteContributeur() {
 
         </div>
 
-        {/* Acceptation */}
         <div style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '20px', marginBottom: 24 }}>
           <button type="button" onClick={() => setAccepted(!accepted)} style={{
             display: 'flex', alignItems: 'flex-start', gap: 12, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%'
@@ -203,7 +201,6 @@ export default function CharteContributeur() {
           </button>
         </div>
 
-        {/* Bouton */}
         <button
           onClick={handleAccepter}
           disabled={!accepted || loading}
@@ -223,5 +220,13 @@ export default function CharteContributeur() {
 
       </div>
     </main>
+  )
+}
+
+export default function CharteContributeur() {
+  return (
+    <Suspense fallback={null}>
+      <CharteContributeurInner />
+    </Suspense>
   )
 }
