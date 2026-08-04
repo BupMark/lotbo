@@ -109,6 +109,17 @@ export default function RootLayout({
                     .catch(function(err) {
                       console.log('SW erreur:', err);
                     });
+
+                  // Recharge automatiquement une seule fois quand un nouveau
+                  // Service Worker prend le contrôle (déploiement pendant que
+                  // l'onglet était déjà ouvert) — évite qu'un utilisateur reste
+                  // bloqué sur un ancien SW jusqu'à un rechargement manuel.
+                  var refreshing = false;
+                  navigator.serviceWorker.addEventListener('controllerchange', function() {
+                    if (refreshing) return;
+                    refreshing = true;
+                    window.location.reload();
+                  });
                 });
               }
             `,

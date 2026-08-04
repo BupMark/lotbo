@@ -91,13 +91,23 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 4. Navigation → network-first → cache → /offline.html
+  // Ne jamais intercepter les navigations en dev (localhost) — évite les
+  // interférences avec Turbopack/HMR qui peuvent perturber le fetch normal
+  if (self.location.hostname === 'localhost' && request.mode === 'navigate') {
+    return
+  }
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then(response => {
           if (response.ok) {
+            // Cloner immédiatement et synchrone — cloner dans un .then()
+            // non attendu crée une course avec la lecture du flux de la
+            // réponse par le navigateur, cause de "Response body is
+            // already used" observé en production
+            const responseClone = response.clone()
             caches.open(CACHE_PAGES).then(cache => {
-              cache.put(request, response.clone())
+              cache.put(request, responseClone)
               trimCache(CACHE_PAGES, MAX_PAGES)
             })
           }
