@@ -282,13 +282,6 @@
       "prochainBadge": "Next badge"
     }
   },
-  "tabbar": {
-    "carte": "Map",
-    "recherche": "Search",
-    "ajouter": "Add",
-    "community": "Together",
-    "profil": "Profile"
-  },
   "sidebar": {
     "alune": "Featured",
     "topvilles": "Top cities",
