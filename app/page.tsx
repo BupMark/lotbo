@@ -489,6 +489,13 @@ export default function Home() {
         ;(map.getSource('events') as mapboxgl.GeoJSONSource).setData(geojson)
         return
       }
+      // Verrou anti-concurrence : addLayers est async (charge des images
+      // de pins avant addSource) — si l'effet se redéclenche pendant qu'un
+      // appel précédent est encore en cours, getSource('events') ci-dessus
+      // renvoie encore false pour les deux appels, causant une double
+      // tentative d'addSource et l'erreur "already a source with ID events"
+      if ((window as any).__lotboAddLayersEnCours) return
+      ;(window as any).__lotboAddLayersEnCours = true
 
       // Charger les icônes SVG pin avant d'ajouter les layers
       const loadPin = (name: string, fill: string, w: number, h: number) =>
@@ -718,6 +725,7 @@ export default function Home() {
         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = '' })
       })
+      ;(window as any).__lotboAddLayersEnCours = false
     }
 
     if (map.isStyleLoaded()) {
