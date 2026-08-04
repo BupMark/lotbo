@@ -1128,7 +1128,7 @@ export default function EvenementPage() {
                     border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold',
                     cursor: propositionForm.nouvelle_valeur.trim() ? 'pointer' : 'not-allowed',
                   }}>
-                  Envoyer la proposition →
+                  {t.evenement.envoyerProposition}
                 </button>
               </>
             )}
@@ -1141,28 +1141,35 @@ export default function EvenementPage() {
           <div onClick={() => { setSignalementModal(false); setSignalementConfirmation(false); setRaisonSignalement(''); setErreurSignalement('') }}
             style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
           <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#F7F2E8', borderTop: '1px solid #E8E0D0', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
-            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Signaler cet événement</h3>
+            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>{t.evenement.signaler}</h3>
             {!signalementConfirmation ? (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {['Information incorrecte ou fausse date', 'Événement annulé non mis à jour', 'Contenu dangereux ou illégal', 'Spam ou doublon'].map(raison => (
-                    <button key={raison} onClick={() => setRaisonSignalement(raison)} style={{
+                  {[
+                    { code: 'info_incorrecte',    label: t.evenement.raisonInfoIncorrecte },
+                    { code: 'annule_non_maj',     label: t.evenement.raisonAnnuleNonMaj },
+                    { code: 'contenu_dangereux',  label: t.evenement.raisonContenuDangereux },
+                    { code: 'spam_doublon',       label: t.evenement.raisonSpamDoublon },
+                  ].map(r => (
+                    <button key={r.code} onClick={() => setRaisonSignalement(r.code)} style={{
                       padding: '12px 16px', borderRadius: 10, fontSize: 14, textAlign: 'left', cursor: 'pointer',
-                      background: raisonSignalement === raison ? 'rgba(200,67,26,0.15)' : 'white',
-                      border: raisonSignalement === raison ? '1px solid #C8431A' : '1px solid #E8E0D0',
+                      background: raisonSignalement === r.code ? 'rgba(200,67,26,0.15)' : 'white',
+                      border: raisonSignalement === r.code ? '1px solid #C8431A' : '1px solid #E8E0D0',
                       color: '#1A1410',
-                    }}>{raison}</button>
+                    }}>{r.label}</button>
                   ))}
                 </div>
                 <button onClick={() => setSignalementConfirmation(true)} disabled={!raisonSignalement}
                   style={{ width: '100%', padding: '13px', background: raisonSignalement ? '#C8431A' : 'rgba(255,255,255,0.04)', color: raisonSignalement ? '#F7F2E8' : '#555', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold', cursor: raisonSignalement ? 'pointer' : 'not-allowed' }}>
-                  Envoyer le signalement
+                  {t.evenement.envoyerSignalement}
                 </button>
               </>
             ) : (
               <>
                 <p style={{ color: '#1A1410', fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
-                  Confirmer le signalement pour : <strong style={{ color: '#C8431A' }}>{raisonSignalement}</strong> ?
+                  {t.evenement.confirmerSignalementPour} <strong style={{ color: '#C8431A' }}>{
+                    ({ info_incorrecte: t.evenement.raisonInfoIncorrecte, annule_non_maj: t.evenement.raisonAnnuleNonMaj, contenu_dangereux: t.evenement.raisonContenuDangereux, spam_doublon: t.evenement.raisonSpamDoublon } as Record<string, string>)[raisonSignalement] || raisonSignalement
+                  }</strong> ?
                 </p>
                 {erreurSignalement && (
                   <p style={{ color: '#C8431A', fontSize: 13, background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
@@ -1171,9 +1178,9 @@ export default function EvenementPage() {
                 )}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={() => { setSignalementConfirmation(false); setErreurSignalement('') }}
-                    style={{ flex: 1, background: 'white', border: '1px solid #E8E0D0', color: '#8C5A40', borderRadius: 10, padding: '12px', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}>Annuler</button>
+                    style={{ flex: 1, background: 'white', border: '1px solid #E8E0D0', color: '#8C5A40', borderRadius: 10, padding: '12px', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}>{t.evenement.annuler}</button>
                   <button onClick={handleSignalement}
-                    style={{ flex: 2, background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}>Confirmer le signalement</button>
+                    style={{ flex: 2, background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}>{t.evenement.confirmerSignalement}</button>
                 </div>
               </>
             )}
@@ -1186,26 +1193,26 @@ export default function EvenementPage() {
           <div onClick={() => { setClaimModal(false); setClaimEnvoye(false); setClaimMessage('') }}
             style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
           <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51, background: '#F7F2E8', borderTop: '1px solid #E8E0D0', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
-            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>{"C'est mon événement"}</h3>
+            <h3 style={{ color: '#1A1410', fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>{t.evenement.cestMonEvenement}</h3>
             <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 20, lineHeight: 1.5 }}>
-              Ta demande sera examinée par notre équipe. Si validée, tu deviendras propriétaire de cet événement.
+              {t.evenement.claimDescription}
             </p>
             {claimEnvoye ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <p style={{ fontSize: 32, marginBottom: 12 }}>✅</p>
-                <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>Demande envoyée !</p>
-                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 20 }}>Notre équipe va examiner ta réclamation. Merci !</p>
+                <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>{t.evenement.demandeEnvoyee}</p>
+                <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 20 }}>{t.evenement.claimMerci}</p>
                 <button onClick={() => { setClaimModal(false); setClaimEnvoye(false) }}
                   style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer' }}>
-                  Fermer
+                  {t.evenement.fermer}
                 </button>
               </div>
             ) : (
               <>
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>{"Explique pourquoi cet événement t'appartient (optionnel)"}</label>
+                  <label style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6, display: 'block' }}>{t.evenement.expliquePourquoi}</label>
                   <textarea value={claimMessage} onChange={e => setClaimMessage(e.target.value)}
-                    placeholder="Ex: Je suis l'organisateur, mon nom est dans la description..."
+                    placeholder={t.evenement.placeholderClaim}
                     rows={3} maxLength={300}
                     style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 10, padding: '10px 14px', color: '#1A1410', fontSize: 14, width: '100%', resize: 'vertical', fontFamily: 'inherit' }} />
                 </div>
@@ -1229,7 +1236,7 @@ export default function EvenementPage() {
                     setClaimLoading(false)
                   }}
                   style={{ width: '100%', padding: '13px', background: claimLoading ? 'rgba(26,20,16,0.1)' : '#C8431A', color: claimLoading ? '#8C5A40' : '#F7F2E8', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 'bold', cursor: claimLoading ? 'not-allowed' : 'pointer' }}>
-                  {claimLoading ? '...' : 'Envoyer ma réclamation →'}
+                  {claimLoading ? '...' : t.evenement.envoyerReclamation}
                 </button>
               </>
             )}
