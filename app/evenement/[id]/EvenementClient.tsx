@@ -6,19 +6,28 @@ import { useParams, useRouter } from 'next/navigation'
 import CarteVisuelle from '../../../components/CarteVisuelle'
 import { attributerPoints } from '../../../lib/points'
 import { getEventImage } from '../../../lib/fallbackImages'
+import { useLangue } from '../../../lib/useLangue'
+import { getTraductions, type Langue } from '../../../lib/i18n'
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function formatDate(dateStr: string): string {
+const MOIS_PAR_LANGUE: Record<Langue, string[]> = {
+  fr: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  es: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  pt: ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+  ht: ['janvye', 'fevriye', 'mas', 'avril', 'me', 'jen', 'jiyè', 'out', 'septanm', 'oktòb', 'novanm', 'desanm'],
+}
+function formatDate(dateStr: string, langue: Langue = 'fr'): string {
   if (!dateStr) return dateStr
   const [year, month, day] = dateStr.split('-')
-  const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+  const mois = MOIS_PAR_LANGUE[langue] || MOIS_PAR_LANGUE.fr
   return `${parseInt(day)} ${mois[parseInt(month) - 1]} ${year}`
 }
 
-function afficherPeriode(ev: { date?: string; date_fin?: string | null }): string {
-  if (ev.date_fin && ev.date_fin !== ev.date) return `${formatDate(ev.date || '')} → ${formatDate(ev.date_fin)}`
-  return formatDate(ev.date || '') || ev.date || ''
+function afficherPeriode(ev: { date?: string; date_fin?: string | null }, langue: Langue = 'fr'): string {
+  if (ev.date_fin && ev.date_fin !== ev.date) return `${formatDate(ev.date || '', langue)} → ${formatDate(ev.date_fin, langue)}`
+  return formatDate(ev.date || '', langue) || ev.date || ''
 }
 
 function estEnLigne(lieu: string): boolean {
@@ -31,7 +40,7 @@ function adresseIncomplete(ev: { latitude?: number | null; longitude?: number | 
   return !ev.latitude || !ev.longitude
 }
 
-function afficherHeureFuseau(heure: string, fuseauOrganisateur: string, dateEvenement?: string): string {
+function afficherHeureFuseau(heure: string, fuseauOrganisateur: string, dateEvenement: string | undefined, t: any): string {
   if (!heure) return heure
   try {
     const [h, m] = heure.split(':').map(Number)
@@ -55,7 +64,7 @@ function afficherHeureFuseau(heure: string, fuseauOrganisateur: string, dateEven
     const heureVisiteur = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: fuseauVisiteur, hour12: false }).format(instantReel)
 
     if (heureOrga === heureVisiteur) return heureOrga
-    return `${heureOrga} (heure locale) · Chez vous : ${heureVisiteur}`
+    return `${heureOrga} (${t.evenement.heureLocale}) · ${t.evenement.chezVous} : ${heureVisiteur}`
   } catch { return heure }
 }
 
@@ -528,6 +537,8 @@ function CommentairesList({
 export default function EvenementPage() {
   const { id }   = useParams()
   const router   = useRouter()
+  const { langue } = useLangue()
+  const t = getTraductions(langue)
   const [ev, setEv]                         = useState<Evenement | null>(null)
   const [loading, setLoading]               = useState(true)
   const [similaires, setSimilaires]         = useState<Evenement[]>([])
@@ -899,7 +910,7 @@ export default function EvenementPage() {
     a.click()
     URL.revokeObjectURL(url)
   }
-  const periodeAffichee = afficherPeriode(ev)
+  const periodeAffichee = afficherPeriode(ev, langue)
   const estMultiJours   = ev.date_fin && ev.date_fin !== ev.date
   const enLigne         = estEnLigne(ev.lieu || '')
   const sansCoordonnes  = adresseIncomplete(ev)
@@ -1301,8 +1312,8 @@ export default function EvenementPage() {
             {ev.heure_debut && (
               <p style={{ color: '#8C5A40', fontSize: 15 }}>
                 🕐 <span style={{ color: '#1A1410' }}>
-                  {afficherHeureFuseau(ev.heure_debut, ev.fuseau_organisateur || 'America/Port-au-Prince', ev.date)}
-                  {ev.heure_fin ? ` → ${afficherHeureFuseau(ev.heure_fin, ev.fuseau_organisateur || 'America/Port-au-Prince', ev.date)}` : ''}
+                  {afficherHeureFuseau(ev.heure_debut, ev.fuseau_organisateur || 'America/Port-au-Prince', ev.date, t)}
+                  {ev.heure_fin ? ` → ${afficherHeureFuseau(ev.heure_fin, ev.fuseau_organisateur || 'America/Port-au-Prince', ev.date, t)}` : ''}
                 </span>
               </p>
             )}
@@ -1577,7 +1588,7 @@ export default function EvenementPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sim.titre}</p>
                       <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>{estEnLigne(sim.lieu || '') ? '🌐' : '📍'} {sim.lieu}</p>
-                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {afficherPeriode(sim)}</p>
+                      <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 6 }}>📅 {afficherPeriode(sim, langue)}</p>
                       <span style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>{sim.categorie}</span>
                     </div>
                   </a>

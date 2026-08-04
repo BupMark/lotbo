@@ -67,7 +67,9 @@
     "partager_facebook": "Facebook",
     "similaires": "Eventos similares",
     "signaler": "Reportar este evento",
-    "retour": "Voltar ao mapa"
+    "retour": "Voltar ao mapa",
+    "heureLocale": "horário local",
+    "chezVous": "Seu horário"
   },
   "ajouter": {
     "retourCarte": "← Voltar ao mapa",

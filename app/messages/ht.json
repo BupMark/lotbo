@@ -67,7 +67,9 @@
     "partager_facebook": "Facebook",
     "similaires": "Evènman ki sanble",
     "signaler": "Rapòte evènman sa",
-    "retour": "Retounen nan kat la"
+    "retour": "Retounen nan kat la",
+    "heureLocale": "lè lokal",
+    "chezVous": "Lè ou"
   },
   "ajouter": {
     "retourCarte": "← Retounen nan kat la",

@@ -67,7 +67,9 @@
     "partager_facebook": "Facebook",
     "similaires": "Similar events",
     "signaler": "Report this event",
-    "retour": "Back to map"
+    "retour": "Back to map",
+    "heureLocale": "local time",
+    "chezVous": "Your time"
   },
   "ajouter": {
     "retourCarte": "← Back to map",
