@@ -208,6 +208,7 @@ function CommentaireForm({
   parentAuthorUserId,
   evenementTitre,
   evenementUserId,
+  t,
 }: {
   evenementId: string
   parentId?: string
@@ -219,6 +220,7 @@ function CommentaireForm({
   parentAuthorUserId?: string | null
   evenementTitre?: string
   evenementUserId?: string | null
+  t: any
 }) {
   const [contenu, setContenu] = useState('')
   const [loading, setLoading] = useState(false)
@@ -233,13 +235,13 @@ function CommentaireForm({
         justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
       }}>
         <span style={{ color: '#8C5A40', fontSize: 13 }}>
-          {parentId ? 'Connecte-toi pour répondre.' : 'Connecte-toi pour laisser un commentaire.'}
+          {parentId ? t.evenement.connecteToiRepondre : t.evenement.connecteToiCommenter}
         </span>
         <a href="/login" style={{
           background: '#C8431A', color: 'white', padding: '8px 16px',
           borderRadius: 8, fontSize: 13, fontWeight: 'bold', textDecoration: 'none', whiteSpace: 'nowrap',
         }}>
-          Se connecter
+          {t.evenement.seConnecter}
         </a>
       </div>
     )
@@ -333,7 +335,7 @@ function CommentaireForm({
         <textarea
           value={contenu}
           onChange={e => setContenu(e.target.value)}
-          placeholder={placeholder || 'Laisse un commentaire...'}
+          placeholder={placeholder || t.evenement.placeholderCommentaire}
           maxLength={500}
           rows={compact ? 2 : 3}
           required
@@ -341,13 +343,13 @@ function CommentaireForm({
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           {envoye
-            ? <p style={{ color: '#2D9E6B', fontSize: 13 }}>✓ {parentId ? 'Réponse ajoutée !' : 'Commentaire ajouté !'}</p>
+            ? <p style={{ color: '#2D9E6B', fontSize: 13 }}>✓ {parentId ? t.evenement.reponseAjoutee : t.evenement.commentaireAjoute}</p>
             : <div />
           }
           <div style={{ display: 'flex', gap: 8 }}>
             {onCancel && (
               <button type="button" onClick={onCancel} style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 13, cursor: 'pointer', padding: '8px 12px' }}>
-                Annuler
+                {t.evenement.annuler}
               </button>
             )}
             <button type="submit" disabled={loading} style={{
@@ -357,7 +359,7 @@ function CommentaireForm({
               borderRadius: 10, border: 'none', fontSize: 13,
               cursor: loading ? 'not-allowed' : 'pointer',
             }}>
-              {loading ? '...' : parentId ? 'Répondre →' : 'Commenter →'}
+              {loading ? '...' : parentId ? t.evenement.repondreBouton : t.evenement.commenterBouton}
             </button>
           </div>
         </div>
@@ -374,6 +376,7 @@ function CarteCommentaire({
   estReponse,
   userProfile,
   evenementTitre,
+  t,
 }: {
   commentaire: Commentaire
   evenementId: string
@@ -381,6 +384,7 @@ function CarteCommentaire({
   estReponse?: boolean
   userProfile: UserProfile | null
   evenementTitre?: string
+  t: any
 }) {
   const [showRepondre, setShowRepondre] = useState(false)
 
@@ -434,6 +438,7 @@ function CarteCommentaire({
                 userProfile={userProfile}
                 parentAuthorUserId={commentaire.user_id}
                 evenementTitre={evenementTitre}
+                t={t}
                 onNouveau={(reponse) => {
                   onNouvelleReponse(commentaire.id, reponse)
                   setShowRepondre(false)
@@ -456,6 +461,7 @@ function CarteCommentaire({
               onNouvelleReponse={onNouvelleReponse}
               userProfile={userProfile}
               evenementTitre={evenementTitre}
+              t={t}
               estReponse
             />
           ))}
@@ -472,12 +478,14 @@ function CommentairesList({
   onNouvelleReponse,
   userProfile,
   evenementTitre,
+  t,
 }: {
   commentaires: Commentaire[]
   evenementId: string
   onNouvelleReponse: (parentId: string, reponse: Commentaire) => void
   userProfile: UserProfile | null
   evenementTitre?: string
+  t: any
 }) {
   const [tri, setTri]         = useState<'recent' | 'likes'>('recent')
   const [nbVisible, setNbVisible] = useState(COMMENTS_PER_PAGE)
@@ -490,22 +498,22 @@ function CommentairesList({
   const visibles = tries.slice(0, nbVisible)
 
   if (racines.length === 0) {
-    return <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Aucun commentaire. Sois le premier à commenter !</p>
+    return <p style={{ color: '#8C5A40', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>{t.evenement.aucunCommentaire}</p>
   }
 
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {[{ key: 'recent', label: '🕐 Plus récents' }, { key: 'likes', label: '❤️ Plus likés' }].map(t => (
-          <button key={t.key} onClick={() => setTri(t.key as 'recent' | 'likes')} style={{
+        {[{ key: 'recent', label: t.evenement.plusRecents }, { key: 'likes', label: t.evenement.plusLikes }].map(opt => (
+          <button key={opt.key} onClick={() => setTri(opt.key as 'recent' | 'likes')} style={{
             padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 'bold',
             border: 'none', cursor: 'pointer',
-            background: tri === t.key ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
-            color: tri === t.key ? '#C8431A' : '#8C5A40',
-          }}>{t.label}</button>
+            background: tri === opt.key ? 'rgba(200,67,26,0.15)' : 'rgba(255,255,255,0.04)',
+            color: tri === opt.key ? '#C8431A' : '#8C5A40',
+          }}>{opt.label}</button>
         ))}
         <span style={{ color: '#555', fontSize: 12, marginLeft: 'auto', alignSelf: 'center' }}>
-          {racines.length} commentaire{racines.length > 1 ? 's' : ''}
+          {racines.length} {racines.length > 1 ? t.evenement.commentairePluriel : t.evenement.commentaireSingulier}
         </span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -517,6 +525,7 @@ function CommentairesList({
             onNouvelleReponse={onNouvelleReponse}
             userProfile={userProfile}
             evenementTitre={evenementTitre}
+            t={t}
           />
         ))}
       </div>
@@ -528,7 +537,7 @@ function CommentairesList({
           padding: '12px', fontSize: 13, color: '#8C5A40',
           cursor: 'pointer', fontWeight: 'bold',
         }}>
-          Voir plus ({racines.length - nbVisible} restants)
+          {t.evenement.voirPlusRestants.replace('{n}', String(racines.length - nbVisible))}
         </button>
       )}
     </div>
@@ -1530,6 +1539,7 @@ function EvenementPageInner() {
               evenementTitre={ev.titre}
               evenementUserId={ev.user_id}
               onNouveau={(c) => setCommentaires(prev => [{ ...c, reponses: [], reactions: {} }, ...prev])}
+              t={t}
             />
             <CommentairesList
               commentaires={commentaires}
@@ -1537,6 +1547,7 @@ function EvenementPageInner() {
               onNouvelleReponse={handleNouvelleReponse}
               userProfile={userProfile}
               evenementTitre={ev.titre}
+              t={t}
             />
           </div>
 
