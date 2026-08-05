@@ -32,10 +32,22 @@ function CharteContributeurInner() {
     if (!accepted || !user) return
     setLoading(true)
 
+    // Upsert profil avec charte acceptée — ne jamais écraser un rôle
+    // existant plus élevé (admin, admin_enqueteur) : ce flux ne doit
+    // que PROMOUVOIR vers contributeur, jamais rétrograder un admin
     const now = new Date().toISOString()
+    const { data: profilActuel } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    const rolesProteges = ['admin', 'admin_enqueteur']
+    const nouveauRole = profilActuel?.role && rolesProteges.includes(profilActuel.role)
+      ? profilActuel.role
+      : 'contributeur'
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
-      role: 'contributeur',
+      role: nouveauRole,
       charte_acceptee:       true,
       charte_acceptee_le:    now,
       charte_contributeur:   true,
