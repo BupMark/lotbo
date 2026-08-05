@@ -423,7 +423,7 @@ function CarteCommentaire({
               onClick={() => setShowRepondre(true)}
               style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4 }}
             >
-              💬 Répondre
+              {t.evenement.repondreOuvrir}
               {commentaire.reponses && commentaire.reponses.length > 0 && (
                 <span style={{ background: 'rgba(200,67,26,0.1)', color: '#C8431A', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 'bold' }}>
                   {commentaire.reponses.length}
@@ -444,7 +444,7 @@ function CarteCommentaire({
                   setShowRepondre(false)
                 }}
                 onCancel={() => setShowRepondre(false)}
-                placeholder={`Répondre à ${commentaire.auteur}...`}
+                placeholder={t.evenement.placeholderRepondreA.replace('{nom}', commentaire.auteur)}
                 compact
               />
             </div>

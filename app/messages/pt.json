@@ -73,6 +73,8 @@
     "reponseAjoutee": "Resposta adicionada!",
     "commentaireAjoute": "Comentário adicionado!",
     "repondreBouton": "Responder →",
+    "repondreOuvrir": "💬 Responder",
+    "placeholderRepondreA": "Responder a {nom}...",
     "commenterBouton": "Comentar →",
     "aucunCommentaire": "Ainda sem comentários. Seja o primeiro a comentar!",
     "plusRecents": "🕐 Mais recentes",
