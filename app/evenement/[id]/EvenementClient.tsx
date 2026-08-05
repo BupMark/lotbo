@@ -833,8 +833,8 @@ function EvenementPageInner() {
   if (!ev) return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8' }} className="flex items-center justify-center">
       <div style={{ textAlign: 'center' }}>
-        <p style={{ color: '#8C5A40', marginBottom: 16 }}>Événement introuvable.</p>
-        <button onClick={() => router.push('/')} style={{ background: '#C8431A', color: '#F7F2E8', padding: '10px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 14 }}>Retour à la carte</button>
+        <p style={{ color: '#8C5A40', marginBottom: 16 }}>{t.evenement.evenementIntrouvable}</p>
+        <button onClick={() => router.push('/')} style={{ background: '#C8431A', color: '#F7F2E8', padding: '10px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 14 }}>{t.evenement.retour}</button>
       </div>
     </main>
   )
@@ -1035,7 +1035,7 @@ function EvenementPageInner() {
                             style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }} />
                         </div>
                         <div>
-                          <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>Longitude</label>
+                          <label style={{ fontSize: 11, color: '#8C5A40', display: 'block', marginBottom: 4 }}>{t.evenement.proposition.longitude}</label>
                           <input type="number" step="0.00001" value={propositionLng}
                             onChange={e => { setPropositionLng(parseFloat(e.target.value)); setPropositionForm(f => ({ ...f, nouvelle_valeur: `${propositionLat},${e.target.value}` })) }}
                             style={{ width: '100%', background: 'white', border: '1px solid #E8E0D0', borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' as const }} />
@@ -1581,16 +1581,16 @@ function EvenementPageInner() {
 
           {!isConnected && (
             <div style={{ background: '#1A1410', borderRadius: 16, padding: '20px 16px', marginBottom: 24 }}>
-              <p style={{ color: '#F7F2E8', fontSize: 15, fontWeight: 'bold', marginBottom: 6 }}>Vous aimez cet événement ?</p>
+              <p style={{ color: '#F7F2E8', fontSize: 15, fontWeight: 'bold', marginBottom: 6 }}>{t.evenement.connecteToiTitre2}</p>
               <p style={{ color: 'rgba(247,242,232,0.65)', fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
-                Connectez-vous pour dire <strong style={{ color: '#F7F2E8' }}>Je serai là</strong> et partager cet événement avec vos amis.
+                {t.evenement.connecteToiDesc2.split('{jeSeraisLa}')[0]}<strong style={{ color: '#F7F2E8' }}>{t.evenement.jeSeraiLaCourt}</strong>{t.evenement.connecteToiDesc2.split('{jeSeraisLa}')[1]}
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <a href="/login" style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: '#F7F2E8', borderRadius: 999, padding: '10px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
-                  Se connecter
+                  {t.evenement.seConnecter}
                 </a>
                 <a href="/login?mode=inscription" style={{ flex: 1, background: '#C8431A', color: '#F7F2E8', borderRadius: 999, padding: '10px 0', fontSize: 13, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>
-                  Créer un compte
+                  {t.evenement.creerCompte}
                 </a>
               </div>
             </div>
@@ -1598,7 +1598,7 @@ function EvenementPageInner() {
 
           {similaires.length > 0 && (
             <div>
-              <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1A1410' }}>Événements similaires</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1A1410' }}>{t.evenement.similaires}</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {similaires.map(sim => (
                   <a href={'/evenement/' + sim.id} key={sim.id} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 12, textDecoration: 'none', color: '#1A1410' }}>
