@@ -530,6 +530,7 @@
     "parametres": {
       "infosPersoTitre": "👤 Enfòmasyon pèsonèl",
       "nomAffiche": "Non ki afiche",
+      "placeholderPrenom": "Prenon ou ti non ou",
       "email": "Imèl",
       "emailNonModifiable": "Imèl la pa ka modifye isit la",
       "enregistrerNom": "Anrejistre non an",
@@ -578,7 +579,9 @@
       "scanPublie": "Scan & Pibliye",
       "scanPublieDesc": "Rezilta soumisyon Scan & Pibliye ou yo",
       "evenementModifie": "Chanjman evènman",
-      "evenementModifieDesc": "Chanjman sou evènman favori ou yo"
+      "evenementModifieDesc": "Chanjman sou evènman favori ou yo",
+      "analyticsAnonymises": "Analitik anonim",
+      "analyticsDesc": "Ede amelyore LOTBO · pa gen idantifyan pèsonèl"
     },
     "badges": {
       "titreEngage": "⭐ Badj Kontribitè",

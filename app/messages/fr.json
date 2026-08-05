@@ -530,6 +530,7 @@
     "parametres": {
       "infosPersoTitre": "👤 Informations personnelles",
       "nomAffiche": "Nom affiché",
+      "placeholderPrenom": "Ton prénom ou pseudo",
       "email": "Email",
       "emailNonModifiable": "L'email ne peut pas être modifié ici",
       "enregistrerNom": "Enregistrer le nom",
@@ -578,7 +579,9 @@
       "scanPublie": "Scan & Publie",
       "scanPublieDesc": "Résultat de tes soumissions Scan & Publie",
       "evenementModifie": "Modifications d'événements",
-      "evenementModifieDesc": "Changements sur tes événements favoris"
+      "evenementModifieDesc": "Changements sur tes événements favoris",
+      "analyticsAnonymises": "Analytics anonymisés",
+      "analyticsDesc": "Aide à améliorer LOTBO · aucun identifiant personnel"
     },
     "badges": {
       "titreEngage": "⭐ Badges Engagé",

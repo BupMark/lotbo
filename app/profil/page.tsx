@@ -411,7 +411,7 @@ function ProfilInner() {
                   {/* Nom modifiable */}
                   {editNom ? (
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                      <input value={nomInput} onChange={e => setNomInput(e.target.value)} maxLength={40} placeholder="Ton prénom ou pseudo" autoFocus
+                      <input value={nomInput} onChange={e => setNomInput(e.target.value)} maxLength={40} placeholder={t.profil.parametres.placeholderPrenom} autoFocus
                         style={{ background: 'white', border: '1px solid #C8431A', borderRadius: 8, padding: '6px 12px', color: '#1A1410', fontSize: 15, outline: 'none', flex: 1 }}
                         onKeyDown={e => { if (e.key === 'Enter') handleSaveNom() }} />
                       <button onClick={handleSaveNom} disabled={savingNom} style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>{savingNom ? '...' : 'Enregistrer'}</button>
@@ -1031,8 +1031,8 @@ function ProfilInner() {
                         style={{ marginTop: 2, accentColor: '#C8431A', width: 16, height: 16, flexShrink: 0 }}
                       />
                       <div>
-                        <p style={{ fontSize: 13, color: '#1A1410', fontWeight: 'bold', lineHeight: 1.4 }}>Analytics anonymisés</p>
-                        <p style={{ fontSize: 11, color: '#8C5A40', lineHeight: 1.4 }}>Aide à améliorer LOTBO · aucun identifiant personnel</p>
+                        <p style={{ fontSize: 13, color: '#1A1410', fontWeight: 'bold', lineHeight: 1.4 }}>{t.profil.notifications.analyticsAnonymises}</p>
+                        <p style={{ fontSize: 11, color: '#8C5A40', lineHeight: 1.4 }}>{t.profil.notifications.analyticsDesc}</p>
                       </div>
                     </label>
 
