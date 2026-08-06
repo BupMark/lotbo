@@ -65,7 +65,10 @@ function parseJsonLd(html: string): EventJsonLd | null {
 
 async function geocode(address: string): Promise<{ longitude: number; latitude: number } | null> {
   try {
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&limit=1`
+    // country=ci — sans ce biais, une adresse ambiguë/vague peut matcher
+    // n'importe où dans le monde (déjà vu historiquement pour Haïti,
+    // reproduit ici : événements ivoiriens géolocalisés en Allemagne/Algérie)
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&country=ci&limit=1`
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
     const data = await res.json()
     if (data.features && data.features.length > 0) {
