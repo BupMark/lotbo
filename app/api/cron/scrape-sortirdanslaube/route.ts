@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { verifierDoublon, estSourceBloquee } from '../../../../lib/deduplication'
 import { normaliserVille } from '../../../../lib/normalisation'
 
@@ -10,6 +10,10 @@ const HEADERS = {
 }
 
 const NB_PAGES = 2
+// Nombre d'événements traités en parallèle par lot — équilibre entre
+// vitesse (éviter le séquentiel qui cause les 504) et politesse envers
+// le site source (éviter de le marteler avec trop de requêtes simultanées)
+const CONCURRENCE = 10
 
 const CATEGORIE_MAP: Record<string, string> = {
   cine_spectacle_theatre: 'Concert / Spectacle',
@@ -43,8 +47,7 @@ interface EventBrut {
 function parseDateTexte(dateTexte: string, anneePubli: number): { debut: string; fin: string | null } | null {
   const nettoye = dateTexte.trim().replace(/1er/g, '1')
 
-  // Cas "Du J1 mois1 au J2 mois2"
-  let m = nettoye.match(/Du (\d{1,2}) (\w+) au (\d{1,2}) (\w+)/i)
+  let m = nettoye.match(/Du (\d{1,2}) ([a-zàâäéèêëîïôöùûüÿçœ]+) au (\d{1,2}) ([a-zàâäéèêëîïôöùûüÿçœ]+)/i)
   if (m) {
     const [, j1, mo1, j2, mo2] = m
     const mois1 = MOIS_FR[mo1.toLowerCase()]
@@ -59,8 +62,7 @@ function parseDateTexte(dateTexte: string, anneePubli: number): { debut: string;
     }
   }
 
-  // Cas "Du J1 au J2 mois" (même mois)
-  m = nettoye.match(/Du (\d{1,2}) au (\d{1,2}) (\w+)/i)
+  m = nettoye.match(/Du (\d{1,2}) au (\d{1,2}) ([a-zàâäéèêëîïôöùûüÿçœ]+)/i)
   if (m) {
     const [, j1, j2, mo] = m
     const mois = MOIS_FR[mo.toLowerCase()]
@@ -72,8 +74,7 @@ function parseDateTexte(dateTexte: string, anneePubli: number): { debut: string;
     }
   }
 
-  // Cas "Le J mois"
-  m = nettoye.match(/Le (\d{1,2}) (\w+)/i)
+  m = nettoye.match(/Le (\d{1,2}) ([a-zàâäéèêëîïôöùûüÿçœ]+)/i)
   if (m) {
     const [, j, mo] = m
     const mois = MOIS_FR[mo.toLowerCase()]
@@ -150,6 +151,105 @@ async function recupererCoordonnees(lieuSlug: string, cache: Map<string, { lat: 
   }
 }
 
+interface Compteurs {
+  imported: number
+  skipped: number
+  skipRapide: number
+  skipDate: number
+  skipCoords: number
+  doublons: number
+  errors: number
+  tempsAnneePubli: number
+  nbAnneePubli: number
+  tempsCoords: number
+  nbCoords: number
+}
+
+async function traiterEvenement(
+  ev: EventBrut,
+  admin: SupabaseClient,
+  setExistants: Set<string>,
+  cacheLieux: Map<string, { lat: number; lng: number } | null>,
+  compteurs: Compteurs,
+  anomaliesAnnee: string[]
+): Promise<void> {
+  const sourceId = `sortirdanslaube-${ev.slug}`
+
+  if (setExistants.has(sourceId)) { compteurs.skipped++; compteurs.skipRapide++; return }
+
+  const bloquee = await estSourceBloquee(admin, 'sortirdanslaube', sourceId)
+  if (bloquee) { compteurs.skipped++; return }
+
+  // recupererAnneePublication et recupererCoordonnees sont deux fetchs
+  // indépendants (l'un ne dépend pas du résultat de l'autre) — lancés
+  // en parallèle plutôt qu'en séquence, ça divise leur coût combiné
+  // par ~2 pour cet événement précis
+  const t1 = Date.now()
+  const [anneePubli, coords] = await Promise.all([
+    recupererAnneePublication(ev.ficheUrl),
+    recupererCoordonnees(ev.lieuSlug, cacheLieux),
+  ])
+  const dt = Date.now() - t1
+  compteurs.tempsAnneePubli += dt
+  compteurs.nbAnneePubli++
+  compteurs.tempsCoords += dt
+  compteurs.nbCoords++
+
+  const dates = parseDateTexte(ev.dateTexte, anneePubli)
+  if (!dates) { compteurs.skipped++; compteurs.skipDate++; return }
+
+  const moisEvenement = parseInt(dates.debut.split('-')[1])
+  const moisPubli = new Date().getMonth() + 1
+  if (Math.abs(moisEvenement - moisPubli) > 5) {
+    anomaliesAnnee.push(`${ev.titre} (${dates.debut})`)
+  }
+
+  if (!coords) { compteurs.skipped++; compteurs.skipCoords++; return }
+
+  const ville = normaliserVille(ev.lieuNom)
+
+  const dedup = await verifierDoublon(admin, {
+    titre: ev.titre,
+    date: dates.debut,
+    latitude: coords.lat,
+    longitude: coords.lng,
+    source_id: sourceId,
+  })
+  if (dedup.estDoublon) { compteurs.doublons++; return }
+
+  const categoriePrincipale = ev.categories[0]
+    ? (CATEGORIE_MAP[ev.categories[0]] || 'Célébration communautaire')
+    : 'Célébration communautaire'
+
+  const { error } = await admin.from('evenements').insert([{
+    titre: ev.titre,
+    lieu: ville,
+    ville,
+    pays: 'France',
+    date: dates.debut,
+    date_debut: dates.debut,
+    date_fin: dates.fin,
+    categorie: categoriePrincipale,
+    latitude: coords.lat,
+    longitude: coords.lng,
+    prix: 'payant',
+    acces: 'public',
+    statut: 'approuve',
+    visibilite: 'public',
+    source: 'sortirdanslaube',
+    source_id: sourceId,
+    lien: ev.ficheUrl,
+  }])
+
+  if (error) {
+    console.error('[SortirDansLAube] insert error:', error.message, '—', ev.titre, '—', sourceId)
+    compteurs.errors++
+  } else {
+    compteurs.imported++
+    setExistants.add(sourceId)
+  }
+}
+
 export async function GET(request: Request) {
   const secret = request.headers.get('x-internal-secret')
   if (secret !== process.env.INTERNAL_API_SECRET) {
@@ -161,14 +261,21 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  let imported = 0
-  let skipped = 0
-  let doublons = 0
-  let errors = 0
+  const compteurs: Compteurs = {
+    imported: 0, skipped: 0, skipRapide: 0, skipDate: 0, skipCoords: 0,
+    doublons: 0, errors: 0,
+    tempsAnneePubli: 0, nbAnneePubli: 0, tempsCoords: 0, nbCoords: 0,
+  }
   const anomaliesAnnee: string[] = []
   const cacheLieux = new Map<string, { lat: number; lng: number } | null>()
 
   try {
+    const { data: existants } = await admin
+      .from('evenements')
+      .select('source_id')
+      .eq('source', 'sortirdanslaube')
+    const setExistants = new Set((existants || []).map(e => e.source_id).filter(Boolean))
+
     for (let page = 1; page <= NB_PAGES; page++) {
       const url = page === 1
         ? 'https://sortirdanslaube.com/evenements/'
@@ -180,75 +287,30 @@ export async function GET(request: Request) {
       const events = parseListePage(html)
       if (events.length === 0) break
 
-      for (const ev of events) {
-        const sourceId = `sortirdanslaube-${ev.slug}`
-
-        const bloquee = await estSourceBloquee(admin, 'sortirdanslaube', sourceId)
-        if (bloquee) { skipped++; continue }
-
-        const { data: existing } = await admin
-          .from('evenements').select('id').eq('source_id', sourceId).maybeSingle()
-        if (existing) { skipped++; continue }
-
-        const anneePubli = await recupererAnneePublication(ev.ficheUrl)
-        const dates = parseDateTexte(ev.dateTexte, anneePubli)
-        if (!dates) { skipped++; continue }
-
-        // Garde-fou : signale les cas où le mois de l'événement est très
-        // éloigné du mois de publication (risque d'année mal déduite)
-        const moisEvenement = parseInt(dates.debut.split('-')[1])
-        const moisPubli = new Date().getMonth() + 1
-        if (Math.abs(moisEvenement - moisPubli) > 5) {
-          anomaliesAnnee.push(`${ev.titre} (${dates.debut})`)
-        }
-
-        const coords = await recupererCoordonnees(ev.lieuSlug, cacheLieux)
-        if (!coords) { skipped++; continue }
-
-        const ville = normaliserVille(ev.lieuNom)
-
-        const dedup = await verifierDoublon(admin, {
-          titre: ev.titre,
-          date: dates.debut,
-          latitude: coords.lat,
-          longitude: coords.lng,
-          source_id: sourceId,
-        })
-        if (dedup.estDoublon) { doublons++; continue }
-
-        const categoriePrincipale = ev.categories[0]
-          ? (CATEGORIE_MAP[ev.categories[0]] || 'Célébration communautaire')
-          : 'Célébration communautaire'
-
-        const { error } = await admin.from('evenements').insert([{
-          titre: ev.titre,
-          lieu: ville,
-          ville,
-          pays: 'France',
-          date: dates.debut,
-          date_debut: dates.debut,
-          date_fin: dates.fin,
-          categorie: categoriePrincipale,
-          latitude: coords.lat,
-          longitude: coords.lng,
-          prix: 'payant',
-          acces: 'public',
-          statut: 'approuve',
-          visibilite: 'public',
-          source: 'sortirdanslaube',
-          source_id: sourceId,
-          lien: ev.ficheUrl,
-        }])
-
-        if (error) { errors++ } else { imported++ }
-
-        await new Promise(r => setTimeout(r, 100))
+      // Traitement par lots de CONCURRENCE événements en parallèle,
+      // plutôt qu'un par un — c'est ce qui règle le dépassement du
+      // maxDuration=60s observé en production
+      for (let i = 0; i < events.length; i += CONCURRENCE) {
+        const lot = events.slice(i, i + CONCURRENCE)
+        await Promise.all(lot.map(ev => traiterEvenement(ev, admin, setExistants, cacheLieux, compteurs, anomaliesAnnee)))
       }
     }
 
+    console.log('[SortirDansLAube] INSTRUMENTATION', JSON.stringify(compteurs))
     return NextResponse.json({
-      success: true, imported, skipped, doublons, errors,
+      success: true,
+      imported: compteurs.imported,
+      skipped: compteurs.skipped,
+      skipRapide: compteurs.skipRapide,
+      skipDate: compteurs.skipDate,
+      skipCoords: compteurs.skipCoords,
+      doublons: compteurs.doublons,
+      errors: compteurs.errors,
       anomalies_annee: anomaliesAnnee,
+      instrumentation: {
+        tempsAnneePubliMs: compteurs.tempsAnneePubli, nbAnneePubli: compteurs.nbAnneePubli,
+        tempsCoordsMs: compteurs.tempsCoords, nbCoords: compteurs.nbCoords,
+      },
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
