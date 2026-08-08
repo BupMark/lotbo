@@ -29,6 +29,7 @@ interface EvenementVitrine {
   titre: string
   lieu: string
   date_debut: string | null
+  date_fin: string | null
   date: string
   categorie: string
   prix: string
@@ -37,6 +38,11 @@ interface EvenementVitrine {
 
 function getInitiales(nom: string): string {
   return nom.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'OR'
+}
+
+function estEvenementPasse(ev: { date_debut: string | null; date_fin: string | null; date: string }, aujourdhui: string): boolean {
+  const fin = ev.date_fin ?? ev.date_debut ?? ev.date
+  return fin < aujourdhui
 }
 
 export default function PageOrganisation() {
@@ -58,6 +64,11 @@ export default function PageOrganisation() {
   const [isDesktop, setIsDesktop]       = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [coverUrl, setCoverUrl]         = useState<string | null>(null)
+  const [nbEvenementsTotal, setNbEvenementsTotal] = useState(0)
+  const [evenementsPasses, setEvenementsPasses]   = useState<EvenementVitrine[]>([])
+  const [passesOuvert, setPassesOuvert]           = useState(false)
+  const [passesLoading, setPassesLoading]         = useState(false)
+  const [passesCharges, setPassesCharges]         = useState(false)
   const [coverPosition, setCoverPosition] = useState<'top' | 'center' | 'bottom'>('center')
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [logoUrl, setLogoUrl]           = useState<string | null>(null)
@@ -125,24 +136,33 @@ export default function PageOrganisation() {
 
     setOrg(orgData as Organisation)
 
-    const [{ data: evData }, { count: followCount }] = await Promise.all([
+    const aujourdhui = new Date().toISOString().split('T')[0]
+
+    const [{ data: evData }, { count: followCount }, { count: totalCount }] = await Promise.all([
       supabase
         .from('evenements')
-        .select('id, titre, lieu, date_debut, date, categorie, prix, image_url')
+        .select('id, titre, lieu, date_debut, date_fin, date, categorie, prix, image_url')
         .eq('organisation_id', orgData.id)
-        .gte('date_debut', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .eq('statut', 'approuve')
+        // en cours (date_fin future) OU pas encore commencé (date_debut future)
+        .or(`date_fin.gte.${aujourdhui},and(date_fin.is.null,date_debut.gte.${aujourdhui})`)
         .order('date_debut', { ascending: true })
-        .limit(10),
+        .limit(20),
       supabase
         .from('organisation_membres')
         .select('user_id', { count: 'exact', head: true })
         .eq('org_id', orgData.id)
         .neq('role', 'owner'),
+      supabase
+        .from('evenements')
+        .select('id', { count: 'exact', head: true })
+        .eq('organisation_id', orgData.id)
+        .eq('statut', 'approuve'),
     ])
 
     setEvenements((evData as EvenementVitrine[]) ?? [])
     setNbFollowers(followCount ?? 0)
+    setNbEvenementsTotal(totalCount ?? 0)
     setLoading(false)
   }
 
@@ -165,6 +185,27 @@ export default function PageOrganisation() {
       setNbFollowers(prev => prev + 1)
     }
     setSuiviLoading(false)
+  }
+
+  const handleTogglePasses = async () => {
+    const nouvelEtat = !passesOuvert
+    setPassesOuvert(nouvelEtat)
+    if (nouvelEtat && !passesCharges && org) {
+      setPassesLoading(true)
+      const aujourdhui = new Date().toISOString().split('T')[0]
+      const { data } = await supabase
+        .from('evenements')
+        .select('id, titre, lieu, date_debut, date_fin, date, categorie, prix, image_url')
+        .eq('organisation_id', org.id)
+        .eq('statut', 'approuve')
+        .lt('date_debut', aujourdhui)
+        .not('id', 'in', `(${evenements.map(e => e.id).join(',') || '00000000-0000-0000-0000-000000000000'})`)
+        .order('date_debut', { ascending: false })
+        .limit(20)
+      setEvenementsPasses((data as EvenementVitrine[]) ?? [])
+      setPassesCharges(true)
+      setPassesLoading(false)
+    }
   }
 
   const handleUploadCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -415,7 +456,7 @@ export default function PageOrganisation() {
               )}
               <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
                 <span style={{ color: '#8C5A40', fontSize: 12 }}>
-                  <strong style={{ color: '#1A1410' }}>{evenements.length}</strong> événements à venir
+                  <strong style={{ color: '#1A1410' }}>{nbEvenementsTotal}</strong> événements · <strong style={{ color: '#1A1410' }}>{evenements.length}</strong> à venir
                 </span>
                 <span style={{ color: '#8C5A40', fontSize: 12 }}>
                   <strong style={{ color: '#1A1410' }}>{nbFollowers}</strong> membres
@@ -519,6 +560,45 @@ export default function PageOrganisation() {
                 })}
               </div>
             )}
+
+            {/* Section événements passés — repliée par défaut */}
+            <div style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                onClick={handleTogglePasses}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#8C5A40', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.06em', cursor: 'pointer', padding: 0 }}
+              >
+                <span style={{ transform: passesOuvert ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', display: 'inline-block' }}>▶</span>
+                Événements passés
+              </button>
+              {passesOuvert && (
+                <div style={{ marginTop: 12 }}>
+                  {passesLoading ? (
+                    <p style={{ color: '#8C5A40', fontSize: 13 }}>Chargement...</p>
+                  ) : evenementsPasses.length === 0 ? (
+                    <p style={{ color: '#8C5A40', fontSize: 13 }}>Aucun événement passé</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {evenementsPasses.map(ev => (
+                        <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start', opacity: 0.7 }}>
+                          <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                            {ev.image_url ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📅'}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.titre}</p>
+                            <p style={{ color: '#8C5A40', fontSize: 12, marginBottom: 2 }}>📍 {ev.lieu}</p>
+                            <p style={{ color: '#8C5A40', fontSize: 12 }}>📅 {ev.date_debut ?? ev.date}</p>
+                          </div>
+                          <span style={{ background: 'rgba(140,90,64,0.15)', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 'bold', flexShrink: 0 }}>
+                            Passé
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
           </div>
 
