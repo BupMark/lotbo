@@ -15,6 +15,7 @@ interface OrgRow {
   pays: string | null
   site_web: string | null
   email_contact: string | null
+  email_contact_verifie: boolean
   telephone: string | null
   logo_url: string | null
   owner_id: string
@@ -51,9 +52,13 @@ export default function ModifierOrganisation() {
   const [pays, setPays]                 = useState('')
   const [siteWeb, setSiteWeb]           = useState('')
   const [emailContact, setEmailContact] = useState('')
+  const [emailContactOriginal, setEmailContactOriginal] = useState('')
   const [logoUrl, setLogoUrl]           = useState<string | null>(null)
   const [logoFile, setLogoFile]         = useState<File | null>(null)
   const [logoPreview, setLogoPreview]   = useState<string | null>(null)
+  const [emailVerifie, setEmailVerifie] = useState(false)
+  const [envoiVerifLoading, setEnvoiVerifLoading] = useState(false)
+  const [verifMsg, setVerifMsg]         = useState<{ type: 'ok' | 'err'; texte: string } | null>(null)
 
   useEffect(() => {
     if (!slug) return
@@ -63,7 +68,7 @@ export default function ModifierOrganisation() {
 
       const { data: org } = await supabase
         .from('organisations')
-        .select('id, nom, slogan, description, ville, pays, site_web, email_contact, telephone, logo_url, owner_id')
+        .select('id, nom, slogan, description, ville, pays, site_web, email_contact, email_contact_verifie, telephone, logo_url, owner_id')
         .eq('slug', slug)
         .maybeSingle()
 
@@ -96,8 +101,20 @@ export default function ModifierOrganisation() {
       setPays(o.pays ?? '')
       setSiteWeb(o.site_web ?? '')
       setEmailContact(o.email_contact ?? '')
+      setEmailContactOriginal(o.email_contact ?? '')
+      setEmailVerifie(o.email_contact_verifie ?? false)
       setLogoUrl(o.logo_url)
       setLoading(false)
+
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('email_valide') === '1') {
+        setVerifMsg({ type: 'ok', texte: 'Email de contact confirmé !' })
+        setEmailVerifie(true)
+      } else if (params.get('erreur') === 'token_expire') {
+        setVerifMsg({ type: 'err', texte: 'Le lien de confirmation a expiré, renvoie un nouvel email.' })
+      } else if (params.get('erreur') === 'token_invalide') {
+        setVerifMsg({ type: 'err', texte: 'Lien de confirmation invalide.' })
+      }
     })
   }, [slug])
 
@@ -130,6 +147,8 @@ export default function ModifierOrganisation() {
       }
     }
 
+    const emailAChange = emailContact.trim() !== (emailContactOriginal || '')
+
     const { error } = await supabase
       .from('organisations')
       .update({
@@ -141,9 +160,12 @@ export default function ModifierOrganisation() {
         pays:          pays.trim() || null,
         site_web:      siteWeb.trim() || null,
         email_contact: emailContact.trim() || null,
+        email_contact_verifie: emailAChange ? false : emailVerifie,
         logo_url:      newLogoUrl,
       })
       .eq('id', orgId)
+
+    if (emailAChange) setEmailVerifie(false)
 
     if (error) {
       setErreur(error.message)
@@ -152,6 +174,33 @@ export default function ModifierOrganisation() {
     }
 
     router.push(`/organisation/${slug}`)
+  }
+
+  const handleEnvoyerVerification = async () => {
+    if (!orgId) return
+    setEnvoiVerifLoading(true)
+    setVerifMsg(null)
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setEnvoiVerifLoading(false); return }
+
+    const res = await fetch('/api/organisation/envoyer-verification-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ org_id: orgId }),
+    })
+
+    const json = await res.json() as { error?: string }
+
+    if (res.ok) {
+      setVerifMsg({ type: 'ok', texte: 'Email de confirmation envoyé — vérifie ta boîte mail.' })
+    } else {
+      setVerifMsg({ type: 'err', texte: json.error ?? 'Erreur inconnue' })
+    }
+    setEnvoiVerifLoading(false)
   }
 
   const previewSrc = logoPreview ?? logoUrl ?? null
@@ -235,7 +284,33 @@ export default function ModifierOrganisation() {
 
           <div>
             <label style={labelStyle}>Email de contact</label>
-            <input type="email" value={emailContact} onChange={e => setEmailContact(e.target.value)} style={inputStyle} />
+            <input type="email" value={emailContact} onChange={e => { setEmailContact(e.target.value); setVerifMsg(null) }} style={inputStyle} />
+            {emailContact.trim() && (
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+                {emailContact.trim() !== emailContactOriginal ? (
+                  <span style={{ fontSize: 12, color: '#8C5A40' }}>Enregistre d&apos;abord pour pouvoir valider ce nouvel email</span>
+                ) : emailVerifie ? (
+                  <span style={{ fontSize: 12, color: '#2D9E6B', fontWeight: 'bold' }}>✅ Vérifié</span>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 12, color: '#8C5A40' }}>⚠️ Non vérifié</span>
+                    <button
+                      type="button"
+                      onClick={handleEnvoyerVerification}
+                      disabled={envoiVerifLoading}
+                      style={{ fontSize: 11, color: '#C8431A', background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.25)', borderRadius: 999, padding: '4px 10px', cursor: envoiVerifLoading ? 'default' : 'pointer', fontWeight: 'bold' }}
+                    >
+                      {envoiVerifLoading ? 'Envoi...' : 'Valider mon email'}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            {verifMsg && (
+              <p style={{ marginTop: 6, fontSize: 12, color: verifMsg.type === 'ok' ? '#2D9E6B' : '#e57373' }}>
+                {verifMsg.texte}
+              </p>
+            )}
           </div>
 
           {erreur && (

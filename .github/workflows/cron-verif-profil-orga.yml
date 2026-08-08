@@ -1,0 +1,14 @@
+name: Verif Profil Organisation
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route verif-profil-orga
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/verif-profil-orga"

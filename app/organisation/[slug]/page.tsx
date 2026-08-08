@@ -16,6 +16,7 @@ interface Organisation {
   pays: string | null
   site_web: string | null
   email_contact: string | null
+  email_contact_verifie: boolean
   telephone: string | null
   verified: boolean
   logo_url: string | null
@@ -112,7 +113,7 @@ export default function PageOrganisation() {
 
     const { data: orgData } = await supabase
       .from('organisations')
-      .select('id, slug, nom, slogan, description, ville, pays, site_web, email_contact, telephone, verified, logo_url, cover_url, owner_id')
+      .select('id, slug, nom, slogan, description, ville, pays, site_web, email_contact, email_contact_verifie, telephone, verified, logo_url, cover_url, owner_id')
       .eq('slug', slug)
       .maybeSingle()
 
@@ -442,7 +443,7 @@ export default function PageOrganisation() {
                     {suivi ? 'Suivi ✓' : 'Suivre'}
                   </button>
                 )}
-                {org.email_contact && (
+                {org.email_contact && org.email_contact_verifie && (
                   <a href={`mailto:${org.email_contact}`} style={{ background: 'white', color: '#1A1410', border: '1px solid #E8E0D0', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 'bold', textDecoration: 'none' }}>
                     ✉️ Email
                   </a>
