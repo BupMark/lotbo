@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { verifierDoublon, estSourceBloquee } from '../../../../lib/deduplication'
 import { normaliserVille } from '../../../../lib/normalisation'
 
@@ -30,6 +30,7 @@ const CATEGORIE_MAP: Record<string, string> = {
 
 interface EventJsonLd {
   name: string
+  description?: string
   image?: string
   startDate?: string
   endDate?: string
@@ -63,11 +64,73 @@ function parseJsonLd(html: string): EventJsonLd | null {
   }
 }
 
-async function geocode(address: string): Promise<{ longitude: number; latitude: number } | null> {
+function normaliser(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+}
+
+// Consulte lieux_connus AVANT tout appel API externe — gratuit,
+// instantané, fiabilité garantie (vérifié manuellement)
+async function chercherLieuConnu(admin: SupabaseClient, adresse: string): Promise<{ latitude: number; longitude: number } | null> {
+  const { data: lieux } = await admin.from('lieux_connus').select('nom_normalise, latitude, longitude')
+  if (!lieux) return null
+  const adresseNorm = normaliser(adresse)
+  for (const lieu of lieux) {
+    if (adresseNorm.includes(lieu.nom_normalise)) {
+      return { latitude: Number(lieu.latitude), longitude: Number(lieu.longitude) }
+    }
+  }
+  return null
+}
+
+// Mapbox avec types=poi,address — restreint aux résultats précis
+// (lieux/adresses), plutôt que de retomber silencieusement sur le
+// centre-ville quand le POI est inconnu de Mapbox (comportement par
+// défaut sans ce paramètre, source du regroupement massif observé)
+async function geocodeMapboxPrecis(address: string): Promise<{ longitude: number; latitude: number; relevance: number } | null> {
   try {
-    // country=ci — sans ce biais, une adresse ambiguë/vague peut matcher
-    // n'importe où dans le monde (déjà vu historiquement pour Haïti,
-    // reproduit ici : événements ivoiriens géolocalisés en Allemagne/Algérie)
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&country=ci&types=poi,address&limit=1`
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+    const data = await res.json()
+    if (data.features && data.features.length > 0) {
+      const [longitude, latitude] = data.features[0].center
+      return { longitude, latitude, relevance: data.features[0].relevance }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+// Nominatim OSM — a une couverture différente de Mapbox pour certains
+// POI locaux (confirmé : "Palais de la Culture d'Abidjan" trouvé par
+// Nominatim, absent de Mapbox). Throttling 1.1s obligatoire — la
+// politique d'usage Nominatim limite à 1 req/s, sans quoi les appels
+// échouent en 429 (confirmé par test réel)
+let derniereRequeteNominatim = 0
+async function geocodeNominatim(query: string): Promise<{ longitude: number; latitude: number } | null> {
+  const maintenant = Date.now()
+  const attente = 1100 - (maintenant - derniereRequeteNominatim)
+  if (attente > 0) await new Promise(r => setTimeout(r, attente))
+  derniereRequeteNominatim = Date.now()
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=ci`
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'LOTBO/1.0 (lotbo@bup-mark.com)' },
+      signal: AbortSignal.timeout(8000),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (!data.length) return null
+    return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }
+  } catch {
+    return null
+  }
+}
+
+// Mapbox générique (dernier recours) — accepte un résultat au niveau
+// ville/région si rien de plus précis n'a été trouvé ailleurs
+async function geocodeMapboxGenerique(address: string): Promise<{ longitude: number; latitude: number } | null> {
+  try {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&country=ci&limit=1`
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
     const data = await res.json()
@@ -79,6 +142,28 @@ async function geocode(address: string): Promise<{ longitude: number; latitude: 
   } catch {
     return null
   }
+}
+
+// Chaîne de fallback : lieux_connus → Mapbox précis (relevance ≥ 0.5)
+// → Nominatim (nom + ville, prioritaire — formulation la plus fiable
+// testée) → Nominatim (adresse complète) → Mapbox générique (ville)
+async function geocode(admin: SupabaseClient, address: string, ville: string): Promise<{ longitude: number; latitude: number } | null> {
+  const connu = await chercherLieuConnu(admin, address)
+  if (connu) return connu
+
+  const precis = await geocodeMapboxPrecis(address)
+  if (precis && precis.relevance >= 0.5) return { longitude: precis.longitude, latitude: precis.latitude }
+
+  const nomLieu = address.split(',')[0]?.trim()
+  if (nomLieu) {
+    const nominatimSimplifie = await geocodeNominatim(`${nomLieu}, ${ville}, Côte d'Ivoire`)
+    if (nominatimSimplifie) return nominatimSimplifie
+  }
+
+  const nominatimComplet = await geocodeNominatim(`${address}, Côte d'Ivoire`)
+  if (nominatimComplet) return nominatimComplet
+
+  return geocodeMapboxGenerique(`${ville}, Côte d'Ivoire`)
 }
 
 export async function GET(request: Request) {
@@ -149,15 +234,15 @@ export async function GET(request: Request) {
         const adresse = data.location?.address || data.location?.name || ''
         if (!adresse) { skipped++; continue }
 
+        const villeBrute = data.location?.name?.split(',')[0]?.trim() || 'Abidjan'
+        const ville = normaliserVille(villeBrute)
+
         let coords = cacheGeocode.get(adresse)
         if (coords === undefined) {
-          coords = await geocode(adresse)
+          coords = await geocode(admin, adresse, ville)
           cacheGeocode.set(adresse, coords)
         }
         if (!coords) { skipped++; continue }
-
-        const villeBrute = data.location?.name?.split(',')[0]?.trim() || 'Abidjan'
-        const ville = normaliserVille(villeBrute)
 
         const dedup = await verifierDoublon(admin, {
           titre,
@@ -176,6 +261,7 @@ export async function GET(request: Request) {
           date: dateDebut,
           date_debut: dateDebut,
           date_fin: dateFin,
+          description: data.description || null,
           categorie: deviverCategorieDepuisTitre(titre),
           latitude: coords.latitude,
           longitude: coords.longitude,
