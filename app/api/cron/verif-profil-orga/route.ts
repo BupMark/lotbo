@@ -140,8 +140,9 @@ function construireHtml(langue: Langue, nomOrg: string, slug: string, manquants:
 async function traiterEtape(
   admin: ReturnType<typeof makeAdminClient>,
   etape: Etape,
-  emailMap: Map<string, string>
-): Promise<{ orgsTraitees: number; emailsEnvoyes: number }> {
+  emailMap: Map<string, string>,
+  dryRun: boolean
+): Promise<{ orgsTraitees: number; emailsEnvoyes: number; detail: Array<{ org: string; manquants: string[] }> }> {
   const now = new Date()
   const jours = etape === 'j1' ? 1 : 7
   const colonneEnvoi = etape === 'j1' ? 'verif_profil_j1_envoye_le' : 'verif_profil_j7_envoye_le'
@@ -158,9 +159,10 @@ async function traiterEtape(
     .limit(2000)
 
   if (error) throw error
-  if (!orgs || orgs.length === 0) return { orgsTraitees: 0, emailsEnvoyes: 0 }
+  if (!orgs || orgs.length === 0) return { orgsTraitees: 0, emailsEnvoyes: 0, detail: [] }
 
   let emailsEnvoyes = 0
+  const detail: Array<{ org: string; manquants: string[] }> = []
 
   for (const org of orgs as OrgRow[]) {
     const { data: membres } = await admin
@@ -169,7 +171,10 @@ async function traiterEtape(
       .eq('org_id', org.id)
       .in('role', ['owner', 'admin'])
 
-    await admin.from('organisations').update({ [colonneEnvoi]: now.toISOString() }).eq('id', org.id)
+    // Marquer comme traité dans tous les cas — jamais de re-scan du même org à cette étape
+    if (!dryRun) {
+      await admin.from('organisations').update({ [colonneEnvoi]: now.toISOString() }).eq('id', org.id)
+    }
 
     if (!membres || membres.length === 0) continue
 
@@ -182,7 +187,10 @@ async function traiterEtape(
     const chartesOk = (profiles || []).every(p => p.charte_organisateur === true)
     const manquants = champsManquants(org, chartesOk)
 
-    if (manquants.length === 0) continue
+    if (manquants.length === 0) continue // profil déjà complet
+
+    detail.push({ org: org.nom, manquants })
+    if (dryRun) continue
 
     for (const p of (profiles || []) as ProfileRow[]) {
       const email = emailMap.get(p.id)
@@ -209,7 +217,7 @@ async function traiterEtape(
     }
   }
 
-  return { orgsTraitees: orgs.length, emailsEnvoyes }
+  return { orgsTraitees: orgs.length, emailsEnvoyes, detail }
 }
 
 export async function GET(request: Request) {
@@ -218,16 +226,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
+  const url = new URL(request.url)
+  const dryRun = url.searchParams.get('dry_run') === 'true'
+
   const admin = makeAdminClient()
 
   try {
     const { data: usersResponse } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
     const emailMap = new Map((usersResponse?.users ?? []).map(u => [u.id, u.email!]))
 
-    const j1 = await traiterEtape(admin, 'j1', emailMap)
-    const j7 = await traiterEtape(admin, 'j7', emailMap)
+    const j1 = await traiterEtape(admin, 'j1', emailMap, dryRun)
+    const j7 = await traiterEtape(admin, 'j7', emailMap, dryRun)
 
-    return NextResponse.json({ success: true, j1, j7 })
+    return NextResponse.json({ success: true, dryRun, j1, j7 })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue'
     return NextResponse.json({ error: message }, { status: 500 })
