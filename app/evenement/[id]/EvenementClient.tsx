@@ -8,6 +8,7 @@ import { attributerPoints } from '../../../lib/points'
 import { getEventImage } from '../../../lib/fallbackImages'
 import { useLangue } from '../../../lib/useLangue'
 import { getTraductions, type Langue } from '../../../lib/i18n'
+import { getSessionId } from '../../../lib/getSessionId'
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -121,14 +122,6 @@ const REACTIONS_DISPONIBLES = ['👍', '❤️', '😂', '😮', '🙏', '🔥']
 const COMMENTS_PER_PAGE = 10
 
 // ── Obtenir ou créer session_id ───────────────────────────────────────────────
-function getSessionId(): string {
-  if (typeof window === 'undefined') return ''
-  const existing = localStorage.getItem('lotbo_session_id')
-  if (existing) return existing
-  const newId = Math.random().toString(36).slice(2)
-  localStorage.setItem('lotbo_session_id', newId)
-  return newId
-}
 
 // ── Composant Réactions ───────────────────────────────────────────────────────
 function ReactionBar({ commentaireId, reactionsInitiales }: {
