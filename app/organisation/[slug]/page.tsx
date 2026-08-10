@@ -41,11 +41,6 @@ function getInitiales(nom: string): string {
   return nom.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'OR'
 }
 
-function estEvenementPasse(ev: { date_debut: string | null; date_fin: string | null; date: string }, aujourdhui: string): boolean {
-  const fin = ev.date_fin ?? ev.date_debut ?? ev.date
-  return fin < aujourdhui
-}
-
 export default function PageOrganisation() {
   const params     = useParams()
   const slug       = params?.slug as string
@@ -263,15 +258,6 @@ export default function PageOrganisation() {
       setUploadingLogo(false)
       e.target.value = ''
     }
-  }
-
-  const partager = () => {
-    const texte = `Suivez nos événements sur Lotbo 👉 https://app.lotbo.app/o/${slug}?utm_source=share&utm_medium=whatsapp&utm_campaign=org`
-    navigator.clipboard.writeText(texte).then(() => {
-      setLienCopie(true)
-      if (copieTimer.current) clearTimeout(copieTimer.current)
-      copieTimer.current = setTimeout(() => setLienCopie(false), 2000)
-    }).catch(() => {})
   }
 
   const trackerPartage = async (canal: string) => {
@@ -554,9 +540,8 @@ export default function PageOrganisation() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {evenements.map(ev => {
-                  const estPasse = (ev.date_debut ?? ev.date) < new Date().toISOString().split('T')[0]
                   return (
-                    <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start', opacity: estPasse ? 0.7 : 1 }}>
+                    <a key={ev.id} href={`/evenement/${ev.id}`} style={{ display: 'flex', gap: 12, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: 14, textDecoration: 'none', color: '#1A1410', alignItems: 'flex-start' }}>
                       <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F7F2E8', border: '1px solid #E8E0D0', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                         {ev.image_url ? <img src={ev.image_url} alt={ev.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📅'}
                       </div>
@@ -569,11 +554,6 @@ export default function PageOrganisation() {
                         <span style={{ background: '#C8431A', color: 'white', padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>
                           {ev.categorie}
                         </span>
-                        {estPasse && (
-                          <span style={{ background: 'rgba(140,90,64,0.15)', color: '#8C5A40', padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 'bold' }}>
-                            Passé
-                          </span>
-                        )}
                       </div>
                     </a>
                   )
