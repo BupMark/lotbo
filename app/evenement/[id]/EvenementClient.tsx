@@ -1496,7 +1496,7 @@ function EvenementPageInner() {
               )}
             </div>
             {ev && (userProfile?.id === ev.user_id || roleOrg === 'owner' || roleOrg === 'admin' || roleOrg === 'editeur') && (
-              <div style={{ marginBottom: 8 }}>
+              <div style={{ marginBottom: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <a href={`/evenement/${ev.id}/modifier`} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'rgba(200,67,26,0.1)', color: '#C8431A',
@@ -1506,6 +1506,42 @@ function EvenementPageInner() {
                 }}>
                   {t.evenement.modifierEvenement}
                 </a>
+                <button
+                  onClick={async () => {
+                    const email = window.prompt('Email de la personne à inviter (laisse vide pour générer un lien à partager) :')
+                    if (email === null) return
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) return
+                    const res = await fetch(`/api/evenement/${ev.id}/inviter-co-organisateur`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                      },
+                      body: JSON.stringify({ type_cible: 'utilisateur', email: email.trim() || undefined }),
+                    })
+                    const json = await res.json() as { error?: string; lien?: string; cas?: string }
+                    if (!res.ok) {
+                      window.alert(json.error ?? 'Erreur lors de l\'invitation')
+                      return
+                    }
+                    if (json.cas === 'email_envoye') {
+                      window.alert('Invitation envoyée par email !')
+                    } else if (json.lien) {
+                      navigator.clipboard.writeText(json.lien).catch(() => {})
+                      window.alert('Lien copié dans le presse-papier : ' + json.lien)
+                    }
+                  }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'white', color: '#8C5A40',
+                    border: '1px solid #E8E0D0',
+                    borderRadius: 999, padding: '8px 18px',
+                    fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                  }}
+                >
+                  🤝 Inviter un co-organisateur
+                </button>
               </div>
             )}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
