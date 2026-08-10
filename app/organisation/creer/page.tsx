@@ -48,6 +48,8 @@ export default function CreerOrganisation() {
   const [emailContact, setEmailContact] = useState('')
   const [logoFile, setLogoFile]         = useState<File | null>(null)
   const [logoPreview, setLogoPreview]   = useState<string | null>(null)
+  const [categoriesDisponibles, setCategoriesDisponibles] = useState<{ id: number; libelle_fr: string }[]>([])
+  const [categoriesSelectionnees, setCategoriesSelectionnees] = useState<number[]>([])
 
   const slug = genererSlug(nom)
 
@@ -58,6 +60,20 @@ export default function CreerOrganisation() {
       setLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    supabase
+      .from('organisation_categories')
+      .select('id, libelle_fr')
+      .order('id', { ascending: true })
+      .then(({ data }) => setCategoriesDisponibles(data ?? []))
+  }, [])
+
+  const toggleCategorie = (id: number) => {
+    setCategoriesSelectionnees(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    )
+  }
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -120,6 +136,12 @@ export default function CreerOrganisation() {
         role:      'owner',
         joined_at: new Date().toISOString(),
       })
+
+      if (categoriesSelectionnees.length > 0) {
+        await supabase.from('organisation_categories_liees').insert(
+          categoriesSelectionnees.map(categorie_id => ({ organisation_id: orgData.id, categorie_id }))
+        )
+      }
     }
 
     router.push(`/organisation/${slug}`)
@@ -200,6 +222,32 @@ export default function CreerOrganisation() {
               placeholder="Décris ton organisation en quelques lignes"
               style={{ ...inputStyle, resize: 'vertical' }}
             />
+          </div>
+
+          {/* Catégories d'activité */}
+          <div>
+            <label style={labelStyle}>Catégories d&apos;activité</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {categoriesDisponibles.map(cat => {
+                const selectionne = categoriesSelectionnees.includes(cat.id)
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => toggleCategorie(cat.id)}
+                    style={{
+                      background: selectionne ? '#C8431A' : 'white',
+                      color: selectionne ? 'white' : '#8C5A40',
+                      border: selectionne ? 'none' : '1px solid #E8E0D0',
+                      borderRadius: 999, padding: '7px 14px',
+                      fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
+                    }}
+                  >
+                    {cat.libelle_fr}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Slogan */}

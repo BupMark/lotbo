@@ -59,6 +59,8 @@ export default function ModifierOrganisation() {
   const [emailVerifie, setEmailVerifie] = useState(false)
   const [envoiVerifLoading, setEnvoiVerifLoading] = useState(false)
   const [verifMsg, setVerifMsg]         = useState<{ type: 'ok' | 'err'; texte: string } | null>(null)
+  const [categoriesDisponibles, setCategoriesDisponibles] = useState<{ id: number; libelle_fr: string }[]>([])
+  const [categoriesSelectionnees, setCategoriesSelectionnees] = useState<number[]>([])
 
   useEffect(() => {
     if (!slug) return
@@ -104,8 +106,15 @@ export default function ModifierOrganisation() {
       setEmailContactOriginal(o.email_contact ?? '')
       setEmailVerifie(o.email_contact_verifie ?? false)
       setLogoUrl(o.logo_url)
-      setLoading(false)
 
+      const [{ data: toutesCategories }, { data: categoriesLiees }] = await Promise.all([
+        supabase.from('organisation_categories').select('id, libelle_fr').order('id', { ascending: true }),
+        supabase.from('organisation_categories_liees').select('categorie_id').eq('organisation_id', o.id),
+      ])
+      setCategoriesDisponibles(toutesCategories ?? [])
+      setCategoriesSelectionnees((categoriesLiees ?? []).map(c => c.categorie_id))
+
+      setLoading(false)
       const params = new URLSearchParams(window.location.search)
       if (params.get('email_valide') === '1') {
         setVerifMsg({ type: 'ok', texte: 'Email de contact confirmé !' })
@@ -117,6 +126,12 @@ export default function ModifierOrganisation() {
       }
     })
   }, [slug])
+
+  const toggleCategorie = (id: number) => {
+    setCategoriesSelectionnees(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    )
+  }
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -171,6 +186,13 @@ export default function ModifierOrganisation() {
       setErreur(error.message)
       setSubmitting(false)
       return
+    }
+
+    await supabase.from('organisation_categories_liees').delete().eq('organisation_id', orgId)
+    if (categoriesSelectionnees.length > 0) {
+      await supabase.from('organisation_categories_liees').insert(
+        categoriesSelectionnees.map(categorie_id => ({ organisation_id: orgId, categorie_id }))
+      )
     }
 
     router.push(`/organisation/${slug}`)
@@ -254,6 +276,31 @@ export default function ModifierOrganisation() {
           <div>
             <label style={labelStyle}>Description</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={400} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Catégories d&apos;activité</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {categoriesDisponibles.map(cat => {
+                const selectionne = categoriesSelectionnees.includes(cat.id)
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => toggleCategorie(cat.id)}
+                    style={{
+                      background: selectionne ? '#C8431A' : 'white',
+                      color: selectionne ? 'white' : '#8C5A40',
+                      border: selectionne ? 'none' : '1px solid #E8E0D0',
+                      borderRadius: 999, padding: '7px 14px',
+                      fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
+                    }}
+                  >
+                    {cat.libelle_fr}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <div>

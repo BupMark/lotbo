@@ -42,6 +42,7 @@ const TEXTES: Record<Langue, { sujet: string; intro: string; champs: Record<stri
       description: 'Ajouter une description',
       email_verifie: 'Valider ton email de contact',
       site_web: 'Ajouter un site web',
+      categorie: 'Choisir au moins une catégorie d\'activité',
       charte_organisateur: 'Accepter la charte des organisateurs (tous les admins)',
     },
     cta: 'Compléter mon profil',
@@ -55,6 +56,7 @@ const TEXTES: Record<Langue, { sujet: string; intro: string; champs: Record<stri
       description: 'Add a description',
       email_verifie: 'Verify your contact email',
       site_web: 'Add a website',
+      categorie: 'Choose at least one activity category',
       charte_organisateur: 'Accept the organizer charter (all admins)',
     },
     cta: 'Complete my profile',
@@ -68,6 +70,7 @@ const TEXTES: Record<Langue, { sujet: string; intro: string; champs: Record<stri
       description: 'Añadir una descripción',
       email_verifie: 'Verificar tu email de contacto',
       site_web: 'Añadir un sitio web',
+      categorie: 'Elegir al menos una categoría de actividad',
       charte_organisateur: 'Aceptar la carta de organizadores (todos los administradores)',
     },
     cta: 'Completar mi perfil',
@@ -81,6 +84,7 @@ const TEXTES: Record<Langue, { sujet: string; intro: string; champs: Record<stri
       description: 'Adicionar uma descrição',
       email_verifie: 'Verificar seu email de contato',
       site_web: 'Adicionar um site',
+      categorie: 'Escolher pelo menos uma categoria de atividade',
       charte_organisateur: 'Aceitar a carta dos organizadores (todos os admins)',
     },
     cta: 'Completar meu perfil',
@@ -94,6 +98,7 @@ const TEXTES: Record<Langue, { sujet: string; intro: string; champs: Record<stri
       description: 'Ajouter une description',
       email_verifie: 'Valider ton email de contact',
       site_web: 'Ajouter un site web',
+      categorie: 'Choisir au moins une catégorie d\'activité',
       charte_organisateur: 'Accepter la charte des organisateurs (tous les admins)',
     },
     cta: 'Compléter mon profil',
@@ -101,12 +106,13 @@ const TEXTES: Record<Langue, { sujet: string; intro: string; champs: Record<stri
   },
 }
 
-function champsManquants(org: OrgRow, chartesOk: boolean): string[] {
+function champsManquants(org: OrgRow, chartesOk: boolean, hasCategorie: boolean): string[] {
   const manquants: string[] = []
   if (!org.logo_url) manquants.push('logo')
   if (!org.description || !org.description.trim()) manquants.push('description')
   if (!org.email_contact_verifie) manquants.push('email_verifie')
   if (!org.site_web || !org.site_web.trim()) manquants.push('site_web')
+  if (!hasCategorie) manquants.push('categorie')
   if (!chartesOk) manquants.push('charte_organisateur')
   return manquants
 }
@@ -184,8 +190,13 @@ async function traiterEtape(
       .select('id, nom, charte_organisateur, langue_preference')
       .in('id', adminIds)
 
+    const { count: nbCategories } = await admin
+      .from('organisation_categories_liees')
+      .select('organisation_id', { count: 'exact', head: true })
+      .eq('organisation_id', org.id)
+
     const chartesOk = (profiles || []).every(p => p.charte_organisateur === true)
-    const manquants = champsManquants(org, chartesOk)
+    const manquants = champsManquants(org, chartesOk, (nbCategories ?? 0) > 0)
 
     if (manquants.length === 0) continue // profil déjà complet
 

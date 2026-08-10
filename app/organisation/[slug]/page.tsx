@@ -61,6 +61,7 @@ export default function PageOrganisation() {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [coverUrl, setCoverUrl]         = useState<string | null>(null)
   const [nbEvenementsTotal, setNbEvenementsTotal] = useState(0)
+  const [categoriesOrg, setCategoriesOrg] = useState<string[]>([])
   const [evenementsPasses, setEvenementsPasses]   = useState<EvenementVitrine[]>([])
   const [passesOuvert, setPassesOuvert]           = useState(false)
   const [passesLoading, setPassesLoading]         = useState(false)
@@ -134,7 +135,7 @@ export default function PageOrganisation() {
 
     const aujourdhui = new Date().toISOString().split('T')[0]
 
-    const [{ data: evData }, { count: followCount }, { count: totalCount }] = await Promise.all([
+    const [{ data: evData }, { count: followCount }, { count: totalCount }, { data: categoriesData }] = await Promise.all([
       supabase
         .from('evenements')
         .select('id, titre, lieu, date_debut, date_fin, date, categorie, prix, image_url')
@@ -154,11 +155,20 @@ export default function PageOrganisation() {
         .select('id', { count: 'exact', head: true })
         .eq('organisation_id', orgData.id)
         .eq('statut', 'approuve'),
+      supabase
+        .from('organisation_categories_liees')
+        .select('organisation_categories(libelle_fr)')
+        .eq('organisation_id', orgData.id),
     ])
 
     setEvenements((evData as EvenementVitrine[]) ?? [])
     setNbFollowers(followCount ?? 0)
     setNbEvenementsTotal(totalCount ?? 0)
+    setCategoriesOrg(
+      ((categoriesData ?? []) as unknown as { organisation_categories: { libelle_fr: string } }[])
+        .map(c => c.organisation_categories?.libelle_fr)
+        .filter(Boolean)
+    )
     setLoading(false)
   }
 
@@ -470,6 +480,15 @@ export default function PageOrganisation() {
 
               {org.description && (
                 <p style={{ color: '#4A3830', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>{org.description}</p>
+              )}
+              {categoriesOrg.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                  {categoriesOrg.map(cat => (
+                    <span key={cat} style={{ background: 'rgba(200,67,26,0.08)', color: '#C8431A', borderRadius: 999, padding: '4px 12px', fontSize: 11, fontWeight: 'bold' }}>
+                      {cat}
+                    </span>
+                  ))}
+                </div>
               )}
 
               {/* Actions */}
