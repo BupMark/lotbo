@@ -40,6 +40,18 @@ export async function POST(request: Request) {
   if (invitation.statut !== 'en_attente') return NextResponse.json({ error: 'Invitation déjà utilisée' }, { status: 409 })
   if (new Date(invitation.expire_le) < new Date()) return NextResponse.json({ error: 'Invitation expirée' }, { status: 410 })
 
+  const { data: evPourCheck } = await admin
+    .from('evenements')
+    .select('date_debut, date_fin')
+    .eq('id', invitation.evenement_id)
+    .maybeSingle()
+
+  const finReferenceCheck = evPourCheck?.date_fin ?? evPourCheck?.date_debut
+  const aujourdhuiCheck = new Date().toISOString().split('T')[0]
+  if (finReferenceCheck && finReferenceCheck < aujourdhuiCheck) {
+    return NextResponse.json({ error: 'Cet événement est passé, l\'invitation n\'est plus valable' }, { status: 410 })
+  }
+
   // Cas individu — l'utilisateur connecté devient co-organisateur, email ciblé ou non
   if (invitation.type_cible === 'utilisateur') {
     const { error: insertError } = await admin.from('evenement_co_organisateurs').insert({

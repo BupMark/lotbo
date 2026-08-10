@@ -63,11 +63,17 @@ export async function POST(
   // Vérifier que l'appelant est propriétaire de l'événement (user_id direct OU membre habilité de l'org liée)
   const { data: ev } = await admin
     .from('evenements')
-    .select('id, titre, user_id, organisation_id')
+    .select('id, titre, user_id, organisation_id, date_debut, date_fin')
     .eq('id', evenementId)
     .maybeSingle()
 
   if (!ev) return NextResponse.json({ error: 'Événement introuvable' }, { status: 404 })
+
+  const finReference = ev.date_fin ?? ev.date_debut
+  const aujourdhui = new Date().toISOString().split('T')[0]
+  if (finReference && finReference < aujourdhui) {
+    return NextResponse.json({ error: 'Impossible d\'inviter un co-organisateur sur un événement passé' }, { status: 400 })
+  }
 
   let autorise = ev.user_id === user.id
   if (!autorise && ev.organisation_id) {
