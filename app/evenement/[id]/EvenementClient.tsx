@@ -10,6 +10,7 @@ import { useLangue } from '../../../lib/useLangue'
 import { getTraductions, type Langue } from '../../../lib/i18n'
 import { getSessionId } from '../../../lib/getSessionId'
 import ModalCoOrganisateurs from '../../../components/ModalCoOrganisateurs'
+import ModalStatistiques from '../../../components/ModalStatistiques'
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -580,6 +581,8 @@ function EvenementPageInner() {
   const [roleOrg, setRoleOrg]                           = useState<string | null>(null)
   const [coOrganisateurs, setCoOrganisateurs]           = useState<{ type_cible: string; nom: string }[]>([])
   const [modalCoOrgOuvert, setModalCoOrgOuvert]         = useState(false)
+  const [modalStatsOuvert, setModalStatsOuvert]         = useState(false)
+  const [estCoOrganisateur, setEstCoOrganisateur]       = useState(false)
   const [isDesktop, setIsDesktop]                       = useState(false)
   const [showNavMenu, setShowNavMenu]                   = useState(false)
   const [showCalMenu, setShowCalMenu]                   = useState(false)
@@ -750,6 +753,33 @@ function EvenementPageInner() {
             .eq('user_id', session.user.id)
             .maybeSingle()
           setRoleOrg(membre?.role ?? null)
+        }
+
+        const { data: coOrgDirect } = await supabase
+          .from('evenement_co_organisateurs')
+          .select('id')
+          .eq('evenement_id', id)
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+
+        if (coOrgDirect) {
+          setEstCoOrganisateur(true)
+        } else {
+          const { data: mesOrgs } = await supabase
+            .from('organisation_membres')
+            .select('org_id')
+            .eq('user_id', session.user.id)
+            .in('role', ['owner', 'admin'])
+
+          if (mesOrgs && mesOrgs.length > 0) {
+            const { data: coOrgViaOrg } = await supabase
+              .from('evenement_co_organisateurs')
+              .select('id')
+              .eq('evenement_id', id)
+              .in('organisation_id', mesOrgs.map(o => o.org_id))
+              .maybeSingle()
+            setEstCoOrganisateur(!!coOrgViaOrg)
+          }
         }
       }
     })
@@ -1602,8 +1632,27 @@ function EvenementPageInner() {
                 </button>
               </div>
             )}
+            {ev && (userProfile?.id === ev.user_id || roleOrg === 'owner' || roleOrg === 'admin' || roleOrg === 'editeur' || estCoOrganisateur) && (
+              <div style={{ marginBottom: 8 }}>
+                <button
+                  onClick={() => setModalStatsOuvert(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'white', color: '#8C5A40',
+                    border: '1px solid #E8E0D0',
+                    borderRadius: 999, padding: '8px 18px',
+                    fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                  }}
+                >
+                  📊 Statistiques
+                </button>
+              </div>
+            )}
             {modalCoOrgOuvert && ev && (
               <ModalCoOrganisateurs evenementId={ev.id} onClose={() => setModalCoOrgOuvert(false)} />
+            )}
+            {modalStatsOuvert && ev && (
+              <ModalStatistiques evenementId={ev.id} onClose={() => setModalStatsOuvert(false)} />
             )}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#8C5A40', marginRight: 4 }}>{t.evenement.partagerLabel}</span>
