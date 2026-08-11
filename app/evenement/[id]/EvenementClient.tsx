@@ -590,17 +590,34 @@ function EvenementPageInner() {
         if (data) {
           const { data: coOrgs } = await supabase
             .from('evenement_co_organisateurs')
-            .select('type_cible, user_id, organisation_id, profiles(nom), organisations(nom)')
+            .select('type_cible, user_id, organisation_id')
             .eq('evenement_id', data.id)
 
-          setCoOrganisateurs(
-            ((coOrgs ?? []) as unknown as { type_cible: string; profiles: { nom: string } | null; organisations: { nom: string } | null }[])
-              .map(c => ({
-                type_cible: c.type_cible,
-                nom: c.type_cible === 'utilisateur' ? (c.profiles?.nom ?? 'Utilisateur') : (c.organisations?.nom ?? 'Organisation'),
-              }))
-              .filter(c => c.nom)
-          )
+          if (coOrgs && coOrgs.length > 0) {
+            const userIds = coOrgs.filter(c => c.user_id).map(c => c.user_id as string)
+            const orgIds = coOrgs.filter(c => c.organisation_id).map(c => c.organisation_id as string)
+
+            const [{ data: profilsData }, { data: orgsData }] = await Promise.all([
+              userIds.length > 0
+                ? supabase.from('profiles').select('id, nom').in('id', userIds)
+                : Promise.resolve({ data: [] as { id: string; nom: string | null }[] }),
+              orgIds.length > 0
+                ? supabase.from('organisations').select('id, nom').in('id', orgIds)
+                : Promise.resolve({ data: [] as { id: string; nom: string }[] }),
+            ])
+
+            setCoOrganisateurs(
+              coOrgs.map(c => {
+                if (c.type_cible === 'utilisateur') {
+                  const p = (profilsData ?? []).find(p => p.id === c.user_id)
+                  return { type_cible: c.type_cible, nom: p?.nom ?? 'Utilisateur' }
+                } else {
+                  const o = (orgsData ?? []).find(o => o.id === c.organisation_id)
+                  return { type_cible: c.type_cible, nom: o?.nom ?? 'Organisation' }
+                }
+              }).filter(c => c.nom)
+            )
+          }
         }
 
         if (data && !data.image_url?.trim() && data.categorie) {
