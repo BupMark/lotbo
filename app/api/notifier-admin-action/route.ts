@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { kind, record_id } = await request.json() as { kind: 'proposition' | 'reclamation'; record_id: string }
+    const { kind, record_id } = await request.json() as { kind: 'proposition' | 'reclamation' | 'claim_organisation'; record_id: string }
     if (!kind || !record_id) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
     }
@@ -72,6 +72,25 @@ export async function POST(request: Request) {
         type: 'reclamation',
         titre: `Réclamation — ${ev?.titre ?? 'Événement'}`,
         message: `${prof?.nom ?? 'Un utilisateur'} réclame la propriété de "${ev?.titre ?? 'cet événement'}"`,
+        lien: '/admin',
+        lu: false,
+      }])
+    } else if (kind === 'claim_organisation') {
+      const { data: rec } = await admin
+        .from('reclamations_organisations')
+        .select('organisation_id, reclamant_id')
+        .eq('id', record_id)
+        .single()
+      if (!rec || rec.reclamant_id !== callerId) {
+        return NextResponse.json({ error: 'Introuvable ou non autorisé' }, { status: 403 })
+      }
+      const { data: org } = await admin.from('organisations').select('nom').eq('id', rec.organisation_id).single()
+      const { data: prof } = await admin.from('profiles').select('nom').eq('id', callerId).single()
+      await admin.from('notifications').insert([{
+        user_id: ADMIN_UUID,
+        type: 'claim_organisation',
+        titre: `Réclamation organisation — ${org?.nom ?? 'Organisation'}`,
+        message: `${prof?.nom ?? 'Un utilisateur'} réclame la propriété de "${org?.nom ?? 'cette organisation'}"`,
         lien: '/admin',
         lu: false,
       }])

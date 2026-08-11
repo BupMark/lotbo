@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { getSessionId } from '../../../lib/getSessionId'
 import ModalSignalerOrganisation from '../../../components/ModalSignalerOrganisation'
+import ModalReclamerOrganisation from '../../../components/ModalReclamerOrganisation'
 import { useLangue } from '../../../lib/useLangue'
 import { getTraductions } from '../../../lib/i18n'
 
@@ -75,6 +76,7 @@ export default function PageOrganisation() {
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [modalSignalerOuvert, setModalSignalerOuvert] = useState(false)
   const [disclaimerOuvert, setDisclaimerOuvert] = useState(false)
+  const [modalReclamerOuvert, setModalReclamerOuvert] = useState(false)
   const [logoUrl, setLogoUrl]           = useState<string | null>(null)
 
   useEffect(() => {
@@ -559,16 +561,27 @@ export default function PageOrganisation() {
                   </a>
                 )}
               </div>
-              <button
-                onClick={() => setModalSignalerOuvert(true)}
-                style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', marginTop: 12, padding: 0, textDecoration: 'underline' }}
-              >
-                🚩 Signaler cette organisation
-              </button>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button
+                  onClick={() => setModalSignalerOuvert(true)}
+                  style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                >
+                  🚩 Signaler cette organisation
+                </button>
+                <button
+                  onClick={() => setModalReclamerOuvert(true)}
+                  style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                >
+                  🔑 {t.organisation.reclamer_court}
+                </button>
+              </div>
             </div>
           </div>
           {modalSignalerOuvert && org && (
             <ModalSignalerOrganisation organisationId={org.id} onClose={() => setModalSignalerOuvert(false)} />
+          )}
+          {modalReclamerOuvert && org && (
+            <ModalReclamerOrganisation organisationId={org.id} onClose={() => setModalReclamerOuvert(false)} />
           )}
 
           {/* Colonne droite — Événements */}
