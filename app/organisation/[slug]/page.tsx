@@ -6,6 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { getSessionId } from '../../../lib/getSessionId'
+import ModalSignalerOrganisation from '../../../components/ModalSignalerOrganisation'
+import { useLangue } from '../../../lib/useLangue'
+import { getTraductions } from '../../../lib/i18n'
 
 interface Organisation {
   id: string
@@ -45,6 +48,8 @@ export default function PageOrganisation() {
   const params     = useParams()
   const slug       = params?.slug as string
   const copieTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { langue } = useLangue()
+  const t = getTraductions(langue)
 
   const [org, setOrg]                   = useState<Organisation | null>(null)
   const [evenements, setEvenements]     = useState<EvenementVitrine[]>([])
@@ -68,6 +73,8 @@ export default function PageOrganisation() {
   const [passesCharges, setPassesCharges]         = useState(false)
   const [coverPosition, setCoverPosition] = useState<'top' | 'center' | 'bottom'>('center')
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [modalSignalerOuvert, setModalSignalerOuvert] = useState(false)
+  const [disclaimerOuvert, setDisclaimerOuvert] = useState(false)
   const [logoUrl, setLogoUrl]           = useState<string | null>(null)
 
   useEffect(() => {
@@ -456,11 +463,19 @@ export default function PageOrganisation() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
                 <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>{org.nom}</h1>
                 {org.verified && (
-                  <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0 }}>
+                  <button
+                    onClick={() => setDisclaimerOuvert(!disclaimerOuvert)}
+                    style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', border: 'none', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0, cursor: 'pointer' }}
+                  >
                     ✅ Organisation vérifiée
-                  </span>
+                  </button>
                 )}
               </div>
+              {org.verified && disclaimerOuvert && (
+                <p style={{ color: '#8C5A40', fontSize: 11, lineHeight: 1.5, marginBottom: 8, background: 'rgba(140,90,64,0.06)', borderRadius: 8, padding: '8px 12px' }}>
+                  {t.organisation.verifie_disclaimer}
+                </p>
+              )}
               {org.slogan && (
                 <p style={{ color: '#8C5A40', fontSize: 13, fontStyle: 'italic', marginBottom: 6 }}>{org.slogan}</p>
               )}
@@ -541,9 +556,17 @@ export default function PageOrganisation() {
                   </a>
                 )}
               </div>
+              <button
+                onClick={() => setModalSignalerOuvert(true)}
+                style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', marginTop: 12, padding: 0, textDecoration: 'underline' }}
+              >
+                🚩 Signaler cette organisation
+              </button>
             </div>
-
           </div>
+          {modalSignalerOuvert && org && (
+            <ModalSignalerOrganisation organisationId={org.id} onClose={() => setModalSignalerOuvert(false)} />
+          )}
 
           {/* Colonne droite — Événements */}
           <div>

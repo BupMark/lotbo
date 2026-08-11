@@ -1,0 +1,14 @@
+name: Badge Verifie Organisation
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+jobs:
+  calcul:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route badge-verifie-orga
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/badge-verifie-orga"
