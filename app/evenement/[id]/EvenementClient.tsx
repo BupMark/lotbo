@@ -577,6 +577,7 @@ function EvenementPageInner() {
   const [claimEnvoye, setClaimEnvoye]                   = useState(false)
   const [claimLoading, setClaimLoading]                 = useState(false)
   const [roleOrg, setRoleOrg]                           = useState<string | null>(null)
+  const [coOrganisateurs, setCoOrganisateurs]           = useState<{ type_cible: string; nom: string }[]>([])
   const [isDesktop, setIsDesktop]                       = useState(false)
   const [showNavMenu, setShowNavMenu]                   = useState(false)
   const [showCalMenu, setShowCalMenu]                   = useState(false)
@@ -585,6 +586,23 @@ function EvenementPageInner() {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
       .then(async ({ data }) => {
         setEv(data as Evenement)
+
+        if (data) {
+          const { data: coOrgs } = await supabase
+            .from('evenement_co_organisateurs')
+            .select('type_cible, user_id, organisation_id, profiles(nom), organisations(nom)')
+            .eq('evenement_id', data.id)
+
+          setCoOrganisateurs(
+            ((coOrgs ?? []) as unknown as { type_cible: string; profiles: { nom: string } | null; organisations: { nom: string } | null }[])
+              .map(c => ({
+                type_cible: c.type_cible,
+                nom: c.type_cible === 'utilisateur' ? (c.profiles?.nom ?? 'Utilisateur') : (c.organisations?.nom ?? 'Organisation'),
+              }))
+              .filter(c => c.nom)
+          )
+        }
+
         if (data && !data.image_url?.trim() && data.categorie) {
           fetch(`/api/unsplash?categorie=${encodeURIComponent(data.categorie)}&q=${encodeURIComponent(data.titre)}`)
             .then(r => r.json())
@@ -1340,6 +1358,15 @@ function EvenementPageInner() {
               </p>
             )}
             {ev.organisateur && <p style={{ color: '#8C5A40', fontSize: 15 }}>👤 <span style={{ color: '#1A1410' }}>{ev.organisateur}</span></p>}
+            {coOrganisateurs.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                {coOrganisateurs.map((c, i) => (
+                  <span key={i} style={{ background: 'rgba(140,90,64,0.1)', color: '#8C5A40', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 'bold' }}>
+                    🤝 Co-organisé par {c.nom}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* ── FEAT-MAPS-NAVIGATE-1 — Bouton S'y rendre avec choix Google Maps / Apple Plans ── */}
             {!enLigne && !sansCoordonnes && ev.latitude && ev.longitude && (
