@@ -9,6 +9,7 @@ import { getEventImage } from '../../../lib/fallbackImages'
 import { useLangue } from '../../../lib/useLangue'
 import { getTraductions, type Langue } from '../../../lib/i18n'
 import { getSessionId } from '../../../lib/getSessionId'
+import ModalCoOrganisateurs from '../../../components/ModalCoOrganisateurs'
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -578,6 +579,7 @@ function EvenementPageInner() {
   const [claimLoading, setClaimLoading]                 = useState(false)
   const [roleOrg, setRoleOrg]                           = useState<string | null>(null)
   const [coOrganisateurs, setCoOrganisateurs]           = useState<{ type_cible: string; nom: string }[]>([])
+  const [modalCoOrgOuvert, setModalCoOrgOuvert]         = useState(false)
   const [isDesktop, setIsDesktop]                       = useState(false)
   const [showNavMenu, setShowNavMenu]                   = useState(false)
   const [showCalMenu, setShowCalMenu]                   = useState(false)
@@ -1586,7 +1588,22 @@ function EvenementPageInner() {
                 >
                   🤝 Inviter un co-organisateur
                 </button>
+                <button
+                  onClick={() => setModalCoOrgOuvert(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'white', color: '#8C5A40',
+                    border: '1px solid #E8E0D0',
+                    borderRadius: 999, padding: '8px 18px',
+                    fontSize: 13, fontWeight: 'bold', cursor: 'pointer',
+                  }}
+                >
+                  ⚙️ Gérer
+                </button>
               </div>
+            )}
+            {modalCoOrgOuvert && ev && (
+              <ModalCoOrganisateurs evenementId={ev.id} onClose={() => setModalCoOrgOuvert(false)} />
             )}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#8C5A40', marginRight: 4 }}>{t.evenement.partagerLabel}</span>
