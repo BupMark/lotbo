@@ -506,8 +506,8 @@ export default function Admin() {
     const [{ data: evs }, { data: sigs }, { data: reclsData }, { data: reclsOrgData }] = await Promise.all([
       supabase.from('evenements').select('*').order('created_at', { ascending: false }).limit(2000),
       supabase.from('signalements').select('*').order('created_at', { ascending: false }),
-      supabase.from('reclamations_evenements').select('*, evenements(titre, user_id), profiles!reclamations_evenements_reclamant_id_fkey(nom)').order('created_at', { ascending: false }),
-      supabase.from('reclamations_organisations').select('*, organisations(nom, owner_id), profiles!reclamations_organisations_reclamant_id_fkey(nom)').order('created_at', { ascending: false }),
+      supabase.from('reclamations_evenements').select('*, evenements(titre, user_id)').order('created_at', { ascending: false }),
+      supabase.from('reclamations_organisations').select('*, organisations(nom, owner_id)').order('created_at', { ascending: false }),
     ])
     const { data: rejetesData } = await supabase
       .from('evenements').select('*').eq('statut', 'rejete').order('created_at', { ascending: false })
@@ -533,8 +533,18 @@ export default function Admin() {
     }
     setMisEnAvantConfigs(cfgs)
     setSignalements((sigs as Signalement[]) || [])
-    setReclamations((reclsData as Reclamation[]) || [])
-    setReclamationsOrg((reclsOrgData as ReclamationOrganisation[]) || [])
+    const reclsBase = (reclsData as Reclamation[]) || []
+    const reclsOrgBase = (reclsOrgData as ReclamationOrganisation[]) || []
+    const reclamantIds = [...new Set([...reclsBase.map(r => r.reclamant_id), ...reclsOrgBase.map(r => r.reclamant_id)])]
+    if (reclamantIds.length > 0) {
+      const { data: profilsReclamants } = await supabase.from('profiles').select('id, nom').in('id', reclamantIds)
+      const profilMap = new Map((profilsReclamants || []).map(p => [p.id, p.nom]))
+      setReclamations(reclsBase.map(r => ({ ...r, profiles: { nom: profilMap.get(r.reclamant_id) ?? null } })))
+      setReclamationsOrg(reclsOrgBase.map(r => ({ ...r, profiles: { nom: profilMap.get(r.reclamant_id) ?? null } })))
+    } else {
+      setReclamations(reclsBase)
+      setReclamationsOrg(reclsOrgBase)
+    }
 
     // ── 4. SC7 — Stats import par source ─────────────────────────────────────
     const { data: statsSource } = await supabase
