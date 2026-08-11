@@ -463,12 +463,15 @@ export default function PageOrganisation() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
                 <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>{org.nom}</h1>
                 {org.verified && (
-                  <button
-                    onClick={() => setDisclaimerOuvert(!disclaimerOuvert)}
-                    style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', border: 'none', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold', flexShrink: 0, cursor: 'pointer' }}
-                  >
-                    ✅ Organisation vérifiée
-                  </button>
+                  <>
+                    <img src="/badge-verifie.svg" width="20" height="20" alt="Organisation vérifiée" style={{ flexShrink: 0 }} />
+                    <button
+                      onClick={() => setDisclaimerOuvert(!disclaimerOuvert)}
+                      style={{ width: 18, height: 18, borderRadius: '50%', background: '#E8E0D0', border: 'none', color: '#8C5A40', fontSize: 11, fontWeight: 'bold', fontStyle: 'italic', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}
+                    >
+                      i
+                    </button>
+                  </>
                 )}
               </div>
               {org.verified && disclaimerOuvert && (

@@ -277,9 +277,7 @@ export default function PageOrganisations() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <span style={{ fontWeight: 'bold', fontSize: 20, color: '#1A1410' }}>{vedette.nom}</span>
                       {vedette.verified && (
-                        <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 'bold' }}>
-                          ✅ Vérifié
-                        </span>
+                        <img src="/badge-verifie.svg" width="20" height="20" alt="Organisation vérifiée" style={{ flexShrink: 0 }} />
                       )}
                     </div>
                     {vedette.slogan && (
@@ -354,9 +352,7 @@ export default function PageOrganisations() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
                           <span style={{ fontWeight: 'bold', fontSize: 15, color: '#1A1410' }}>{org.nom}</span>
                           {org.verified && (
-                            <span style={{ background: 'rgba(45,158,107,0.12)', color: '#2D9E6B', padding: '1px 8px', borderRadius: 999, fontSize: 10, fontWeight: 'bold', flexShrink: 0 }}>
-                              ✅ Vérifié
-                            </span>
+                            <img src="/badge-verifie.svg" width="16" height="16" alt="Organisation vérifiée" style={{ flexShrink: 0 }} />
                           )}
                         </div>
                         {org.slogan && (
