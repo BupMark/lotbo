@@ -872,6 +872,12 @@
     "celebration_inscription": "Bem-vindo ao LOTBO! Que bom te ver aqui.",
     "celebration_premier_favori": "Boa escolha! Seu primeiro evento favorito.",
     "celebration_premier_commentaire": "Ótimo comentário! O primeiro de muitos.",
-    "celebration_premiere_organisation": "Você agora segue sua primeira organização!"
+    "celebration_premiere_organisation": "Você agora segue sua primeira organização!",
+    "conseil_suivre_ville": "Dica: siga uma cidade para receber um resumo diário dos seus eventos.",
+    "conseil_proposer_correction": "Dica: você pode propor uma correção em qualquer evento se alguma informação estiver errada.",
+    "conseil_swipe_alune": "Dica: deslize os eventos Em destaque para descobrir mais.",
+    "conseil_profil_contributions": "Dica: seu perfil mostra quantas contribuições você já fez no LOTBO.",
+    "conseil_bouton_ajouter": "Dica: toque no + para adicionar um novo evento no LOTBO.",
+    "conseil_scan_publie": "Dica: com Scan & Publie, tire uma foto de um cartaz e preenchemos o formulário para você."
   }
 }

@@ -381,7 +381,7 @@
     }
   },
   "sidebar": {
-    "alune": "Pi gwo",
+    "alune": "An avan",
     "topvilles": "Top vil yo",
     "evenements": "evènman",
     "voirtous": "Wè tout"
@@ -872,6 +872,12 @@
     "celebration_inscription": "Byenveni sou LOTBO! Nou kontan wè w.",
     "celebration_premier_favori": "Bèl chwa! Premye evènman prefere w.",
     "celebration_premier_commentaire": "Bèl kòmantè! Premye nan yon seri byen long.",
-    "celebration_premiere_organisation": "Ou swiv premye òganizasyon w!"
+    "celebration_premiere_organisation": "Ou swiv premye òganizasyon w!",
+    "conseil_suivre_ville": "Konsèy: swiv yon vil pou resevwa yon rezime chak jou sou evènman li yo.",
+    "conseil_proposer_correction": "Konsèy: ou ka pwopoze yon koreksyon sou nenpòt evènman si yon enfòmasyon fo.",
+    "conseil_swipe_alune": "Konsèy: fè swip sou evènman ki an avan yo pou dekouvri lòt yo.",
+    "conseil_profil_contributions": "Konsèy: pwofil ou montre konbyen kontribisyon ou fè sou LOTBO.",
+    "conseil_bouton_ajouter": "Konsèy: klike sou + a pou ajoute yon nouvo evènman sou LOTBO.",
+    "conseil_scan_publie": "Konsèy: ak Scan & Publie, pran yon foto afich la, nou ranpli fòm lan pou ou."
   }
 }

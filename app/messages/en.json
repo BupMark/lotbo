@@ -872,6 +872,12 @@
     "celebration_inscription": "Welcome to LOTBO! Glad you're here.",
     "celebration_premier_favori": "Nice pick! Your first favorite event.",
     "celebration_premier_commentaire": "Great comment! First of many.",
-    "celebration_premiere_organisation": "You're now following your first organisation!"
+    "celebration_premiere_organisation": "You're now following your first organisation!",
+    "conseil_suivre_ville": "Tip: follow a city to get a daily summary of its events.",
+    "conseil_proposer_correction": "Tip: you can propose a correction on any event if some info is wrong.",
+    "conseil_swipe_alune": "Tip: swipe the Featured events to discover more.",
+    "conseil_profil_contributions": "Tip: your profile shows how many contributions you've made on LOTBO.",
+    "conseil_bouton_ajouter": "Tip: tap the + to add a new event on LOTBO.",
+    "conseil_scan_publie": "Tip: with Scan & Publish, take a photo of a poster and we'll fill in the form for you."
   }
 }

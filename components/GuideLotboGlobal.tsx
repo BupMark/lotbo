@@ -14,13 +14,6 @@ interface DonneesWikivoyage {
   lien: string | null
 }
 
-const CONSEILS_GENERIQUES = [
-  "Astuce : suis une ville pour recevoir un résumé quotidien de ses événements.",
-  "Astuce : tu peux proposer une correction sur n'importe quel événement si une info est fausse.",
-  "Astuce : appuie longtemps sur la carte pour changer de quartier rapidement.",
-  "Astuce : ton profil garde une trace de toutes tes contributions.",
-]
-
 const MAPPING_ACTION_CLE: Record<ActionCelebrable, string> = {
   inscription: 'celebration_inscription',
   premier_favori: 'celebration_premier_favori',
@@ -84,7 +77,9 @@ export default function GuideLotboGlobal() {
       } catch { /* silencieux, fallback générique */ }
     }
     setWikivoyage(null)
-    setConseilGenerique(CONSEILS_GENERIQUES[Math.floor(Math.random() * CONSEILS_GENERIQUES.length)])
+    const clesConseils = ['conseil_suivre_ville', 'conseil_proposer_correction', 'conseil_swipe_alune', 'conseil_profil_contributions', 'conseil_bouton_ajouter', 'conseil_scan_publie']
+    const cleChoisie = clesConseils[Math.floor(Math.random() * clesConseils.length)]
+    setConseilGenerique((t.loyita as Record<string, string>)[cleChoisie])
   }
 
   const fermerPanneau = () => setPanneauOuvert(false)
