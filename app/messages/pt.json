@@ -132,6 +132,7 @@
       "champTitre": "Título",
       "champLieu": "Local",
       "champDate": "Data",
+      "champDateFin": "Data de término",
       "champDescription": "Descrição",
       "champLien": "Link oficial",
       "champEmplacementPin": "📍 Localização do pin no mapa",

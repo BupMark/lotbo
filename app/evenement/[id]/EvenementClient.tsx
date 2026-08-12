@@ -1070,6 +1070,7 @@ function EvenementPageInner() {
                       const champ = e.target.value
                       const valeurs: Record<string, string> = {
                         titre: ev?.titre || '', lieu: ev?.lieu || '', date: ev?.date || '',
+                        date_fin: ev?.date_fin || '',
                         description: ev?.description || '', lien: ev?.lien || '',
                         emplacement_pin: `${ev?.latitude?.toFixed(5) || '?'}, ${ev?.longitude?.toFixed(5) || '?'}`,
                         categorie: ev?.categorie || '',
@@ -1085,6 +1086,7 @@ function EvenementPageInner() {
                     <option value="titre">{t.evenement.proposition.champTitre}</option>
                     <option value="lieu">{t.evenement.proposition.champLieu}</option>
                     <option value="date">{t.evenement.proposition.champDate}</option>
+                    <option value="date_fin">{t.evenement.proposition.champDateFin}</option>
                     <option value="description">{t.evenement.proposition.champDescription}</option>
                     <option value="lien">{t.evenement.proposition.champLien}</option>
                     <option value="emplacement_pin">{t.evenement.proposition.champEmplacementPin}</option>

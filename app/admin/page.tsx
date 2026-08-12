@@ -1857,7 +1857,7 @@ export default function Admin() {
               propositions.map(p => {
                 const busy = traitementPropositionId === p.id
                 const labelChamp: Record<string, string> = {
-                  titre: 'Titre', lieu: 'Lieu', date: 'Date', description: 'Description',
+                  titre: 'Titre', lieu: 'Lieu', date: 'Date', date_fin: 'Date de fin', description: 'Description',
                   lien: 'Lien officiel', emplacement_pin: '📍 Emplacement du pin', image: '🖼️ Image',
                   categorie: '🏷️ Catégorie', heure: '🕐 Heure', prix_acces: '💰 Prix / Accès',
                 }

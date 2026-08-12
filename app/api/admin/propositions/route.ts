@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 // Mapping explicite champ_modifie → écriture réelle (certains sont composites)
 function construireUpdate(champ: string, nouvelleValeur: string): Record<string, unknown> | null {
   switch (champ) {
-    case 'titre': case 'lieu': case 'date': case 'description': case 'lien': case 'categorie':
+    case 'titre': case 'lieu': case 'date': case 'date_fin': case 'description': case 'lien': case 'categorie':
       return { [champ]: nouvelleValeur }
     case 'image':
       return { image_url: nouvelleValeur }
