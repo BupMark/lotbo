@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { useLangue } from '../lib/useLangue'
+import { getTraductions } from '../lib/i18n'
+import type { ActionCelebrable } from '../lib/celebrerAction'
 
 const CLE_SALUT_VU = 'lotbo_guide_salut_vu'
 
@@ -17,10 +20,20 @@ const CONSEILS_GENERIQUES = [
   "Astuce : ton profil garde une trace de toutes tes contributions.",
 ]
 
+const MAPPING_ACTION_CLE: Record<ActionCelebrable, string> = {
+  inscription: 'celebration_inscription',
+  premier_favori: 'celebration_premier_favori',
+  premier_commentaire: 'celebration_premier_commentaire',
+  premiere_organisation_suivie: 'celebration_premiere_organisation',
+}
+
 export default function GuideLotboGlobal() {
   const pathname = usePathname()
+  const { langue } = useLangue()
+  const t = getTraductions(langue)
   const [visible, setVisible] = useState(false)
   const [bulleSalut, setBulleSalut] = useState(false)
+  const [bulleCelebration, setBulleCelebration] = useState<string | null>(null)
   const [panneauOuvert, setPanneauOuvert] = useState(false)
   const [wikivoyage, setWikivoyage] = useState<DonneesWikivoyage | null>(null)
   const [conseilGenerique, setConseilGenerique] = useState('')
@@ -34,6 +47,21 @@ export default function GuideLotboGlobal() {
       return () => clearTimeout(timer)
     }
   }, [])
+
+  useEffect(() => {
+    const ecouter = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { action: ActionCelebrable }
+      const cle = MAPPING_ACTION_CLE[detail.action]
+      const texte = (t.loyita as Record<string, string>)[cle]
+      if (!texte) return
+      setBulleSalut(false)
+      setBulleCelebration(texte)
+      const timer = setTimeout(() => setBulleCelebration(null), 6000)
+      return () => clearTimeout(timer)
+    }
+    window.addEventListener('lotbo:premiere_fois', ecouter)
+    return () => window.removeEventListener('lotbo:premiere_fois', ecouter)
+  }, [t])
 
   const ouvrirPanneau = async () => {
     setBulleSalut(false)
@@ -79,6 +107,18 @@ export default function GuideLotboGlobal() {
           maxWidth: 200, boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
         }}>
           Bonjour ! Je suis là pour t&apos;aider à explorer LOTBO 👋
+        </div>
+      )}
+
+      {bulleCelebration && !panneauOuvert && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(150px + env(safe-area-inset-bottom))', right: 20, zIndex: 998,
+          background: '#1A1410', color: '#F7F2E8', fontSize: 13,
+          padding: '10px 14px', borderRadius: '14px 14px 2px 14px',
+          maxWidth: 200, boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          border: '1px solid #D4A820',
+        }}>
+          {bulleCelebration}
         </div>
       )}
 

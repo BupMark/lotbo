@@ -14,6 +14,7 @@ import { attributerPoints } from '../lib/points'
 import { useLangue } from '../lib/useLangue'
 import { usePushPermission } from '../lib/usePushPermission'
 import PrePermissionModal from '../components/PrePermissionModal'
+import { celebrerPremiereFois } from '../lib/celebrerAction'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string
 
@@ -771,6 +772,7 @@ export default function Home() {
       attributerPoints({ user_id: user.id, action: 'favoris', evenement_id: evenementId, type_role: 'utilisateur' })
       if (estPremierFavori) {
         proposerPermission('Reçois un rappel avant tes événements favoris.')
+        celebrerPremiereFois('premier_favori')
       }
     }
     setTogglingFavori(null)

@@ -867,5 +867,11 @@
     "membreParDefaut": "Membre LOTBO",
     "toi": "← Toi",
     "pts": "pts"
+  },
+  "loyita": {
+    "celebration_inscription": "Bienvenue sur LOTBO ! Content de te voir.",
+    "celebration_premier_favori": "Bel choix ! Ton premier événement favori.",
+    "celebration_premier_commentaire": "Beau commentaire ! Le premier d'une longue série.",
+    "celebration_premiere_organisation": "Tu suis ta première organisation !"
   }
 }

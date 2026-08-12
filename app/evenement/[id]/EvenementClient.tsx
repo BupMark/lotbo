@@ -11,6 +11,7 @@ import { getTraductions, type Langue } from '../../../lib/i18n'
 import { getSessionId } from '../../../lib/getSessionId'
 import ModalCoOrganisateurs from '../../../components/ModalCoOrganisateurs'
 import ModalStatistiques from '../../../components/ModalStatistiques'
+import { celebrerPremiereFois } from '../../../lib/celebrerAction'
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -265,6 +266,10 @@ function CommentaireForm({
         evenement_id: evenementId,
         type_role: 'utilisateur',
       })
+      if (!parentId) {
+        supabase.from('commentaires').select('id', { count: 'exact', head: true }).eq('user_id', userProfile.id)
+          .then(({ count }) => { if (count === 1) celebrerPremiereFois('premier_commentaire') })
+      }
       const { data: { session } } = await supabase.auth.getSession()
       const notifierUtilisateur = (payload: { user_id: string; type: string; titre: string; message: string; lien?: string | null }) => {
         fetch('/api/notifier-utilisateur', {
@@ -847,6 +852,8 @@ function EvenementPageInner() {
         await supabase.from('favoris').insert([{ evenement_id: id, user_id: userId }])
         setNbLikes(n => n + 1)
         attributerPoints({ user_id: userId, action: 'liker', evenement_id: id as string, type_role: 'utilisateur' })
+        supabase.from('favoris').select('id', { count: 'exact', head: true }).eq('user_id', userId)
+          .then(({ count }) => { if (count === 1) celebrerPremiereFois('premier_favori') })
       }
     } else {
       const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')

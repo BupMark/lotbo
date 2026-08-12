@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 import { track } from '../../lib/amplitude'
+import { celebrerPremiereFois } from '../../lib/celebrerAction'
 
 const CGU_VERSION = 'v2-23juin2026'
 
@@ -252,6 +253,7 @@ export default function Login() {
         onboarding_complete:  true,
         created_at:           now,
       })
+      celebrerPremiereFois('inscription')
 
       // Fil d'activité communautaire — nouveau_membre (pas de session tant que
       // l'email n'est pas confirmé — le fetch est simplement sauté dans ce cas)

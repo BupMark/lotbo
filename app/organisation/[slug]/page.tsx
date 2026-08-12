@@ -10,6 +10,7 @@ import ModalSignalerOrganisation from '../../../components/ModalSignalerOrganisa
 import ModalReclamerOrganisation from '../../../components/ModalReclamerOrganisation'
 import { useLangue } from '../../../lib/useLangue'
 import { getTraductions } from '../../../lib/i18n'
+import { celebrerPremiereFois } from '../../../lib/celebrerAction'
 
 interface Organisation {
   id: string
@@ -203,6 +204,8 @@ export default function PageOrganisation() {
         .insert({ org_id: org.id, user_id: userId, role: 'lecteur' })
       setSuivi(true)
       setNbFollowers(prev => prev + 1)
+      supabase.from('organisation_membres').select('org_id', { count: 'exact', head: true }).eq('user_id', userId).eq('role', 'lecteur')
+        .then(({ count }) => { if (count === 1) celebrerPremiereFois('premiere_organisation_suivie') })
     }
     setSuiviLoading(false)
   }

@@ -867,5 +867,11 @@
     "membreParDefaut": "Manm LOTBO",
     "toi": "← Ou",
     "pts": "pwen"
+  },
+  "loyita": {
+    "celebration_inscription": "Byenveni sou LOTBO! Nou kontan wè w.",
+    "celebration_premier_favori": "Bèl chwa! Premye evènman prefere w.",
+    "celebration_premier_commentaire": "Bèl kòmantè! Premye nan yon seri byen long.",
+    "celebration_premiere_organisation": "Ou swiv premye òganizasyon w!"
   }
 }
