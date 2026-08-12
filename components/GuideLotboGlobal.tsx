@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useLangue } from '../lib/useLangue'
 import { getTraductions } from '../lib/i18n'
 import type { ActionCelebrable } from '../lib/celebrerAction'
+import { jouerBipLoyita } from '../lib/sonLoyita'
 
 const CLE_SALUT_VU = 'lotbo_guide_salut_vu'
 
@@ -56,6 +57,7 @@ export default function GuideLotboGlobal() {
       if (!texte) return
       setBulleSalut(false)
       setBulleCelebration(texte)
+      jouerBipLoyita()
       const timer = setTimeout(() => setBulleCelebration(null), 6000)
       return () => clearTimeout(timer)
     }
@@ -66,6 +68,7 @@ export default function GuideLotboGlobal() {
   const ouvrirPanneau = async () => {
     setBulleSalut(false)
     setPanneauOuvert(true)
+    jouerBipLoyita()
     localStorage.setItem(CLE_SALUT_VU, new Date().toISOString())
 
     const matchVille = pathname?.match(/^\/ville\/([^/]+)/)
