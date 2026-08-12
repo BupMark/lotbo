@@ -75,6 +75,12 @@ export async function GET(request: Request) {
           suspendue_raison: null,
         }).eq('id', rec.organisation_id)
 
+        await admin
+          .from('evenements')
+          .update({ statut: 'approuve' })
+          .eq('organisation_id', rec.organisation_id)
+          .eq('statut', 'suspendu_litige')
+
         await admin.from('reclamations_organisations').update({
           statut: 'rejete',
           traite_le: now,

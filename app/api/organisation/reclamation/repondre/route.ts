@@ -79,6 +79,15 @@ export async function POST(request: Request) {
       suspendue_raison: 'litige_claim',
     }).eq('id', org.id)
 
+    // Suspend les événements futurs de l'organisation (passés restent inchangés/visibles)
+    const aujourdhuiLitige = now.toISOString().split('T')[0]
+    await admin
+      .from('evenements')
+      .update({ statut: 'suspendu_litige' })
+      .eq('organisation_id', org.id)
+      .eq('statut', 'approuve')
+      .or(`date_fin.gte.${aujourdhuiLitige},and(date_fin.is.null,date_debut.gte.${aujourdhuiLitige})`)
+
     await admin.from('reclamations_organisations').update({
       statut: 'litige',
       proprietaire_reponse: 'conteste',
