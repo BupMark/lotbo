@@ -9,6 +9,7 @@ import AnalyticsBanner from "../components/AnalyticsBanner";
 import Preloader from "../components/Preloader";
 import TabBarGlobal from "../components/TabBarGlobal";
 import CelebrationVilleGlobal from "../components/CelebrationVilleGlobal";
+import GuideLotboGlobal from "../components/GuideLotboGlobal";
 import { Analytics } from "@vercel/analytics/react";
 import AmplitudeInit from "../components/AmplitudeInit";
 
@@ -60,6 +61,9 @@ export default function RootLayout({
         {children}
         <Suspense fallback={null}>
           <CelebrationVilleGlobal />
+        </Suspense>
+        <Suspense fallback={null}>
+          <GuideLotboGlobal />
         </Suspense>
         <TabBarGlobal />
         <StoreBanner />
