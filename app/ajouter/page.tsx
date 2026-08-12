@@ -355,7 +355,6 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte, t
 })
 {
   const isContrib = role === 'contributeur'
-  const ordinal   = nbContributions === 1 ? '1ère' : `${nbContributions}e`
   return (
     <>
       <Confetti />
@@ -367,13 +366,13 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte, t
         <div style={{ background: '#1A1410', border: '1px solid rgba(212,168,32,0.4)', borderRadius: 24, padding: '40px 32px', maxWidth: 380, width: '100%', textAlign: 'center', animation: 'popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)', boxShadow: '0 0 60px rgba(212,168,32,0.15)' }}>
           <div style={{ fontSize: 72, lineHeight: 1, marginBottom: 16, display: 'inline-block', animation: 'badgePulse 1.5s ease-in-out infinite' }}>{badge.emoji}</div>
           <p style={{ color: '#D4A820', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>🏅 {t.ajouter.popupBadge.titre}</p>
-          <h2 style={{ color: '#F7F2E8', fontSize: 26, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', marginBottom: 8 }}>{badge.label}</h2>
+          <h2 style={{ color: '#F7F2E8', fontSize: 26, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', marginBottom: 8 }}>{t.profil.badges[isContrib ? 'contributeur' : 'organisateur'][badge.id]?.label ?? badge.label}</h2>
           <p style={{ color: '#8C5A40', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
-            {(isContrib ? t.ajouter.popupBadge.felicitationsContrib : t.ajouter.popupBadge.felicitationsOrga).replace('{ordinal}', ordinal)}
+            {(isContrib ? t.ajouter.popupBadge.felicitationsContrib : t.ajouter.popupBadge.felicitationsOrga).replace('{n}', String(nbContributions))}
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
             <span style={{ background: 'rgba(212,168,32,0.15)', border: '1px solid rgba(212,168,32,0.4)', color: '#D4A820', padding: '6px 18px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>
-              {badge.emoji} {badge.label} · {badge.desc}
+              {badge.emoji} {t.profil.badges[isContrib ? 'contributeur' : 'organisateur'][badge.id]?.label ?? badge.label} · {t.profil.badges[isContrib ? 'contributeur' : 'organisateur'][badge.id]?.desc ?? badge.desc}
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1315,7 +1314,6 @@ function AjouterEvenement() {
   if (succes) {
     const isContrib = succesData?.role === 'contributeur'
     const nb        = succesData?.nbContributions || 1
-    const ordinal   = nb === 1 ? '1ère' : `${nb}e`
     return (
       <main style={{ minHeight: '100dvh', background: '#1A1410', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
         {showBadgePopup && succesData?.nouveauBadge && (
@@ -1339,7 +1337,7 @@ function AjouterEvenement() {
         <div style={{ maxWidth: 480, width: '100%' }}>
           <div style={{ textAlign: 'center', fontSize: 52, marginBottom: 20 }}>{isContrib ? '⭐' : '🎪'}</div>
           <h2 style={{ color: '#F7F2E8', fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 }}>
-            {isContrib ? `${t.ajouter.succes.contributeur} ${ordinal} ${t.ajouter.succes.contributeurSuite}` : t.ajouter.succes.organisateur}
+            {isContrib ? t.ajouter.succes.contributeur.replace('{n}', String(nb)) : t.ajouter.succes.organisateur}
           </h2>
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
             <p style={{ color: '#F7F2E8', fontSize: 14, lineHeight: 1.7 }}>
@@ -1348,7 +1346,7 @@ function AjouterEvenement() {
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <span style={{ background: isContrib ? 'rgba(212,168,32,0.15)' : 'rgba(200,67,26,0.15)', color: isContrib ? '#D4A820' : '#C8431A', padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 'bold' }}>
-              {isContrib ? `${t.ajouter.succes.roleContrib} ${ordinal} ${t.ajouter.succes.contribution}` : `${t.ajouter.succes.roleOrga} ${ordinal} ${t.ajouter.succes.contribution}`}
+              {isContrib ? `${t.ajouter.succes.roleContrib.replace('{n}', String(nb))} ${t.ajouter.succes.contribution}` : `${t.ajouter.succes.roleOrga.replace('{n}', String(nb))} ${t.ajouter.succes.contribution}`}
             </span>
           </div>
           {succesData?.nouveauBadge && !showBadgePopup && (
@@ -1356,7 +1354,7 @@ function AjouterEvenement() {
               <span style={{ fontSize: 28 }}>{succesData.nouveauBadge.emoji}</span>
               <div>
                 <p style={{ color: '#D4A820', fontSize: 12, fontWeight: 'bold' }}>{t.ajouter.succes.badgeDebloque}</p>
-                <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>{succesData.nouveauBadge.label}</p>
+                <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>{t.profil.badges[isContrib ? 'contributeur' : 'organisateur'][succesData.nouveauBadge.id]?.label ?? succesData.nouveauBadge.label}</p>
               </div>
             </div>
           )}
@@ -1381,7 +1379,7 @@ function AjouterEvenement() {
                   <span style={{ fontSize: 22 }}>{prochain.emoji}</span>
                   <div>
                     <p style={{ color: '#C8431A', fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.ajouter.popupBadge.prochainBadge}</p>
-                    <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>{prochain.label}</p>
+                    <p style={{ color: '#F7F2E8', fontSize: 14, fontWeight: 'bold' }}>{t.profil.badges[isContrib ? 'contributeur' : 'organisateur'][prochain.id]?.label ?? prochain.label}</p>
                   </div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 999, height: 6, overflow: 'hidden', marginBottom: 8 }}>

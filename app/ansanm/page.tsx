@@ -286,6 +286,16 @@ export default function AnsanmPage() {
   const carte = {
     background: 'white', border: '1px solid #E8E0D0', borderRadius: 16, padding: 20, marginBottom: 16,
   }
+  const badgesContributeurTraduits = BADGES_CONTRIBUTEUR.map(b => ({
+    ...b,
+    label: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.label ?? b.id,
+    desc: t.profil.badges.contributeur[b.id as keyof typeof t.profil.badges.contributeur]?.desc,
+  }))
+  const badgesOrganisateurTraduits = BADGES_ORGANISATEUR.map(b => ({
+    ...b,
+    label: t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.label ?? b.id,
+    desc: t.profil.badges.organisateur[b.id as keyof typeof t.profil.badges.organisateur]?.desc,
+  }))
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', paddingBottom: 96 }}>
@@ -517,8 +527,8 @@ export default function AnsanmPage() {
                     <BadgeProgression
                       nbContrib={nbContrib}
                       nbApprouves={nbApprouves}
-                      badgesContributeur={BADGES_CONTRIBUTEUR}
-                      badgesOrganisateur={BADGES_ORGANISATEUR}
+                      badgesContributeur={badgesContributeurTraduits}
+                      badgesOrganisateur={badgesOrganisateurTraduits}
                       titreContributeur={(b) => `${t.ansanm.niveauActuel} — ${b ? `${b.emoji} ${b.label}` : PAS_ENCORE_BADGE[langue]}`}
                       titreOrganisateur={(b) => `${t.ansanm.organisateurTitre} — ${b ? `${b.emoji} ${b.label}` : PAS_ENCORE_BADGE[langue]}`}
                       labelProchainBadge={t.ansanm.prochainBadge}
