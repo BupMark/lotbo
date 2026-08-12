@@ -590,6 +590,22 @@ function EvenementPageInner() {
   useEffect(() => {
     supabase.from('evenements').select('*').eq('id', id).eq('statut', 'approuve').single()
       .then(async ({ data }) => {
+        if (data?.organisation_id) {
+          const aujourdhuiCheck = new Date().toISOString().split('T')[0]
+          const finReferenceCheck = data.date_fin ?? data.date_debut ?? data.date
+          const estFutur = !finReferenceCheck || finReferenceCheck >= aujourdhuiCheck
+          if (estFutur) {
+            const { data: orgCheck } = await supabase
+              .from('organisations')
+              .select('suspendue')
+              .eq('id', data.organisation_id)
+              .maybeSingle()
+            if (orgCheck?.suspendue) {
+              setEv(null)
+              return
+            }
+          }
+        }
         setEv(data as Evenement)
 
         if (data) {

@@ -1,0 +1,14 @@
+name: Delais Claim Organisation
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+jobs:
+  traitement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route delais-claim-organisation
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/delais-claim-organisation"

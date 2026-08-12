@@ -27,6 +27,7 @@ interface Organisation {
   logo_url: string | null
   cover_url?: string | null
   owner_id: string
+  suspendue: boolean
 }
 
 interface EvenementVitrine {
@@ -130,7 +131,7 @@ export default function PageOrganisation() {
 
     const { data: orgData } = await supabase
       .from('organisations')
-      .select('id, slug, nom, slogan, description, ville, pays, site_web, email_contact, email_contact_verifie, telephone, verified, logo_url, cover_url, owner_id')
+      .select('id, slug, nom, slogan, description, ville, pays, site_web, email_contact, email_contact_verifie, telephone, verified, logo_url, cover_url, owner_id, suspendue')
       .eq('slug', slug)
       .maybeSingle()
 
@@ -143,17 +144,21 @@ export default function PageOrganisation() {
     setOrg(orgData as Organisation)
 
     const aujourdhui = new Date().toISOString().split('T')[0]
+    const orgSuspendue = !!(orgData as Organisation).suspendue
 
     const [{ data: evData }, { count: followCount }, { count: totalCount }, { data: categoriesData }] = await Promise.all([
-      supabase
-        .from('evenements')
-        .select('id, titre, lieu, date_debut, date_fin, date, categorie, prix, image_url')
-        .eq('organisation_id', orgData.id)
-        .eq('statut', 'approuve')
-        // en cours (date_fin future) OU pas encore commencé (date_debut future)
-        .or(`date_fin.gte.${aujourdhui},and(date_fin.is.null,date_debut.gte.${aujourdhui})`)
-        .order('date_debut', { ascending: true })
-        .limit(20),
+      // Événements futurs masqués si l'organisation est suspendue (litige en cours) — les passés restent visibles ailleurs
+      orgSuspendue
+        ? Promise.resolve({ data: [] as EvenementVitrine[] })
+        : supabase
+            .from('evenements')
+            .select('id, titre, lieu, date_debut, date_fin, date, categorie, prix, image_url')
+            .eq('organisation_id', orgData.id)
+            .eq('statut', 'approuve')
+            // en cours (date_fin future) OU pas encore commencé (date_debut future)
+            .or(`date_fin.gte.${aujourdhui},and(date_fin.is.null,date_debut.gte.${aujourdhui})`)
+            .order('date_debut', { ascending: true })
+            .limit(20),
       supabase
         .from('organisation_membres')
         .select('user_id', { count: 'exact', head: true })
@@ -320,6 +325,11 @@ export default function PageOrganisation() {
 
   return (
     <main style={{ minHeight: '100dvh', background: '#F7F2E8', color: '#1A1410' }}>
+      {org.suspendue && (
+        <div style={{ background: '#C8431A', color: 'white', padding: '10px 16px', textAlign: 'center', fontSize: 13, fontWeight: 'bold' }}>
+          ⚠️ {t.organisation.litige_en_cours}
+        </div>
+      )}
 
       {/* Cover + logo — bloc unique, style Facebook (le logo chevauche le cover) */}
       <div style={{ position: 'relative', marginBottom: avatarSize / 2 + 16 }}>

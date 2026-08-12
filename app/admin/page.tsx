@@ -1648,9 +1648,11 @@ export default function Admin() {
                 {reclamationsOrg.map(rec => {
                   const statut = rec.statut || 'en_attente'
                   const badgeCfg =
-                    statut === 'approuve' ? { label: '✅ Approuvé', bg: '#2D9E6B' } :
-                    statut === 'rejete'   ? { label: '✗ Rejeté',   bg: '#8C5A40' } :
-                                           { label: '🔑 En attente', bg: '#D4A820' }
+                    statut === 'approuve'              ? { label: '✅ Approuvé', bg: '#2D9E6B' } :
+                    statut === 'rejete'                ? { label: '✗ Rejeté',   bg: '#8C5A40' } :
+                    statut === 'proprietaire_notifie'   ? { label: '⏳ Propriétaire notifié', bg: '#D4A820' } :
+                    statut === 'litige'                 ? { label: '⚠️ Litige', bg: '#C8431A' } :
+                                                          { label: '🔑 En attente', bg: '#D4A820' }
                   const labelPreuve =
                     rec.type_preuve === 'email_domaine'         ? 'Email domaine officiel' :
                     rec.type_preuve === 'lien_page_officielle'  ? 'Lien page officielle' :
@@ -1685,24 +1687,22 @@ export default function Admin() {
                         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                           <button
                             onClick={async () => {
-                              if (!confirm(`Transférer la propriété de "${rec.organisations?.nom}" à ce réclamant ?`)) return
-                              await supabase.from('organisations').update({ owner_id: rec.reclamant_id }).eq('id', rec.organisation_id)
-                              await supabase.from('reclamations_organisations').update({ statut: 'approuve', traite_le: new Date().toISOString() }).eq('id', rec.id)
-                              fetch('/api/admin/notifications', {
-                                method: 'POST', headers: hiAuth(),
-                                body: JSON.stringify({
-                                  user_id: rec.reclamant_id,
-                                  type: 'organisation_approuve',
-                                  titre: '🔑 Réclamation approuvée !',
-                                  message: `Vous êtes maintenant propriétaire de "${rec.organisations?.nom}".`,
-                                  lien: `/organisation/${rec.organisation_id}`,
-                                }),
-                              }).catch(() => {})
-                              setReclamationsOrg(prev => prev.map(r => r.id === rec.id ? { ...r, statut: 'approuve' } : r))
+                              if (!confirm(`Valider la preuve pour "${rec.organisations?.nom}" et notifier le propriétaire actuel ? Il aura 5 jours ouvrés pour répondre.`)) return
+                              const { data: { session } } = await supabase.auth.getSession()
+                              const res = await fetch('/api/organisation/reclamation/notifier-proprietaire', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+                                body: JSON.stringify({ reclamation_id: rec.id }),
+                              })
+                              if (res.ok) {
+                                setReclamationsOrg(prev => prev.map(r => r.id === rec.id ? { ...r, statut: 'proprietaire_notifie' } : r))
+                              } else {
+                                alert('Erreur lors de la notification du propriétaire.')
+                              }
                             }}
                             style={{ background: '#2D9E6B', color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 'bold', cursor: 'pointer' }}
                           >
-                            ✅ Approuver — transférer propriété
+                            ✅ Valider — notifier le propriétaire
                           </button>
                           <button
                             onClick={async () => {
