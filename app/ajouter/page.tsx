@@ -14,6 +14,8 @@ const CarteBadge = dynamicImport(() => import('../../components/CarteBadge'), { 
 import { attributerPoints } from '../../lib/points'
 import CarteInteractive, { Coords } from '../components/CarteInteractive'
 import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR, getProchainBadge } from '../../lib/badges'
+import { jouerBipLoyita } from '../../lib/sonLoyita'
+import { ouvrirChatLoyita } from '../../lib/celebrerAction'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGE_PIONEER_SCAN: Badge = { id: 'pioneer_scan', emoji: '📸', label: 'Pioneer Scan & Publie', seuil: 0, desc: '1er scan publié' }
@@ -355,6 +357,11 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte, t
 })
 {
   const isContrib = role === 'contributeur'
+
+  useEffect(() => {
+    jouerBipLoyita()
+  }, [])
+
   return (
     <>
       <Confetti />
@@ -378,6 +385,7 @@ function PopupBadge({ badge, nbContributions, role, onContinuer, onCreerCarte, t
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button onClick={onContinuer} style={{ background: '#C8431A', color: '#F7F2E8', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>{t.ajouter.popupBadge.voirMesBadges}</button>
             <button onClick={onCreerCarte} style={{ background: 'rgba(247,242,232,0.1)', color: '#F7F2E8', border: '1px solid rgba(247,242,232,0.2)', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: 8 }}>🎨 {t.ajouter.popupBadge.creerCarteBadge}</button>
+            <button onClick={() => { onContinuer(); ouvrirChatLoyita('Félicite-moi pour mon nouveau badge et donne-moi des idées pour mon prochain événement !') }} style={{ background: 'rgba(200,67,26,0.15)', color: '#C8431A', border: '1px solid rgba(200,67,26,0.3)', borderRadius: 12, padding: '11px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: 8 }}>💬 {t.ajouter.popupBadge.demanderLoyita ?? 'Demander des idées à Loyita'}</button>
             <button onClick={onContinuer} style={{ background: 'transparent', color: '#8C5A40', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px' }}>{t.ajouter.popupBadge.continuer}</button>
           </div>
         </div>

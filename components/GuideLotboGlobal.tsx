@@ -92,8 +92,22 @@ export default function GuideLotboGlobal() {
 
   const fermerPanneau = () => setPanneauOuvert(false)
 
-  const envoyerMessage = async () => {
-    const texte = saisie.trim()
+  useEffect(() => {
+    const ecouterChat = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { message?: string }
+      setBulleSalut(false)
+      setBulleCelebration(null)
+      setPanneauOuvert(true)
+      if (detail.message) {
+        envoyerMessage(detail.message)
+      }
+    }
+    window.addEventListener('lotbo:ouvrir_chat', ecouterChat)
+    return () => window.removeEventListener('lotbo:ouvrir_chat', ecouterChat)
+  }, [])
+
+  const envoyerMessage = async (texteOverride?: string) => {
+    const texte = (texteOverride ?? saisie).trim()
     if (!texte || chatEnCours) return
 
     const nouveauxMessages: MessageChat[] = [...messages, { role: 'user', content: texte }]
@@ -220,7 +234,7 @@ export default function GuideLotboGlobal() {
               style={{ flex: 1, border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px 14px', fontSize: 13, outline: 'none' }}
             />
             <button
-              onClick={envoyerMessage}
+              onClick={() => envoyerMessage()}
               disabled={chatEnCours || !saisie.trim()}
               style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: '50%', width: 44, height: 44, cursor: 'pointer', flexShrink: 0, opacity: (chatEnCours || !saisie.trim()) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
