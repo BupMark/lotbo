@@ -110,7 +110,7 @@ export default function GuideLotboGlobal() {
       const texte = (t.loyita as Record<string, string>)[cleChoisie]
       if (!texte) return
       setToastAmbiant(texte)
-      const timer = setTimeout(() => setToastAmbiant(null), 3000)
+      const timer = setTimeout(() => setToastAmbiant(null), 4500)
       return () => clearTimeout(timer)
     }
     window.addEventListener('lotbo:toast_ambiant', ecouterAmbiant)
@@ -195,14 +195,21 @@ export default function GuideLotboGlobal() {
         </div>
       )}
 
-      {toastAmbiant && (
+      {toastAmbiant && !panneauOuvert && (
         <div style={{
-          position: 'fixed', top: 'calc(16px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', zIndex: 997,
-          background: '#1A1410', color: '#F7F2E8', fontSize: 12, fontWeight: 'bold',
-          padding: '8px 16px', borderRadius: 999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          animation: 'lotboGuideBulleApparait 0.2s ease-out', whiteSpace: 'nowrap',
+          position: 'fixed', bottom: 'calc(150px + env(safe-area-inset-bottom))', right: 20, zIndex: 998,
+          background: '#1A1410', color: '#F7F2E8', fontSize: 13, fontWeight: 'bold',
+          padding: '10px 14px', borderRadius: '14px 14px 2px 14px', maxWidth: 200,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          animation: 'lotboGuideBulleApparait 0.2s ease-out',
+          display: 'flex', alignItems: 'center', gap: 8,
         }}>
-          ✨ {toastAmbiant}
+          <svg width="20" height="20" viewBox="0 0 56 56" style={{ flexShrink: 0 }}>
+            <path d="M28 6 C40 6 48 15 48 27 C48 37 41 45 30 47 C29 47.3 27.5 47.3 26.5 46.5 C22 43 8 40 8 27 C8 15 16 6 28 6 Z" fill="#C8431A" />
+            <circle cx="20" cy="25" r="3" fill="#F7F2E8" />
+            <circle cx="36" cy="25" r="3" fill="#F7F2E8" />
+          </svg>
+          <span>{toastAmbiant}</span>
         </div>
       )}
 
