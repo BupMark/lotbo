@@ -11,7 +11,7 @@ import { getTraductions, type Langue } from '../../../lib/i18n'
 import { getSessionId } from '../../../lib/getSessionId'
 import ModalCoOrganisateurs from '../../../components/ModalCoOrganisateurs'
 import ModalStatistiques from '../../../components/ModalStatistiques'
-import { celebrerPremiereFois } from '../../../lib/celebrerAction'
+import { celebrerPremiereFois, toastAmbiantLoyita } from '../../../lib/celebrerAction'
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -268,7 +268,10 @@ function CommentaireForm({
       })
       if (!parentId) {
         supabase.from('commentaires').select('id', { count: 'exact', head: true }).eq('user_id', userProfile.id)
-          .then(({ count }) => { if (count === 1) celebrerPremiereFois('premier_commentaire') })
+          .then(({ count }) => {
+            if (count === 1) celebrerPremiereFois('premier_commentaire')
+            else toastAmbiantLoyita('commentaire_repete')
+          })
       }
       const { data: { session } } = await supabase.auth.getSession()
       const notifierUtilisateur = (payload: { user_id: string; type: string; titre: string; message: string; lien?: string | null }) => {
@@ -853,7 +856,10 @@ function EvenementPageInner() {
         setNbLikes(n => n + 1)
         attributerPoints({ user_id: userId, action: 'liker', evenement_id: id as string, type_role: 'utilisateur' })
         supabase.from('favoris').select('id', { count: 'exact', head: true }).eq('user_id', userId)
-          .then(({ count }) => { if (count === 1) celebrerPremiereFois('premier_favori') })
+          .then(({ count }) => {
+            if (count === 1) celebrerPremiereFois('premier_favori')
+            else toastAmbiantLoyita('favori_repete')
+          })
       }
     } else {
       const likes = JSON.parse(localStorage.getItem('lotbo_likes') || '{}')
@@ -1030,6 +1036,7 @@ function EvenementPageInner() {
       },
       body: JSON.stringify({ session_id: getSessionId(), canal }),
     }).catch(() => {})
+    toastAmbiantLoyita('partage')
   }
 
   return (

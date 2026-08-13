@@ -879,6 +879,16 @@
     "conseil_swipe_alune": "Dica: deslize os eventos Em destaque para descobrir mais.",
     "conseil_profil_contributions": "Dica: seu perfil mostra quantas contribuições você já fez no LOTBO.",
     "conseil_bouton_ajouter": "Dica: toque no + para adicionar um novo evento no LOTBO.",
-    "conseil_scan_publie": "Dica: com Scan & Publie, tire uma foto de um cartaz e preenchemos o formulário para você."
+    "conseil_scan_publie": "Dica: com Scan & Publie, tire uma foto de um cartaz e preenchemos o formulário para você.",
+    "ambiant_favori_1": "Boa escolha de novo!",
+    "ambiant_favori_2": "Você tem bom gosto!",
+    "ambiant_commentaire_1": "Ótimo comentário!",
+    "ambiant_commentaire_2": "Sempre tem algo bom a dizer!",
+    "ambiant_partage_1": "Obrigado por compartilhar!",
+    "ambiant_partage_2": "Isso ajuda a comunidade a crescer!",
+    "ambiant_ville_1": "Mais uma cidade na sua lista!",
+    "ambiant_ville_2": "Você está explorando bem!",
+    "ambiant_organisation_1": "Mais uma organização na sua lista!",
+    "ambiant_organisation_2": "Você está por dentro de tudo!"
   }
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useLangue } from '../lib/useLangue'
 import { getTraductions } from '../lib/i18n'
-import type { ActionCelebrable } from '../lib/celebrerAction'
+import type { ActionCelebrable, ActionAmbiante } from '../lib/celebrerAction'
 import { jouerBipLoyita } from '../lib/sonLoyita'
 
 const CLE_SALUT_VU = 'lotbo_guide_salut_vu'
@@ -26,6 +26,14 @@ const MAPPING_ACTION_CLE: Record<ActionCelebrable, string> = {
   premiere_organisation_suivie: 'celebration_premiere_organisation',
 }
 
+const MAPPING_AMBIANT_CLES: Record<ActionAmbiante, string[]> = {
+  favori_repete: ['ambiant_favori_1', 'ambiant_favori_2'],
+  commentaire_repete: ['ambiant_commentaire_1', 'ambiant_commentaire_2'],
+  partage: ['ambiant_partage_1', 'ambiant_partage_2'],
+  ville_suivie_repetee: ['ambiant_ville_1', 'ambiant_ville_2'],
+  organisation_suivie_repetee: ['ambiant_organisation_1', 'ambiant_organisation_2'],
+}
+
 export default function GuideLotboGlobal() {
   const pathname = usePathname()
   const { langue } = useLangue()
@@ -33,6 +41,7 @@ export default function GuideLotboGlobal() {
   const [visible, setVisible] = useState(false)
   const [bulleSalut, setBulleSalut] = useState(false)
   const [bulleCelebration, setBulleCelebration] = useState<string | null>(null)
+  const [toastAmbiant, setToastAmbiant] = useState<string | null>(null)
   const [panneauOuvert, setPanneauOuvert] = useState(false)
   const [wikivoyage, setWikivoyage] = useState<DonneesWikivoyage | null>(null)
   const [conseilGenerique, setConseilGenerique] = useState('')
@@ -93,6 +102,22 @@ export default function GuideLotboGlobal() {
   const fermerPanneau = () => setPanneauOuvert(false)
 
   useEffect(() => {
+    const ecouterAmbiant = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { action: ActionAmbiante }
+      const cles = MAPPING_AMBIANT_CLES[detail.action]
+      if (!cles) return
+      const cleChoisie = cles[Math.floor(Math.random() * cles.length)]
+      const texte = (t.loyita as Record<string, string>)[cleChoisie]
+      if (!texte) return
+      setToastAmbiant(texte)
+      const timer = setTimeout(() => setToastAmbiant(null), 3000)
+      return () => clearTimeout(timer)
+    }
+    window.addEventListener('lotbo:toast_ambiant', ecouterAmbiant)
+    return () => window.removeEventListener('lotbo:toast_ambiant', ecouterAmbiant)
+  }, [t])
+
+  useEffect(() => {
     const ecouterChat = (e: Event) => {
       const detail = (e as CustomEvent).detail as { message?: string }
       setBulleSalut(false)
@@ -144,6 +169,7 @@ export default function GuideLotboGlobal() {
         .lotbo-guide-svg { animation: lotboGuideFloat 3s ease-in-out infinite }
         .lotbo-guide-halo { animation: lotboGuideGlow 2.4s ease-in-out infinite }
         .lotbo-guide-eye { animation: lotboGuideBlink 3.6s ease-in-out infinite; transform-origin: center }
+        @keyframes lotboGuideBulleApparait { from { transform: scale(0.9); opacity: 0 } to { transform: scale(1); opacity: 1 } }
       `}</style>
 
       {bulleSalut && !panneauOuvert && (
@@ -166,6 +192,17 @@ export default function GuideLotboGlobal() {
           border: '1px solid #D4A820',
         }}>
           {bulleCelebration}
+        </div>
+      )}
+
+      {toastAmbiant && (
+        <div style={{
+          position: 'fixed', top: 'calc(16px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', zIndex: 997,
+          background: '#1A1410', color: '#F7F2E8', fontSize: 12, fontWeight: 'bold',
+          padding: '8px 16px', borderRadius: 999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          animation: 'lotboGuideBulleApparait 0.2s ease-out', whiteSpace: 'nowrap',
+        }}>
+          ✨ {toastAmbiant}
         </div>
       )}
 

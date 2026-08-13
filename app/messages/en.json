@@ -879,6 +879,16 @@
     "conseil_swipe_alune": "Tip: swipe the Featured events to discover more.",
     "conseil_profil_contributions": "Tip: your profile shows how many contributions you've made on LOTBO.",
     "conseil_bouton_ajouter": "Tip: tap the + to add a new event on LOTBO.",
-    "conseil_scan_publie": "Tip: with Scan & Publish, take a photo of a poster and we'll fill in the form for you."
+    "conseil_scan_publie": "Tip: with Scan & Publish, take a photo of a poster and we'll fill in the form for you.",
+    "ambiant_favori_1": "Nice pick again!",
+    "ambiant_favori_2": "You've got good taste!",
+    "ambiant_commentaire_1": "Great comment!",
+    "ambiant_commentaire_2": "Always something good to say!",
+    "ambiant_partage_1": "Thanks for sharing!",
+    "ambiant_partage_2": "That helps the community grow!",
+    "ambiant_ville_1": "One more city on your list!",
+    "ambiant_ville_2": "You're exploring well!",
+    "ambiant_organisation_1": "One more organisation on your list!",
+    "ambiant_organisation_2": "You're keeping up with things!"
   }
 }

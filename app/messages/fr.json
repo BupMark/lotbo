@@ -879,6 +879,16 @@
     "conseil_swipe_alune": "Astuce : glisse sur les événements À la une pour découvrir les suivants.",
     "conseil_profil_contributions": "Astuce : ton profil affiche le nombre de contributions que tu as faites sur LOTBO.",
     "conseil_bouton_ajouter": "Astuce : clique sur le + pour ajouter un nouvel événement sur LOTBO.",
-    "conseil_scan_publie": "Astuce : avec Scan & Publie, prends en photo une affiche et on remplit le formulaire pour toi."
+    "conseil_scan_publie": "Astuce : avec Scan & Publie, prends en photo une affiche et on remplit le formulaire pour toi.",
+    "ambiant_favori_1": "Bel choix encore !",
+    "ambiant_favori_2": "Tu as du goût !",
+    "ambiant_commentaire_1": "Beau commentaire !",
+    "ambiant_commentaire_2": "Toujours de bonnes choses à dire !",
+    "ambiant_partage_1": "Merci pour le partage !",
+    "ambiant_partage_2": "Ça aide la communauté à grandir !",
+    "ambiant_ville_1": "Une ville de plus dans ta liste !",
+    "ambiant_ville_2": "Tu explores bien !",
+    "ambiant_organisation_1": "Une organisation de plus dans ta liste !",
+    "ambiant_organisation_2": "Tu suis bien ce qui se passe !"
   }
 }

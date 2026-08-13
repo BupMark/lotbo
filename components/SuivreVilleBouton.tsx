@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { toastAmbiantLoyita } from '../lib/celebrerAction'
 
 interface Props {
   ville: string
@@ -44,6 +45,7 @@ export default function SuivreVilleBouton({ ville, pays }: Props) {
       const { error } = await supabase.from('villes_suivies').insert([{ user_id: userId, ville, pays: pays || null }])
       if (error) { console.error('[SuivreVilleBouton] insert error:', error); return }
       setSuivie(true)
+      toastAmbiantLoyita('ville_suivie_repetee')
     }
   }
 
