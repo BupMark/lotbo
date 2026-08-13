@@ -14,6 +14,11 @@ interface DonneesWikivoyage {
   lien: string | null
 }
 
+interface MessageChat {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 const MAPPING_ACTION_CLE: Record<ActionCelebrable, string> = {
   inscription: 'celebration_inscription',
   premier_favori: 'celebration_premier_favori',
@@ -31,6 +36,9 @@ export default function GuideLotboGlobal() {
   const [panneauOuvert, setPanneauOuvert] = useState(false)
   const [wikivoyage, setWikivoyage] = useState<DonneesWikivoyage | null>(null)
   const [conseilGenerique, setConseilGenerique] = useState('')
+  const [messages, setMessages] = useState<MessageChat[]>([])
+  const [saisie, setSaisie] = useState('')
+  const [chatEnCours, setChatEnCours] = useState(false)
 
   useEffect(() => {
     setVisible(true)
@@ -83,6 +91,33 @@ export default function GuideLotboGlobal() {
   }
 
   const fermerPanneau = () => setPanneauOuvert(false)
+
+  const envoyerMessage = async () => {
+    const texte = saisie.trim()
+    if (!texte || chatEnCours) return
+
+    const nouveauxMessages: MessageChat[] = [...messages, { role: 'user', content: texte }]
+    setMessages(nouveauxMessages)
+    setSaisie('')
+    setChatEnCours(true)
+
+    try {
+      const res = await fetch('/api/loyita-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: nouveauxMessages, langue }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reponse }])
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: '...' }])
+      }
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: '...' }])
+    }
+    setChatEnCours(false)
+  }
 
   if (!visible) return null
 
@@ -138,20 +173,60 @@ export default function GuideLotboGlobal() {
       {panneauOuvert && (
         <div style={{
           position: 'fixed', bottom: 'calc(76px + env(safe-area-inset-bottom))', right: 20, left: 20, maxWidth: 340, marginLeft: 'auto', zIndex: 999,
-          background: 'white', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', padding: 16,
+          background: 'white', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+          display: 'flex', flexDirection: 'column', maxHeight: '60vh',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 16px 10px' }}>
             <span style={{ fontSize: 13, fontWeight: 'bold', color: '#1A1410' }}>Guide LOTBO</span>
             <button onClick={fermerPanneau} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 16 }}>✕</button>
           </div>
-          <p style={{ fontSize: 12, color: '#4A3830', lineHeight: 1.5, marginBottom: wikivoyage ? 10 : 0 }}>
-            {wikivoyage ? wikivoyage.extrait : conseilGenerique}
-          </p>
-          {wikivoyage?.lien && (
-            <a href={wikivoyage.lien} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: '#F7F2E8', borderRadius: 8, padding: '8px 10px', fontSize: 11, color: '#8C5A40', textDecoration: 'none' }}>
-              📖 Source Wikivoyage
-            </a>
-          )}
+
+          <div style={{ overflowY: 'auto', padding: '0 16px', flex: 1 }}>
+            <p style={{ fontSize: 12, color: '#4A3830', lineHeight: 1.5, marginBottom: wikivoyage ? 10 : 12 }}>
+              {wikivoyage ? wikivoyage.extrait : conseilGenerique}
+            </p>
+            {wikivoyage?.lien && (
+              <a href={wikivoyage.lien} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: '#F7F2E8', borderRadius: 8, padding: '8px 10px', fontSize: 11, color: '#8C5A40', textDecoration: 'none', marginBottom: 12 }}>
+                📖 Source Wikivoyage
+              </a>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} style={{
+                marginBottom: 8, display: 'flex',
+                justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
+              }}>
+                <div style={{
+                  maxWidth: '85%', padding: '8px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.5,
+                  background: m.role === 'user' ? '#C8431A' : '#F7F2E8',
+                  color: m.role === 'user' ? 'white' : '#1A1410',
+                }}>
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {chatEnCours && (
+              <div style={{ fontSize: 12, color: '#8C5A40', fontStyle: 'italic', marginBottom: 8 }}>...</div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, padding: 16, borderTop: '1px solid #E8E0D0' }}>
+            <input
+              type="text"
+              value={saisie}
+              onChange={e => setSaisie(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') envoyerMessage() }}
+              placeholder="Écris ton message..."
+              disabled={chatEnCours}
+              style={{ flex: 1, border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px 14px', fontSize: 13, outline: 'none' }}
+            />
+            <button
+              onClick={envoyerMessage}
+              disabled={chatEnCours || !saisie.trim()}
+              style={{ background: '#C8431A', color: 'white', border: 'none', borderRadius: '50%', width: 44, height: 44, cursor: 'pointer', flexShrink: 0, opacity: (chatEnCours || !saisie.trim()) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              →
+            </button>
+          </div>
         </div>
       )}
     </>
