@@ -169,7 +169,7 @@ export default function CreerOrganisation() {
           <h1 style={{ fontSize: 24, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', color: '#1A1410', marginBottom: 6 }}>
             {t.organisation.creer_titre}
           </h1>
-          <p style={{ color: '#8C5A40', fontSize: 14 }}>Crée ta page publique sur Lotbo</p>
+          <p style={{ color: '#8C5A40', fontSize: 14 }}>{t.organisation.creer_soustitre}</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
