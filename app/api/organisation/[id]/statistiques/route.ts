@@ -9,11 +9,33 @@ function makeAdminClient() {
   )
 }
 
+type Periode = 'jour' | 'semaine' | 'mois' | 'tous'
+
+function calculerDebutPeriode(periode: Periode): string | null {
+  const now = new Date()
+  if (periode === 'jour') {
+    const debut = new Date(now); debut.setHours(0, 0, 0, 0)
+    return debut.toISOString()
+  }
+  if (periode === 'semaine') {
+    const debut = new Date(now); debut.setDate(now.getDate() - now.getDay()); debut.setHours(0, 0, 0, 0)
+    return debut.toISOString()
+  }
+  if (periode === 'mois') {
+    const debut = new Date(now.getFullYear(), now.getMonth(), 1)
+    return debut.toISOString()
+  }
+  return null
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: organisationId } = await params
+  const url = new URL(request.url)
+  const periode = (url.searchParams.get('periode') as Periode) ?? 'tous'
+  const debutPeriode = calculerDebutPeriode(periode)
 
   const auth = request.headers.get('authorization')
   if (!auth?.startsWith('Bearer ')) {
@@ -62,12 +84,22 @@ export async function GET(
     return NextResponse.json({ nb_vues_total: 0, nb_partages_total: 0, partages_par_canal: {}, evenements: [] })
   }
 
+  let requeteVues = admin.from('vues_evenements').select('evenement_id').in('evenement_id', evenementIds)
+  let requetePartages = admin.from('partages_evenements').select('evenement_id, canal').in('evenement_id', evenementIds)
+  let requeteFavoris = admin.from('favoris').select('evenement_id').in('evenement_id', evenementIds)
+  let requeteParticipations = admin.from('participations').select('evenement_id').in('evenement_id', evenementIds)
+  let requeteCommentaires = admin.from('commentaires').select('evenement_id').in('evenement_id', evenementIds)
+
+  if (debutPeriode) {
+    requeteVues = requeteVues.gte('created_at', debutPeriode)
+    requetePartages = requetePartages.gte('created_at', debutPeriode)
+    requeteFavoris = requeteFavoris.gte('created_at', debutPeriode)
+    requeteParticipations = requeteParticipations.gte('created_at', debutPeriode)
+    requeteCommentaires = requeteCommentaires.gte('created_at', debutPeriode)
+  }
+
   const [{ data: vuesData }, { data: partagesData }, { data: favorisData }, { data: participationsData }, { data: commentairesData }] = await Promise.all([
-    admin.from('vues_evenements').select('evenement_id').in('evenement_id', evenementIds),
-    admin.from('partages_evenements').select('evenement_id, canal').in('evenement_id', evenementIds),
-    admin.from('favoris').select('evenement_id').in('evenement_id', evenementIds),
-    admin.from('participations').select('evenement_id').in('evenement_id', evenementIds),
-    admin.from('commentaires').select('evenement_id').in('evenement_id', evenementIds),
+    requeteVues, requetePartages, requeteFavoris, requeteParticipations, requeteCommentaires,
   ])
 
   const vuesParEvenement: Record<string, number> = {}
@@ -105,6 +137,7 @@ export async function GET(
     .sort((a, b) => b.vues - a.vues)
 
   return NextResponse.json({
+    periode,
     nb_vues_total: (vuesData ?? []).length,
     nb_partages_total: (partagesData ?? []).length,
     nb_favoris_total: (favorisData ?? []).length,

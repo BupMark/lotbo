@@ -13,7 +13,10 @@ interface EvenementStat {
   commentaires: number
 }
 
+type Periode = 'jour' | 'semaine' | 'mois' | 'tous'
+
 interface Stats {
+  periode: Periode
   nb_vues_total: number
   nb_partages_total: number
   nb_favoris_total: number
@@ -31,36 +34,65 @@ const LABELS_CANAL: Record<string, string> = {
   autre: 'Autre',
 }
 
+const LABELS_PERIODE: Record<Periode, string> = {
+  jour: "Aujourd'hui",
+  semaine: 'Cette semaine',
+  mois: 'Ce mois',
+  tous: 'Tout',
+}
+
 export default function ModalStatistiquesOrganisation({ organisationId, onClose }: { organisationId: string; onClose: () => void }) {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<Stats | null>(null)
   const [erreur, setErreur] = useState('')
+  const [periode, setPeriode] = useState<Periode>('tous')
+
+  const charger = async (p: Periode) => {
+    setLoading(true)
+    const { data } = await supabase.auth.getSession()
+    if (!data.session) { setErreur('Non connecté'); setLoading(false); return }
+
+    const res = await fetch(`/api/organisation/${organisationId}/statistiques?periode=${p}`, {
+      headers: { 'Authorization': `Bearer ${data.session.access_token}` },
+    })
+    const json = await res.json() as Stats & { error?: string }
+
+    if (res.ok) {
+      setStats(json)
+    } else {
+      setErreur(json.error ?? 'Erreur de chargement')
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) { setErreur('Non connecté'); setLoading(false); return }
-
-      const res = await fetch(`/api/organisation/${organisationId}/statistiques`, {
-        headers: { 'Authorization': `Bearer ${data.session.access_token}` },
-      })
-      const json = await res.json() as Stats & { error?: string }
-
-      if (res.ok) {
-        setStats(json)
-      } else {
-        setErreur(json.error ?? 'Erreur de chargement')
-      }
-      setLoading(false)
-    })
-  }, [organisationId])
+    charger(periode)
+  }, [organisationId, periode])
 
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.6)' }} />
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 61, background: '#F7F2E8', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', maxHeight: '80vh', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 17, fontWeight: 'bold', color: '#1A1410', margin: 0 }}>📊 Statistiques</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, color: '#8C5A40', cursor: 'pointer' }}>✕</button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+          {(['jour', 'semaine', 'mois', 'tous'] as Periode[]).map(p => (
+            <button
+              key={p}
+              onClick={() => setPeriode(p)}
+              style={{
+                background: periode === p ? '#C8431A' : 'white',
+                color: periode === p ? 'white' : '#8C5A40',
+                border: periode === p ? 'none' : '1px solid #E8E0D0',
+                borderRadius: 999, padding: '6px 12px', fontSize: 11, fontWeight: 'bold', cursor: 'pointer',
+              }}
+            >
+              {LABELS_PERIODE[p]}
+            </button>
+          ))}
         </div>
 
         {loading ? (
