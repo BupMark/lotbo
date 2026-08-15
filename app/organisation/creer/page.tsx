@@ -52,7 +52,7 @@ export default function CreerOrganisation() {
   const [emailContact, setEmailContact] = useState('')
   const [logoFile, setLogoFile]         = useState<File | null>(null)
   const [logoPreview, setLogoPreview]   = useState<string | null>(null)
-  const [categoriesDisponibles, setCategoriesDisponibles] = useState<{ id: number; libelle_fr: string }[]>([])
+  const [categoriesDisponibles, setCategoriesDisponibles] = useState<{ id: number; libelle_fr: string; libelle_en: string; libelle_es: string; libelle_pt: string; libelle_ht: string }[]>([])
   const [categoriesSelectionnees, setCategoriesSelectionnees] = useState<number[]>([])
 
   const slug = genererSlug(nom)
@@ -68,7 +68,7 @@ export default function CreerOrganisation() {
   useEffect(() => {
     supabase
       .from('organisation_categories')
-      .select('id, libelle_fr')
+      .select('id, libelle_fr, libelle_en, libelle_es, libelle_pt, libelle_ht')
       .order('id', { ascending: true })
       .then(({ data }) => setCategoriesDisponibles(data ?? []))
   }, [])
@@ -247,7 +247,7 @@ export default function CreerOrganisation() {
                       fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
                     }}
                   >
-                    {cat.libelle_fr}
+                    {cat[`libelle_${langue}` as keyof typeof cat] ?? cat.libelle_fr}
                   </button>
                 )
               })}

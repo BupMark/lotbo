@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
+import { useLangue } from '../../../../lib/useLangue'
+import { getTraductions } from '../../../../lib/i18n'
 
 interface OrgRow {
   id: string
@@ -37,6 +39,8 @@ export default function ModifierOrganisation() {
   const slug    = params?.slug as string
   const router  = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
+  const { langue } = useLangue()
+  const t = getTraductions(langue)
 
   const [loading, setLoading]           = useState(true)
   const [submitting, setSubmitting]     = useState(false)
@@ -59,7 +63,7 @@ export default function ModifierOrganisation() {
   const [emailVerifie, setEmailVerifie] = useState(false)
   const [envoiVerifLoading, setEnvoiVerifLoading] = useState(false)
   const [verifMsg, setVerifMsg]         = useState<{ type: 'ok' | 'err'; texte: string } | null>(null)
-  const [categoriesDisponibles, setCategoriesDisponibles] = useState<{ id: number; libelle_fr: string }[]>([])
+  const [categoriesDisponibles, setCategoriesDisponibles] = useState<{ id: number; libelle_fr: string; libelle_en: string; libelle_es: string; libelle_pt: string; libelle_ht: string }[]>([])
   const [categoriesSelectionnees, setCategoriesSelectionnees] = useState<number[]>([])
 
   useEffect(() => {
@@ -108,7 +112,7 @@ export default function ModifierOrganisation() {
       setLogoUrl(o.logo_url)
 
       const [{ data: toutesCategories }, { data: categoriesLiees }] = await Promise.all([
-        supabase.from('organisation_categories').select('id, libelle_fr').order('id', { ascending: true }),
+        supabase.from('organisation_categories').select('id, libelle_fr, libelle_en, libelle_es, libelle_pt, libelle_ht').order('id', { ascending: true }),
         supabase.from('organisation_categories_liees').select('categorie_id').eq('organisation_id', o.id),
       ])
       setCategoriesDisponibles(toutesCategories ?? [])
@@ -117,12 +121,12 @@ export default function ModifierOrganisation() {
       setLoading(false)
       const params = new URLSearchParams(window.location.search)
       if (params.get('email_valide') === '1') {
-        setVerifMsg({ type: 'ok', texte: 'Email de contact confirmé !' })
+        setVerifMsg({ type: 'ok', texte: t.organisation.modifier_email_confirme })
         setEmailVerifie(true)
       } else if (params.get('erreur') === 'token_expire') {
-        setVerifMsg({ type: 'err', texte: 'Le lien de confirmation a expiré, renvoie un nouvel email.' })
+        setVerifMsg({ type: 'err', texte: t.organisation.modifier_email_lien_expire })
       } else if (params.get('erreur') === 'token_invalide') {
-        setVerifMsg({ type: 'err', texte: 'Lien de confirmation invalide.' })
+        setVerifMsg({ type: 'err', texte: t.organisation.modifier_email_lien_invalide })
       }
     })
   }, [slug])
@@ -218,7 +222,7 @@ export default function ModifierOrganisation() {
     const json = await res.json() as { error?: string }
 
     if (res.ok) {
-      setVerifMsg({ type: 'ok', texte: 'Email de confirmation envoyé — vérifie ta boîte mail.' })
+      setVerifMsg({ type: 'ok', texte: t.organisation.modifier_email_confirmation_envoyee })
     } else {
       setVerifMsg({ type: 'err', texte: json.error ?? 'Erreur inconnue' })
     }
@@ -238,25 +242,25 @@ export default function ModifierOrganisation() {
       <div style={{ maxWidth: 540, margin: '0 auto', padding: '24px 16px 80px' }}>
 
         <a href={`/organisation/${slug}`} style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'inline-block', marginBottom: 24 }}>
-          ← Retour à la page
+          ← {t.evenement.retour}
         </a>
 
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 24, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', color: '#1A1410', marginBottom: 6 }}>
-            Modifier l&apos;organisation
+            {t.organisation.modifier_titre}
           </h1>
-          <p style={{ color: '#8C5A40', fontSize: 14 }}>Mets à jour les informations de ta page</p>
+          <p style={{ color: '#8C5A40', fontSize: 14 }}>{t.organisation.modifier_soustitre}</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           <div>
-            <label style={labelStyle}>Nom de l&apos;organisation *</label>
+            <label style={labelStyle}>{t.organisation.creer_nom} *</label>
             <input type="text" value={nom} onChange={e => setNom(e.target.value)} required maxLength={80} style={inputStyle} />
           </div>
 
           <div>
-            <label style={labelStyle}>Logo (optionnel)</label>
+            <label style={labelStyle}>{t.organisation.modifier_logo}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {previewSrc ? (
                 <img src={previewSrc} alt="Logo" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E8E0D0', flexShrink: 0 }} />
@@ -266,7 +270,7 @@ export default function ModifierOrganisation() {
               <div style={{ flex: 1 }}>
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
                 <button type="button" onClick={() => fileRef.current?.click()} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px 16px', fontSize: 13, color: '#8C5A40', cursor: 'pointer', fontWeight: 'bold' }}>
-                  {logoFile ? '📷 Changer' : previewSrc ? '📷 Remplacer' : '📷 Choisir une image'}
+                  {logoFile ? t.organisation.creer_logo_changer : previewSrc ? t.organisation.modifier_logo_remplacer : t.organisation.creer_logo_choisir}
                 </button>
                 {logoFile && <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>{logoFile.name}</p>}
               </div>
@@ -274,12 +278,12 @@ export default function ModifierOrganisation() {
           </div>
 
           <div>
-            <label style={labelStyle}>Description</label>
+            <label style={labelStyle}>{t.organisation.creer_description}</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={400} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
           <div>
-            <label style={labelStyle}>Catégories d&apos;activité</label>
+            <label style={labelStyle}>{t.organisation.creer_categories}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {categoriesDisponibles.map(cat => {
                 const selectionne = categoriesSelectionnees.includes(cat.id)
@@ -296,7 +300,7 @@ export default function ModifierOrganisation() {
                       fontSize: 12, fontWeight: 'bold', cursor: 'pointer',
                     }}
                   >
-                    {cat.libelle_fr}
+                    {cat[`libelle_${langue}` as keyof typeof cat] ?? cat.libelle_fr}
                   </button>
                 )
               })}
@@ -304,50 +308,50 @@ export default function ModifierOrganisation() {
           </div>
 
           <div>
-            <label style={labelStyle}>Slogan</label>
+            <label style={labelStyle}>{t.organisation.creer_slogan}</label>
             <input type="text" value={slogan} onChange={e => setSlogan(e.target.value)} maxLength={120} placeholder="Ex : Tous les événements, un seul endroit" style={inputStyle} />
           </div>
 
           <div>
-            <label style={labelStyle}>Téléphone</label>
+            <label style={labelStyle}>{t.organisation.creer_telephone}</label>
             <input type="tel" value={telephone} onChange={e => setTelephone(e.target.value)} maxLength={30} placeholder="+509 XXXX XXXX" style={inputStyle} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={labelStyle}>Ville</label>
+              <label style={labelStyle}>{t.organisation.creer_ville}</label>
               <input type="text" value={ville} onChange={e => setVille(e.target.value)} maxLength={60} style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Pays</label>
+              <label style={labelStyle}>{t.organisation.creer_pays}</label>
               <input type="text" value={pays} onChange={e => setPays(e.target.value)} maxLength={60} style={inputStyle} />
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Site web</label>
+            <label style={labelStyle}>{t.organisation.creer_site}</label>
             <input type="url" value={siteWeb} onChange={e => setSiteWeb(e.target.value)} style={inputStyle} />
           </div>
 
           <div>
-            <label style={labelStyle}>Email de contact</label>
+            <label style={labelStyle}>{t.organisation.creer_email}</label>
             <input type="email" value={emailContact} onChange={e => { setEmailContact(e.target.value); setVerifMsg(null) }} style={inputStyle} />
             {emailContact.trim() && (
               <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
                 {emailContact.trim() !== emailContactOriginal ? (
-                  <span style={{ fontSize: 12, color: '#8C5A40' }}>Enregistre d&apos;abord pour pouvoir valider ce nouvel email</span>
+                  <span style={{ fontSize: 12, color: '#8C5A40' }}>{t.organisation.modifier_email_attendre_save}</span>
                 ) : emailVerifie ? (
-                  <span style={{ fontSize: 12, color: '#2D9E6B', fontWeight: 'bold' }}>✅ Vérifié</span>
+                  <span style={{ fontSize: 12, color: '#2D9E6B', fontWeight: 'bold' }}>{t.organisation.modifier_email_verifie}</span>
                 ) : (
                   <>
-                    <span style={{ fontSize: 12, color: '#8C5A40' }}>⚠️ Non vérifié</span>
+                    <span style={{ fontSize: 12, color: '#8C5A40' }}>{t.organisation.modifier_email_non_verifie}</span>
                     <button
                       type="button"
                       onClick={handleEnvoyerVerification}
                       disabled={envoiVerifLoading}
                       style={{ fontSize: 11, color: '#C8431A', background: 'rgba(200,67,26,0.08)', border: '1px solid rgba(200,67,26,0.25)', borderRadius: 999, padding: '4px 10px', cursor: envoiVerifLoading ? 'default' : 'pointer', fontWeight: 'bold' }}
                     >
-                      {envoiVerifLoading ? 'Envoi...' : 'Valider mon email'}
+                      {envoiVerifLoading ? t.organisation.modifier_email_envoi : t.organisation.modifier_email_valider}
                     </button>
                   </>
                 )}
@@ -368,14 +372,14 @@ export default function ModifierOrganisation() {
 
           <div style={{ display: 'flex', gap: 12 }}>
             <a href={`/organisation/${slug}`} style={{ flex: 1, background: 'white', color: '#8C5A40', border: '1px solid #E8E0D0', borderRadius: 999, padding: '14px', fontSize: 14, fontWeight: 'bold', textDecoration: 'none', textAlign: 'center' }}>
-              Annuler
+              {t.organisation.modifier_annuler}
             </a>
             <button
               type="submit"
               disabled={submitting || !nom.trim()}
               style={{ flex: 2, background: nom.trim() ? '#C8431A' : '#E8E0D0', color: nom.trim() ? 'white' : '#8C5A40', border: 'none', borderRadius: 999, padding: '14px', fontSize: 14, fontWeight: 'bold', cursor: nom.trim() && !submitting ? 'pointer' : 'default' }}
             >
-              {submitting ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              {submitting ? t.organisation.modifier_enregistrement_en_cours : t.organisation.modifier_enregistrer}
             </button>
           </div>
 
@@ -388,8 +392,8 @@ export default function ModifierOrganisation() {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '14px 18px', textDecoration: 'none', color: '#1A1410' }}
           >
             <div>
-              <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 2 }}>👥 Gérer les membres</p>
-              <p style={{ color: '#8C5A40', fontSize: 12 }}>Inviter, retirer, gérer les rôles</p>
+              <p style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 2 }}>{t.organisation.modifier_gerer_membres}</p>
+              <p style={{ color: '#8C5A40', fontSize: 12 }}>{t.organisation.modifier_gerer_membres_desc}</p>
             </div>
             <span style={{ color: '#8C5A40', fontSize: 18 }}>→</span>
           </a>
@@ -402,7 +406,7 @@ export default function ModifierOrganisation() {
               href={`/organisation/${slug}/modifier`}
               style={{ display: 'block', textAlign: 'center', color: '#e57373', fontSize: 12, textDecoration: 'none', padding: '8px' }}
             >
-              Zone dangereuse — contacter le support pour supprimer
+              {t.organisation.modifier_zone_dangereuse}
             </a>
           </div>
         )}
