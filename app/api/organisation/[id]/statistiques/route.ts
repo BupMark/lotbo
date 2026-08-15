@@ -58,13 +58,6 @@ export async function GET(
     .eq('id', organisationId)
     .maybeSingle()
 
-  const [{ count: nbVuesOrg }, { count: nbFollowers }] = await Promise.all([
-    (debutPeriode
-      ? admin.from('vues_organisations').select('id', { count: 'exact', head: true }).eq('organisation_id', organisationId).gte('created_at', debutPeriode)
-      : admin.from('vues_organisations').select('id', { count: 'exact', head: true }).eq('organisation_id', organisationId)),
-    admin.from('organisation_membres').select('user_id', { count: 'exact', head: true }).eq('org_id', organisationId).neq('role', 'owner'),
-  ])
-
   if (!org) return NextResponse.json({ error: 'Organisation introuvable' }, { status: 404 })
 
   let autorise = org.owner_id === user.id
@@ -78,6 +71,13 @@ export async function GET(
     autorise = !!membre && ['owner', 'admin'].includes(membre.role)
   }
   if (!autorise) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+
+  const [{ count: nbVuesOrg }, { count: nbFollowers }] = await Promise.all([
+    (debutPeriode
+      ? admin.from('vues_organisations').select('id', { count: 'exact', head: true }).eq('organisation_id', organisationId).gte('created_at', debutPeriode)
+      : admin.from('vues_organisations').select('id', { count: 'exact', head: true }).eq('organisation_id', organisationId)),
+    admin.from('organisation_membres').select('user_id', { count: 'exact', head: true }).eq('org_id', organisationId).neq('role', 'owner'),
+  ])
 
   const { data: evenements } = await admin
     .from('evenements')
