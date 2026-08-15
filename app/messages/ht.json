@@ -434,7 +434,17 @@
     "creer_email": "Imèl kontak",
     "creer_publier": "Kreye òganizasyon an",
     "slug_label": "URL paj ou a",
-    "introuvable": "Òganizasyon pa jwenn"
+    "introuvable": "Òganizasyon pa jwenn",
+    "creer_slogan": "Eslogan",
+    "creer_telephone": "Telefòn",
+    "creer_logo": "Logo òganizasyon an (opsyonèl)",
+    "creer_logo_choisir": "📷 Chwazi yon imaj",
+    "creer_logo_changer": "📷 Chanje",
+    "creer_nom_placeholder": "Egzanp: Festival Kreyòl",
+    "creer_description_placeholder": "Dekri òganizasyon w an nan kèk liy",
+    "creer_categories": "Kategori aktivite",
+    "erreur_nom_deja_utilise": "Non sa a deja itilize, eseye yon lòt.",
+    "creer_creation_en_cours": "K ap kreye..."
   },
   "organisations": {
     "titre": "Òganizasyon yo",

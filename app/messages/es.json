@@ -434,7 +434,17 @@
     "creer_email": "Email de contacto",
     "creer_publier": "Crear organización",
     "slug_label": "URL de tu página",
-    "introuvable": "Organización no encontrada"
+    "introuvable": "Organización no encontrada",
+    "creer_slogan": "Eslogan",
+    "creer_telephone": "Teléfono",
+    "creer_logo": "Logo de la organización (opcional)",
+    "creer_logo_choisir": "📷 Elegir una imagen",
+    "creer_logo_changer": "📷 Cambiar",
+    "creer_nom_placeholder": "Ej: Festival Kreyòl",
+    "creer_description_placeholder": "Describe tu organización en pocas líneas",
+    "creer_categories": "Categorías de actividad",
+    "erreur_nom_deja_utilise": "Este nombre ya está en uso, prueba con otro.",
+    "creer_creation_en_cours": "Creando..."
   },
   "organisations": {
     "titre": "Organizaciones",

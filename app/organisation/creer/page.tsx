@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
+import { useLangue } from '../../../lib/useLangue'
+import { getTraductions } from '../../../lib/i18n'
 
 function genererSlug(nom: string): string {
   return nom
@@ -32,6 +34,8 @@ const labelStyle: React.CSSProperties = {
 export default function CreerOrganisation() {
   const router  = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
+  const { langue } = useLangue()
+  const t = getTraductions(langue)
 
   const [loading, setLoading]           = useState(true)
   const [userId, setUserId]             = useState<string | null>(null)
@@ -122,7 +126,7 @@ export default function CreerOrganisation() {
     if (error) {
       setErreur(
         error.message.includes('slug') || error.message.includes('unique')
-          ? 'Ce nom est déjà utilisé, essaie un autre.'
+          ? t.organisation.erreur_nom_deja_utilise
           : error.message
       )
       setSubmitting(false)
@@ -158,12 +162,12 @@ export default function CreerOrganisation() {
       <div style={{ maxWidth: 540, margin: '0 auto', padding: '24px 16px 80px' }}>
 
         <a href="/" style={{ color: '#8C5A40', fontSize: 13, textDecoration: 'none', display: 'inline-block', marginBottom: 24 }}>
-          ← Retour à la carte
+          ← {t.evenement.retour}
         </a>
 
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 24, fontWeight: 'bold', fontFamily: 'serif', fontStyle: 'italic', color: '#1A1410', marginBottom: 6 }}>
-            Créer une organisation
+            {t.organisation.creer_titre}
           </h1>
           <p style={{ color: '#8C5A40', fontSize: 14 }}>Crée ta page publique sur Lotbo</p>
         </div>
@@ -172,19 +176,19 @@ export default function CreerOrganisation() {
 
           {/* Nom */}
           <div>
-            <label style={labelStyle}>Nom de l&apos;organisation *</label>
+            <label style={labelStyle}>{t.organisation.creer_nom} *</label>
             <input
               type="text"
               value={nom}
               onChange={e => setNom(e.target.value)}
               required
               maxLength={80}
-              placeholder="Ex : Festival Kreyòl"
+              placeholder={t.organisation.creer_nom_placeholder}
               style={inputStyle}
             />
             {nom && (
               <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(200,67,26,0.06)', borderRadius: 8, border: '1px solid rgba(200,67,26,0.15)' }}>
-                <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 2 }}>URL de votre page</p>
+                <p style={{ color: '#8C5A40', fontSize: 11, marginBottom: 2 }}>{t.organisation.slug_label}</p>
                 <p style={{ color: '#C8431A', fontSize: 13 }}>
                   app.lotbo.app/organisation/<strong>{slug}</strong>
                 </p>
@@ -194,7 +198,7 @@ export default function CreerOrganisation() {
 
           {/* Logo */}
           <div>
-            <label style={labelStyle}>Logo de l&apos;organisation (optionnel)</label>
+            <label style={labelStyle}>{t.organisation.creer_logo}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {logoPreview ? (
                 <img src={logoPreview} alt="Aperçu logo" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E8E0D0', flexShrink: 0 }} />
@@ -204,7 +208,7 @@ export default function CreerOrganisation() {
               <div style={{ flex: 1 }}>
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
                 <button type="button" onClick={() => fileRef.current?.click()} style={{ background: 'white', border: '1px solid #E8E0D0', borderRadius: 999, padding: '8px 16px', fontSize: 13, color: '#8C5A40', cursor: 'pointer', fontWeight: 'bold' }}>
-                  {logoFile ? '📷 Changer' : '📷 Choisir une image'}
+                  {logoFile ? t.organisation.creer_logo_changer : t.organisation.creer_logo_choisir}
                 </button>
                 {logoFile && <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>{logoFile.name}</p>}
               </div>
@@ -213,20 +217,20 @@ export default function CreerOrganisation() {
 
           {/* Description */}
           <div>
-            <label style={labelStyle}>Description</label>
+            <label style={labelStyle}>{t.organisation.creer_description}</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               maxLength={400}
               rows={3}
-              placeholder="Décris ton organisation en quelques lignes"
+              placeholder={t.organisation.creer_description_placeholder}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
           </div>
 
           {/* Catégories d'activité */}
           <div>
-            <label style={labelStyle}>Catégories d&apos;activité</label>
+            <label style={labelStyle}>{t.organisation.creer_categories}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {categoriesDisponibles.map(cat => {
                 const selectionne = categoriesSelectionnees.includes(cat.id)
@@ -252,7 +256,7 @@ export default function CreerOrganisation() {
 
           {/* Slogan */}
           <div>
-            <label style={labelStyle}>Slogan</label>
+            <label style={labelStyle}>{t.organisation.creer_slogan}</label>
             <input
               type="text"
               value={slogan}
@@ -265,7 +269,7 @@ export default function CreerOrganisation() {
 
           {/* Téléphone */}
           <div>
-            <label style={labelStyle}>Téléphone</label>
+            <label style={labelStyle}>{t.organisation.creer_telephone}</label>
             <input
               type="tel"
               value={telephone}
@@ -279,24 +283,24 @@ export default function CreerOrganisation() {
           {/* Ville / Pays */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={labelStyle}>Ville</label>
+              <label style={labelStyle}>{t.organisation.creer_ville}</label>
               <input type="text" value={ville} onChange={e => setVille(e.target.value)} maxLength={60} placeholder="Port-au-Prince" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Pays</label>
+              <label style={labelStyle}>{t.organisation.creer_pays}</label>
               <input type="text" value={pays} onChange={e => setPays(e.target.value)} maxLength={60} placeholder="Haïti" style={inputStyle} />
             </div>
           </div>
 
           {/* Site web */}
           <div>
-            <label style={labelStyle}>Site web</label>
+            <label style={labelStyle}>{t.organisation.creer_site}</label>
             <input type="url" value={siteWeb} onChange={e => setSiteWeb(e.target.value)} placeholder="https://monsite.com" style={inputStyle} />
           </div>
 
           {/* Email de contact */}
           <div>
-            <label style={labelStyle}>Email de contact</label>
+            <label style={labelStyle}>{t.organisation.creer_email}</label>
             <input type="email" value={emailContact} onChange={e => setEmailContact(e.target.value)} placeholder="contact@monorg.com" style={inputStyle} />
           </div>
 
@@ -316,7 +320,7 @@ export default function CreerOrganisation() {
               cursor: nom.trim() && !submitting ? 'pointer' : 'default', transition: 'background 0.15s',
             }}
           >
-            {submitting ? 'Création...' : "Créer l'organisation"}
+            {submitting ? t.organisation.creer_creation_en_cours : t.organisation.creer_publier}
           </button>
 
         </form>
