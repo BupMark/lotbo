@@ -145,6 +145,16 @@ export default function PageOrganisation() {
     }
 
     setOrg(orgData as Organisation)
+    supabase.auth.getSession().then(({ data: sessionData }) => {
+      fetch(`/api/organisation/${orgData.id}/vue`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionData.session?.access_token ? { Authorization: `Bearer ${sessionData.session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ session_id: getSessionId() }),
+      }).catch(() => {})
+    })
 
     const aujourdhui = new Date().toISOString().split('T')[0]
     const orgSuspendue = !!(orgData as Organisation).suspendue

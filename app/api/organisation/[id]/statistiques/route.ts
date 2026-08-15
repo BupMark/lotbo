@@ -58,6 +58,13 @@ export async function GET(
     .eq('id', organisationId)
     .maybeSingle()
 
+  const [{ count: nbVuesOrg }, { count: nbFollowers }] = await Promise.all([
+    (debutPeriode
+      ? admin.from('vues_organisations').select('id', { count: 'exact', head: true }).eq('organisation_id', organisationId).gte('created_at', debutPeriode)
+      : admin.from('vues_organisations').select('id', { count: 'exact', head: true }).eq('organisation_id', organisationId)),
+    admin.from('organisation_membres').select('user_id', { count: 'exact', head: true }).eq('org_id', organisationId).neq('role', 'owner'),
+  ])
+
   if (!org) return NextResponse.json({ error: 'Organisation introuvable' }, { status: 404 })
 
   let autorise = org.owner_id === user.id
@@ -81,7 +88,18 @@ export async function GET(
   const evenementIds = (evenements ?? []).map(e => e.id)
 
   if (evenementIds.length === 0) {
-    return NextResponse.json({ nb_vues_total: 0, nb_partages_total: 0, partages_par_canal: {}, evenements: [] })
+    return NextResponse.json({
+      periode,
+      nb_vues_total: 0,
+      nb_partages_total: 0,
+      nb_favoris_total: 0,
+      nb_participations_total: 0,
+      nb_commentaires_total: 0,
+      nb_vues_organisation: nbVuesOrg ?? 0,
+      nb_followers: nbFollowers ?? 0,
+      partages_par_canal: {},
+      evenements: [],
+    })
   }
 
   let requeteVues = admin.from('vues_evenements').select('evenement_id').in('evenement_id', evenementIds)
@@ -143,6 +161,8 @@ export async function GET(
     nb_favoris_total: (favorisData ?? []).length,
     nb_participations_total: (participationsData ?? []).length,
     nb_commentaires_total: (commentairesData ?? []).length,
+    nb_vues_organisation: nbVuesOrg ?? 0,
+    nb_followers: nbFollowers ?? 0,
     partages_par_canal: partagesParCanal,
     evenements: evenementsAvecStats,
   })

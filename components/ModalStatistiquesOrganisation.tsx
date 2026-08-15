@@ -22,6 +22,8 @@ interface Stats {
   nb_favoris_total: number
   nb_participations_total: number
   nb_commentaires_total: number
+  nb_vues_organisation: number
+  nb_followers: number
   partages_par_canal: Record<string, number>
   evenements: EvenementStat[]
 }
@@ -137,6 +139,20 @@ export default function ModalStatistiquesOrganisation({ organisationId, onClose 
                 </div>
               </div>
             )}
+
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 'bold', color: '#8C5A40', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Organisation</p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', marginBottom: 2 }}>{stats.nb_vues_organisation}</p>
+                  <p style={{ fontSize: 10, color: '#8C5A40' }}>👁️ Vues de la fiche</p>
+                </div>
+                <div style={{ flex: 1, background: 'white', border: '1px solid #E8E0D0', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1410', marginBottom: 2 }}>{stats.nb_followers}</p>
+                  <p style={{ fontSize: 10, color: '#8C5A40' }}>👥 Followers</p>
+                </div>
+              </div>
+            </div>
 
             {stats.evenements.length > 0 && (
               <div>
