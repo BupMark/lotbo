@@ -1,0 +1,14 @@
+name: Supprimer Organisations
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+jobs:
+  suppression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel route supprimer-organisations
+        run: |
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "https://app.lotbo.app/api/cron/supprimer-organisations"

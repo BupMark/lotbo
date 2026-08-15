@@ -463,7 +463,18 @@
     "modifier_email_confirme": "¡Email de contacto confirmado!",
     "modifier_email_lien_expire": "El enlace de confirmación expiró, envía un nuevo email.",
     "modifier_email_lien_invalide": "Enlace de confirmación inválido.",
-    "modifier_email_confirmation_envoyee": "Email de confirmación enviado — revisa tu bandeja de entrada."
+    "modifier_email_confirmation_envoyee": "Email de confirmación enviado — revisa tu bandeja de entrada.",
+    "suppression_titre": "Eliminar organización",
+    "suppression_description": "Esto solicitará la eliminación de la organización. Elige qué pasará con los eventos vinculados.",
+    "suppression_option_transferer": "Transferir eventos a mi cuenta personal",
+    "suppression_option_transferer_desc": "Los eventos seguirán siendo públicos, pero ya no estarán vinculados a la organización",
+    "suppression_option_tout": "Eliminar todo — la organización y sus eventos",
+    "suppression_option_tout_desc": "Todo se borrará después de 30 días, sin posibilidad de recuperación",
+    "suppression_annuler": "Cancelar",
+    "suppression_confirmer": "Confirmar eliminación",
+    "suppression_delai": "Tienes 30 días para cambiar de opinión — contacta con soporte.",
+    "suppression_envoi": "Enviando...",
+    "suppression_succes": "Solicitud de eliminación registrada. La organización se eliminará permanentemente en 30 días."
   },
   "organisations": {
     "titre": "Organizaciones",

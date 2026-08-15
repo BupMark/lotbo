@@ -463,7 +463,18 @@
     "modifier_email_confirme": "Contact email confirmed!",
     "modifier_email_lien_expire": "The confirmation link has expired, send a new email.",
     "modifier_email_lien_invalide": "Invalid confirmation link.",
-    "modifier_email_confirmation_envoyee": "Confirmation email sent — check your inbox."
+    "modifier_email_confirmation_envoyee": "Confirmation email sent — check your inbox.",
+    "suppression_titre": "Delete organisation",
+    "suppression_description": "This will request the organisation's deletion. Choose what happens to its linked events.",
+    "suppression_option_transferer": "Transfer events to my personal account",
+    "suppression_option_transferer_desc": "Events will stay public, but no longer linked to the organisation",
+    "suppression_option_tout": "Delete everything — organisation and its events",
+    "suppression_option_tout_desc": "Everything will be erased after 30 days, with no way back",
+    "suppression_annuler": "Cancel",
+    "suppression_confirmer": "Confirm deletion",
+    "suppression_delai": "You have 30 days to change your mind — contact support.",
+    "suppression_envoi": "Sending...",
+    "suppression_succes": "Deletion request recorded. The organisation will be permanently deleted in 30 days."
   },
   "organisations": {
     "titre": "Organizations",

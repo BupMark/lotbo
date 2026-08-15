@@ -463,7 +463,18 @@
     "modifier_email_confirme": "Imel kontak konfime!",
     "modifier_email_lien_expire": "Lyen konfimasyon an ekspire, voye yon nouvo imel.",
     "modifier_email_lien_invalide": "Lyen konfimasyon an pa valid.",
-    "modifier_email_confirmation_envoyee": "Imel konfimasyon an ale — verifye bwat imel ou."
+    "modifier_email_confirmation_envoyee": "Imel konfimasyon an ale — verifye bwat imel ou.",
+    "suppression_titre": "Efase òganizasyon an",
+    "suppression_description": "Sa a pral mande pou sispann òganizasyon an. Chwazi sa ki pral pase ak evènman ki gen rapò yo.",
+    "suppression_option_transferer": "Transfere evènman yo sou kont pèsonèl mwen",
+    "suppression_option_transferer_desc": "Evènman yo ap rete piblik, men yo p ap gen rapò ak òganizasyon an ankò",
+    "suppression_option_tout": "Efase tout — òganizasyon ak evènman yo",
+    "suppression_option_tout_desc": "Tout bagay ap efase apre 30 jou, san posibilite pou retounen",
+    "suppression_annuler": "Anile",
+    "suppression_confirmer": "Konfime sipresyon an",
+    "suppression_delai": "Ou gen 30 jou pou chanje lide — kontakte sipò a.",
+    "suppression_envoi": "Ap voye...",
+    "suppression_succes": "Demand sipresyon anrejistre. Òganizasyon an ap efase nèt nan 30 jou."
   },
   "organisations": {
     "titre": "Òganizasyon yo",

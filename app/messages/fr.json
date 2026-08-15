@@ -463,7 +463,18 @@
     "modifier_email_confirme": "Email de contact confirmé !",
     "modifier_email_lien_expire": "Le lien de confirmation a expiré, renvoie un nouvel email.",
     "modifier_email_lien_invalide": "Lien de confirmation invalide.",
-    "modifier_email_confirmation_envoyee": "Email de confirmation envoyé — vérifie ta boîte mail."
+    "modifier_email_confirmation_envoyee": "Email de confirmation envoyé — vérifie ta boîte mail.",
+    "suppression_titre": "Supprimer l'organisation",
+    "suppression_description": "Ceci va demander la suppression de l'organisation. Choisis ce qui doit arriver aux événements liés.",
+    "suppression_option_transferer": "Transférer les événements vers mon compte personnel",
+    "suppression_option_transferer_desc": "Les événements resteront publics, mais ne seront plus liés à l'organisation",
+    "suppression_option_tout": "Tout supprimer — l'organisation et ses événements",
+    "suppression_option_tout_desc": "Tout sera effacé après 30 jours, sans possibilité de retour",
+    "suppression_annuler": "Annuler",
+    "suppression_confirmer": "Confirmer la suppression",
+    "suppression_delai": "Tu as 30 jours pour changer d'avis — contacte le support.",
+    "suppression_envoi": "Envoi...",
+    "suppression_succes": "Demande de suppression enregistrée. L'organisation sera définitivement supprimée dans 30 jours."
   },
   "organisations": {
     "titre": "Organisations",

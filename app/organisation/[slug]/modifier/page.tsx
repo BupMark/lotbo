@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
 import { useLangue } from '../../../../lib/useLangue'
+import ModalSupprimerOrganisation from '../../../../components/ModalSupprimerOrganisation'
 import { getTraductions } from '../../../../lib/i18n'
 
 interface OrgRow {
@@ -43,6 +44,7 @@ export default function ModifierOrganisation() {
   const t = getTraductions(langue)
 
   const [loading, setLoading]           = useState(true)
+  const [modalSuppressionOuvert, setModalSuppressionOuvert] = useState(false)
   const [submitting, setSubmitting]     = useState(false)
   const [erreur, setErreur]             = useState<string | null>(null)
   const [orgId, setOrgId]               = useState<string>('')
@@ -402,13 +404,16 @@ export default function ModifierOrganisation() {
         {/* ── Supprimer l'organisation (owner uniquement) ─────────────── */}
         {userRole === 'owner' && (
           <div style={{ marginTop: 16 }}>
-            <a
-              href={`/organisation/${slug}/modifier`}
-              style={{ display: 'block', textAlign: 'center', color: '#e57373', fontSize: 12, textDecoration: 'none', padding: '8px' }}
+            <button
+              onClick={() => setModalSuppressionOuvert(true)}
+              style={{ display: 'block', width: '100%', background: 'none', border: 'none', textAlign: 'center', color: '#e57373', fontSize: 12, cursor: 'pointer', padding: '8px' }}
             >
               {t.organisation.modifier_zone_dangereuse}
-            </a>
+            </button>
           </div>
+        )}
+        {modalSuppressionOuvert && orgId && (
+          <ModalSupprimerOrganisation organisationId={orgId} onClose={() => setModalSuppressionOuvert(false)} />
         )}
 
       </div>
