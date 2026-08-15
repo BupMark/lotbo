@@ -8,6 +8,7 @@ import { supabase } from '../../../lib/supabase'
 import { getSessionId } from '../../../lib/getSessionId'
 import ModalSignalerOrganisation from '../../../components/ModalSignalerOrganisation'
 import ModalReclamerOrganisation from '../../../components/ModalReclamerOrganisation'
+import ModalStatistiquesOrganisation from '../../../components/ModalStatistiquesOrganisation'
 import { useLangue } from '../../../lib/useLangue'
 import { getTraductions } from '../../../lib/i18n'
 import { celebrerPremiereFois, toastAmbiantLoyita } from '../../../lib/celebrerAction'
@@ -79,6 +80,7 @@ export default function PageOrganisation() {
   const [modalSignalerOuvert, setModalSignalerOuvert] = useState(false)
   const [disclaimerOuvert, setDisclaimerOuvert] = useState(false)
   const [modalReclamerOuvert, setModalReclamerOuvert] = useState(false)
+  const [modalStatsOuvert, setModalStatsOuvert] = useState(false)
   const [logoUrl, setLogoUrl]           = useState<string | null>(null)
 
   useEffect(() => {
@@ -590,9 +592,20 @@ export default function PageOrganisation() {
                 >
                   🔑 {t.organisation.reclamer_court}
                 </button>
+                {canManage && (
+                  <button
+                    onClick={() => setModalStatsOuvert(true)}
+                    style={{ background: 'none', border: 'none', color: '#8C5A40', fontSize: 11, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                  >
+                    📊 Statistiques
+                  </button>
+                )}
               </div>
             </div>
           </div>
+          {modalStatsOuvert && org && (
+            <ModalStatistiquesOrganisation organisationId={org.id} onClose={() => setModalStatsOuvert(false)} />
+          )}
           {modalSignalerOuvert && org && (
             <ModalSignalerOrganisation organisationId={org.id} onClose={() => setModalSignalerOuvert(false)} />
           )}
