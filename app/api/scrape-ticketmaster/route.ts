@@ -86,6 +86,20 @@ export async function GET(request: Request) {
         const heure    = ev.dates?.start?.localTime?.slice(0, 5) || ''
         const genre    = ev.classifications?.[0]?.genre?.name || classification.nom
 
+        // Détection tourisme/loisir mal classé sous "Sports" par Ticketmaster
+        // (audit du 13 août : visites guidées, musées, tours de stade —
+        // ~101 événements confirmés en base, motifs validés sur échantillon réel)
+        const estTourismeLoisir = classification.categorie === 'Sport' && (
+          /guided walk/i.test(ev.name) ||
+          /fishing/i.test(ev.name) ||
+          /visit to/i.test(ev.name) ||
+          /^tours:/i.test(ev.name) ||
+          /stadium tour/i.test(ev.name) ||
+          /museum/i.test(ev.name) ||
+          /classic tour at/i.test(ev.name)
+        )
+        const categorieFinale = estTourismeLoisir ? 'Loisir' : classification.categorie
+
         const { error } = await supabase.from('evenements').insert([{
           titre,
           lieu,
@@ -95,7 +109,7 @@ export async function GET(request: Request) {
           description: `${ev.name} · ${genre} · ${ville}${pays ? ', ' + pays : ''}`,
           longitude,
           latitude,
-          categorie:   classification.categorie,
+          categorie:   categorieFinale,
           acces:       'public',
           prix,
           image_url:   image,
