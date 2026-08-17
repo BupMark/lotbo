@@ -224,6 +224,23 @@ function ProfilInner() {
     })
   }, [])
 
+  // Rafraîchit la liste "Mes événements" au retour sur l'onglet — évite
+  // d'afficher une version obsolète après une modification ailleurs dans l'app
+  useEffect(() => {
+    const rechargerMesEvenements = () => {
+      if (!user?.id) return
+      supabase
+        .from('evenements')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .then(({ data }) => setEvenements(data || []))
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') rechargerMesEvenements() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [user])
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
