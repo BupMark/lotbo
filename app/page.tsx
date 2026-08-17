@@ -305,7 +305,7 @@ export default function Home() {
   }, [])
 
   // Chargement des événements indépendant de Mapbox
-  useEffect(() => {
+  const chargerEvenements = () => {
     const aujourd_hui = new Date().toISOString().split('T')[0]
     supabase
       .from('evenements')
@@ -316,6 +316,12 @@ export default function Home() {
       .order('date_debut', { ascending: true, nullsFirst: false })
       .limit(2000)
       .then(({ data }) => setEvenements((data as Evenement[]) || []))
+  }
+  useEffect(() => {
+    chargerEvenements()
+    const onVisible = () => { if (document.visibilityState === 'visible') chargerEvenements() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   useEffect(() => {
@@ -328,7 +334,7 @@ export default function Home() {
   }, [])
 
   // BUG-LIMIT1000-1 Phase A — chargement dédié Liste : fenêtre 90j + mis_en_avant toujours inclus
-  useEffect(() => {
+  const chargerEvenementsListe = () => {
     const aujourd_hui = new Date().toISOString().split('T')[0]
     const dans90Jours = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0]
     supabase
@@ -339,6 +345,12 @@ export default function Home() {
       .order('date_debut', { ascending: true, nullsFirst: false })
       .limit(2000)
       .then(({ data }) => setEvenementsListe((data as Evenement[]) || []))
+  }
+  useEffect(() => {
+    chargerEvenementsListe()
+    const onVisible = () => { if (document.visibilityState === 'visible') chargerEvenementsListe() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   // BUG-LIMIT1000-1 Phase A — stats globales exactes (indépendantes du plafond)

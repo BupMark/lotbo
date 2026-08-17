@@ -296,7 +296,7 @@ export default function ModifierEvenement() {
 
       setMessageType('succes')
       setMessage('✅ Événement mis à jour avec succès !')
-      setTimeout(() => router.push(`/evenement/${id}`), 1500)
+      setTimeout(() => { window.location.href = `/evenement/${id}` }, 1500)
 
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur inconnue'
