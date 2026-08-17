@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useLangue } from '../lib/useLangue'
 import { getTraductions } from '../lib/i18n'
 import type { ActionCelebrable, ActionAmbiante } from '../lib/celebrerAction'
+import { selectionnerContexte } from '../lib/contexteAnsanm'
 import { jouerBipLoyita } from '../lib/sonLoyita'
 
 const CLE_SALUT_VU = 'lotbo_guide_salut_vu'
@@ -41,6 +42,8 @@ export default function GuideLotboGlobal() {
   const [visible, setVisible] = useState(false)
   const [bulleSalut, setBulleSalut] = useState(false)
   const [bulleCelebration, setBulleCelebration] = useState<string | null>(null)
+  const [variante] = useState(() => Math.floor(Math.random() * 3))
+  const [messageSalutContextuel, setMessageSalutContextuel] = useState<string | null>(null)
   const [toastAmbiant, setToastAmbiant] = useState<string | null>(null)
   const [panneauOuvert, setPanneauOuvert] = useState(false)
   const [wikivoyage, setWikivoyage] = useState<DonneesWikivoyage | null>(null)
@@ -49,13 +52,27 @@ export default function GuideLotboGlobal() {
   const [saisie, setSaisie] = useState('')
   const [chatEnCours, setChatEnCours] = useState(false)
 
+  const langueRef = useRef(langue)
+  useEffect(() => { langueRef.current = langue }, [langue])
+
   useEffect(() => {
     setVisible(true)
     const dejaVu = localStorage.getItem(CLE_SALUT_VU)
     if (!dejaVu) {
       setBulleSalut(true)
-      const timer = setTimeout(() => setBulleSalut(false), 6000)
-      return () => clearTimeout(timer)
+      let annule = false
+      fetch('/api/ansanm/contexte')
+        .then(res => res.json())
+        .then(data => {
+          if (annule) return
+          const resultat = selectionnerContexte(data.contextes || [], langueRef.current)
+          if (resultat) setMessageSalutContextuel(resultat.message)
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!annule) setTimeout(() => setBulleSalut(false), 9000)
+        })
+      return () => { annule = true }
     }
   }, [])
 
@@ -170,6 +187,13 @@ export default function GuideLotboGlobal() {
         .lotbo-guide-halo { animation: lotboGuideGlow 2.4s ease-in-out infinite }
         .lotbo-guide-eye { animation: lotboGuideBlink 3.6s ease-in-out infinite; transform-origin: center }
         @keyframes lotboGuideBulleApparait { from { transform: scale(0.9); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+        @keyframes lotboGuideClinOeil { 0%, 85%, 100% { transform: scaleY(1) } 90% { transform: scaleY(0.15) } }
+        .lotbo-guide-eye-clin-droit { animation: lotboGuideBlink 3.6s ease-in-out infinite; transform-origin: center }
+        .lotbo-guide-eye-clin-gauche { animation: lotboGuideClinOeil 4.2s ease-in-out infinite; transform-origin: center }
+        @keyframes lotboGuideRebond { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.25) } }
+        .lotbo-guide-eye-rebond { animation: lotboGuideRebond 2.8s ease-in-out infinite; transform-origin: center }
+        @keyframes lotboGuideFloatJoyeux { 0%, 100% { transform: translateY(0) rotate(0deg) } 50% { transform: translateY(-6px) rotate(-2deg) } }
+        .lotbo-guide-svg-joyeux { animation: lotboGuideFloatJoyeux 2.2s ease-in-out infinite }
       `}</style>
 
       {bulleSalut && !panneauOuvert && (
@@ -179,7 +203,7 @@ export default function GuideLotboGlobal() {
           padding: '10px 14px', borderRadius: '14px 14px 2px 14px',
           maxWidth: 200, boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
         }}>
-          Bonjour ! Je suis là pour t&apos;aider à explorer LOTBO 👋
+          {messageSalutContextuel ?? "Bonjour ! Je suis là pour t'aider à explorer LOTBO 👋"}
         </div>
       )}
 
@@ -219,11 +243,27 @@ export default function GuideLotboGlobal() {
           aria-label="Ouvrir le guide LOTBO"
           style={{ position: 'fixed', bottom: 'calc(76px + env(safe-area-inset-bottom))', right: 20, zIndex: 998, width: 56, height: 56, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <svg className="lotbo-guide-svg" viewBox="0 0 56 56" width="56" height="56">
+          <svg className={variante === 2 ? "lotbo-guide-svg lotbo-guide-svg-joyeux" : "lotbo-guide-svg"} viewBox="0 0 56 56" width="56" height="56">
             <circle className="lotbo-guide-halo" cx="28" cy="28" r="26" fill="#D4A820" opacity="0.25" />
             <path d="M28 6 C40 6 48 15 48 27 C48 37 41 45 30 47 C29 47.3 27.5 47.3 26.5 46.5 C22 43 8 40 8 27 C8 15 16 6 28 6 Z" fill="#C8431A" />
-            <circle className="lotbo-guide-eye" cx="20" cy="25" r="3" fill="#F7F2E8" />
-            <circle className="lotbo-guide-eye" cx="36" cy="25" r="3" fill="#F7F2E8" />
+            {variante === 0 && (
+              <>
+                <circle className="lotbo-guide-eye" cx="20" cy="25" r="3" fill="#F7F2E8" />
+                <circle className="lotbo-guide-eye" cx="36" cy="25" r="3" fill="#F7F2E8" />
+              </>
+            )}
+            {variante === 1 && (
+              <>
+                <circle className="lotbo-guide-eye-clin-gauche" cx="20" cy="25" r="3" fill="#F7F2E8" />
+                <circle className="lotbo-guide-eye-clin-droit" cx="36" cy="25" r="3" fill="#F7F2E8" />
+              </>
+            )}
+            {variante === 2 && (
+              <>
+                <circle className="lotbo-guide-eye-rebond" cx="20" cy="25" r="3" fill="#F7F2E8" />
+                <circle className="lotbo-guide-eye-rebond" cx="36" cy="25" r="3" fill="#F7F2E8" />
+              </>
+            )}
           </svg>
         </button>
       )}
