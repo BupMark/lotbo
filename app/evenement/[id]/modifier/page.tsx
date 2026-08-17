@@ -82,8 +82,8 @@ export default function ModifierEvenement() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const uid = session?.user?.id ?? null
+      const { data: { user } } = await supabase.auth.getUser()
+      const uid = user?.id ?? null
       setUserId(uid)
 
       const { data: evData } = await supabase

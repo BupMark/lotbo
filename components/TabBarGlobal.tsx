@@ -123,7 +123,7 @@ export default function TabBarGlobal() {
       </a>
 
       {/* Profil — badge notif migré ici */}
-      <a href={userId ? '/profil' : '/login'} className="lotbo-tabbar-item" aria-label={t.nav.tabbar.profil}>
+      <a href={userId ? '/profil' : `/login?redirect=${encodeURIComponent(pathname || '/')}`} className="lotbo-tabbar-item" aria-label={t.nav.tabbar.profil}>
         <div style={{ position: 'relative', display: 'inline-flex' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="8" r="4" stroke={c(isProfil)} strokeWidth="1.8"/>

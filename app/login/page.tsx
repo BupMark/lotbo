@@ -77,8 +77,10 @@ export default function Login() {
             .eq('id', data.session.user.id)
             .single()
           const role = prof?.role ?? data.session.user?.user_metadata?.role
-          if (role === 'admin' || role === 'admin_enqueteur') window.location.href = '/admin'
-          else window.location.href = getRedirect()
+          const destination = getRedirect()
+          if (destination !== '/') window.location.href = destination
+          else if (role === 'admin' || role === 'admin_enqueteur') window.location.href = '/admin'
+          else window.location.href = '/'
         }
       })
     }
@@ -210,8 +212,10 @@ export default function Login() {
         .single()
       role = prof?.role ?? role
     }
-    if (role === 'admin' || role === 'admin_enqueteur') window.location.href = '/admin'
-    else window.location.href = getRedirect()
+    const destination = getRedirect()
+    if (destination !== '/') window.location.href = destination
+    else if (role === 'admin' || role === 'admin_enqueteur') window.location.href = '/admin'
+    else window.location.href = '/'
   }
 
   // ── Inscription email ──────────────────────────────────────────────────────
