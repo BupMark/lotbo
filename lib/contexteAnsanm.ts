@@ -40,7 +40,16 @@ export function selectionnerContexte(
     })
 
   const defaut = contextes.find(c => c.type === 'defaut')
-  const choisi = evenement || saison || moment || defaut
+
+  // Rotation équiprobable — chaque contexte actif (evenement, moment_journee,
+  // saison) a la même chance d'être choisi, plutôt qu'un ordre de priorité
+  // fixe qui écrase systématiquement les autres (bug historique : saison
+  // gagnait toujours car elle couvre les 12 mois sans discontinuité)
+  const candidats = [evenement, moment, saison].filter((c): c is ContextePayload => !!c)
+  const choisi = candidats.length > 0
+    ? candidats[Math.floor(Math.random() * candidats.length)]
+    : defaut
+
   if (!choisi) return null
 
   const message = choisi.messages?.[langue] || choisi.messages?.fr
