@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { useLangue } from '../../lib/useLangue'
 import { type Langue, getTraductions } from '../../lib/i18n'
 import BadgeProgression, { PAS_ENCORE_BADGE } from '../../components/BadgeProgression'
+import { selectionnerContexte } from '../../lib/contexteAnsanm'
 import PodiumTop3 from '../../components/PodiumTop3'
 import MenuLateralAnsanm from '../../components/MenuLateralAnsanm'
 import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR } from '../../lib/badges'
@@ -39,42 +40,6 @@ interface ContextePayload {
   priorite: number
   illustrations: string[]
   messages: Record<string, string>
-}
-
-// Sélection : événement ponctuel > saison (cas spécial hiver à cheval sur l'année) > moment de journée > défaut
-function selectionnerContexte(contextes: ContextePayload[], langue: Langue): { message: string; illustration: string | null } | null {
-  const maintenant = new Date()
-  const auj = `${maintenant.getFullYear()}-${String(maintenant.getMonth() + 1).padStart(2, '0')}-${String(maintenant.getDate()).padStart(2, '0')}`
-  const moisActuel = maintenant.getMonth() + 1
-  const heureActuelle = `${String(maintenant.getHours()).padStart(2, '0')}:${String(maintenant.getMinutes()).padStart(2, '0')}:00`
-
-  const evenement = contextes
-    .filter(c => c.type === 'evenement' && c.date_debut && c.date_fin)
-    .find(c => auj >= c.date_debut! && auj <= c.date_fin!)
-
-  const saison = contextes
-    .filter(c => c.type === 'saison' && c.mois_debut != null && c.mois_fin != null)
-    .find(c => {
-      const debut = c.mois_debut!, fin = c.mois_fin!
-      return debut <= fin ? (moisActuel >= debut && moisActuel <= fin) : (moisActuel >= debut || moisActuel <= fin)
-    })
-
-  const moment = contextes
-    .filter(c => c.type === 'moment_journee' && c.heure_debut && c.heure_fin)
-    .find(c => {
-      const debut = c.heure_debut!, fin = c.heure_fin!
-      return debut <= fin ? (heureActuelle >= debut && heureActuelle <= fin) : (heureActuelle >= debut || heureActuelle <= fin)
-    })
-
-  const defaut = contextes.find(c => c.type === 'defaut')
-
-  const choisi = evenement || saison || moment || defaut
-  if (!choisi) return null
-
-  const message = choisi.messages?.[langue] || choisi.messages?.fr
-  if (!message) return null
-
-  return { message, illustration: choisi.illustrations?.[0] || null }
 }
 
 const STYLE_PAR_TYPE: Record<string, { icone: string; couleur: string }> = {
