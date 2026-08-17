@@ -238,6 +238,10 @@ export default function ModifierEvenement() {
     try {
       let image_url = ev.image_url
 
+      const lieuAffiche = nomLieu
+        ? `${nomLieu}${ville ? ', ' + ville : ''}`
+        : `${adresse || ville}${ville ? ', ' + ville : ''}`
+
       if (image) {
         const ext = image.name.split('.').pop()?.toLowerCase() || 'jpg'
         const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
@@ -259,6 +263,7 @@ export default function ModifierEvenement() {
           pays,
           nom_lieu: nomLieu || null,
           adresse: adresse || null,
+          lieu: lieuAffiche,
           date: date || null,
           date_fin: dateFin || null,
           heure_debut: heureDebut || null,
