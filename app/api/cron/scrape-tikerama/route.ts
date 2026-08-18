@@ -169,6 +169,8 @@ export async function GET(request: Request) {
             lien_source: ficheUrl,
             date_expiration: dateFin || dateDebut,
             donnees_evenement: donneesEvenement,
+            pays_brut: "Côte d'Ivoire",
+            code_pays: 'ci',
           }])
 
           if (erreurRevision) { errors++ } else { aReviser++ }

@@ -278,6 +278,8 @@ export async function GET(request: Request) {
           lien_source: ev.url,
           date_expiration: ev.end_date || ev.start_date,
           donnees_evenement: donneesEvenement,
+          pays_brut: zone.paysFallback,
+          code_pays: zoneKey === 'colombo' ? 'lk' : zoneKey === 'kathmandu' ? 'np' : 'in',
         }])
 
         if (erreurRevision) { errors++ } else { aReviser++ }
