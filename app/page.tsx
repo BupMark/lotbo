@@ -540,9 +540,9 @@ export default function Home() {
         })
 
       await Promise.all([
-        loadClusterPin('pin-cluster-sm', '#C8431A', 36, 46),
-        loadClusterPin('pin-cluster-md', '#A03315', 44, 56),
-        loadClusterPin('pin-cluster-lg', '#7A2510', 52, 66),
+        loadClusterPin('pin-lieu-sm', '#C8431A', 36, 46),
+        loadClusterPin('pin-lieu-md', '#C8431A', 44, 56),
+        loadClusterPin('pin-lieu-lg', '#C8431A', 52, 66),
       ])
 
       map.addSource('events', {
@@ -568,16 +568,16 @@ export default function Home() {
 
       // Pins groupés par lieu (count > 1) — pins SVG taille variable
       map.addLayer({
-        id: 'lieu-cluster',
+        id: 'lieu-multi-evenements',
         type: 'symbol',
         source: 'events',
         filter: ['>', ['get', 'count'], 1],
         layout: {
           'icon-image': [
             'step', ['get', 'count'],
-            'pin-cluster-sm', 5,
-            'pin-cluster-md', 15,
-            'pin-cluster-lg',
+            'pin-lieu-sm', 5,
+            'pin-lieu-md', 15,
+            'pin-lieu-lg',
           ],
           'icon-allow-overlap': true,
           'icon-anchor': 'bottom',
@@ -586,7 +586,7 @@ export default function Home() {
 
       // Compteur sur les pins groupés
       map.addLayer({
-        id: 'lieu-cluster-count',
+        id: 'lieu-multi-evenements-count',
         type: 'symbol',
         source: 'events',
         filter: ['>', ['get', 'count'], 1],
@@ -623,7 +623,7 @@ export default function Home() {
       clusterInitialized.current = true
 
       // Clic sur pin groupé → popup liste des événements du lieu
-      map.on('click', 'lieu-cluster', (e: mapboxgl.MapLayerMouseEvent) => {
+      map.on('click', 'lieu-multi-evenements', (e: mapboxgl.MapLayerMouseEvent) => {
         if (!e.features?.length) return
         const props = e.features[0].properties
         if (!props) return
@@ -635,72 +635,45 @@ export default function Home() {
           .filter((ev): ev is NonNullable<typeof ev> => ev != null)
         if (!evList.length) return
 
-        let currentIndex = 0
-        const total = evList.length
         const nomLieu = props.nom_lieu || props.lieu || ''
-        const uid = Date.now()
 
-        const formatDateCarrousel = (ev: (typeof evList)[number]) =>
+        const formatPastille = (ev: (typeof evList)[number]) => {
+          const brut = ev.date_debut || ev.date || ''
+          const d = brut ? new Date(brut) : null
+          if (!d || isNaN(d.getTime())) return { jour: '--', mois: '' }
+          const jour = d.getDate().toString().padStart(2, '0')
+          const mois = d.toLocaleDateString(langue === 'ht' ? 'fr' : langue, { month: 'short' }).replace('.', '')
+          return { jour, mois }
+        }
+
+        const formatHeure = (ev: (typeof evList)[number]) =>
           afficherPeriode({ date: ev.date_debut || ev.date || '', date_fin: ev.date_fin }, langue)
 
-        const slideHTML = (idx: number) => {
-          const ev = evList[idx]
-          const imageUrl = ev.image_url || getEventImage(null, ev.categorie)
-          const dateStr = formatDateCarrousel(ev)
+        const rowHTML = (ev: (typeof evList)[number]) => {
+          const { jour, mois } = formatPastille(ev)
+          const heureStr = formatHeure(ev)
           return `
-            ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:110px;object-fit:cover;display:block;" crossorigin="anonymous"/>` : ''}
-            <div style="padding:10px 12px;">
-              <p style="font-weight:bold;font-size:13px;margin:0 0 4px;color:#F7F2E8;line-height:1.3;">${ev.titre}</p>
-              ${ev.lieu ? `<p style="font-size:11px;color:rgba(247,242,232,0.65);margin:0 0 2px;">📍 ${ev.lieu}</p>` : ''}
-              ${dateStr ? `<p style="font-size:11px;color:rgba(247,242,232,0.65);margin:0 0 6px;">📅 ${dateStr}</p>` : ''}
-              ${ev.categorie ? `<span style="display:inline-block;margin-bottom:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;background:rgba(200,67,26,0.15);color:#C8431A;">${ev.categorie}</span>` : ''}
-              <a href="/evenement/${ev.id}" style="display:block;text-align:center;padding:7px 0;background:#C8431A;color:#F7F2E8;border-radius:8px;font-size:12px;font-weight:bold;text-decoration:none;">${t.map.viewFullEvent}</a>
-            </div>
+            <a href="/evenement/${ev.id}" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;text-decoration:none;border-bottom:1px solid rgba(247,242,232,0.08);">
+              <div style="flex-shrink:0;width:34px;height:34px;border-radius:50%;background:#C8431A;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:#F7F2E8;">${jour}</div>
+              <div style="min-width:0;">
+                <p style="font-weight:bold;font-size:12px;margin:0 0 3px;color:#F7F2E8;line-height:1.3;">${ev.titre}</p>
+                <p style="font-size:10px;color:rgba(247,242,232,0.6);margin:0;">${mois}${heureStr ? ' · ⏱ ' + heureStr : ''}</p>
+              </div>
+            </a>
           `
         }
 
-        new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup', maxWidth: 'none' })
+        new mapboxgl.Popup({ offset: 25, className: 'lotbo-popup-liste', maxWidth: 'none' })
           .setLngLat(coords)
           .setHTML(`
-            <div style="width:240px;background:#1A1410;border-radius:12px;overflow:hidden;user-select:none;" id="lp-${uid}">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid rgba(247,242,232,0.1);">
-                <p style="font-size:11px;font-weight:bold;color:#C8431A;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">📍 ${nomLieu}</p>
-                <span id="lp-counter-${uid}" style="font-size:11px;color:rgba(247,242,232,0.5);white-space:nowrap;margin-left:6px;">1 / ${total}</span>
+            <div style="background:#1A1410;">
+              <div style="padding:10px 12px;border-bottom:1px solid rgba(247,242,232,0.1);position:sticky;top:0;background:#1A1410;z-index:1;">
+                <p style="font-size:13px;font-weight:bold;color:#F7F2E8;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${nomLieu}</p>
               </div>
-              <div id="lp-slide-${uid}">${slideHTML(0)}</div>
-              <div style="display:flex;justify-content:space-between;padding:6px 12px;border-top:1px solid rgba(247,242,232,0.1);">
-                <button id="lp-prev-${uid}" style="background:rgba(247,242,232,0.08);border:none;color:#F7F2E8;font-size:18px;width:36px;height:32px;border-radius:8px;cursor:pointer;">‹</button>
-                <button id="lp-next-${uid}" style="background:rgba(247,242,232,0.08);border:none;color:#F7F2E8;font-size:18px;width:36px;height:32px;border-radius:8px;cursor:pointer;">›</button>
-              </div>
+              ${evList.map(rowHTML).join('')}
             </div>
           `)
           .addTo(map)
-
-        const update = () => {
-          const slide = document.getElementById(`lp-slide-${uid}`)
-          const counter = document.getElementById(`lp-counter-${uid}`)
-          if (slide) slide.innerHTML = slideHTML(currentIndex)
-          if (counter) counter.textContent = `${currentIndex + 1} / ${total}`
-        }
-
-        setTimeout(() => {
-          const prev = document.getElementById(`lp-prev-${uid}`)
-          const next = document.getElementById(`lp-next-${uid}`)
-          const container = document.getElementById(`lp-${uid}`)
-          if (prev) prev.addEventListener('click', () => { currentIndex = (currentIndex - 1 + total) % total; update() })
-          if (next) next.addEventListener('click', () => { currentIndex = (currentIndex + 1) % total; update() })
-          if (container) {
-            let touchStartX = 0
-            container.addEventListener('touchstart', (te) => { touchStartX = te.touches[0].clientX }, { passive: true })
-            container.addEventListener('touchend', (te) => {
-              const dx = te.changedTouches[0].clientX - touchStartX
-              if (Math.abs(dx) > 40) {
-                currentIndex = dx < 0 ? (currentIndex + 1) % total : (currentIndex - 1 + total) % total
-                update()
-              }
-            }, { passive: true })
-          }
-        }, 0)
       })
 
       const handlePointClick = (e: mapboxgl.MapLayerMouseEvent) => {
@@ -734,7 +707,7 @@ export default function Home() {
       map.on('click', 'unclustered-point', handlePointClick)
       map.on('click', 'unclustered-aune', handlePointClick)
 
-      ;['unclustered-point', 'lieu-cluster', 'unclustered-aune'].forEach(layer => {
+      ;['unclustered-point', 'lieu-multi-evenements', 'unclustered-aune'].forEach(layer => {
         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = '' })
       })
