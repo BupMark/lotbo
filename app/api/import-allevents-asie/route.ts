@@ -267,6 +267,7 @@ export async function GET(request: Request) {
           prix: ev.prix,
           acces: 'public',
           lien: ev.url,
+          venue_name: ev.venue_name,
         }
 
         const { error: erreurRevision } = await supabase.from('revision_geolocalisation').insert([{
