@@ -25,6 +25,7 @@ export const maxDuration = 60
 
 // ── Types JSON-LD (subset utilisé) ──────────────────────────────
 interface JsonLdAddress {
+  streetAddress?: string
   addressLocality?: string
   addressCountry?: string
 }
@@ -73,6 +74,18 @@ interface EventData {
   prix:       'gratuit' | 'payant'
 }
 
+// Adresse précise récupérée depuis la fiche individuelle — distincte
+// des coordonnées génériques de la page de zone (fix
+// TECH-GEOCODAGE-EMPILEMENT-1, 18 août : la page de zone renvoie un
+// centroïde ville identique pour tous les événements, la fiche
+// individuelle contient le vrai lieu)
+interface GeoPrecise {
+  latitude: number
+  longitude: number
+  streetAddress: string | null
+  city: string | null
+}
+
 function toNumber(v: number | string | undefined): number | null {
   if (v === undefined || v === null) return null
   const n = typeof v === 'number' ? v : parseFloat(v)
@@ -97,6 +110,47 @@ function extractEventsJsonLd(html: string): JsonLdEvent[] {
     }
   }
   return []
+}
+
+// Fiche individuelle AllEvents — JSON-LD unique (objet, pas tableau),
+// @type variable selon la catégorie (MusicEvent, Event, etc.)
+function extractSingleEventJsonLd(html: string): JsonLdEvent | null {
+  const regex = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g
+  let m: RegExpExecArray | null
+  while ((m = regex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(m[1]) as unknown
+      const items = Array.isArray(parsed) ? parsed : [parsed]
+      for (const item of items) {
+        const ev = item as JsonLdEvent
+        if (ev.location?.geo?.latitude && ev.location?.geo?.longitude) return ev
+      }
+    } catch {
+      continue
+    }
+  }
+  return null
+}
+
+async function recupererGeoPrecise(url: string): Promise<GeoPrecise | null> {
+  try {
+    const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return null
+    const html = await res.text()
+    const data = extractSingleEventJsonLd(html)
+    if (!data) return null
+    const lat = toNumber(data.location?.geo?.latitude)
+    const lon = toNumber(data.location?.geo?.longitude)
+    if (lat === null || lon === null) return null
+    return {
+      latitude: lat,
+      longitude: lon,
+      streetAddress: data.location?.address?.streetAddress || null,
+      city: data.location?.address?.addressLocality || null,
+    }
+  } catch {
+    return null
+  }
 }
 
 function parseEvents(html: string): EventData[] {
@@ -125,6 +179,8 @@ function parseEvents(html: string): EventData[] {
     const endDateStr = endRaw.slice(0, 10)
     const end_date   = endDateStr && endDateStr !== start_date ? endDateStr : null
 
+    // Coordonnées de la page de zone conservées comme fallback informatif
+    // uniquement — plus utilisées pour l'insert (voir recupererGeoPrecise)
     const lat = toNumber(item.location?.geo?.latitude)
     const lon = toNumber(item.location?.geo?.longitude)
 
@@ -167,7 +223,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  let imported = 0, skipped = 0, doublons = 0, errors = 0, events_found = 0
+  let imported = 0, skipped = 0, doublons = 0, errors = 0, events_found = 0, aReviser = 0
 
   try {
     const res = await fetch(zone.url, { headers: HEADERS, redirect: 'follow', cache: 'no-store' } as RequestInit)
@@ -179,8 +235,6 @@ export async function GET(request: Request) {
     events_found = events.length
 
     for (const ev of events) {
-      if (!ev.latitude || !ev.longitude) { skipped++; continue }
-
       const sourceId = `allevents-${ev.eid}`
 
       // T-1 — Filtre anti-réimport suppression
@@ -191,31 +245,69 @@ export async function GET(request: Request) {
         .from('evenements').select('id').eq('source_id', sourceId).maybeSingle()
       if (existing) { skipped++; continue }
 
+      const { data: dejaEnRevision } = await supabase
+        .from('revision_geolocalisation').select('id').eq('source_id', sourceId).maybeSingle()
+      if (dejaEnRevision) { skipped++; continue }
+
+      // Fetch de la fiche individuelle — la page de zone ne fournit
+      // que des coordonnées génériques "centre-ville" (fix
+      // TECH-GEOCODAGE-EMPILEMENT-1)
+      const geoPrecise = await recupererGeoPrecise(ev.url)
+      await new Promise(r => setTimeout(r, 300)) // throttle après le fetch fiche
+
+      if (!geoPrecise) {
+        const donneesEvenement = {
+          titre: ev.name,
+          description: null,
+          image_url: ev.image_url,
+          date_debut: ev.start_date,
+          date_fin: ev.end_date,
+          heure_debut: ev.start_time,
+          categorie: 'Célébration communautaire',
+          prix: ev.prix,
+          acces: 'public',
+          lien: ev.url,
+        }
+
+        const { error: erreurRevision } = await supabase.from('revision_geolocalisation').insert([{
+          source: 'allevents',
+          source_id: sourceId,
+          titre: ev.name,
+          ville_brute: ev.city || zone.villeFallback,
+          adresse_brute: ev.venue_name,
+          lien_source: ev.url,
+          date_expiration: ev.end_date || ev.start_date,
+          donnees_evenement: donneesEvenement,
+        }])
+
+        if (erreurRevision) { errors++ } else { aReviser++ }
+        continue
+      }
+
       const dedup = await verifierDoublon(supabase, {
         titre: ev.name, date: ev.start_date,
-        latitude: ev.latitude, longitude: ev.longitude, source_id: sourceId,
+        latitude: geoPrecise.latitude, longitude: geoPrecise.longitude, source_id: sourceId,
       })
       if (dedup.estDoublon) { doublons++; continue }
 
-      const ville = ev.city ? normaliserVille(ev.city) : zone.villeFallback
+      const ville = geoPrecise.city ? normaliserVille(geoPrecise.city) : (ev.city ? normaliserVille(ev.city) : zone.villeFallback)
       const { error } = await supabase.from('evenements').insert([{
         titre: ev.name, lieu: ev.venue_name || ville, ville,
         pays: zone.paysFallback,
         date: ev.start_date, date_debut: ev.start_date, date_fin: ev.end_date,
         heure_debut: ev.start_time, description: null,
-        latitude: ev.latitude, longitude: ev.longitude,
+        latitude: geoPrecise.latitude, longitude: geoPrecise.longitude,
         categorie: 'Célébration communautaire', image_url: ev.image_url,
         prix: ev.prix, acces: 'public', statut: 'approuve', visibilite: 'public',
         source: 'allevents', source_id: sourceId, lien: ev.url,
       }])
       if (error) { errors++ } else { imported++ }
-      await new Promise(r => setTimeout(r, 300))
     }
   } catch (e) {
     return NextResponse.json({ success: false, zone: zoneKey, error: String(e) }, { status: 500 })
   }
 
   return NextResponse.json({
-    success: true, zone: zoneKey, events_found, imported, skipped, doublons, errors,
+    success: true, zone: zoneKey, events_found, imported, skipped, doublons, errors, a_reviser: aReviser,
   })
 }
