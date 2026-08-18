@@ -78,6 +78,7 @@ export async function GET(request: Request) {
   let skipped = 0
   let doublons = 0
   let errors = 0
+  let aReviser = 0
   const cacheGeocode = new Map<string, { longitude: number; latitude: number } | null>()
 
   try {
@@ -87,6 +88,13 @@ export async function GET(request: Request) {
       .select('source_id')
       .eq('source', 'tikerama')
     const setExistants = new Set((existants || []).map(e => e.source_id).filter(Boolean))
+
+    // Préchargement des source_id déjà envoyés en révision (éviter les doublons de file)
+    const { data: dejaEnRevision } = await admin
+      .from('revision_geolocalisation')
+      .select('source_id')
+      .eq('source', 'tikerama')
+    const setEnRevision = new Set((dejaEnRevision || []).map(r => r.source_id).filter(Boolean))
 
     const tousSlugs = new Set<string>()
     for (let page = 1; page <= NB_PAGES; page++) {
@@ -107,6 +115,7 @@ export async function GET(request: Request) {
       const sourceId = `tikerama-${slug}`
 
       if (setExistants.has(sourceId)) { skipped++; continue }
+      if (setEnRevision.has(sourceId)) { skipped++; continue }
 
       try {
         const bloquee = await estSourceBloquee(admin, 'tikerama', sourceId)
@@ -131,7 +140,41 @@ export async function GET(request: Request) {
         const adresse = data.location?.address || data.location?.name || ''
         if (!adresse) { skipped++; continue }
 
-        const villeBrute = data.location?.name?.split(',')[0]?.trim() || 'Abidjan'
+        const villeBrute = data.location?.name?.split(',')[0]?.trim() || ''
+
+        // Ville introuvable dans le JSON-LD — on route vers la file de
+        // révision manuelle plutôt que d'assigner Abidjan par défaut
+        // (cause principale de l'empilement de coordonnées identifié
+        // le 18 août — fix TECH-GEOCODAGE-EMPILEMENT-1)
+        if (!villeBrute) {
+          const donneesEvenement = {
+            titre,
+            description: data.description || null,
+            image_url: data.image || null,
+            date_debut: dateDebut,
+            date_fin: dateFin,
+            categorie: deviverCategorieDepuisTitre(titre),
+            organisateur: data.organizer?.name || null,
+            prix: 'payant',
+            acces: 'public',
+            lien: ficheUrl,
+          }
+
+          const { error: erreurRevision } = await admin.from('revision_geolocalisation').insert([{
+            source: 'tikerama',
+            source_id: sourceId,
+            titre,
+            ville_brute: null,
+            adresse_brute: adresse,
+            lien_source: ficheUrl,
+            date_expiration: dateFin || dateDebut,
+            donnees_evenement: donneesEvenement,
+          }])
+
+          if (erreurRevision) { errors++ } else { aReviser++ }
+          continue
+        }
+
         const ville = normaliserVille(villeBrute)
 
         let coords = cacheGeocode.get(adresse)
@@ -180,7 +223,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      success: true, imported, skipped, doublons, errors,
+      success: true, imported, skipped, doublons, errors, a_reviser: aReviser,
       slugs_trouves: tousSlugs.size,
     })
   } catch (err: unknown) {
