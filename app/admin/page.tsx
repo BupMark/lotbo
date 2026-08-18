@@ -114,9 +114,24 @@ interface BadgeEnAttente {
   created_at: string
 }
 
+interface EntreeRevisionGeo {
+  id: string
+  source: string
+  source_id: string
+  titre: string
+  ville_brute: string | null
+  adresse_brute: string | null
+  pays_brut: string | null
+  code_pays: string | null
+  lien_source: string | null
+  date_expiration: string | null
+  donnees_evenement: Record<string, unknown>
+  created_at: string
+}
+
 type FiltreStatut  = 'en_attente' | 'approuve' | 'en_cours' | 'rejete' | 'hors_ligne' | 'archive' | 'tous'
 type FiltreTemporel = 'aujourd_hui' | 'cette_semaine' | 'ce_mois' | 'tous'
-type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations' | 'reclamations_org' | 'candidatures' | 'propositions'
+type Onglet        = 'evenements' | 'signalements' | 'import' | 'utilisateurs' | 'reclamations' | 'reclamations_org' | 'candidatures' | 'propositions' | 'revision_geo'
 type FiltreRole    = 'tous' | 'membre' | 'contributeur' | 'contributeur_terrain' | 'organisateur' | 'ambassadeur' | 'admin' | 'admin_enqueteur'
 type FiltreStatutUser = 'tous' | 'actif' | 'suspendu'
 
@@ -409,6 +424,14 @@ export default function Admin() {
   const [accessToken,         setAccessToken]         = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [candidatures,        setCandidatures]        = useState<EnqueteurCandidature[]>([])
+  const [entreesRevisionGeo,    setEntreesRevisionGeo]    = useState<EntreeRevisionGeo[]>([])
+  const [loadingRevisionGeo,    setLoadingRevisionGeo]    = useState(false)
+  const [traitementRevisionId,  setTraitementRevisionId]  = useState<string | null>(null)
+  const [modeSaisie,            setModeSaisie]            = useState<Record<string, 'adresse' | 'coordonnees'>>({})
+  const [saisieAdresse,         setSaisieAdresse]         = useState<Record<string, string>>({})
+  const [saisieVille,           setSaisieVille]           = useState<Record<string, string>>({})
+  const [saisieLatLon,          setSaisieLatLon]          = useState<Record<string, string>>({})
+  const [ajouterLieuxConnus,    setAjouterLieuxConnus]    = useState<Record<string, boolean>>({})
   const [fichesInitiales,     setFichesInitiales]     = useState<Record<string, number>>({})
   const [loadingCandidatures, setLoadingCandidatures]  = useState(false)
   const [traitementId,        setTraitementId]        = useState<string | null>(null)
@@ -722,6 +745,61 @@ export default function Admin() {
       alert('Erreur lors du traitement')
     }
     setTraitementPropositionId(null)
+  }
+
+  const chargerRevisionGeo = async () => {
+    setLoadingRevisionGeo(true)
+    try {
+      const res  = await fetch('/api/admin/revision-geolocalisation', { headers: hiAuth() })
+      const data = await res.json()
+      setEntreesRevisionGeo(data.entrees || [])
+    } catch { /* ignore */ }
+    setLoadingRevisionGeo(false)
+  }
+
+  const skipperEntreeRevisionGeo = async (id: string) => {
+    if (!confirm('Ignorer cet événement ? Il ne sera pas publié.')) return
+    setTraitementRevisionId(id)
+    try {
+      const res  = await fetch('/api/admin/revision-geolocalisation', { method: 'POST', headers: hiAuth(), body: JSON.stringify({ id, action: 'skip' }) })
+      const data = await res.json()
+      if (data.error) { alert('Erreur : ' + data.error); setTraitementRevisionId(null); return }
+      setEntreesRevisionGeo(prev => prev.filter(e => e.id !== id))
+    } catch {
+      alert('Erreur lors du traitement')
+    }
+    setTraitementRevisionId(null)
+  }
+
+  const publierEntreeRevisionGeo = async (entree: EntreeRevisionGeo) => {
+    const mode = modeSaisie[entree.id] || 'adresse'
+    setTraitementRevisionId(entree.id)
+    try {
+      const body: Record<string, unknown> = {
+        id: entree.id,
+        action: 'publier',
+        mode,
+        ville: saisieVille[entree.id] || entree.ville_brute || '',
+        ajouter_a_lieux_connus: !!ajouterLieuxConnus[entree.id],
+      }
+      if (mode === 'adresse') {
+        body.adresse = saisieAdresse[entree.id] || ''
+        if (!body.adresse) { alert('Adresse requise'); setTraitementRevisionId(null); return }
+      } else {
+        const brut = (saisieLatLon[entree.id] || '').split(',').map(s => s.trim())
+        const lat = parseFloat(brut[0]), lon = parseFloat(brut[1])
+        if (isNaN(lat) || isNaN(lon)) { alert('Coordonnées invalides — format attendu : "lat, lon"'); setTraitementRevisionId(null); return }
+        body.latitude = lat
+        body.longitude = lon
+      }
+      const res  = await fetch('/api/admin/revision-geolocalisation', { method: 'POST', headers: hiAuth(), body: JSON.stringify(body) })
+      const data = await res.json()
+      if (data.error) { alert('Erreur : ' + data.error); setTraitementRevisionId(null); return }
+      setEntreesRevisionGeo(prev => prev.filter(e => e.id !== entree.id))
+    } catch {
+      alert('Erreur lors de la publication')
+    }
+    setTraitementRevisionId(null)
   }
 
   const validerCandidature = async (c: EnqueteurCandidature) => {
@@ -1219,6 +1297,7 @@ export default function Admin() {
             { key: 'reclamations_org', label: '🏢 Claims Org', count: reclamationsOrg.filter(r => r.statut === 'en_attente').length, badge: true, public: false },
             { key: 'candidatures', label: '📋 Enquêteurs', count: candidatures.length,                                      badge: true, public: true },
             { key: 'propositions', label: '✏️ Corrections', count: propositions.length,                                     badge: true, public: false },
+            { key: 'revision_geo', label: '📍 Révision géo', count: entreesRevisionGeo.length, badge: true, public: false },
             { key: 'import',       label: '📥 Import',  count: statsImport.length,                                        badge: true, public: false },
             { key: 'utilisateurs', label: '👥 Users',   count: countMembres,                                              badge: true, public: false },
           ].filter(tab => userRole !== 'admin_enqueteur' || tab.public).map(tab => (
@@ -1229,6 +1308,7 @@ export default function Admin() {
                 if (tab.key === 'utilisateurs' && users.length === 0) chargerUtilisateurs()
                 if (tab.key === 'candidatures' && candidatures.length === 0 && !loadingCandidatures) chargerCandidatures()
                 if (tab.key === 'propositions' && propositions.length === 0 && !loadingPropositions) chargerPropositions()
+                if (tab.key === 'revision_geo' && entreesRevisionGeo.length === 0 && !loadingRevisionGeo) chargerRevisionGeo()
               }}
               style={{
                 padding: '10px 16px', fontSize: 13, fontWeight: 'bold',
@@ -1900,6 +1980,112 @@ export default function Admin() {
                   </div>
                 )
               })
+            )}
+          </div>
+        )}
+
+        {onglet === 'revision_geo' && (
+          <div style={{ marginBottom: 48 }}>
+            <h3 style={{ color: '#1A1410', fontSize: 15, fontWeight: 'bold', marginBottom: 12 }}>
+              📍 Événements en attente de géolocalisation {entreesRevisionGeo.length > 0 && `(${entreesRevisionGeo.length})`}
+            </h3>
+            {loadingRevisionGeo ? (
+              <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40, fontStyle: 'italic' }}>Chargement…</p>
+            ) : entreesRevisionGeo.length === 0 ? (
+              <p style={{ color: '#8C5A40', textAlign: 'center', padding: 40 }}>Aucun événement en attente de révision.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {entreesRevisionGeo.map(entree => {
+                  const busy = traitementRevisionId === entree.id
+                  const mode = modeSaisie[entree.id] || 'adresse'
+                  return (
+                    <div key={entree.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 12, padding: 16 }}>
+                      <div style={{ marginBottom: 10 }}>
+                        <h4 style={{ color: '#1A1410', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>{entree.titre}</h4>
+                        <p style={{ color: '#8C5A40', fontSize: 12 }}>
+                          Source : {entree.source} · Ville brute : {entree.ville_brute || '—'} · Pays : {entree.pays_brut || '—'}
+                        </p>
+                        {entree.adresse_brute && (
+                          <p style={{ color: '#8C5A40', fontSize: 12 }}>Adresse brute : {entree.adresse_brute}</p>
+                        )}
+                        {entree.lien_source && (
+                          <a href={entree.lien_source} target="_blank" rel="noopener noreferrer" style={{ color: '#C8431A', fontSize: 12 }}>
+                            🔗 Voir la fiche source
+                          </a>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                        <button
+                          onClick={() => setModeSaisie(prev => ({ ...prev, [entree.id]: 'adresse' }))}
+                          style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'adresse' ? '#C8431A' : 'rgba(255,255,255,0.06)', color: mode === 'adresse' ? 'white' : '#8C5A40' }}
+                        >
+                          Coller une adresse
+                        </button>
+                        <button
+                          onClick={() => setModeSaisie(prev => ({ ...prev, [entree.id]: 'coordonnees' }))}
+                          style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 'bold', border: 'none', cursor: 'pointer', background: mode === 'coordonnees' ? '#C8431A' : 'rgba(255,255,255,0.06)', color: mode === 'coordonnees' ? 'white' : '#8C5A40' }}
+                        >
+                          Coller lat/lon
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                        <input
+                          type="text"
+                          placeholder="Ville finale"
+                          value={saisieVille[entree.id] ?? entree.ville_brute ?? ''}
+                          onChange={e => setSaisieVille(prev => ({ ...prev, [entree.id]: e.target.value }))}
+                          style={{ flex: 1, minWidth: 140, padding: '7px 10px', borderRadius: 8, border: '1px solid #E8E0D0', fontSize: 12 }}
+                        />
+                        {mode === 'adresse' ? (
+                          <input
+                            type="text"
+                            placeholder="Adresse ou nom du lieu à géocoder"
+                            value={saisieAdresse[entree.id] ?? ''}
+                            onChange={e => setSaisieAdresse(prev => ({ ...prev, [entree.id]: e.target.value }))}
+                            style={{ flex: 2, minWidth: 200, padding: '7px 10px', borderRadius: 8, border: '1px solid #E8E0D0', fontSize: 12 }}
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder="lat, lon (ex: 19.1048, 72.9221)"
+                            value={saisieLatLon[entree.id] ?? ''}
+                            onChange={e => setSaisieLatLon(prev => ({ ...prev, [entree.id]: e.target.value }))}
+                            style={{ flex: 2, minWidth: 200, padding: '7px 10px', borderRadius: 8, border: '1px solid #E8E0D0', fontSize: 12 }}
+                          />
+                        )}
+                      </div>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8C5A40', marginBottom: 10 }}>
+                        <input
+                          type="checkbox"
+                          checked={!!ajouterLieuxConnus[entree.id]}
+                          onChange={e => setAjouterLieuxConnus(prev => ({ ...prev, [entree.id]: e.target.checked }))}
+                        />
+                        Ajouter ce lieu à lieux_connus pour les prochains imports
+                      </label>
+
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => publierEntreeRevisionGeo(entree)}
+                          disabled={busy}
+                          style={{ background: 'rgba(45,158,107,0.15)', color: '#2D9E6B', padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: busy ? 'not-allowed' : 'pointer' }}
+                        >
+                          {busy ? '…' : '✓ Publier'}
+                        </button>
+                        <button
+                          onClick={() => skipperEntreeRevisionGeo(entree.id)}
+                          disabled={busy}
+                          style={{ background: 'rgba(180,40,40,0.15)', color: '#e57373', padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 'bold', border: 'none', cursor: busy ? 'not-allowed' : 'pointer' }}
+                        >
+                          {busy ? '…' : '✗ Ignorer'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
         )}
