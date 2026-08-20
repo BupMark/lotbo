@@ -378,7 +378,7 @@ export default function Home() {
     map.on('load', () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
-          map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 12 })
+          map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14 })
         })
       }
     })
@@ -539,6 +539,8 @@ export default function Home() {
     const addLayers = async () => {
       if (map.getSource('events')) {
         ;(map.getSource('events') as mapboxgl.GeoJSONSource).setData(geojson)
+        const sourceGeo = map.getSource('events-geo-cluster')
+        if (sourceGeo) (sourceGeo as mapboxgl.GeoJSONSource).setData(geojson)
         return
       }
       // Verrou anti-concurrence : addLayers est async (charge des images
@@ -584,10 +586,95 @@ export default function Home() {
         loadClusterPin('pin-lieu-lg', '#C8431A', 52, 66),
       ])
 
+      const loadGeoClusterPin = (name: string, w: number, h: number, nbRayons: number, longueurRayon: number) =>
+        new Promise<void>(resolve => {
+          const cx = w / 2
+          const cyPin = w / 2
+          let rayons = ''
+          for (let i = 0; i < nbRayons; i++) {
+            const angle = (i / nbRayons) * Math.PI * 2
+            const x1 = cx + Math.cos(angle) * (w * 0.42)
+            const y1 = cyPin + Math.sin(angle) * (w * 0.42)
+            const x2 = cx + Math.cos(angle) * (w * 0.42 + longueurRayon)
+            const y2 = cyPin + Math.sin(angle) * (w * 0.42 + longueurRayon)
+            rayons += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#D4A820" stroke-width="2" stroke-linecap="round"/>`
+          }
+          const totalH = h + longueurRayon * 2
+          const totalW = w + longueurRayon * 2
+          const offsetX = longueurRayon
+          const offsetY = longueurRayon
+          const svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(${offsetX},${offsetY})">
+              ${rayons}
+              <path d="M${w/2} 2C${w*0.14} 2 2 ${h*0.25} 2 ${w/2}C2 ${h*0.68} ${w/2} ${h-2} ${w/2} ${h-2}S${w-2} ${h*0.68} ${w-2} ${w/2}C${w-2} ${h*0.25} ${w*0.86} 2 ${w/2} 2Z" fill="#C8431A" stroke="#1A1410" stroke-width="0.8"/>
+            </g>
+          </svg>`
+          const img = new Image(totalW, totalH)
+          img.onload = () => { if (!map.hasImage(name)) map.addImage(name, img); resolve() }
+          img.onerror = () => resolve()
+          img.src = 'data:image/svg+xml,' + encodeURIComponent(svg)
+        })
+
+      await Promise.all([
+        loadGeoClusterPin('pin-geo-cluster-sm', 36, 46, 8, 10),
+        loadGeoClusterPin('pin-geo-cluster-md', 44, 56, 10, 13),
+        loadGeoClusterPin('pin-geo-cluster-lg', 52, 66, 12, 16),
+      ])
+
       map.addSource('events', {
         type: 'geojson',
         data: geojson,
         cluster: false,
+      })
+
+      map.addSource('events-geo-cluster', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        clusterMaxZoom: 13,
+        clusterRadius: 50,
+        clusterProperties: {
+          total_evenements: ['+', ['get', 'count']],
+        },
+      })
+
+      map.addLayer({
+        id: 'geo-clusters',
+        type: 'symbol',
+        source: 'events-geo-cluster',
+        filter: ['has', 'point_count'],
+        maxzoom: 13,
+        layout: {
+          'icon-image': [
+            'step', ['get', 'point_count'],
+            'pin-geo-cluster-sm', 5,
+            'pin-geo-cluster-md', 15,
+            'pin-geo-cluster-lg',
+          ],
+          'icon-allow-overlap': true,
+          'icon-anchor': 'bottom',
+        },
+      })
+
+      map.addLayer({
+        id: 'geo-clusters-count',
+        type: 'symbol',
+        source: 'events-geo-cluster',
+        filter: ['has', 'point_count'],
+        maxzoom: 13,
+        layout: {
+          'text-field': ['get', 'point_count'],
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 12,
+          'text-allow-overlap': true,
+          'text-anchor': 'bottom',
+          'text-offset': [0, -1.2],
+        },
+        paint: {
+          'text-color': '#F7F2E8',
+          'text-halo-color': 'rgba(0,0,0,0.3)',
+          'text-halo-width': 0.5,
+        },
       })
 
       // Pins individuels (count = 1)
@@ -595,6 +682,7 @@ export default function Home() {
         id: 'unclustered-point',
         type: 'symbol',
         source: 'events',
+        minzoom: 13,
         filter: ['==', ['get', 'count'], 1],
         layout: {
           'icon-image': 'pin-event',
@@ -610,6 +698,7 @@ export default function Home() {
         id: 'pin-en-cours-pulse',
         type: 'circle',
         source: 'events',
+        minzoom: 13,
         filter: ['all', ['==', ['get', 'count'], 1], ['==', ['get', 'en_cours'], true]],
         paint: {
           'circle-radius': 6.2,
@@ -624,6 +713,7 @@ export default function Home() {
         id: 'lieu-multi-evenements',
         type: 'symbol',
         source: 'events',
+        minzoom: 13,
         filter: ['>', ['get', 'count'], 1],
         layout: {
           'icon-image': [
@@ -642,6 +732,7 @@ export default function Home() {
         id: 'lieu-multi-evenements-count',
         type: 'symbol',
         source: 'events',
+        minzoom: 13,
         filter: ['>', ['get', 'count'], 1],
         layout: {
           'text-field': ['get', 'count'],
@@ -663,6 +754,7 @@ export default function Home() {
         id: 'unclustered-aune',
         type: 'symbol',
         source: 'events',
+        minzoom: 13,
         filter: ['==', ['get', 'est_a_la_une'], true],
         layout: {
           'icon-image': 'pin-aune',
@@ -765,9 +857,22 @@ export default function Home() {
       map.on('click', 'unclustered-point', handlePointClick)
       map.on('click', 'unclustered-aune', handlePointClick)
 
-      ;['unclustered-point', 'lieu-multi-evenements', 'unclustered-aune'].forEach(layer => {
+      ;['unclustered-point', 'lieu-multi-evenements', 'unclustered-aune', 'geo-clusters'].forEach(layer => {
         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = '' })
+      })
+
+      map.on('click', 'geo-clusters', (e: mapboxgl.MapLayerMouseEvent) => {
+        if (!e.features?.length) return
+        const feature = e.features[0]
+        const clusterId = feature.properties?.cluster_id
+        const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
+        const source = map.getSource('events-geo-cluster') as mapboxgl.GeoJSONSource
+        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return
+          const zoomCible = Math.min((zoom ?? 14) + 2.5, 14)
+          map.easeTo({ center: coords, zoom: zoomCible })
+        })
       })
       ;(window as any).__lotboAddLayersEnCours = false
     }
