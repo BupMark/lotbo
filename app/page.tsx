@@ -99,7 +99,6 @@ function estEnCours(ev: Evenement, now: Date): boolean {
   const [fh, fm] = ev.heure_fin.split(':').map(Number)
   const nowMin   = now.getHours() * 60 + now.getMinutes()
   const result   = nowMin >= dh * 60 + dm && nowMin <= fh * 60 + fm
-  console.log('[F8 estEnCours]', ev.titre, { dateDebut, dateFin, todayStr, nowMin, debutMin: dh * 60 + dm, finMin: fh * 60 + fm, result })
   return result
 }
 
@@ -157,12 +156,12 @@ export default function Home() {
   const [favoriTooltipId, setFavoriTooltipId] = useState<string | null>(null)
   const [sheetReduit, setSheetReduit]       = useState(false)
   const touchStartX                         = useRef(0)
-  const aLaUneMarkerRef                     = useRef<mapboxgl.Marker | null>(null)
   const tooltipTimer                        = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [enCoursIds, setEnCoursIds]         = useState<Set<string>>(new Set())
   const enCoursIntervalRef                  = useRef<ReturnType<typeof setInterval> | null>(null)
   const searchRef                           = useRef<HTMLInputElement>(null)
   const clusterInitialized                  = useRef(false)
+  const pulseFrameRef = useRef<number | null>(null)
   const evenementsFiltresRef                = useRef<Evenement[]>([])
 
   const t       = getTraductions(langue)
@@ -311,7 +310,7 @@ export default function Home() {
       .from('evenements')
       .select('*')
       .eq('statut', 'approuve')
-      .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null')
+      .or('date_debut.gte.' + aujourd_hui + ',date_debut.is.null,date_fin.gte.' + aujourd_hui)
       .neq('statut', 'hors_ligne')
       .order('date_debut', { ascending: true, nullsFirst: false })
       .limit(2000)
@@ -341,7 +340,7 @@ export default function Home() {
       .from('evenements')
       .select('*')
       .eq('statut', 'approuve')
-      .or(`and(date_debut.gte.${aujourd_hui},date_debut.lte.${dans90Jours}),date_debut.is.null,and(mis_en_avant.eq.true,date_debut.gt.${dans90Jours})`)
+      .or(`and(date_debut.gte.${aujourd_hui},date_debut.lte.${dans90Jours}),date_debut.is.null,and(mis_en_avant.eq.true,date_debut.gt.${dans90Jours}),date_fin.gte.${aujourd_hui}`)
       .order('date_debut', { ascending: true, nullsFirst: false })
       .limit(2000)
       .then(({ data }) => setEvenementsListe((data as Evenement[]) || []))
@@ -384,7 +383,25 @@ export default function Home() {
       }
     })
     mapRef.current = map
-    return () => map.remove()
+
+    // Animation du pulse — indépendante du cycle addLayers/setData, tourne en continu
+    const animerPulse = () => {
+      if (map.getLayer('pin-en-cours-pulse')) {
+        const t = (Date.now() % 1400) / 1400
+        map.setPaintProperty('pin-en-cours-pulse', 'circle-radius', 6.5 + t * 6)
+        map.setPaintProperty('pin-en-cours-pulse', 'circle-opacity', 0.6 * (1 - t))
+      }
+      pulseFrameRef.current = requestAnimationFrame(animerPulse)
+    }
+    animerPulse()
+
+    return () => {
+      map.remove()
+      if (pulseFrameRef.current !== null) {
+        cancelAnimationFrame(pulseFrameRef.current)
+        pulseFrameRef.current = null
+      }
+    }
   }, [])
 
   const filtreActif = (ev: Evenement) => {
@@ -412,8 +429,29 @@ export default function Home() {
     : evenementsListe.filter(filtreActif)
 
   const preClusterParLieu = (events: typeof evenementsFiltres): GeoJSON.Feature[] => {
-    const groupes = new Map<string, typeof evenementsFiltres>()
+    // Événements récurrents — ne garder que la prochaine occurrence par série (parent_id)
+    const aujourd_hui = new Date().toISOString().split('T')[0]
+    const prochaineParParent = new Map<string, typeof events[number]>()
+    const eventsSansOccurrencesFuturesDupliquees: typeof events = []
     for (const ev of events) {
+      if (!ev.parent_id) {
+        eventsSansOccurrencesFuturesDupliquees.push(ev)
+        continue
+      }
+      const dateEv = ev.date_debut || ev.date || ''
+      if (dateEv < aujourd_hui) continue
+      const actuel = prochaineParParent.get(ev.parent_id)
+      if (!actuel) {
+        prochaineParParent.set(ev.parent_id, ev)
+      } else {
+        const dateActuel = actuel.date_debut || actuel.date || ''
+        if (dateEv < dateActuel) prochaineParParent.set(ev.parent_id, ev)
+      }
+    }
+    const events2 = [...eventsSansOccurrencesFuturesDupliquees, ...Array.from(prochaineParParent.values())]
+
+    const groupes = new Map<string, typeof evenementsFiltres>()
+    for (const ev of events2) {
       if (!ev.longitude || !ev.latitude) continue
       const nomLieu = ev.nom_lieu?.trim().toLowerCase() || ev.lieu?.trim().toLowerCase() || ''
       const coordKey = `${ev.longitude.toFixed(4)},${ev.latitude.toFixed(4)}`
@@ -456,6 +494,7 @@ export default function Home() {
             acces: premier.acces || '',
             est_a_la_une: premier.mis_en_avant || false,
             count: 1,
+            en_cours: enCoursIds.has(premier.id),
             ids: JSON.stringify([premier.id]),
             titres: JSON.stringify([premier.titre]),
           },
@@ -566,6 +605,20 @@ export default function Home() {
         },
       })
 
+      // Pulse sur le rond central des pins simples en cours (F8 reconnecté)
+      map.addLayer({
+        id: 'pin-en-cours-pulse',
+        type: 'circle',
+        source: 'events',
+        filter: ['all', ['==', ['get', 'count'], 1], ['==', ['get', 'en_cours'], true]],
+        paint: {
+          'circle-radius': 6.2,
+          'circle-color': '#D4A820',
+          'circle-opacity': 0.95,
+          'circle-translate': [0, -22],
+        },
+      })
+
       // Pins groupés par lieu (count > 1) — pins SVG taille variable
       map.addLayer({
         id: 'lieu-multi-evenements',
@@ -649,15 +702,20 @@ export default function Home() {
         const formatHeure = (ev: (typeof evList)[number]) =>
           afficherPeriode({ date: ev.date_debut || ev.date || '', date_fin: ev.date_fin }, langue)
 
-        const rowHTML = (ev: (typeof evList)[number]) => {
+        const rowHTML = (ev: (typeof evList)[number], index: number) => {
           const { jour, mois } = formatPastille(ev)
           const heureStr = formatHeure(ev)
+          const estPaire = index % 2 === 0
+          const fond = estPaire ? '#1A1410' : '#F7F2E8'
+          const couleurTexte = estPaire ? '#F7F2E8' : '#1A1410'
+          const couleurSousTexte = estPaire ? 'rgba(247,242,232,0.6)' : 'rgba(26,20,16,0.6)'
+          const bordure = estPaire ? 'rgba(247,242,232,0.08)' : 'rgba(26,20,16,0.08)'
           return `
-            <a href="/evenement/${ev.id}" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;text-decoration:none;border-bottom:1px solid rgba(247,242,232,0.08);">
+            <a href="/evenement/${ev.id}" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;text-decoration:none;border-bottom:1px solid ${bordure};background:${fond};">
               <div style="flex-shrink:0;width:34px;height:34px;border-radius:50%;background:#C8431A;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:#F7F2E8;">${jour}</div>
               <div style="min-width:0;">
-                <p style="font-weight:bold;font-size:12px;margin:0 0 3px;color:#F7F2E8;line-height:1.3;">${ev.titre}</p>
-                <p style="font-size:10px;color:rgba(247,242,232,0.6);margin:0;">${mois}${heureStr ? ' · ⏱ ' + heureStr : ''}</p>
+                <p style="font-weight:bold;font-size:12px;margin:0 0 3px;color:${couleurTexte};line-height:1.3;">${ev.titre}</p>
+                <p style="font-size:10px;color:${couleurSousTexte};margin:0;">${mois}${heureStr ? ' · ⏱ ' + heureStr : ''}</p>
               </div>
             </a>
           `
@@ -670,7 +728,7 @@ export default function Home() {
               <div style="padding:10px 12px;border-bottom:1px solid rgba(247,242,232,0.1);position:sticky;top:0;background:#1A1410;z-index:1;">
                 <p style="font-size:13px;font-weight:bold;color:#F7F2E8;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${nomLieu}</p>
               </div>
-              ${evList.map(rowHTML).join('')}
+              ${evList.map((ev, i) => rowHTML(ev, i)).join('')}
             </div>
           `)
           .addTo(map)
@@ -719,7 +777,7 @@ export default function Home() {
     } else {
       map.once('load', addLayers)
     }
-  }, [evenementsFiltres])
+  }, [evenementsFiltres, enCoursIds])
 
   const btnStyle = (actif: boolean) => ({
     padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 'bold' as const,
@@ -827,21 +885,6 @@ export default function Home() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
   }, [evenements])
-
-  // Pin spécial "À la une" — mis à jour quand le carrousel change
-  useEffect(() => {
-    if (aLaUneMarkerRef.current) { aLaUneMarkerRef.current.remove(); aLaUneMarkerRef.current = null }
-    const ev = aLaUne[carouselIdx]
-    if (!mapRef.current || !ev || !ev.latitude || !ev.longitude) return
-    const el = document.createElement('div')
-    el.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer'
-    el.innerHTML =
-      `<div style="background:#C8431A;color:white;font-size:9px;font-weight:bold;padding:2px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(200,67,26,0.5);margin-bottom:3px">🔥 ${t.sidebar.alune}</div>` +
-      '<div style="width:22px;height:22px;background:#C8431A;border:3px solid white;border-radius:50%;box-shadow:0 3px 10px rgba(200,67,26,0.6)"></div>'
-    aLaUneMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-      .setLngLat([ev.longitude, ev.latitude])
-      .addTo(mapRef.current)
-  }, [aLaUne, carouselIdx])
 
   // Carousel — démarrage aléatoire + auto-avance 5s
   useEffect(() => {
