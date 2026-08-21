@@ -930,6 +930,7 @@
     "ambiant_ville_1": "Une ville de plus dans ta liste !",
     "ambiant_ville_2": "Tu explores bien !",
     "ambiant_organisation_1": "Une organisation de plus dans ta liste !",
-    "ambiant_organisation_2": "Tu suis bien ce qui se passe !"
+    "ambiant_organisation_2": "Tu suis bien ce qui se passe !",
+    "etat_vide_recherche": "Essaie une ville voisine, ou élargis un peu ta recherche — il y a sûrement quelque chose qui t'attend 👋"
   }
 }

@@ -12,6 +12,7 @@ import NotifCloche from '../components/NotifCloche'
 import { track } from '../lib/amplitude'
 import { attributerPoints } from '../lib/points'
 import { useLangue } from '../lib/useLangue'
+import { useLoyitaEtatVide } from '../lib/contexteLoyitaEtatVide'
 import { usePushPermission } from '../lib/usePushPermission'
 import PrePermissionModal from '../components/PrePermissionModal'
 import { celebrerPremiereFois } from '../lib/celebrerAction'
@@ -133,6 +134,7 @@ export default function Home() {
   const { langue, setLangue } = useLangue()
   const [dateDebut, setDateDebut]           = useState('')
   const [dateFin, setDateFin]               = useState('')
+  const filtreActifPourAffichage = categorie !== 'Toutes' || acces !== 'tous' || prix !== 'tous' || dateDebut !== '' || dateFin !== '' || recherche !== ''
   const [filtresOuverts, setFiltresOuverts] = useState(false)
   const [drawerOuvert, setDrawerOuvert]     = useState(false)
   const [showDesktopMenu, setShowDesktopMenu] = useState(false)
@@ -161,6 +163,8 @@ export default function Home() {
   const enCoursIntervalRef                  = useRef<ReturnType<typeof setInterval> | null>(null)
   const searchRef                           = useRef<HTMLInputElement>(null)
   const clusterInitialized                  = useRef(false)
+  const etatVideListeRef = useRef<HTMLDivElement>(null)
+  const etatVideCarteRef = useRef<HTMLDivElement>(null)
   const pulseFrameRef = useRef<number | null>(null)
   const evenementsFiltresRef                = useRef<Evenement[]>([])
 
@@ -427,6 +431,20 @@ export default function Home() {
   const evenementsListeFiltres = (recherche || dateDebut || dateFin)
     ? evenementsFiltres
     : evenementsListe.filter(filtreActif)
+
+  const { signalerEtatVide, signalerFinEtatVide } = useLoyitaEtatVide()
+
+  useEffect(() => {
+    const refActive = mode === 'liste' ? etatVideListeRef : etatVideCarteRef
+    const estVide = mode === 'liste' ? evenementsListeFiltres.length === 0 : evenementsFiltres.length === 0
+    if (estVide && refActive.current) {
+      const rect = refActive.current.getBoundingClientRect()
+      signalerEtatVide({ x: rect.left + rect.width / 2, y: rect.top })
+    } else {
+      signalerFinEtatVide()
+    }
+    return () => { signalerFinEtatVide() }
+  }, [mode, evenementsListeFiltres.length, evenementsFiltres.length, signalerEtatVide, signalerFinEtatVide])
 
   const preClusterParLieu = (events: typeof evenementsFiltres): GeoJSON.Feature[] => {
     // Événements récurrents — ne garder que la prochaine occurrence par série (parent_id)
@@ -1559,8 +1577,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ══ Section "À la une" ══ */}
-          {aLaUne.length > 0 && (
+          {/* ══ Section "À la une" — masquée quand un filtre est actif, pour laisser place aux résultats ══ */}
+          {aLaUne.length > 0 && !filtreActifPourAffichage && (
             <div style={{ marginBottom: 32 }}>
               <p style={{ color: '#8C5A40', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 'bold' }}>🔥 {t.sidebar.alune}</p>
 
@@ -1638,7 +1656,7 @@ export default function Home() {
           )}
 
           {evenementsListeFiltres.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '40px 16px 24px' }}>
+            <div ref={etatVideListeRef} style={{ textAlign: 'center', padding: '40px 16px 24px' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
               <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>{t.carte.aucunResultat}</p>
               <p style={{ color: '#8C5A40', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>{t.carte.aucunResultatDesc}</p>
@@ -1716,7 +1734,7 @@ export default function Home() {
         <div className="lotbo-carte-inner">
           <div ref={mapContainer} style={{ position: 'absolute', inset: 0 }} />
           {mode === 'carte' && evenementsFiltres.length === 0 && evenements.length > 0 && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10, background: 'white', borderRadius: 16, padding: '24px 20px', boxShadow: '0 8px 32px rgba(26,20,16,0.18)', textAlign: 'center', maxWidth: 280, width: 'calc(100% - 40px)' }}>
+            <div ref={etatVideCarteRef} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10, background: 'white', borderRadius: 16, padding: '24px 20px', boxShadow: '0 8px 32px rgba(26,20,16,0.18)', textAlign: 'center', maxWidth: 280, width: 'calc(100% - 40px)' }}>
               <button onClick={() => { setCategorie('Toutes'); setAcces('tous'); setPrix('tous'); setDateDebut(''); setDateFin('') }} style={{ position: 'absolute', top: 10, right: 12, background: 'none', border: 'none', cursor: 'pointer', color: '#8C5A40', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>✕</button>
               <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
               <p style={{ color: '#1A1410', fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>{t.carte.aucunResultat}</p>

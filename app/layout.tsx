@@ -10,6 +10,7 @@ import Preloader from "../components/Preloader";
 import TabBarGlobal from "../components/TabBarGlobal";
 import CelebrationVilleGlobal from "../components/CelebrationVilleGlobal";
 import GuideLotboGlobal from "../components/GuideLotboGlobal";
+import { LoyitaEtatVideProvider } from "../lib/contexteLoyitaEtatVide";
 import { Analytics } from "@vercel/analytics/react";
 import AmplitudeInit from "../components/AmplitudeInit";
 
@@ -58,13 +59,15 @@ export default function RootLayout({
       </head>
       <body className={`${dmSans.variable} ${playfairDisplay.variable} antialiased`}>
         <Preloader />
-        {children}
-        <Suspense fallback={null}>
-          <CelebrationVilleGlobal />
-        </Suspense>
-        <Suspense fallback={null}>
-          <GuideLotboGlobal />
-        </Suspense>
+        <LoyitaEtatVideProvider>
+          {children}
+          <Suspense fallback={null}>
+            <CelebrationVilleGlobal />
+          </Suspense>
+          <Suspense fallback={null}>
+            <GuideLotboGlobal />
+          </Suspense>
+        </LoyitaEtatVideProvider>
         <TabBarGlobal />
         <StoreBanner />
         <CookieBanner />

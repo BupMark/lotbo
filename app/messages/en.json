@@ -930,6 +930,7 @@
     "ambiant_ville_1": "One more city on your list!",
     "ambiant_ville_2": "You're exploring well!",
     "ambiant_organisation_1": "One more organisation on your list!",
-    "ambiant_organisation_2": "You're keeping up with things!"
+    "ambiant_organisation_2": "You're keeping up with things!",
+    "etat_vide_recherche": "Try a nearby city, or widen your search — there's probably something waiting for you 👋"
   }
 }

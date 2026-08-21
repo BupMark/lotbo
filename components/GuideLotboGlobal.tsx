@@ -7,6 +7,7 @@ import { getTraductions } from '../lib/i18n'
 import type { ActionCelebrable, ActionAmbiante } from '../lib/celebrerAction'
 import { selectionnerContexte } from '../lib/contexteAnsanm'
 import { jouerBipLoyita } from '../lib/sonLoyita'
+import { useLoyitaEtatVide } from '../lib/contexteLoyitaEtatVide'
 
 const CLE_SALUT_VU = 'lotbo_guide_salut_vu'
 
@@ -36,6 +37,14 @@ const MAPPING_AMBIANT_CLES: Record<ActionAmbiante, string[]> = {
 }
 
 export default function GuideLotboGlobal() {
+  const { etatVideActif, positionCible } = useLoyitaEtatVide()
+  const etatVidePrecedentRef = useRef(false)
+  useEffect(() => {
+    if (etatVideActif && !etatVidePrecedentRef.current) {
+      jouerBipLoyita()
+    }
+    etatVidePrecedentRef.current = etatVideActif
+  }, [etatVideActif])
   const pathname = usePathname()
   const { langue } = useLangue()
   const t = getTraductions(langue)
@@ -241,7 +250,11 @@ export default function GuideLotboGlobal() {
         <button
           onClick={ouvrirPanneau}
           aria-label="Ouvrir le guide LOTBO"
-          style={{ position: 'fixed', bottom: 'calc(76px + env(safe-area-inset-bottom))', right: 20, zIndex: 998, width: 56, height: 56, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={
+            etatVideActif && positionCible
+              ? { position: 'fixed', top: positionCible.y - 170, left: positionCible.x - 28, zIndex: 998, width: 56, height: 56, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'top 0.6s cubic-bezier(0.4, 0, 0.2, 1), left 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }
+              : { position: 'fixed', bottom: 'calc(76px + env(safe-area-inset-bottom))', right: 20, zIndex: 998, width: 56, height: 56, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'top 0.6s cubic-bezier(0.4, 0, 0.2, 1), left 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }
+          }
         >
           <svg className={variante === 2 ? "lotbo-guide-svg lotbo-guide-svg-joyeux" : "lotbo-guide-svg"} viewBox="0 0 56 56" width="56" height="56">
             <circle className="lotbo-guide-halo" cx="28" cy="28" r="26" fill="#D4A820" opacity="0.25" />
@@ -266,6 +279,28 @@ export default function GuideLotboGlobal() {
             )}
           </svg>
         </button>
+      )}
+
+      {etatVideActif && positionCible && (
+        <div style={{
+          position: 'fixed',
+          top: positionCible.y - 106,
+          left: positionCible.x - 28,
+          transform: 'translateX(-50%)',
+          zIndex: 997,
+          background: '#1A1410',
+          color: '#F7F2E8',
+          fontSize: 12,
+          fontWeight: 'bold',
+          padding: '8px 12px',
+          borderRadius: 12,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          maxWidth: 220,
+          textAlign: 'center',
+          animation: 'lotboGuideBulleApparait 0.3s ease-out',
+        }}>
+          {t.loyita.etat_vide_recherche}
+        </div>
       )}
 
       {panneauOuvert && (
