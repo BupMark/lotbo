@@ -439,7 +439,7 @@ export default function Home() {
     const estVide = mode === 'liste' ? evenementsListeFiltres.length === 0 : evenementsFiltres.length === 0
     if (estVide && refActive.current) {
       const rect = refActive.current.getBoundingClientRect()
-      signalerEtatVide({ x: rect.left + rect.width / 2, y: rect.top })
+      signalerEtatVide({ x: rect.left + rect.width / 2, y: rect.top }, t.loyita.etat_vide_recherche)
     } else {
       signalerFinEtatVide()
     }

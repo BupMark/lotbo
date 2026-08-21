@@ -37,7 +37,7 @@ const MAPPING_AMBIANT_CLES: Record<ActionAmbiante, string[]> = {
 }
 
 export default function GuideLotboGlobal() {
-  const { etatVideActif, positionCible } = useLoyitaEtatVide()
+  const { etatVideActif, positionCible, message } = useLoyitaEtatVide()
   const etatVidePrecedentRef = useRef(false)
   useEffect(() => {
     if (etatVideActif && !etatVidePrecedentRef.current) {
@@ -299,7 +299,7 @@ export default function GuideLotboGlobal() {
           textAlign: 'center',
           animation: 'lotboGuideBulleApparait 0.3s ease-out',
         }}>
-          {t.loyita.etat_vide_recherche}
+          {message}
         </div>
       )}
 

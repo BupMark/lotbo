@@ -9,7 +9,8 @@ interface PositionCible {
 interface LoyitaEtatVideContextType {
   etatVideActif: boolean
   positionCible: PositionCible | null
-  signalerEtatVide: (position: PositionCible) => void
+  message: string | null
+  signalerEtatVide: (position: PositionCible, message: string) => void
   signalerFinEtatVide: () => void
 }
 
@@ -18,19 +19,22 @@ const LoyitaEtatVideContext = createContext<LoyitaEtatVideContextType | null>(nu
 export function LoyitaEtatVideProvider({ children }: { children: ReactNode }) {
   const [etatVideActif, setEtatVideActif] = useState(false)
   const [positionCible, setPositionCible] = useState<PositionCible | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
 
-  const signalerEtatVide = useCallback((position: PositionCible) => {
+  const signalerEtatVide = useCallback((position: PositionCible, msg: string) => {
     setPositionCible(position)
+    setMessage(msg)
     setEtatVideActif(true)
   }, [])
 
   const signalerFinEtatVide = useCallback(() => {
     setEtatVideActif(false)
     setPositionCible(null)
+    setMessage(null)
   }, [])
 
   return (
-    <LoyitaEtatVideContext.Provider value={{ etatVideActif, positionCible, signalerEtatVide, signalerFinEtatVide }}>
+    <LoyitaEtatVideContext.Provider value={{ etatVideActif, positionCible, message, signalerEtatVide, signalerFinEtatVide }}>
       {children}
     </LoyitaEtatVideContext.Provider>
   )

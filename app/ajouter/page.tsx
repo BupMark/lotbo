@@ -16,6 +16,7 @@ import CarteInteractive, { Coords } from '../components/CarteInteractive'
 import { BADGES_CONTRIBUTEUR, BADGES_ORGANISATEUR, getProchainBadge } from '../../lib/badges'
 import { jouerBipLoyita } from '../../lib/sonLoyita'
 import { ouvrirChatLoyita } from '../../lib/celebrerAction'
+import { useLoyitaEtatVide } from '../../lib/contexteLoyitaEtatVide'
 
 // ── Système de badges ─────────────────────────────────────────────────────────
 const BADGE_PIONEER_SCAN: Badge = { id: 'pioneer_scan', emoji: '📸', label: 'Pioneer Scan & Publie', seuil: 0, desc: '1er scan publié' }
@@ -615,6 +616,9 @@ function AjouterEvenement() {
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const biaisGeoCacheRef = useRef<{ ville: string; pays: string; lat: number; lng: number } | null>(null)
 
+  const { signalerEtatVide, signalerFinEtatVide } = useLoyitaEtatVide()
+  const champsDejaSignalesRef = useRef<Set<string>>(new Set())
+
   const [form, setForm] = useState({
     titre: '', organisateur: '', nom_lieu: '', adresse: '', ville: '', pays: '',
     date: '', date_fin: '', heure_debut: '', heure_fin: '',
@@ -622,6 +626,21 @@ function AjouterEvenement() {
     description: '', lien: '', acces: 'public', prix: 'gratuit',
     organisation_id: '',
   })
+
+  const gererBlurChampObligatoire = (nomChamp: string, valeur: string, messageI18n: string) => (e: React.FocusEvent<HTMLInputElement>) => {
+    if (valeur.trim() !== '') {
+      signalerFinEtatVide()
+      return
+    }
+    if (champsDejaSignalesRef.current.has(nomChamp)) return
+    champsDejaSignalesRef.current.add(nomChamp)
+    const cible = e.target
+    cible.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => {
+      const rect = cible.getBoundingClientRect()
+      signalerEtatVide({ x: rect.left + rect.width / 2, y: rect.top }, messageI18n)
+    }, 350)
+  }
 
   const themesEffectifs = useMemo(() => {
     const parentsAvecEnfantCoche = new Set(
@@ -1730,7 +1749,7 @@ function AjouterEvenement() {
 
           <div>
             <label style={labelStyle}>{t.ajouter.titre}</label>
-            <input name="titre" value={form.titre} placeholder={t.ajouter.placeholderTitre} onChange={handleChange} style={inputStyle} required />
+            <input name="titre" value={form.titre} placeholder={t.ajouter.placeholderTitre} onChange={handleChange} onBlur={gererBlurChampObligatoire('titre', form.titre, t.loyita.formulaire_titre)} style={inputStyle} required />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1768,17 +1787,17 @@ function AjouterEvenement() {
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{t.ajouter.ville}</label>
-              <input name="ville" value={form.ville} placeholder={t.ajouter.placeholderVille} onChange={handleChange} style={inputStyle} required />
+              <input name="ville" value={form.ville} placeholder={t.ajouter.placeholderVille} onChange={handleChange} onBlur={gererBlurChampObligatoire('ville', form.ville, t.loyita.formulaire_ville)} style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{t.ajouter.pays}</label>
-              <input name="pays" value={form.pays} placeholder={t.ajouter.placeholderPays} onChange={handleChange} style={inputStyle} required />
+              <input name="pays" value={form.pays} placeholder={t.ajouter.placeholderPays} onChange={handleChange} onBlur={gererBlurChampObligatoire('pays', form.pays, t.loyita.formulaire_pays)} style={inputStyle} required />
             </div>
           </div>
 
           <div>
             <label style={labelStyle}>{t.ajouter.nomLieu}</label>
-            <input name="nom_lieu" value={form.nom_lieu} placeholder={t.ajouter.placeholderNomLieu} onChange={handleChange} style={inputStyle} required autoComplete="off" />
+            <input name="nom_lieu" value={form.nom_lieu} placeholder={t.ajouter.placeholderNomLieu} onChange={handleChange} onBlur={gererBlurChampObligatoire('nom_lieu', form.nom_lieu, t.loyita.formulaire_nom_lieu)} style={inputStyle} required autoComplete="off" />
             <p style={{ color: '#8C5A40', fontSize: 11, marginTop: 4 }}>{t.ajouter.aideLieu}</p>
           </div>
 
@@ -1838,12 +1857,12 @@ function AjouterEvenement() {
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>{multiJours ? t.ajouter.dateDebut : t.ajouter.date}</label>
-              <input type="date" name="date" value={form.date} onChange={handleChange} style={inputStyle} required />
+              <input type="date" name="date" value={form.date} onChange={handleChange} onBlur={gererBlurChampObligatoire('date', form.date, t.loyita.formulaire_date)} style={inputStyle} required />
             </div>
             {multiJours && (
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{t.ajouter.dateFin}</label>
-                <input type="date" name="date_fin" value={form.date_fin} min={form.date || undefined} onChange={handleChange} style={inputStyle} required={multiJours} />
+                <input type="date" name="date_fin" value={form.date_fin} min={form.date || undefined} onChange={handleChange} onBlur={multiJours ? gererBlurChampObligatoire('date_fin', form.date_fin, t.loyita.formulaire_date_fin) : undefined} style={inputStyle} required={multiJours} />
               </div>
             )}
           </div>

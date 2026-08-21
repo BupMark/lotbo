@@ -931,6 +931,12 @@
     "ambiant_ville_2": "Você está explorando bem!",
     "ambiant_organisation_1": "Mais uma organização na sua lista!",
     "ambiant_organisation_2": "Você está por dentro de tudo!",
-    "etat_vide_recherche": "Experimenta uma cidade próxima, ou amplia a tua pesquisa — de certeza que há algo à tua espera 👋"
+    "etat_vide_recherche": "Experimenta uma cidade próxima, ou amplia a tua pesquisa — de certeza que há algo à tua espera 👋",
+    "formulaire_titre": "Um bom título dá vontade de clicar!",
+    "formulaire_ville": "Em que cidade é? Colocamos-te no mapa.",
+    "formulaire_pays": "Não te esqueças do país — o LOTBO cobre o mundo inteiro!",
+    "formulaire_nom_lieu": "O nome do local ajuda as pessoas a orientarem-se.",
+    "formulaire_date": "Quando começa?",
+    "formulaire_date_fin": "O teu evento dura vários dias — até quando?"
   }
 }

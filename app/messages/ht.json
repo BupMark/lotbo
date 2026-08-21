@@ -931,6 +931,12 @@
     "ambiant_ville_2": "Ou ap dekouvri lòt kote!",
     "ambiant_organisation_1": "Yon lòt òganizasyon nan lis ou!",
     "ambiant_organisation_2": "Ou ap byen swiv sa k ap pase!",
-    "etat_vide_recherche": "Eseye yon lòt vil toupre, oswa elaji rechèch ou — gen anpil chans pou kichòy ap tann ou 👋"
+    "etat_vide_recherche": "Eseye yon lòt vil toupre, oswa elaji rechèch ou — gen anpil chans pou kichòy ap tann ou 👋",
+    "formulaire_titre": "Yon bon tit bay anvi pou klike!",
+    "formulaire_ville": "Nan ki vil sa ap fèt? Nou mete w sou kat la.",
+    "formulaire_pays": "Pa bliye ajoute peyi a — LOTBO kouvri tout mond lan!",
+    "formulaire_nom_lieu": "Non kote a ede pi byen konprann kibò pou yo rive.",
+    "formulaire_date": "Ak kilè l ap kòmanse?",
+    "formulaire_date_fin": "Evènman w lan dire plizyè jou — jiska ki dat?"
   }
 }
