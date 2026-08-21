@@ -10,6 +10,7 @@ import { jouerBipLoyita } from '../lib/sonLoyita'
 import { useLoyitaEtatVide } from '../lib/contexteLoyitaEtatVide'
 
 const CLE_SALUT_VU = 'lotbo_guide_salut_vu'
+const CLE_GESTE_AJOUT_VU = 'lotbo_guide_geste_ajout_vu'
 
 interface DonneesWikivoyage {
   extrait: string | null
@@ -50,6 +51,7 @@ export default function GuideLotboGlobal() {
   const t = getTraductions(langue)
   const [visible, setVisible] = useState(false)
   const [bulleSalut, setBulleSalut] = useState(false)
+  const [guideFabActif, setGuideFabActif] = useState(false)
   const [bulleCelebration, setBulleCelebration] = useState<string | null>(null)
   const [variante] = useState(() => Math.floor(Math.random() * 3))
   const [messageSalutContextuel, setMessageSalutContextuel] = useState<string | null>(null)
@@ -69,6 +71,11 @@ export default function GuideLotboGlobal() {
     const dejaVu = localStorage.getItem(CLE_SALUT_VU)
     if (!dejaVu) {
       setBulleSalut(true)
+      const gesteAjoutDejaVu = localStorage.getItem(CLE_GESTE_AJOUT_VU)
+      if (!gesteAjoutDejaVu) {
+        setGuideFabActif(true)
+        localStorage.setItem(CLE_GESTE_AJOUT_VU, '1')
+      }
       let annule = false
       fetch('/api/ansanm/contexte')
         .then(res => res.json())
@@ -84,6 +91,22 @@ export default function GuideLotboGlobal() {
       return () => { annule = true }
     }
   }, [])
+
+  useEffect(() => {
+    if (!guideFabActif) return
+    const fab = document.querySelector('.lotbo-tabbar-fab')
+    if (!fab) return
+    fab.classList.add('lotbo-tabbar-fab-guide')
+    const eteindre = () => setGuideFabActif(false)
+    const lienAjouter = fab.closest('a[href="/ajouter"]')
+    lienAjouter?.addEventListener('click', eteindre)
+    const timer = setTimeout(eteindre, 9000)
+    return () => {
+      fab.classList.remove('lotbo-tabbar-fab-guide')
+      lienAjouter?.removeEventListener('click', eteindre)
+      clearTimeout(timer)
+    }
+  }, [guideFabActif])
 
   useEffect(() => {
     const ecouter = (e: Event) => {

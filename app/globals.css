@@ -99,6 +99,21 @@ body {
   justify-content: center;
   box-shadow: 0 3px 10px rgba(200, 67, 26, 0.45);
   margin-bottom: 2px;
+  position: relative;
+}
+.lotbo-tabbar-fab-guide::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: #D4A820;
+  animation: lotboGuideGlow 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes lotboGuideGlow {
+  0%, 100% { opacity: 0.2 }
+  50% { opacity: 0.35 }
 }
 
 /* ══════════════════════════════════════
