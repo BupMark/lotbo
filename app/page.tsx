@@ -651,6 +651,7 @@ export default function Home() {
         cluster: true,
         clusterMaxZoom: 13,
         clusterRadius: 50,
+        clusterMinPoints: 6,
         clusterProperties: {
           total_evenements: ['+', ['get', 'count']],
         },
