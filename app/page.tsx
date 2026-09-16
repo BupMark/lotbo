@@ -645,16 +645,10 @@ export default function Home() {
         cluster: false,
       })
 
-      map.addSource('events-geo-cluster', {
+            map.addSource('events-geo-cluster', {
         type: 'geojson',
         data: geojson,
-        cluster: true,
-        clusterMaxZoom: 13,
-        clusterRadius: 50,
-        clusterMinPoints: 6,
-        clusterProperties: {
-          total_evenements: ['+', ['get', 'count']],
-        },
+        cluster: false,
       })
 
       map.addLayer({
@@ -676,7 +670,7 @@ export default function Home() {
       })
 
       map.addLayer({
-        id: 'geo-clusters-count',
+        id: 'geo-clusters-count', 
         type: 'symbol',
         source: 'events-geo-cluster',
         filter: ['has', 'point_count'],
@@ -689,13 +683,27 @@ export default function Home() {
           'text-anchor': 'bottom',
           'text-offset': [0, -1.2],
         },
-        paint: {
+              paint: {
           'text-color': '#F7F2E8',
           'text-halo-color': 'rgba(0,0,0,0.3)',
           'text-halo-width': 0.5,
         },
       })
 
+            // Tous les lieux affichés comme pins individuels (clustering géographique désactivé temporairement — à reprendre plus tard)
+      map.addLayer({
+        id: 'geo-cluster-point-isole',
+        type: 'symbol',
+        source: 'events-geo-cluster',
+        filter: ['!', ['has', 'point_count']],
+        layout: {
+          'icon-image': 'pin-event',
+          'icon-size': 1,
+          'icon-anchor': 'bottom',
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+        },
+      })
       // Pins individuels (count = 1)
       map.addLayer({
         id: 'unclustered-point',
