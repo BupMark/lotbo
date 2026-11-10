@@ -1,0 +1,34 @@
+name: Keepalive workflows planifiés
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Réactiver les workflows désactivés pour inactivité
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/actions/workflows" --paginate \
+            --jq '.workflows[] | select(.state == "disabled_inactivity") | .id' |
+          while read -r id; do
+            echo "Réactivation du workflow $id"
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$id/enable"
+          done
+
+      - name: Commit vide pour relancer le compteur d'inactivité
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: keepalive"
+          git push
